@@ -84,11 +84,8 @@ pub(super) fn build_line_runs(
 
         let Some(blob) = builder.make() else { continue };
 
-        let slice_advance = compute_slice_advance(
-            &run_cluster_advances[run_index],
-            overlap_start,
-            overlap_end,
-        );
+        let slice_advance =
+            compute_slice_advance(&run_cluster_advances[run_index], overlap_start, overlap_end);
 
         runs.push(DrawTextRun {
             blob,
@@ -109,20 +106,13 @@ pub(super) fn build_line_runs(
 
 pub(super) fn build_run_cluster_advances(pre_run: &PreShapedRun) -> RunClusterAdvances {
     if pre_run.glyphs.is_empty() {
-        return RunClusterAdvances {
-            cluster_bytes: Vec::new(),
-            prefix_advances: vec![0.0],
-        };
+        return RunClusterAdvances { cluster_bytes: Vec::new(), prefix_advances: vec![0.0] };
     }
 
-    let mut raw: Vec<(usize, f32)> = pre_run
-        .glyphs
-        .iter()
-        .map(|glyph| (glyph.cluster_byte, glyph.x))
-        .collect();
+    let mut raw: Vec<(usize, f32)> =
+        pre_run.glyphs.iter().map(|glyph| (glyph.cluster_byte, glyph.x)).collect();
     raw.sort_unstable_by(|a, b| {
-        a.0.cmp(&b.0)
-            .then_with(|| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
+        a.0.cmp(&b.0).then_with(|| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
     });
 
     let mut by_byte: Vec<(usize, f32)> = Vec::with_capacity(raw.len());
@@ -139,18 +129,12 @@ pub(super) fn build_run_cluster_advances(pre_run: &PreShapedRun) -> RunClusterAd
     }
 
     if by_byte.is_empty() {
-        return RunClusterAdvances {
-            cluster_bytes: Vec::new(),
-            prefix_advances: vec![0.0],
-        };
+        return RunClusterAdvances { cluster_bytes: Vec::new(), prefix_advances: vec![0.0] };
     }
 
     let mut visual_order: Vec<usize> = (0..by_byte.len()).collect();
     visual_order.sort_by(|&lhs, &rhs| {
-        by_byte[lhs]
-            .1
-            .partial_cmp(&by_byte[rhs].1)
-            .unwrap_or(std::cmp::Ordering::Equal)
+        by_byte[lhs].1.partial_cmp(&by_byte[rhs].1).unwrap_or(std::cmp::Ordering::Equal)
     });
 
     let mut advances = vec![0.0f32; by_byte.len()];
@@ -175,10 +159,7 @@ pub(super) fn build_run_cluster_advances(pre_run: &PreShapedRun) -> RunClusterAd
         prefix_advances.push(next_prefix);
     }
 
-    RunClusterAdvances {
-        cluster_bytes,
-        prefix_advances,
-    }
+    RunClusterAdvances { cluster_bytes, prefix_advances }
 }
 
 fn compute_slice_advance(

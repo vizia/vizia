@@ -9,7 +9,10 @@
 
 use std::ops::Range;
 
-use parley::{Affinity, BreakReason, Cluster as ParleyCluster, editing::Cursor as ParleyCursor, editing::Selection as ParleySelection};
+use parley::{
+    Affinity, BreakReason, Cluster as ParleyCluster, editing::Cursor as ParleyCursor,
+    editing::Selection as ParleySelection,
+};
 use skia_safe::{Font, GlyphId, Paint, Rect};
 use vizia_style::TextAlign;
 
@@ -61,7 +64,6 @@ pub(crate) struct PreShapedRun {
     pub glyphs: Vec<PreGlyph>,
     /// Total X advance of this run (from `RunInfo.advance.x`).
     pub total_advance: f32,
-    
 }
 
 /// Full pre-shaped text block — the result of running Parley shaping over an entity's text.
@@ -268,4 +270,3 @@ fn perform_layout(pre: &mut PreShapedText, constraint_width: f32) -> LayoutResul
 
     LayoutResult { line_ranges, height }
 }
-

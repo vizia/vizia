@@ -184,14 +184,18 @@ struct ShapedFontRun {
 /// CJK) where Parley may pick a different physical font than Skia's family-name matching
 /// would, which previously caused shaped glyph ids to be drawn against the wrong font and
 /// render as incorrect/garbled glyphs.
-fn typeface_for_font_data(text_context: &mut TextContext, font_data: &parley::FontData) -> Option<Typeface> {
+fn typeface_for_font_data(
+    text_context: &mut TextContext,
+    font_data: &parley::FontData,
+) -> Option<Typeface> {
     let key = (font_data.data.id(), font_data.index);
     if let Some(typeface) = text_context.typeface_cache.get(&key) {
         return Some(typeface.clone());
     }
 
-    let typeface =
-        text_context.default_font_manager.new_from_data(font_data.data.data(), font_data.index as usize)?;
+    let typeface = text_context
+        .default_font_manager
+        .new_from_data(font_data.data.data(), font_data.index as usize)?;
     text_context.typeface_cache.insert(key, typeface.clone());
     Some(typeface)
 }
@@ -564,8 +568,7 @@ pub(crate) fn apply_editor_style(
         .unwrap_or(16.0);
     let run_style = parley_run_style(style, entity, font_size);
 
-    let family: FontFamily<'static> =
-        FontFamily::from(run_style.family_css.as_str()).into_owned();
+    let family: FontFamily<'static> = FontFamily::from(run_style.family_css.as_str()).into_owned();
 
     let styles = editor.edit_styles();
     styles.insert(StyleProperty::FontSize(run_style.font_size));
