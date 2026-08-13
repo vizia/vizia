@@ -1,5 +1,6 @@
 use super::internal;
 use crate::prelude::*;
+use accesskit::SortDirection;
 
 /// Modifiers for changing the accessibility properties of a view.
 pub trait AccessibilityModifiers: internal::Modifiable {
@@ -127,7 +128,7 @@ pub trait AccessibilityModifiers: internal::Modifiable {
     }
 
     /// Sets whether the view should be announced as selected (`true`) or not selected (`false`).
-    fn selected<U: Into<bool>>(mut self, selected: impl Res<U>) -> Self {
+    fn accessibility_selected<U: Into<bool>>(mut self, selected: impl Res<U>) -> Self {
         let entity = self.entity();
         let current = self.current();
         self.context().with_current(current, |cx| {
@@ -140,6 +141,13 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self
     }
 
+    /// Sets whether the view should be announced as selected (`true`) or not selected (`false`).
+    ///
+    /// This is an alias of [`AccessibilityModifiers::accessibility_selected`].
+    fn selected<U: Into<bool>>(self, selected: impl Res<U>) -> Self {
+        self.accessibility_selected(selected)
+    }
+
     /// Sets whether the view allows multiple selected descendants.
     fn multiselectable<U: Into<bool>>(mut self, multiselectable: impl Res<U>) -> Self {
         let entity = self.entity();
@@ -147,6 +155,68 @@ pub trait AccessibilityModifiers: internal::Modifiable {
         self.context().with_current(current, |cx| {
             multiselectable.set_or_bind(cx, move |cx, multiselectable| {
                 cx.style.multiselectable.insert(entity, multiselectable.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
+    /// Sets the accessibility sort direction for sortable headers.
+    ///
+    /// Use `None` when a header is not currently sorted.
+    fn sort_direction(mut self, sort_direction: impl Res<Option<SortDirection>>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            sort_direction.set_or_bind(cx, move |cx, sort_direction| {
+                if let Some(value) = sort_direction.get_value(cx) {
+                    cx.style.sort_direction.insert(entity, value);
+                } else {
+                    cx.style.sort_direction.remove(entity);
+                }
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
+    /// Sets the accessibility level for hierarchical items.
+    fn level<U: Into<usize>>(mut self, level: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            level.set_or_bind(cx, move |cx, level| {
+                cx.style.level.insert(entity, level.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
+    /// Sets the total number of sibling items in a set for this item.
+    fn size_of_set<U: Into<usize>>(mut self, size_of_set: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            size_of_set.set_or_bind(cx, move |cx, size_of_set| {
+                cx.style.size_of_set.insert(entity, size_of_set.get_value(cx).into());
+                cx.style.needs_access_update(entity);
+            });
+        });
+
+        self
+    }
+
+    /// Sets the 1-based position of this item within its sibling set.
+    fn position_in_set<U: Into<usize>>(mut self, position_in_set: impl Res<U>) -> Self {
+        let entity = self.entity();
+        let current = self.current();
+        self.context().with_current(current, |cx| {
+            position_in_set.set_or_bind(cx, move |cx, position_in_set| {
+                cx.style.position_in_set.insert(entity, position_in_set.get_value(cx).into());
                 cx.style.needs_access_update(entity);
             });
         });
