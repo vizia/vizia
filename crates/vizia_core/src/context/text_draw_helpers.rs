@@ -22,21 +22,10 @@ pub(super) struct RunClusterAdvances {
 
 pub(super) fn compute_line_x_offset(
     align: TextAlign,
-    base_rtl: bool,
     line_width: f32,
     constraint_width: f32,
 ) -> f32 {
-    let effective_align = if base_rtl {
-        match align {
-            TextAlign::Left => TextAlign::Right,
-            TextAlign::Right => TextAlign::Left,
-            other => other,
-        }
-    } else {
-        align
-    };
-
-    match effective_align {
+    match align {
         TextAlign::Right => (constraint_width - line_width).max(0.0),
         TextAlign::Center => ((constraint_width - line_width) * 0.5).max(0.0),
         _ => 0.0,

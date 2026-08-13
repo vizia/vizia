@@ -2979,7 +2979,6 @@ impl DrawContext<'_> {
 
                 let line_x_offset = compute_line_x_offset(
                     shaped.pre_shaped.text_align,
-                    shaped.pre_shaped.base_direction_rtl,
                     line.metrics().advance,
                     text_constraint_width,
                 );

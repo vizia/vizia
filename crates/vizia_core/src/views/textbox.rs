@@ -350,6 +350,28 @@ where
         let entity = cx.current;
         let width = self.last_width.get().unwrap_or(f32::MAX);
 
+        // Peek at the post-edit text (without forcing a layout pass yet) and mirror it into
+        // `cx.style.text` so `resolved_text_direction`/`resolve_text_align` auto-detect against
+        // up-to-date content, not last frame's.
+        let Some(peek_text) =
+            cx.text_context.plain_editors.get(entity).map(|e| e.raw_text().to_string())
+        else {
+            return;
+        };
+        cx.style.text.insert(entity, peek_text);
+
+        // Text edits don't go through `sync_editor_layout` (only triggered by
+        // `GeometryChanged`), so a paste that flips the auto-detected direction/alignment must
+        // resync the editor's own alignment here too. Otherwise parley's cursor geometry keeps
+        // using the stale alignment while the visual glyphs/padding are already RTL-flipped.
+        let align = resolve_parley_alignment(cx.style, entity);
+        if self.last_align.get() != Some(align) {
+            if let Some(driver) = cx.text_context.editor_driver(entity) {
+                driver.editor.set_alignment(align);
+            }
+            self.last_align.set(Some(align));
+        }
+
         let Some(mut driver) = cx.text_context.editor_driver(entity) else { return };
         // `PlainEditor::generation()` only reflects a pending style/text/width change once the
         // layout has actually been (re)computed (parley marks `layout_dirty` eagerly but bumps
@@ -1230,6 +1252,11 @@ fn push_editor_text_and_rebuild(entity: Entity, cx: &mut Context, display: &str)
             editor.set_text(display);
         }
     }
+
+    // The editor's actual content lives in the parley buffer, not `style.text`, but
+    // `resolved_text_direction`/`resolve_text_align` read `style.text` to auto-detect RTL
+    // content, so keep it mirrored here.
+    cx.style.text.insert(entity, display.to_string());
 
     if let Some(mut driver) = cx.text_context.editor_driver(entity) {
         let layout = driver.layout().clone();
