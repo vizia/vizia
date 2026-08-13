@@ -184,6 +184,14 @@ struct ShapedFontRun {
 /// CJK) where Parley may pick a different physical font than Skia's family-name matching
 /// would, which previously caused shaped glyph ids to be drawn against the wrong font and
 /// render as incorrect/garbled glyphs.
+///
+/// Some system font collections (e.g. macOS's `STHeiti Medium.ttc`) expose more faces to
+/// fontique's own TTC parsing than Skia's platform `FontMgr` is willing to load by index
+/// (`new_from_data` returns `None` for indices beyond what it recognizes), even though the
+/// extra faces share the same glyph table as face 0. If the requested index fails to load,
+/// retry with index 0 from the same font blob rather than falling all the way back to a
+/// CSS-family-resolved font from a completely different file (which would very likely have
+/// a different glyph id mapping and render the wrong characters).
 fn typeface_for_font_data(
     text_context: &mut TextContext,
     font_data: &parley::FontData,
@@ -193,9 +201,15 @@ fn typeface_for_font_data(
         return Some(typeface.clone());
     }
 
+    let data = font_data.data.data();
     let typeface = text_context
         .default_font_manager
-        .new_from_data(font_data.data.data(), font_data.index as usize)?;
+        .new_from_data(data, font_data.index as usize)
+        .or_else(|| {
+            (font_data.index != 0)
+                .then(|| text_context.default_font_manager.new_from_data(data, 0))
+                .flatten()
+        })?;
     text_context.typeface_cache.insert(key, typeface.clone());
     Some(typeface)
 }
@@ -586,3 +600,84 @@ pub fn build_pre_shaped_text(
 
     PreShapedText { runs: acc.runs, text: acc.text, text_align, max_lines, parley_layout }
 }
+
+#[cfg(test)]
+mod cjk_repro_tests {
+    use parley::editing::PlainEditor;
+    use skia_safe::{FontMgr, textlayout::FontCollection};
+
+    use super::typeface_for_font_data;
+    use crate::text::TextContext;
+
+    fn make_text_context() -> TextContext {
+        let mut font_collection = FontCollection::new();
+        let default_font_manager = FontMgr::default();
+        font_collection.set_default_font_manager(default_font_manager.clone(), None);
+        let asset_provider = skia_safe::textlayout::TypefaceFontProvider::new();
+        let asset_font_manager: FontMgr = asset_provider.clone().into();
+        font_collection.set_asset_font_manager(asset_font_manager);
+
+        TextContext {
+            parley_font_context: parley::FontContext::new(),
+            parley_layout_context: parley::LayoutContext::new(),
+            font_collection,
+            default_font_manager,
+            asset_provider,
+            text_bounds: Default::default(),
+            text_shaped: Default::default(),
+            plain_editors: Default::default(),
+            typeface_cache: Default::default(),
+        }
+    }
+
+    /// Regression test for pasting CJK text (e.g. "你好") into a Textbox: on macOS, fontique
+    /// picks face index 1 of `STHeiti Medium.ttc` for CJK shaping, but Skia's platform
+    /// `FontMgr` only recognizes face 0 of that file. Verify `typeface_for_font_data` still
+    /// resolves a typeface (by falling back to index 0 in the same blob) whose glyph ids match
+    /// what was actually shaped, instead of silently returning `None` and letting callers fall
+    /// back to an unrelated CSS-resolved font (which previously rendered the wrong characters).
+    #[test]
+    fn cjk_typeface_resolves_despite_ttc_index_mismatch() {
+        let mut tc = make_text_context();
+        let mut editor = PlainEditor::<[u8; 4]>::new(16.0);
+        {
+            let mut driver =
+                editor.driver(&mut tc.parley_font_context, &mut tc.parley_layout_context);
+            driver.select_byte_range(0, 0);
+            driver.insert_or_replace_selection("你好");
+        }
+
+        let mut driver = editor.driver(&mut tc.parley_font_context, &mut tc.parley_layout_context);
+        let layout = driver.layout().clone();
+        drop(driver);
+
+        let mut checked_any = false;
+        for line in layout.lines() {
+            for item in line.items() {
+                if let parley::PositionedLayoutItem::GlyphRun(glyph_run) = item {
+                    let run = glyph_run.run();
+                    let font_data = run.font();
+                    let typeface = typeface_for_font_data(&mut tc, font_data)
+                        .expect("typeface should resolve even when the exact ttc index fails");
+                    let font = skia_safe::Font::new(typeface, run.font_size());
+                    for cluster in run.visual_clusters() {
+                        for glyph in cluster.glyphs() {
+                            let ch_start = cluster.text_range().start;
+                            let ch =
+                                editor.raw_text()[ch_start..].chars().next().unwrap();
+                            let expected_glyph = font.unichar_to_glyph(ch as i32);
+                            assert_eq!(
+                                expected_glyph, glyph.id as u16,
+                                "glyph id mismatch for char {ch:?}: shaped={}, typeface={}",
+                                glyph.id, expected_glyph
+                            );
+                            checked_any = true;
+                        }
+                    }
+                }
+            }
+        }
+        assert!(checked_any, "expected at least one glyph run to be checked");
+    }
+}
+
