@@ -226,7 +226,21 @@ struct LayoutResult {
 
 /// Parley line-breaking and TextBlob construction from pre-shaped data.
 fn perform_layout(pre: &mut PreShapedText, constraint_width: f32) -> LayoutResult {
-    if pre.runs.is_empty() || pre.text.is_empty() {
+    if pre.text.is_empty() {
+        // Only reachable for an editor-driven `PreShapedText` (e.g. an empty `Textbox`) — a
+        // label's text always has a trailing ZWS appended (see `build_pre_shaped_text`), so
+        // `pre.text` is never truly empty there. The editor's layout still carries one implicit
+        // empty line; use its metrics so callers computing caret/selection vertical-centering
+        // (which divide by this height) don't treat the content block as 0-height and draw the
+        // caret too low.
+        let layout = &mut pre.parley_layout;
+        layout.break_all_lines(Some(constraint_width.max(0.0)));
+        let height =
+            layout.lines().next().map(|line| line.metrics().block_max_coord).unwrap_or(0.0);
+        return LayoutResult { line_ranges: Vec::new(), height };
+    }
+
+    if pre.runs.is_empty() {
         return LayoutResult { line_ranges: Vec::new(), height: 0.0 };
     }
 
