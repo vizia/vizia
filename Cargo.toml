@@ -88,7 +88,8 @@ log = "0.4"
 morphorm = "0.9"
 open = "5.4.5"
 parking_lot = "0.13"
-parley = { version = "0.11", features = ["accesskit"] }
+parley = { version = "0.11", features = ["accesskit", "complex-scripts"] }
+
 
 raw-window-handle = "0.6"
 rayon = "1.12"
