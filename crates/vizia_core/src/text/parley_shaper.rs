@@ -396,21 +396,7 @@ fn flip_for_rtl(align: TextAlign, is_rtl: bool) -> TextAlign {
 /// against the editor's internal layout) agrees with the manually-computed visual offsets
 /// used by the Skia draw path (see `compute_line_x_offset` in `context/text_draw_helpers.rs`).
 pub(crate) fn resolve_parley_alignment(style: &Style, entity: Entity) -> parley::Alignment {
-    // Mirrors the (pre-existing) double-flip semantics of `resolve_text_align` +
-    // `compute_line_x_offset` so hit-testing agrees with what is actually drawn.
-    let is_rtl = resolved_text_direction(style, entity) == crate::style::Direction::RightToLeft;
-    let align = resolve_text_align(style, entity);
-    let effective = if is_rtl {
-        match align {
-            TextAlign::Left => TextAlign::Right,
-            TextAlign::Right => TextAlign::Left,
-            other => other,
-        }
-    } else {
-        align
-    };
-
-    match effective {
+    match resolve_text_align(style, entity) {
         TextAlign::Right => parley::Alignment::Right,
         TextAlign::Center => parley::Alignment::Center,
         _ => parley::Alignment::Left,
@@ -428,7 +414,6 @@ fn add_run(
     entity: Entity,
     text_context: &mut TextContext,
     acc: &mut PreShapedAccumulator,
-    base_direction_rtl: bool,
 ) {
     if let Some(text) = style.text.get(entity).cloned() {
         if !text.is_empty() {
@@ -474,7 +459,7 @@ fn add_run(
     let iter = LayoutChildIterator::new(tree, entity);
     for child in iter {
         if style.text_span.get(child).copied().unwrap_or_default() {
-            add_run(style, tree, child, text_context, acc, base_direction_rtl);
+            add_run(style, tree, child, text_context, acc);
         }
     }
 }
@@ -493,8 +478,6 @@ pub(crate) fn pre_shaped_from_editor_layout(
     layout: &Layout<[u8; 4]>,
     text_context: &mut TextContext,
 ) -> PreShapedText {
-    let base_direction_rtl =
-        resolved_text_direction(style, entity) == crate::style::Direction::RightToLeft;
     let text_align = resolve_text_align(style, entity);
 
     let fallback_font = resolve_font(style, entity, &mut text_context.font_collection);
@@ -549,7 +532,6 @@ pub(crate) fn pre_shaped_from_editor_layout(
         runs,
         text: text.to_string(),
         text_align,
-        base_direction_rtl,
         max_lines: None,
         parley_layout: layout.clone(),
     }
@@ -588,15 +570,12 @@ pub fn build_pre_shaped_text(
     tree: &Tree<Entity>,
     text_context: &mut TextContext,
 ) -> PreShapedText {
-    let base_direction_rtl =
-        resolved_text_direction(style, entity) == crate::style::Direction::RightToLeft;
-
     let text_align = resolve_text_align(style, entity);
     let max_lines = style.line_clamp.get(entity).map(|c| c.0 as usize);
 
     let mut acc = PreShapedAccumulator { runs: Vec::new(), text: String::new() };
 
-    add_run(style, tree, entity, text_context, &mut acc, base_direction_rtl);
+    add_run(style, tree, entity, text_context, &mut acc);
 
     acc.text.push('\u{200B}');
     if let Some(last) = acc.runs.last_mut() {
@@ -605,12 +584,5 @@ pub fn build_pre_shaped_text(
 
     let parley_layout = build_parley_layout(entity, style, &acc.text, text_context);
 
-    PreShapedText {
-        runs: acc.runs,
-        text: acc.text,
-        text_align,
-        base_direction_rtl,
-        max_lines,
-        parley_layout,
-    }
+    PreShapedText { runs: acc.runs, text: acc.text, text_align, max_lines, parley_layout }
 }

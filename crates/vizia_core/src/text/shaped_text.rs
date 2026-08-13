@@ -76,8 +76,6 @@ pub struct PreShapedText {
     pub(crate) text: String,
     /// Text alignment for line x-offset computation.
     pub(crate) text_align: TextAlign,
-    /// `true` if the base paragraph direction is RTL.
-    pub(crate) base_direction_rtl: bool,
     /// Maximum number of lines (from `line-clamp`).
     pub(crate) max_lines: Option<usize>,
     /// Parley layout used to source line ranges at a given wrap width.
