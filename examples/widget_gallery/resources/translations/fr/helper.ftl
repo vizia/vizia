@@ -243,6 +243,10 @@ demo-region-icon-button = Bouton icône
 demo-region-image = Image
 demo-region-knob = Knob
 demo-region-labelled-checkbox = Labelled Checkbox
+demo-region-disabled-checkbox = Case à cocher désactivée
+demo-region-rtl-checkbox = Case à cocher RTL
+demo-region-custom-icon-checkbox = Case à cocher à icône personnalisée
+demo-region-tri-state-checkbox-group = Groupe de cases à cocher à trois états
 demo-region-markdown-rendering = Markdown Rendering
 demo-region-menu-bar = Menu Bar
 demo-region-placeholder-select = Sélection avec texte d'invite
@@ -278,6 +282,10 @@ demo-region-virtual-list = Virtual List
 demo-region-virtualtable-500-rows = VirtualTable (500 rows)
 demo-region-xypad = XYPad
 demo-region-zstack = ZStack
+
+checkbox-rtl-label = Case à cocher de droite à gauche
+checkbox-custom-icon-label = Utiliser une icône personnalisée
+checkbox-custom-icons-both-label = Icônes personnalisées cochée et non cochée
 
 ## Titres des régions de démo Frame
 frame-demo-title-positions = Cadre avec positions du titre

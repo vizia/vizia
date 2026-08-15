@@ -243,6 +243,10 @@ demo-region-icon-button = زر أيقونة
 demo-region-image = Image
 demo-region-knob = Knob
 demo-region-labelled-checkbox = Labelled Checkbox
+demo-region-disabled-checkbox = صندوق اختيار معطل
+demo-region-rtl-checkbox = صندوق اختيار من اليمين إلى اليسار
+demo-region-custom-icon-checkbox = صندوق اختيار بأيقونة مخصصة
+demo-region-tri-state-checkbox-group = مجموعة صناديق اختيار ثلاثية الحالة
 demo-region-markdown-rendering = Markdown Rendering
 demo-region-menu-bar = Menu Bar
 demo-region-placeholder-select = تحديد مع نص إرشادي
@@ -278,6 +282,10 @@ demo-region-virtual-list = Virtual List
 demo-region-virtualtable-500-rows = VirtualTable (500 rows)
 demo-region-xypad = XYPad
 demo-region-zstack = ZStack
+
+checkbox-rtl-label = صندوق اختيار من اليمين إلى اليسار
+checkbox-custom-icon-label = استخدم أيقونة مخصصة
+checkbox-custom-icons-both-label = أيقونات مخصصة للحالتين المحددة وغير المحددة
 
 ## عناوين مناطق العرض للإطار
 frame-demo-title-positions = إطار مع مواضع العنوان
