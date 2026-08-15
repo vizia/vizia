@@ -1332,6 +1332,10 @@ impl DrawContext<'_> {
 
             let rrect = self.rrect(bounds, (0.0, 0.0));
 
+            // The clip box established by this element's ancestors (e.g. an `overflow: hidden`
+            // container). Shadows should never be able to bleed outside of it.
+            let ambient_clip = self.clip_path();
+
             for shadow in shadows.iter().rev() {
                 let shadow_color = shadow.color.unwrap_or_default();
 
@@ -1370,25 +1374,16 @@ impl DrawContext<'_> {
                 }
 
                 canvas.save();
-                if shadow.inset {
-                    let path = self.build_path(bounds, (0.0, 0.0)).make_offset(bounds.top_left());
-                    let shadow_path = self
-                        .build_path(bounds, (outset, outset))
-                        .make_offset(bounds.top_left())
-                        .make_offset((shadow_x_offset, shadow_y_offset));
-                    let shadow_path = path
-                        .op(&shadow_path, skia_safe::PathOp::Difference)
-                        .unwrap()
-                        .with_is_volatile(true);
-                    canvas.clip_rrect(rrect, ClipOp::Intersect, true);
-                    canvas.draw_path(&shadow_path, &shadow_paint);
-                } else {
-                    let shadow_rrect = self
-                        .rrect(bounds, (outset, outset))
-                        .with_offset((shadow_x_offset, shadow_y_offset));
-                    canvas.clip_rrect(rrect, ClipOp::Difference, true);
-                    canvas.draw_rrect(shadow_rrect, &shadow_paint);
+                if let Some(ambient_clip) = &ambient_clip {
+                    canvas.clip_path(ambient_clip, ClipOp::Intersect, true);
                 }
+                canvas.clip_path(
+                    &path,
+                    if shadow.inset { ClipOp::Intersect } else { ClipOp::Difference },
+                    true,
+                );
+                canvas.draw_path(&shadow_path, &shadow_paint);
+
                 canvas.restore();
             }
         }
