@@ -2361,6 +2361,10 @@ impl DrawContext<'_> {
 
             let path = self.build_path(bounds, (0.0, 0.0)).make_offset(bounds.top_left());
 
+            // The clip box established by this element's ancestors (e.g. an `overflow: hidden`
+            // container). Shadows should never be able to bleed outside of it.
+            let ambient_clip = self.clip_path();
+
             for shadow in shadows.iter().rev() {
                 let shadow_color = shadow.color.unwrap_or_default();
 
@@ -2408,6 +2412,9 @@ impl DrawContext<'_> {
                 }
 
                 canvas.save();
+                if let Some(ambient_clip) = &ambient_clip {
+                    canvas.clip_path(ambient_clip, ClipOp::Intersect, true);
+                }
                 canvas.clip_path(
                     &path,
                     if shadow.inset { ClipOp::Intersect } else { ClipOp::Difference },

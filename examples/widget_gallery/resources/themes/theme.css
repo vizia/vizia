@@ -31,7 +31,14 @@ label.dropdown-label {
 }
 
 hstack.gallery-toolbar {
-    justify-content: flex-end;
+    shadow: 0px 0px 0px #00000000;
+    transition: shadow 100ms;
+    z-index: 10;
+    overflow-x: hidden;
+}
+
+hstack.gallery-toolbar.scrolled {
+    shadow: 0px 4px 6px #00000055;
 }
 
 submenu.controls-menu-button {

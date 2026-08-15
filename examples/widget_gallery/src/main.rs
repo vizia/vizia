@@ -1320,7 +1320,7 @@ fn render_view_page(cx: &mut Context, view_name: &'static str) {
     }
 }
 
-fn content_area(cx: &mut Context, selected_view: Signal<&'static str>) {
+fn content_area(cx: &mut Context, selected_view: Signal<&'static str>, is_scrolled: Signal<bool>) {
     ScrollView::new(cx, move |cx| {
         Binding::new(cx, selected_view, move |cx| {
             let current_view = selected_view.get();
@@ -1334,7 +1334,8 @@ fn content_area(cx: &mut Context, selected_view: Signal<&'static str>) {
         });
     })
     .class("widgets")
-    .width(Stretch(1.0));
+    .width(Stretch(1.0))
+    .on_scroll(move |_cx, _scroll_x, scroll_y| is_scrolled.set(scroll_y > 0.0));
 }
 
 fn main() -> Result<(), ApplicationError> {
@@ -1396,16 +1397,18 @@ fn main() -> Result<(), ApplicationError> {
                         Label::new(cx, "Sidebar Footer").class("sidebar-footer");
                     },
                 );
+                let is_scrolled = Signal::new(false);
                 VStack::new(cx, |cx| {
                     HStack::new(cx, |cx| {
                         controls_menu(cx, app_data);
                     })
                     .class("gallery-toolbar")
+                    .toggle_class("scrolled", is_scrolled)
                     .alignment(Alignment::Right)
                     .padding(Pixels(12.0))
                     .width(Stretch(1.0))
                     .height(Auto);
-                    content_area(cx, app_data.selected_view);
+                    content_area(cx, app_data.selected_view, is_scrolled);
                 });
             })
             .height(Stretch(1.0));
