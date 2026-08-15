@@ -207,6 +207,10 @@ demo-region-icon-button = Icon Button
 demo-region-image = Image
 demo-region-knob = Knob
 demo-region-labelled-checkbox = Labelled Checkbox
+demo-region-disabled-checkbox = Disabled Checkbox
+demo-region-rtl-checkbox = RTL Checkbox
+demo-region-custom-icon-checkbox = Custom Icon Checkbox
+demo-region-tri-state-checkbox-group = Tri-state Checkbox Group
 demo-region-markdown-rendering = Markdown Rendering
 demo-region-menu-bar = Menu Bar
 demo-region-placeholder-select = Placeholder Select
@@ -242,6 +246,10 @@ demo-region-virtual-list = Virtual List
 demo-region-virtualtable-500-rows = VirtualTable (500 rows)
 demo-region-xypad = XYPad
 demo-region-zstack = ZStack
+
+checkbox-rtl-label = Right-to-left checkbox
+checkbox-custom-icon-label = Use custom icon
+checkbox-custom-icons-both-label = Custom checked and unchecked icons
 
 ## Frame Demo Region Titles
 frame-demo-title-positions = Frame with Title Positions
