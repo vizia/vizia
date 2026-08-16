@@ -113,6 +113,11 @@ card.all-view-card {
     min-height: 240px;
 }
 
+card.all-view-card:hover {
+    scale: 1.02;
+    shadow: 0px 4px 6px #00000055;
+}
+
 card.all-view-card > card-content {
     padding: 8px;
 }
