@@ -78,6 +78,8 @@ pub mod prelude {
         AccessContext, AccessNode, Context, ContextProxy, DataContext, DrawContext, EmitContext,
         EventContext, ProxyEmitError, WindowState,
     };
+    #[cfg(feature = "tokio")]
+    pub use super::context::{Task, TaskBuilder, TaskCancellation, TaskHandle, TaskResult};
     pub use super::entity::Entity;
     pub use super::environment::{Environment, EnvironmentEvent, ThemeMode};
     pub use super::events::{Event, Propagation, Timer, TimerAction};
@@ -87,9 +89,14 @@ pub mod prelude {
     pub use super::localization::{Localized, ToStringLocalized, number_with_fraction, percentage};
     pub use super::modifiers::{
         AbilityModifiers, AccessibilityModifiers, ActionModifiers, ControlModifiers, ControlSize,
-        LayoutModifiers, LinearGradientBuilder, ShadowBuilder, StyleModifiers, TextModifiers,
+        DragModifiers, LayoutModifiers, LinearGradientBuilder, ShadowBuilder, StyleModifiers,
+        TextModifiers,
     };
-    pub use super::resource::{ImageId, ImageRetentionPolicy};
+    pub use super::resource::{
+        FontRequest, ImageId, ImageRequest, ImageRetentionPolicy, LoadingStatus,
+        ResourceLoadExecution, ResourceLoadOptions, ResourceLoader, ResourceRequest,
+        TranslationRequest,
+    };
     pub use super::util::{CSS, IntoCssStr};
     pub use super::view::{Handle, View};
     pub use super::views::*;
@@ -105,6 +112,6 @@ pub mod prelude {
 
     pub use morphorm::Units::*;
     pub use morphorm::{LayoutType, PositionType, Units};
+    pub use std::time::{Duration, Instant};
     pub use unic_langid::{LanguageIdentifier, langid};
-    pub use web_time::{Duration, Instant};
 }

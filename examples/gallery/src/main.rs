@@ -1,44 +1,53 @@
 use std::collections::HashMap;
 
-use bytes::Bytes;
-use images::{Status, download, list};
+use images::list;
 use vizia::prelude::*;
 
 mod images;
-use crate::images::{Id, ImageData, Size};
+use crate::images::{Id, ImageData};
 
 pub struct AppData {
     images: Signal<Vec<Vec<Id>>>,
-    thumbnails: Signal<HashMap<Id, (ImageData, Status)>>,
+    thumbnails: Signal<HashMap<Id, ImageData>>,
     original: Signal<Option<Id>>,
-    runtime: tokio::runtime::Runtime,
 }
 
-type GallerySignals =
-    (Signal<Vec<Vec<Id>>>, Signal<HashMap<Id, (ImageData, Status)>>, Signal<Option<Id>>);
+type GallerySignals = (Signal<Vec<Vec<Id>>>, Signal<HashMap<Id, ImageData>>, Signal<Option<Id>>);
 
 impl AppData {
     pub fn create(cx: &mut Context) -> GallerySignals {
-        let runtime = tokio::runtime::Runtime::new().unwrap();
-
-        let mut c = cx.get_proxy();
-        runtime.spawn(async move {
-            let images = list().await;
-            let _ = c.emit(AppEvent::ImagesListed(images));
-        });
+        cx.add_task(Task::new(|_| async move { list().await }).on_result(|result, proxy| {
+            match result {
+                TaskResult::Completed(images) => {
+                    let _ = proxy.emit(AppEvent::ImagesListed(Ok(images)));
+                }
+                TaskResult::Error(error) => {
+                    let _ = proxy.emit(AppEvent::ImagesListed(Err(error)));
+                }
+                TaskResult::Timeout => {
+                    eprintln!("Image list request timed out");
+                }
+                TaskResult::Cancelled => {
+                    eprintln!("Image list request was cancelled");
+                }
+                TaskResult::Disconnected { .. } => {
+                    eprintln!("Image list worker disconnected");
+                }
+            }
+        }));
 
         let images = Signal::new(Vec::default());
         let thumbnails = Signal::new(HashMap::default());
         let original = Signal::new(None);
 
-        Self { images, thumbnails, original, runtime }.build(cx);
+        Self { images, thumbnails, original }.build(cx);
 
         (images, thumbnails, original)
     }
 }
 
 impl Model for AppData {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
         event.take(|app_event, _| match app_event {
             AppEvent::ImagesListed(Err(e)) => {
                 eprintln!("Failed to list images: {e}");
@@ -47,7 +56,7 @@ impl Model for AppData {
             AppEvent::ImagesListed(Ok(images)) => {
                 self.thumbnails.update(|thumbnails| {
                     for img in images.iter() {
-                        thumbnails.insert(img.id, (img.clone(), Status::Loading));
+                        thumbnails.insert(img.id, img.clone());
                     }
                 });
                 self.images.set(
@@ -58,73 +67,19 @@ impl Model for AppData {
                 );
             }
 
-            AppEvent::ImagePoppedIn(id) => {
-                self.thumbnails.update(|thumbnails| {
-                    if let Some(tn) = thumbnails.get_mut(&id) {
-                        tn.1 = Status::Loading;
-                    }
-                });
-                if let Some(image) = self.thumbnails.get().get(&id).cloned() {
-                    let mut c = cx.get_proxy();
-                    self.runtime.spawn(async move {
-                        let image = download(image.0.url, Size::Thumbnail).await;
-                        let _ = c.emit(AppEvent::ImageDownloaded(id, image));
-                    });
-                }
-            }
-
-            AppEvent::ImageDownloaded(id, Err(e)) => {
-                eprintln!("Failed to download image {}: {e}", id.0);
-            }
-
-            AppEvent::ImageDownloaded(id, Ok(img)) => {
-                cx.add_image_encoded(
-                    &id.0.to_string(),
-                    &img,
-                    ImageRetentionPolicy::DropWhenNoObservers,
-                );
-                self.thumbnails.update(|thumbnails| {
-                    if let Some(tn) = thumbnails.get_mut(&id) {
-                        tn.1 = Status::Loaded;
-                    }
-                });
-            }
-
-            AppEvent::OriginalDownloaded(id, Ok(img)) => {
-                cx.add_image_encoded(
-                    &format!("original_{}", id.0),
-                    &img,
-                    ImageRetentionPolicy::DropWhenNoObservers,
-                );
-                self.original.set(Some(id));
-            }
-
             AppEvent::ShowOriginal(id) => {
-                if let Some(image) = self.thumbnails.get().get(&id).cloned() {
-                    let mut c = cx.get_proxy();
-                    self.runtime.block_on(async move {
-                        tokio::spawn(async move {
-                            let image = download(image.0.url, Size::Original).await;
-                            let _ = c.emit(AppEvent::OriginalDownloaded(id, image));
-                        });
-                    });
-                }
+                self.original.set(Some(id));
             }
 
             AppEvent::HideOriginal => {
                 self.original.set(None);
             }
-
-            _ => (),
         });
     }
 }
 
 enum AppEvent {
     ImagesListed(Result<Vec<ImageData>, reqwest::Error>),
-    ImagePoppedIn(Id),
-    ImageDownloaded(Id, Result<Bytes, reqwest::Error>),
-    OriginalDownloaded(Id, Result<Bytes, reqwest::Error>),
     ShowOriginal(Id),
     HideOriginal,
 }
@@ -141,22 +96,45 @@ fn main() -> Result<(), ApplicationError> {
             original.get().map_or(String::default(), |id| format!("original_{}", id.0))
         });
 
+        Binding::new(cx, original, move |cx| {
+            if let Some(id) = original.get() {
+                let base_url = thumbnails
+                    .get()
+                    .get(&id)
+                    .map(|image| image.url.clone())
+                    .unwrap_or_else(|| format!("https://picsum.photos/id/{}", id.0));
+
+                cx.add_image(
+                    format!("original_{}", id.0),
+                    format!("{base_url}/1920/1200"),
+                    ImageRetentionPolicy::DropWhenNoObservers,
+                    None,
+                );
+            }
+        });
+
         Binding::new(cx, has_images, move |cx| {
             let has_images = has_images.get();
             if has_images {
                 VirtualList::new(cx, images, 420.0, move |cx, _, item| {
                     HStack::new(cx, |cx| {
                         for id in item.get() {
-                            let is_loaded = Memo::new(move |_| {
-                                thumbnails
-                                    .get()
-                                    .get(&id)
-                                    .map(|(_, status)| *status == Status::Loaded)
-                                    .unwrap_or(false)
-                            });
+                            let image_name = format!("thumbnail_{}", id.0);
+                            let base_url = thumbnails
+                                .get()
+                                .get(&id)
+                                .map(|image| image.url.clone())
+                                .unwrap_or_else(|| format!("https://picsum.photos/id/{}", id.0));
+                            let status = cx.add_image(
+                                image_name.clone(),
+                                format!("{base_url}/640/410"),
+                                ImageRetentionPolicy::DropWhenNoObservers,
+                                None,
+                            );
+                            let is_loaded =
+                                Memo::new(move |_| matches!(status.get(), LoadingStatus::Loaded));
                             HStack::new(cx, |cx| {
-                                Image::new(cx, id.0.to_string())
-                                    .on_build(move |cx| cx.emit(AppEvent::ImagePoppedIn(id)))
+                                Image::new(cx, image_name)
                                     .on_press(move |cx| cx.emit(AppEvent::ShowOriginal(id)))
                                     .toggle_class("loaded", is_loaded)
                                     .class("thumbnail")

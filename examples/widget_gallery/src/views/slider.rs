@@ -8,19 +8,13 @@ pub fn slider(cx: &mut Context) {
     let stepped = Signal::new(0.0f32);
 
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Slider
-A slider allows the user to select a value from a continuous range by dragging a thumb along a track.",
-        );
+        Label::new(cx, Localized::new("slider")).class("panel-title");
 
         Divider::new(cx);
 
-        DemoRegion::new(cx, "Basic Slider", move |cx| {
+        DemoRegion::new(cx, "Slider", move |cx| {
             VStack::new(cx, |cx| {
-                Slider::new(cx, value)
-                    .on_change(move |_cx, v| value.set(v))
-                    .width(Pixels(200.0));
+                Slider::new(cx, value).on_change(move |_cx, v| value.set(v)).width(Pixels(200.0));
                 Label::new(cx, value.map(|v| format!("{:.2}", v)));
             })
             .height(Auto)
@@ -44,7 +38,7 @@ A slider allows the user to select a value from a continuous range by dragging a
         DemoRegion::new(cx, "Stepped Slider", move |cx| {
             VStack::new(cx, |cx| {
                 Slider::new(cx, stepped)
-                    .step(0.25f32)
+                    .step(0.05f32)
                     .on_change(move |_cx, v| stepped.set(v))
                     .width(Pixels(200.0));
                 Label::new(cx, stepped.map(|v| format!("{:.2}", v)));

@@ -6,11 +6,7 @@ pub fn collapsible(cx: &mut Context) {
     let open = Signal::new(true);
 
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Collapsible
-A collapsible shows or hides its content when the header is pressed.",
-        );
+        Label::new(cx, Localized::new("collapsible")).class("panel-title");
 
         Divider::new(cx);
 

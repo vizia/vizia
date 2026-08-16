@@ -17,6 +17,7 @@ outline-button = Bouton contour
 text-button = Bouton texte
 button-with-icon = Bouton avec icône
 checkbox = Case à cocher
+frame = Cadre
 one = Un
 two = Deux
 three = Trois
@@ -122,6 +123,17 @@ view-title-switch = Switch
 view-title-zstack = Empilement Z
 view-title-combobox = Zone combinée
 view-title-rating = Évaluation
+view-title-frame = Cadre
+frame-example-heading = Exemples de widget Cadre
+frame-title-settings = Paramètres
+frame-title-user-profile = Profil utilisateur
+frame-title-details = Détails
+frame-demo-title-positions = Cadre avec positions du titre
+frame-demo-without-title = Cadre sans titre
+frame-demo-complex-content = Cadre avec contenu complexe
+frame-title-top-left = Haut-gauche
+frame-title-top-center = Haut-centre
+frame-title-top-right = Haut-droite
 
 ## Textbox and scrolling
 textbox-placeholder-type = Tapez quelque chose...

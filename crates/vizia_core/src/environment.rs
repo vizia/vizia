@@ -1,9 +1,12 @@
 //! A model for system specific state which can be accessed by any model or view.
 use crate::prelude::*;
 
+#[cfg(target_os = "linux")]
+use mundy::Interest;
+#[cfg(target_os = "linux")]
+use mundy::Preferences;
 use unic_langid::CharacterDirection;
 use unic_langid::LanguageIdentifier;
-use web_time::Duration;
 
 /// And enum which represents the current built-in theme mode.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -35,6 +38,11 @@ pub struct Environment {
     pub system_theme_mode: ThemeMode,
     /// The timer used to blink the caret of a textbox.
     pub(crate) caret_timer: Timer,
+    /// The distance the mouse has to be dragged to start a drag operation.
+    pub drag_distance: Signal<u32>,
+    /// Whether the layout debug overlay is enabled. When set, views which underwent layout in the
+    /// most recent layout pass are outlined in orange until the next layout pass.
+    pub debug_layout: bool,
 }
 
 fn direction_from_locale(locale: &LanguageIdentifier) -> Direction {
@@ -59,6 +67,27 @@ fn apply_direction_class(cx: &mut EventContext, direction: Direction) {
     }
 }
 
+fn detect_theme() -> ThemeMode {
+    #[cfg(target_os = "linux")]
+    {
+        let mundy_prefs =
+            Preferences::once_blocking(Interest::ColorScheme, Duration::from_millis(100));
+
+        if let Some(preferences) = mundy_prefs
+            && preferences.color_scheme == mundy::ColorScheme::Dark
+        {
+            ThemeMode::DarkMode
+        } else {
+            ThemeMode::LightMode
+        }
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+        ThemeMode::LightMode
+    }
+}
+
 impl Environment {
     pub(crate) fn new(cx: &mut Context) -> Self {
         let locale: LanguageIdentifier =
@@ -69,14 +98,17 @@ impl Environment {
             }
         });
         let direction = direction_from_locale(&locale);
+        cx.style.debug_layout = false;
         Self {
             locale: Signal::new(locale.clone()),
             direction: Signal::new(direction),
             double_click_interval: Duration::from_millis(500),
             tooltip_delay: Duration::from_millis(1500),
             theme_mode: ThemeMode::default(),
-            system_theme_mode: ThemeMode::LightMode,
+            system_theme_mode: detect_theme(),
             caret_timer,
+            drag_distance: Signal::new(4),
+            debug_layout: false,
         }
     }
 
@@ -107,6 +139,12 @@ pub enum EnvironmentEvent {
     SetDoubleClickInterval(Duration),
     /// Set the delay before a tooltip fades in.
     SetTooltipDelay(Duration),
+    /// Set the distance the mouse has to be dragged to start a drag operation.
+    SetDragDistance(u32),
+    /// Enable or disable the layout debug overlay.
+    SetDebugLayout(bool),
+    /// Toggle the layout debug overlay on or off.
+    ToggleDebugLayout,
 }
 
 impl Model for Environment {
@@ -168,6 +206,28 @@ impl Model for Environment {
 
             EnvironmentEvent::SetTooltipDelay(delay) => {
                 self.tooltip_delay = delay;
+            }
+
+            EnvironmentEvent::SetDragDistance(distance) => {
+                self.drag_distance.set_if_changed(distance);
+            }
+
+            EnvironmentEvent::SetDebugLayout(enabled) => {
+                self.debug_layout = enabled;
+                cx.style.debug_layout = enabled;
+                if !enabled {
+                    cx.style.laid_out.clear();
+                }
+                cx.needs_redraw();
+            }
+
+            EnvironmentEvent::ToggleDebugLayout => {
+                self.debug_layout = !self.debug_layout;
+                cx.style.debug_layout = self.debug_layout;
+                if !self.debug_layout {
+                    cx.style.laid_out.clear();
+                }
+                cx.needs_redraw();
             }
         });
 

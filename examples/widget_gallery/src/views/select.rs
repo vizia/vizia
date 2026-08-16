@@ -39,59 +39,32 @@ pub fn select(cx: &mut Context) {
     SelectData { options, selected_option_1, selected_option_2 }.build(cx);
 
     VStack::new(cx, |cx| {
-        Markdown::new(cx, "# Select
-A view which allows the user to select an option from a list.
-        ");
+        Label::new(cx, Localized::new("select")).class("panel-title");
 
         Divider::new(cx);
 
-        DemoRegion::new(
-            cx,
-            "Basic Select",
-            move |cx| {
-                VStack::new(cx, |cx| {
-                    Label::new(cx, "Color:").class("field-label");
-                    Select::new(cx, options, selected_option_1, true)
-                        .on_select(|cx, index| cx.emit(SelectEvent::SetOption1(index)))
-                        .width(Pixels(150.0));
-                })
-                .gap(Pixels(2.0))
-                .size(Auto);
-            });
-
-        Markdown::new(cx, "### Placeholder
-The placeholder text prompts a user to select an option from the picker menu when the selected index is greater than the list length. It disappears once a user selects an option.
-        ");
+        DemoRegion::new(cx, "Select", move |cx| {
+            VStack::new(cx, |cx| {
+                Label::new(cx, "Color:").class("field-label");
+                Select::new(cx, options, selected_option_1, true)
+                    .on_select(|cx, index| cx.emit(SelectEvent::SetOption1(index)))
+                    .width(Pixels(150.0));
+            })
+            .gap(Pixels(2.0))
+            .size(Auto);
+        });
 
         DemoRegion::new(cx, "Placeholder Select", move |cx| {
             VStack::new(cx, |cx| {
                 Label::new(cx, "Color:").class("field-label");
                 Select::new(cx, options, selected_option_2, true)
-                        .placeholder(String::from("Select a color..."))
-                        .on_select(|cx, index| cx.emit(SelectEvent::SetOption2(index)))
-                        .width(Pixels(150.0));
-                })
-                .gap(Pixels(2.0))
-                .size(Auto);
-            });
-
-        Markdown::new(cx, "## Keyboard interactions");
-        Divider::new(cx);
-        Markdown::new(cx, "When the select menu is closed:");
-        Markdown::new(cx, "
-| Key       | Interaction |
-| --------- | ------- |
-| Space or Enter | Opens the select menu. The focus is set on the menu item selected. |
-");
-        Markdown::new(cx, "When the select menu is open:");
-        Markdown::new(cx, "
-| Key       | Interaction |
-| --------- | ------- |
-| Space or Enter | Selects the list item in focus, closes the popup list and moves focus to the select button. |
-| Up or Down Arrow | Moves focus to previous or next item in the popup list. |
-| Esc | Closes the popoup list and moves focus to the select button. |
-");
-
+                    .placeholder(String::from("Select a color..."))
+                    .on_select(|cx, index| cx.emit(SelectEvent::SetOption2(index)))
+                    .width(Pixels(150.0));
+            })
+            .gap(Pixels(2.0))
+            .size(Auto);
+        });
     })
     .class("panel");
 }

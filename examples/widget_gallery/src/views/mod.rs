@@ -103,6 +103,9 @@ pub use accordion::*;
 pub mod card;
 pub use card::*;
 
+pub mod frame;
+pub use frame::*;
+
 pub mod collapsible;
 pub use collapsible::*;
 
@@ -121,8 +124,20 @@ pub use resizable::*;
 pub mod table;
 pub use table::*;
 
+pub mod tree_view;
+pub use tree_view::*;
+
+pub mod tree_table;
+pub use tree_table::*;
+
 pub mod virtual_table;
 pub use virtual_table::*;
+
+pub mod virtual_tree_view;
+pub use virtual_tree_view::*;
+
+pub mod virtual_tree_table;
+pub use virtual_tree_table::*;
 
 pub mod xypad;
 pub use xypad::*;

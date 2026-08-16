@@ -4,6 +4,7 @@ use std::sync::Mutex;
 
 use super::InternalEvent;
 
+use crate::events::ProxyEvent;
 use crate::prelude::*;
 
 /// A bundle of data representing a snapshot of the context when a thread was spawned.
@@ -44,7 +45,7 @@ impl std::error::Error for ProxyEmitError {}
 impl ContextProxy {
     pub fn emit<M: Any + Send>(&mut self, message: M) -> Result<(), ProxyEmitError> {
         if let Some(proxy) = &self.event_proxy {
-            let event = Event::new(message)
+            let event = ProxyEvent::new(message)
                 .target(self.current)
                 .origin(self.current)
                 .propagate(Propagation::Up);
@@ -61,7 +62,7 @@ impl ContextProxy {
         message: M,
     ) -> Result<(), ProxyEmitError> {
         if let Some(proxy) = &self.event_proxy {
-            let event = Event::new(message)
+            let event = ProxyEvent::new(message)
                 .target(target)
                 .origin(self.current)
                 .propagate(Propagation::Direct);
@@ -76,17 +77,48 @@ impl ContextProxy {
         self.emit(InternalEvent::Redraw)
     }
 
-    pub fn load_image(
+    pub fn load_image_encoded(
+        &mut self,
+        path: String,
+        data: &[u8],
+        policy: ImageRetentionPolicy,
+    ) -> Result<bool, ProxyEmitError> {
+        if let Some(image) = skia_safe::Image::from_encoded(skia_safe::Data::new_copy(data)) {
+            self.emit(InternalEvent::LoadImage { path, image: Mutex::new(Some(image)), policy })?;
+            return Ok(true);
+        }
+
+        Ok(false)
+    }
+
+    pub fn load_svg(
         &mut self,
         path: String,
         data: &[u8],
         policy: ImageRetentionPolicy,
     ) -> Result<(), ProxyEmitError> {
-        if let Some(image) = skia_safe::Image::from_encoded(skia_safe::Data::new_copy(data)) {
-            self.emit(InternalEvent::LoadImage { path, image: Mutex::new(Some(image)), policy })?
-        }
+        self.emit(InternalEvent::LoadSvg { path, data: data.to_vec(), policy })
+    }
 
-        Ok(())
+    pub fn load_font(&mut self, path: String, data: &[u8]) -> Result<(), ProxyEmitError> {
+        self.emit(InternalEvent::LoadFont { path, data: data.to_vec() })
+    }
+
+    pub fn load_translation(
+        &mut self,
+        lang: LanguageIdentifier,
+        path: String,
+        ftl: String,
+    ) -> Result<(), ProxyEmitError> {
+        self.emit(InternalEvent::LoadTranslation { lang, path, ftl })
+    }
+
+    pub fn update_resource_status(
+        &mut self,
+        path: String,
+        status: crate::resource::LoadingStatus,
+    ) -> Result<(), ProxyEmitError> {
+        self.emit(InternalEvent::UpdateResourceStatus { path, status })
     }
 
     pub fn spawn<F>(&self, target: F)
@@ -109,6 +141,6 @@ impl Clone for ContextProxy {
 
 pub trait EventProxy: Send {
     #[allow(clippy::result_unit_err)]
-    fn send(&self, event: Event) -> Result<(), ()>;
+    fn send(&self, event: ProxyEvent) -> Result<(), ()>;
     fn make_clone(&self) -> Box<dyn EventProxy>;
 }

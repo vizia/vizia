@@ -32,7 +32,7 @@ pub fn combobox(cx: &mut Context) {
     ComboBoxState { options, selected_option }.build(cx);
 
     VStack::new(cx, |cx| {
-        Markdown::new(cx, "# Combobox");
+        Label::new(cx, Localized::new("combobox")).class("panel-title");
 
         Divider::new(cx);
 

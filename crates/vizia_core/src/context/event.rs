@@ -16,7 +16,7 @@ use crate::resource::{ImageOrSvg, ResourceManager, StoredImage};
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
 use vizia_input::MouseState;
 
-use skia_safe::Matrix;
+use skia_safe::{Matrix, Rect};
 
 use crate::text::TextContext;
 #[cfg(feature = "clipboard")]
@@ -75,6 +75,10 @@ pub struct EventContext<'a> {
         &'a mut HashMap<Entity, Box<dyn Fn(&mut dyn ViewHandler, &mut EventContext, &mut Event)>>,
     pub(crate) resource_manager: &'a mut ResourceManager,
     pub(crate) text_context: &'a mut TextContext,
+    #[cfg(feature = "tokio")]
+    pub(crate) task_runtime: &'a super::TaskRuntime,
+    #[cfg(feature = "tokio")]
+    pub(crate) named_tasks: &'a super::NamedTaskMap,
     pub(crate) modifiers: &'a Modifiers,
     pub(crate) mouse: &'a MouseState<Entity>,
     pub(crate) event_queue: &'a mut VecDeque<Event>,
@@ -84,29 +88,11 @@ pub struct EventContext<'a> {
     pub(crate) running_timers: &'a mut BinaryHeap<TimerState>,
     cursor_icon_locked: &'a mut bool,
     #[cfg(feature = "clipboard")]
-    clipboard: &'a mut Box<dyn ClipboardProvider>,
+    clipboards: &'a mut HashMap<Entity, Box<dyn ClipboardProvider>>,
     pub(crate) event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
     pub(crate) drop_data: &'a mut Option<DropData>,
+    pub(crate) active_drag_view: &'a mut Option<Entity>,
     pub windows: &'a mut HashMap<Entity, WindowState>,
-}
-
-macro_rules! get_length_property {
-    (
-        $(#[$meta:meta])*
-        $name:ident
-    ) => {
-        $(#[$meta])*
-        pub fn $name(&self) -> f32 {
-            if let Some(length) = self.style.$name.get(self.current) {
-                let bounds = self.bounds();
-
-                let px = length.to_pixels(bounds.w.min(bounds.h), self.scale_factor());
-                return px.round();
-            }
-
-            0.0
-        }
-    };
 }
 
 impl<'a> EventContext<'a> {
@@ -127,6 +113,10 @@ impl<'a> EventContext<'a> {
             listeners: &mut cx.listeners,
             resource_manager: &mut cx.resource_manager,
             text_context: &mut cx.text_context,
+            #[cfg(feature = "tokio")]
+            task_runtime: &cx.task_runtime,
+            #[cfg(feature = "tokio")]
+            named_tasks: &cx.named_tasks,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
@@ -136,9 +126,10 @@ impl<'a> EventContext<'a> {
             running_timers: &mut cx.running_timers,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
             #[cfg(feature = "clipboard")]
-            clipboard: &mut cx.clipboard,
+            clipboards: &mut cx.clipboards,
             event_proxy: &mut cx.event_proxy,
             drop_data: &mut cx.drop_data,
+            active_drag_view: &mut cx.active_drag_view,
             windows: &mut cx.windows,
         }
     }
@@ -160,6 +151,10 @@ impl<'a> EventContext<'a> {
             listeners: &mut cx.listeners,
             resource_manager: &mut cx.resource_manager,
             text_context: &mut cx.text_context,
+            #[cfg(feature = "tokio")]
+            task_runtime: &cx.task_runtime,
+            #[cfg(feature = "tokio")]
+            named_tasks: &cx.named_tasks,
             modifiers: &cx.modifiers,
             mouse: &cx.mouse,
             event_queue: &mut cx.event_queue,
@@ -169,9 +164,10 @@ impl<'a> EventContext<'a> {
             running_timers: &mut cx.running_timers,
             cursor_icon_locked: &mut cx.cursor_icon_locked,
             #[cfg(feature = "clipboard")]
-            clipboard: &mut cx.clipboard,
+            clipboards: &mut cx.clipboards,
             event_proxy: &mut cx.event_proxy,
             drop_data: &mut cx.drop_data,
+            active_drag_view: &mut cx.active_drag_view,
             windows: &mut cx.windows,
         }
     }
@@ -262,9 +258,58 @@ impl<'a> EventContext<'a> {
         self.drop_data.is_some()
     }
 
+    /// Returns the current drop payload, if any.
+    pub fn drop_data(&self) -> Option<&DropData> {
+        self.drop_data.as_ref()
+    }
+
+    /// Returns the active drag preview view entity, if any.
+    pub fn active_drag_view(&self) -> Option<Entity> {
+        *self.active_drag_view
+    }
+
+    /// Sets the active drag preview view entity.
+    pub fn set_active_drag_view(&mut self, drag_view: Option<Entity>) {
+        *self.active_drag_view = drag_view;
+    }
+
     /// Returns the bounds of the current view.
     pub fn bounds(&self) -> BoundingBox {
         self.cache.get_bounds(self.current)
+    }
+
+    /// Returns the transformed bounds of an entity in window coordinates.
+    pub fn transformed_bounds(&self, entity: Entity) -> BoundingBox {
+        let bounds = self.cache.get_bounds(entity);
+
+        if let Some(transform) = self.cache.transform.get(entity).copied() {
+            // The cache stores identity matrices for all entities by default, so skip map/rounding
+            // work when no effective transform is present.
+            if transform == Matrix::new_identity() {
+                return bounds;
+            }
+
+            let (rect, _) = transform.map_rect(Rect::from(bounds));
+            rect.into()
+        } else {
+            bounds
+        }
+    }
+
+    /// Returns transformed bounds expanded to pixel-snapped extents.
+    pub fn transformed_bounds_snapped(&self, entity: Entity) -> BoundingBox {
+        let bounds = self.transformed_bounds(entity);
+        BoundingBox::from_min_max(
+            bounds.left().floor(),
+            bounds.top().floor(),
+            bounds.right().ceil(),
+            bounds.bottom().ceil(),
+        )
+    }
+
+    /// Returns the transformed bounds of the current view's parent.
+    pub fn parent_transformed_bounds(&self) -> BoundingBox {
+        self.transformed_bounds(self.parent())
     }
 
     // pub fn set_bounds(&mut self, bounds: BoundingBox) {
@@ -294,35 +339,42 @@ impl<'a> EventContext<'a> {
             self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
         };
 
-        self.cache
-            .clip_path
-            .get(self.current)
-            .cloned()
-            .flatten()
-            .map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
-            .or_else(|| {
-                let mut current = self.current;
-                while let Some(parent) = self.tree.get_parent(current) {
-                    if let Some(clip_path) = self
-                        .cache
-                        .clip_path
-                        .get(parent)
-                        .cloned()
-                        .flatten()
-                        .map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
-                    {
-                        return Some(clip_path);
-                    }
+        let window_bounds = self.cache.get_bounds(current_window);
 
-                    if parent == current_window {
-                        break;
-                    }
+        // A cached entry (including None) is authoritative for this entity.
+        if let Some(clip_path) = self.cache.clip_path.get(self.current) {
+            return clip_path
+                .clone()
+                .map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
+                .unwrap_or(window_bounds);
+        }
 
-                    current = parent;
-                }
-                None
-            })
-            .unwrap_or_else(|| self.cache.get_bounds(current_window))
+        if self.style.ignore_clipping.get(self.current).copied().unwrap_or(false) {
+            return window_bounds;
+        }
+
+        let mut current = self.current;
+        while let Some(parent) = self.tree.get_parent(current) {
+            // A cached parent entry (including None) is authoritative.
+            if let Some(clip_path) = self.cache.clip_path.get(parent) {
+                return clip_path
+                    .clone()
+                    .map(|clip_path| Into::<BoundingBox>::into(*clip_path.bounds()))
+                    .unwrap_or(window_bounds);
+            }
+
+            if self.style.ignore_clipping.get(parent).copied().unwrap_or(false) {
+                return window_bounds;
+            }
+
+            if parent == current_window {
+                break;
+            }
+
+            current = parent;
+        }
+
+        window_bounds
     }
 
     /// Returns the 2D transform of the current view.
@@ -392,7 +444,16 @@ impl<'a> EventContext<'a> {
         }
     }
 
-    pub fn add_image_encoded(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) {
+    /// Adds a resource loader to the loading chain.
+    ///
+    /// Loaders are tried in list order, and this method inserts at the front so custom
+    /// loaders take priority over built-in loaders. The first loader that returns `true`
+    /// handles the request, and subsequent loaders are skipped.
+    pub fn add_resource_loader<L: crate::resource::ResourceLoader>(&mut self, loader: L) {
+        self.resource_manager.resource_loaders.insert(0, Box::new(loader));
+    }
+
+    pub fn load_image_encoded(&mut self, path: &str, data: &[u8], policy: ImageRetentionPolicy) {
         let id = if let Some(image_id) = self.resource_manager.image_ids.get(path) {
             *image_id
         } else {
@@ -418,7 +479,18 @@ impl<'a> EventContext<'a> {
                     });
                 }
             }
-            self.style.needs_relayout();
+            // Relayout only the entities that display this image (its observers) plus the current
+            // entity, rather than forcing a full tree relayout.
+            let observers: Vec<Entity> = self
+                .resource_manager
+                .images
+                .get(&id)
+                .map(|img| img.observers.iter().copied().collect())
+                .unwrap_or_default();
+            for observer in observers {
+                self.style.needs_relayout(observer);
+            }
+            self.style.needs_relayout(self.current);
         }
     }
 
@@ -454,6 +526,16 @@ impl<'a> EventContext<'a> {
 
     /// Sets application focus to the current view with the specified focus visibility.
     pub fn focus_with_visibility(&mut self, focus_visible: bool) {
+        let focusable = self.current == Entity::root()
+            || self
+                .style
+                .abilities
+                .get(self.current)
+                .is_some_and(|abilities| abilities.contains(Abilities::FOCUSABLE));
+        if !focusable {
+            return;
+        }
+
         let old_focus = self.focused();
         let new_focus = self.current();
         self.set_focus_pseudo_classes(old_focus, false, focus_visible);
@@ -644,7 +726,7 @@ impl<'a> EventContext<'a> {
     /// This may fail for a variety of backend-specific reasons.
     #[cfg(feature = "clipboard")]
     pub fn get_clipboard(&mut self) -> Result<String, Box<dyn Error + Send + Sync + 'static>> {
-        self.clipboard.get_contents()
+        self.current_window_clipboard().get_contents()
     }
 
     /// Set the contents of the system clipboard.
@@ -655,7 +737,18 @@ impl<'a> EventContext<'a> {
         &mut self,
         text: String,
     ) -> Result<(), Box<dyn Error + Send + Sync + 'static>> {
-        self.clipboard.set_contents(text)
+        self.current_window_clipboard().set_contents(text)
+    }
+
+    #[cfg(feature = "clipboard")]
+    fn current_window_clipboard(&mut self) -> &mut Box<dyn ClipboardProvider> {
+        let window = if self.tree.is_window(self.current) {
+            self.current
+        } else {
+            self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
+        };
+
+        self.clipboards.entry(window).or_insert_with(super::default_clipboard_provider)
     }
 
     /// Toggles the addition/removal of a class name for the current view.
@@ -699,7 +792,7 @@ impl<'a> EventContext<'a> {
 
     /// Marks the current view as needing a layout computation.
     pub fn needs_relayout(&mut self) {
-        self.style.needs_relayout();
+        self.style.needs_relayout(self.current);
         self.needs_redraw();
     }
 
@@ -757,9 +850,11 @@ impl<'a> EventContext<'a> {
 
         self.style.parse_theme(&overall_theme);
 
+        self.style.needs_relayout(Entity::root());
+
         for entity in self.tree.into_iter() {
             self.style.needs_restyle(entity);
-            self.style.needs_relayout();
+
             //self.style.needs_redraw(entity);
             self.style.needs_text_update(entity);
         }
@@ -786,6 +881,38 @@ impl<'a> EventContext<'a> {
             current: self.current,
             event_proxy: self.event_proxy.as_ref().map(|p| p.make_clone()),
         }
+    }
+
+    /// Submits a configured [`TaskBuilder`] for asynchronous execution.
+    ///
+    /// Tasks run on Vizia's shared Tokio runtime and complete through the
+    /// `on_result(...)` callback attached to the builder, when one is provided.
+    ///
+    /// Returns a [`TaskHandle`] that can be used to request cancellation.
+    ///
+    /// # Example
+    /// ```rust,no_run
+    /// # use vizia_core::prelude::*;
+    /// # #[cfg(feature = "tokio")]
+    /// # fn trigger(cx: &EventContext) {
+    /// // Fire-and-forget:
+    /// cx.add_task(Task::new(|_| async move { Ok::<(), &'static str>(()) }));
+    ///
+    /// // With completion handling:
+    /// cx.add_task(
+    ///     Task::new(|_| async move { Ok::<_, &'static str>(()) })
+    ///         .name("refresh")
+    ///         .on_result(|_, _| {}),
+    /// );
+    /// # }
+    /// ```
+    #[cfg(feature = "tokio")]
+    pub fn add_task<T, E>(&self, task: TaskBuilder<T, E>) -> TaskHandle
+    where
+        T: Send + 'static,
+        E: Send + 'static,
+    {
+        task.add_to_event_context(self)
     }
 
     pub fn modify<V: View>(&mut self, f: impl FnOnce(&mut V)) {
@@ -1180,10 +1307,48 @@ impl<'a> EventContext<'a> {
     }
 
     // GETTERS
-    get_length_property!(
-        /// Returns the border width of the current view in physical pixels.
-        border_width
-    );
+
+    /// Returns the top border width of the current view in physical pixels.
+    pub fn border_top_width(&self) -> f32 {
+        if let Some(length) = self.style.border_top_width.get(self.current) {
+            let bounds = self.bounds();
+            return length.to_pixels(bounds.w.min(bounds.h), self.scale_factor()).round();
+        }
+        0.0
+    }
+
+    /// Returns the right border width of the current view in physical pixels.
+    pub fn border_right_width(&self) -> f32 {
+        if let Some(length) = self.style.border_right_width.get(self.current) {
+            let bounds = self.bounds();
+            return length.to_pixels(bounds.w.min(bounds.h), self.scale_factor()).round();
+        }
+        0.0
+    }
+
+    /// Returns the bottom border width of the current view in physical pixels.
+    pub fn border_bottom_width(&self) -> f32 {
+        if let Some(length) = self.style.border_bottom_width.get(self.current) {
+            let bounds = self.bounds();
+            return length.to_pixels(bounds.w.min(bounds.h), self.scale_factor()).round();
+        }
+        0.0
+    }
+
+    /// Returns the left border width of the current view in physical pixels.
+    pub fn border_left_width(&self) -> f32 {
+        if let Some(length) = self.style.border_left_width.get(self.current) {
+            let bounds = self.bounds();
+            return length.to_pixels(bounds.w.min(bounds.h), self.scale_factor()).round();
+        }
+        0.0
+    }
+
+    /// Returns the top border width of the current view in physical pixels.
+    /// Equivalent to `border_top_width`; kept for backward compatibility.
+    pub fn border_width(&self) -> f32 {
+        self.border_top_width()
+    }
 
     /// Returns the font-size of the current view in physical pixels.
     pub fn font_size(&self) -> f32 {
@@ -1272,16 +1437,14 @@ impl<'a> EventContext<'a> {
 
     /// Modifies the state of an existing timer with the provided `Timer` id.
     pub fn modify_timer(&mut self, timer: Timer, timer_function: impl Fn(&mut TimerState)) {
-        while let Some(next_timer_state) = self.running_timers.peek() {
-            if next_timer_state.id == timer {
-                let mut timer_state = self.running_timers.pop().unwrap();
+        let mut running_timers = self.running_timers.clone().into_vec();
 
-                (timer_function)(&mut timer_state);
-
-                self.running_timers.push(timer_state);
-
-                return;
-            }
+        if let Some(timer_state) =
+            running_timers.iter_mut().find(|timer_state| timer_state.id == timer)
+        {
+            (timer_function)(timer_state);
+            *self.running_timers = running_timers.into();
+            return;
         }
 
         for pending_timer in self.timers.iter_mut() {
@@ -1296,16 +1459,10 @@ impl<'a> EventContext<'a> {
         timer: Timer,
         timer_function: impl Fn(&TimerState) -> T,
     ) -> Option<T> {
-        while let Some(next_timer_state) = self.running_timers.peek() {
-            if next_timer_state.id == timer {
-                let timer_state = self.running_timers.pop().unwrap();
-
-                let t = (timer_function)(&timer_state);
-
-                self.running_timers.push(timer_state);
-
-                return Some(t);
-            }
+        if let Some(timer_state) =
+            self.running_timers.iter().find(|timer_state| timer_state.id == timer)
+        {
+            return Some(timer_function(timer_state));
         }
 
         for pending_timer in self.timers.iter() {
@@ -1379,7 +1536,7 @@ impl DataContext for EventContext<'_> {
 }
 
 impl EmitContext for EventContext<'_> {
-    fn emit<M: Any + Send>(&mut self, message: M) {
+    fn emit<M: Any>(&mut self, message: M) {
         self.event_queue.push_back(
             Event::new(message)
                 .target(self.current)
@@ -1388,7 +1545,7 @@ impl EmitContext for EventContext<'_> {
         );
     }
 
-    fn emit_to<M: Any + Send>(&mut self, target: Entity, message: M) {
+    fn emit_to<M: Any>(&mut self, target: Entity, message: M) {
         self.event_queue.push_back(
             Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
         );
@@ -1398,7 +1555,7 @@ impl EmitContext for EventContext<'_> {
         self.event_queue.push_back(event);
     }
 
-    fn schedule_emit<M: Any + Send>(&mut self, message: M, at: Instant) -> TimedEventHandle {
+    fn schedule_emit<M: Any>(&mut self, message: M, at: Instant) -> TimedEventHandle {
         self.schedule_emit_custom(
             Event::new(message)
                 .target(self.current)
@@ -1407,7 +1564,7 @@ impl EmitContext for EventContext<'_> {
             at,
         )
     }
-    fn schedule_emit_to<M: Any + Send>(
+    fn schedule_emit_to<M: Any>(
         &mut self,
         target: Entity,
         message: M,

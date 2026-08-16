@@ -77,12 +77,15 @@
 
 .todo-footer_text {
     width: 100px;
+    color: black;
 }
 
 .todo-list {
     height: auto;
+    max-height: 250px;
 }
 
 .todo-list scrollview {
     height: auto;
+    max-height: 250px;
 }

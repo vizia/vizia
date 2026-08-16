@@ -6,6 +6,10 @@ use std::collections::BinaryHeap;
 use vizia_storage::{DrawChildIterator, LayoutTreeIterator};
 use vizia_style::BlendMode;
 
+fn should_apply_entity_clip(style: &Style, entity: Entity) -> bool {
+    !style.ignore_clipping.get(entity).copied().unwrap_or(false)
+}
+
 pub(crate) fn draw_system(
     cx: &mut Context,
     window_entity: Entity,
@@ -155,8 +159,35 @@ pub(crate) fn draw_system(
 
     canvas.restore();
 
-    // surface.canvas().clear(Color::transparent());
+    surface.canvas().clear(Color::transparent());
     dirty_surface.draw(surface.canvas(), (0, 0), SamplingOptions::default(), None);
+
+    // Debug overlay: outline the views which underwent layout in the most recent layout pass by
+    // stroking their transformed bounds with an orange rectangle. The overlay persists across
+    // frames (it is redrawn in full on every draw) until the layout system runs again, at which
+    // point the layout system repopulates `laid_out` and schedules the previous outlines to be
+    // erased.
+    if cx.style.debug_layout && !cx.style.laid_out.is_empty() {
+        let canvas = surface.canvas();
+        let mut paint = Paint::default();
+        paint.set_anti_alias(true);
+        paint.set_style(skia_safe::PaintStyle::Stroke);
+        paint.set_stroke_width(1.0);
+        // Orange (RGB 255, 165, 0).
+        paint.set_color(skia_safe::Color::from_argb(255, 255, 165, 0));
+
+        for entity in cx.style.laid_out.iter().copied() {
+            let Some(bounds) = cx.cache.bounds.get(entity).copied() else {
+                continue;
+            };
+            if bounds.w <= 0.0 || bounds.h <= 0.0 {
+                continue;
+            }
+            let matrix = cx.cache.transform.get(entity).copied().unwrap_or_default();
+            let (rect, _) = matrix.map_rect(Rect::from(bounds));
+            canvas.draw_rect(rect, &paint);
+        }
+    }
 
     // Debug draw dirty rect
     // if let Some(rect) = dirty_rect.map(Rect::from) {
@@ -266,20 +297,22 @@ fn draw_entity(
         (_, Some(Visibility::Visible)) => true,
     };
 
-    // Draw the view
-    if is_visible {
-        let should_draw = if let Some(dirty_rect) = dirty_rect {
+    let should_draw = if is_visible {
+        if let Some(dirty_rect) = dirty_rect {
             let bounds = cached_draw_bounds(cx, current);
             bounds.intersects(dirty_rect)
         } else {
             true
-        };
+        }
+    } else {
+        false
+    };
 
-        if should_draw {
-            if let Some(view) = cx.views.remove(&current) {
-                view.draw(cx, canvas);
-                cx.views.insert(current, view);
-            }
+    // Draw the view
+    if should_draw {
+        if let Some(view) = cx.views.remove(&current) {
+            view.draw(cx, canvas);
+            cx.views.insert(current, view);
         }
     }
     canvas.restore();
@@ -292,11 +325,26 @@ fn draw_entity(
         draw_entity(cx, dirty_rect, canvas, current_z, queue, is_visible);
     }
 
+    cx.current = current;
+
+    // Draw outline after children so it appears above descendant content.
+    if should_draw {
+        canvas.save();
+        if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
+            canvas.clip_path(clip_path, ClipOp::Intersect, true);
+        }
+
+        if let Some(transform) = cx.cache.transform.get(current) {
+            canvas.set_matrix(&(transform.into()));
+        }
+
+        cx.draw_outline(canvas);
+        canvas.restore();
+    }
+
     if let Some(count) = layer_count {
         canvas.restore_to_count(count);
     }
-
-    cx.current = current;
 }
 
 fn cached_draw_bounds(cx: &mut DrawContext, entity: Entity) -> BoundingBox {
@@ -396,6 +444,10 @@ pub(crate) fn draw_bounds(
     }
 
     if tree.is_window(entity) {
+        return dirty_bounds;
+    }
+
+    if !should_apply_entity_clip(style, entity) {
         return dirty_bounds;
     }
 

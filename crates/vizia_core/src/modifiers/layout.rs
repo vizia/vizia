@@ -152,7 +152,7 @@ pub trait LayoutModifiers: internal::Modifiable {
                 cx.style.top.insert(entity, value);
                 cx.style.bottom.insert(entity, value);
 
-                cx.style.needs_relayout();
+                cx.style.needs_relayout(entity);
             });
         });
 
@@ -173,6 +173,13 @@ pub trait LayoutModifiers: internal::Modifiable {
         SystemFlags::RELAYOUT
     );
 
+    modifier!(
+        /// Sets the preferred aspect ratio of the view.
+        aspect_ratio,
+        AspectRatio,
+        SystemFlags::RELAYOUT
+    );
+
     /// Sets the width and height of the view.
     fn size<U: Into<Units>>(mut self, value: impl Res<U>) -> Self {
         let entity = self.entity();
@@ -183,7 +190,7 @@ pub trait LayoutModifiers: internal::Modifiable {
                 cx.style.width.insert(entity, value);
                 cx.style.height.insert(entity, value);
 
-                cx.style.needs_relayout();
+                cx.style.needs_relayout(entity);
             });
         });
 
@@ -261,7 +268,7 @@ pub trait LayoutModifiers: internal::Modifiable {
                 cx.style.padding_top.insert(entity, value);
                 cx.style.padding_bottom.insert(entity, value);
 
-                cx.style.needs_relayout();
+                cx.style.needs_relayout(entity);
             });
         });
 
@@ -292,26 +299,12 @@ pub trait LayoutModifiers: internal::Modifiable {
                 cx.style.horizontal_gap.insert(entity, value);
                 cx.style.vertical_gap.insert(entity, value);
 
-                cx.style.needs_relayout();
+                cx.style.needs_relayout(entity);
             });
         });
 
         self
     }
-
-    modifier!(
-        /// Set the vertical scroll position of the view.
-        vertical_scroll,
-        f32,
-        SystemFlags::RELAYOUT
-    );
-
-    modifier!(
-        /// Set the horizontal scroll position of the view.
-        horizontal_scroll,
-        f32,
-        SystemFlags::RELAYOUT
-    );
 
     modifier!(
         /// Sets the minimum width of the view.
@@ -337,7 +330,7 @@ pub trait LayoutModifiers: internal::Modifiable {
                 cx.style.min_width.insert(entity, value);
                 cx.style.min_height.insert(entity, value);
 
-                cx.needs_relayout();
+                cx.style.needs_relayout(entity);
             });
         });
 
@@ -368,7 +361,7 @@ pub trait LayoutModifiers: internal::Modifiable {
                 cx.style.max_width.insert(entity, value);
                 cx.style.max_height.insert(entity, value);
 
-                cx.needs_relayout();
+                cx.style.needs_relayout(entity);
             });
         });
 
@@ -399,7 +392,7 @@ pub trait LayoutModifiers: internal::Modifiable {
                 cx.style.min_horizontal_gap.insert(entity, value);
                 cx.style.min_vertical_gap.insert(entity, value);
 
-                cx.needs_relayout();
+                cx.style.needs_relayout(entity);
             });
         });
 
@@ -430,7 +423,7 @@ pub trait LayoutModifiers: internal::Modifiable {
                 cx.style.max_horizontal_gap.insert(entity, value);
                 cx.style.max_vertical_gap.insert(entity, value);
 
-                cx.needs_relayout();
+                cx.style.needs_relayout(entity);
             });
         });
 
@@ -459,7 +452,7 @@ pub trait LayoutModifiers: internal::Modifiable {
                 let value = v.get_value(cx);
                 cx.style.column_start.insert(entity, value);
 
-                cx.needs_relayout();
+                cx.style.needs_relayout(entity);
             });
         });
 
@@ -474,7 +467,7 @@ pub trait LayoutModifiers: internal::Modifiable {
                 let value = v.get_value(cx);
                 cx.style.column_span.insert(entity, value);
 
-                cx.needs_relayout();
+                cx.style.needs_relayout(entity);
             });
         });
 
@@ -489,7 +482,7 @@ pub trait LayoutModifiers: internal::Modifiable {
                 let value = v.get_value(cx);
                 cx.style.row_start.insert(entity, value);
 
-                cx.needs_relayout();
+                cx.style.needs_relayout(entity);
             });
         });
 
@@ -504,7 +497,7 @@ pub trait LayoutModifiers: internal::Modifiable {
                 let value = v.get_value(cx);
                 cx.style.row_span.insert(entity, value);
 
-                cx.needs_relayout();
+                cx.style.needs_relayout(entity);
             });
         });
 

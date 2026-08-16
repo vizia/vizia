@@ -1,7 +1,10 @@
-use vizia::{icons::ICON_CLOCK, prelude::*};
+use vizia::{
+    icons::{ICON_CLIPBOARD, ICON_CLOCK, ICON_COPY, ICON_CUT},
+    prelude::*,
+};
 
 use chrono::Utc;
-use log::LevelFilter;
+use log::{LevelFilter, debug};
 use vizia::icons::{ICON_BOLD, ICON_ITALIC, ICON_SETTINGS, ICON_UNDERLINE, ICON_USER};
 
 mod app_data;
@@ -264,25 +267,41 @@ fn build_sidebar_content(
         let query = search_text.get().to_lowercase();
         let query = query.trim().to_string();
 
-        let mut matching_items: Vec<&'static str> = std::iter::once("All")
-            .chain(CATEGORIES.iter().flat_map(|(_, items)| items.iter().copied()))
+        let include_all = query.is_empty() || ALL_VIEW_ID.to_lowercase().contains(&query);
+
+        let mut matching_items: Vec<&'static str> = CATEGORIES
+            .iter()
+            .flat_map(|(_, items)| items.iter().map(|(id, _)| *id))
             .filter(|item| query.is_empty() || item.to_lowercase().contains(&query))
             .collect();
 
         matching_items.sort_unstable();
 
-        for item in matching_items.iter().copied() {
-            let selected_view = selected_view;
-            Button::new(cx, move |cx| Label::new(cx, item).hoverable(false))
+        if include_all {
+            matching_items.insert(0, ALL_VIEW_ID);
+        }
+
+        let no_match = matching_items.is_empty();
+
+        VStack::new(cx, move |cx| {
+            for item in matching_items.iter().copied() {
+                let selected_view = selected_view;
+                Button::new(cx, move |cx| {
+                    Label::new(cx, Localized::new(localized_view_key(item))).hoverable(false)
+                })
                 .class("sidebar-menu-button")
                 .toggle_class(
                     "sidebar-menu-button-active",
                     selected_view.map(move |sv| *sv == item),
                 )
                 .on_press(move |cx| cx.emit(AppEvent::SelectView(item)));
-        }
+            }
+        })
+        .height(Auto)
+        .padding_left(Pixels(12.0))
+        .padding_right(Pixels(12.0));
 
-        if matching_items.is_empty() {
+        if no_match {
             Label::new(cx, "No widgets match your search.").class("sidebar-empty-state");
         }
     });
@@ -291,9 +310,7 @@ fn build_sidebar_content(
 fn all_views_page(cx: &mut Context) {
     let mut all_views: Vec<(&'static str, &'static str)> = CATEGORIES
         .iter()
-        .flat_map(|(category, items)| {
-            items.iter().copied().map(move |view_name| (*category, view_name))
-        })
+        .flat_map(|(category, items)| items.iter().map(move |(view_id, _)| (*category, *view_id)))
         .collect();
 
     all_views.sort_unstable_by_key(|(_, view_name)| *view_name);
@@ -301,10 +318,13 @@ fn all_views_page(cx: &mut Context) {
     VStack::new(cx, |cx| {
         HStack::new(cx, move |cx| {
             for (category, view_name) in all_views.iter().copied() {
+                let (min_width, min_height) =
+                    if view_name == "Calendar" { (320.0, 360.0) } else { (200.0, 220.0) };
                 Card::new(cx, move |cx| {
                     CardHeader::new(cx, |cx| {
-                        Label::new(cx, view_name).class("all-view-card-title");
-                        Label::new(cx, category).class("all-view-card-category");
+                        Label::new(cx, Localized::new(localized_view_key(view_name)))
+                            .class("all-view-card-title");
+                        Label::new(cx, Localized::new(category)).class("all-view-card-category");
                     })
                     .height(Auto);
 
@@ -315,8 +335,10 @@ fn all_views_page(cx: &mut Context) {
                     .alignment(Alignment::Center);
                 })
                 .class("all-view-card")
-                .width(Pixels(180.0))
-                .height(Pixels(180.0));
+                .min_width(Pixels(min_width))
+                .min_height(Pixels(min_height))
+                .width(Stretch(1.0))
+                .height(Stretch(1.0));
             }
         })
         .class("all-view-grid")
@@ -333,6 +355,7 @@ fn all_views_page(cx: &mut Context) {
 struct PreviewTableRow {
     id: u32,
     name: String,
+    category: String,
 }
 
 fn render_view_preview(cx: &mut Context, view_name: &'static str) {
@@ -415,8 +438,8 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
             });
         }
         "Calendar" => {
-            //let date = Signal::new(Utc::now().date_naive());
-            //Calendar::new(cx, date).on_select(move |_cx, d| date.set(d));
+            let date = Signal::new(Utc::now().date_naive());
+            Calendar::new(cx, date).on_select(move |_cx, d| date.set(d));
         }
         "Card" => {
             Card::new(cx, |cx| {
@@ -489,41 +512,82 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         "Element" => {
             Element::new(cx).size(Pixels(64.0)).background_color(Color::rgb(58, 134, 255));
         }
+        "Frame" => {
+            Frame::with_title(
+                cx,
+                |cx| Label::new(cx, "Frame").hoverable(false),
+                |cx| {
+                    Label::new(cx, "Frame with title").hoverable(false).padding(Pixels(12.0));
+                },
+            )
+            .title_position(FrameTitlePosition::TopCenter)
+            .width(Stretch(1.0));
+        }
         "Grid" => {
-            Grid::new(cx, vec![Stretch(1.0), Stretch(1.0)], vec![Pixels(60.0)], |cx| {
-                Label::new(cx, "A")
-                    .column_start(0)
-                    .row_start(0)
-                    .background_color(Color::red())
-                    .color(Color::white())
-                    .alignment(Alignment::Center);
-                Label::new(cx, "B")
-                    .column_start(1)
-                    .row_start(0)
-                    .background_color(Color::blue())
-                    .color(Color::white())
-                    .alignment(Alignment::Center);
-            })
+            Grid::new(
+                cx,
+                vec![Pixels(60.0), Stretch(1.0)],
+                vec![Pixels(60.0), Pixels(40.0)],
+                |cx| {
+                    Label::new(cx, "A")
+                        .column_start(0)
+                        .row_start(0)
+                        .background_color(Color::red())
+                        .color(Color::white())
+                        .alignment(Alignment::Center);
+                    Label::new(cx, "B")
+                        .column_start(1)
+                        .row_start(0)
+                        .background_color(Color::blue())
+                        .color(Color::white())
+                        .alignment(Alignment::Center);
+                    Label::new(cx, "C")
+                        .column_start(0)
+                        .column_span(2)
+                        .row_start(1)
+                        .background_color(Color::green())
+                        .color(Color::white())
+                        .alignment(Alignment::Center);
+                },
+            )
             .width(Stretch(1.0))
-            .height(Pixels(60.0));
+            .height(Pixels(100.0));
         }
         "HStack" => {
             HStack::new(cx, |cx| {
                 Element::new(cx).size(Pixels(30.0)).background_color(Color::red());
                 Element::new(cx).size(Pixels(30.0)).background_color(Color::green());
+                Element::new(cx).size(Pixels(30.0)).background_color(Color::blue());
             })
             .height(Auto)
+            .width(Auto)
             .gap(Pixels(6.0));
         }
         "Image" => {
-            Label::new(cx, "Coming soon...");
+            Image::new(cx, "vizia.png")
+                .width(Pixels(64.0))
+                .height(Pixels(64.0))
+                .background_size(vec![BackgroundSize::Cover]);
         }
         "Knob" => {
             let value = Signal::new(0.3f32);
             Knob::new(cx, 0.5, value, false).on_change(move |_cx, v| value.set(v));
         }
         "Label" => {
-            Label::new(cx, "Hello Vizia");
+            VStack::new(cx, |cx| {
+                Label::new(cx, "Hello Vizia");
+                Label::rich(cx, "Hello", |cx| {
+                    TextSpan::new(cx, " Rich", |cx| {
+                        TextSpan::new(cx, " Label", |_| {})
+                            .font_slant(FontSlant::Italic)
+                            .color(Color::red());
+                    })
+                    .font_weight(FontWeightKeyword::Bold);
+                });
+            })
+            .alignment(Alignment::Center)
+            .gap(Pixels(12.0))
+            .height(Auto);
         }
         "List" => {
             let list = Signal::new(vec![Signal::new(1u32), Signal::new(2u32), Signal::new(3u32)]);
@@ -551,7 +615,116 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                     cx,
                     |cx| Label::new(cx, "File"),
                     |cx| {
-                        MenuButton::new(cx, |_| {}, |cx| Label::new(cx, "Open"));
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("New"),
+                            |cx| {
+                                HStack::new(cx, |cx| {
+                                    Label::new(cx, "New");
+                                    Label::new(cx, "Ctrl + N").class("shortcut");
+                                })
+                            },
+                        );
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Open"),
+                            |cx| {
+                                HStack::new(cx, |cx| {
+                                    Label::new(cx, "Open");
+                                    Label::new(cx, "Ctrl + O").class("shortcut");
+                                })
+                            },
+                        );
+                        Submenu::new(
+                            cx,
+                            |cx| Label::new(cx, "Open Recent"),
+                            |cx| {
+                                MenuButton::new(
+                                    cx,
+                                    |_| debug!("Doc 1"),
+                                    |cx| Label::new(cx, "Doc 1"),
+                                );
+                                Submenu::new(
+                                    cx,
+                                    |cx| Label::new(cx, "Doc 2"),
+                                    |cx| {
+                                        MenuButton::new(
+                                            cx,
+                                            |_| debug!("Version 1"),
+                                            |cx| Label::new(cx, "Version 1"),
+                                        );
+                                        MenuButton::new(
+                                            cx,
+                                            |_| debug!("Version 2"),
+                                            |cx| Label::new(cx, "Version 2"),
+                                        );
+                                        MenuButton::new(
+                                            cx,
+                                            |_| debug!("Version 3"),
+                                            |cx| Label::new(cx, "Version 3"),
+                                        );
+                                    },
+                                );
+                                MenuButton::new(
+                                    cx,
+                                    |_| debug!("Doc 3"),
+                                    |cx| Label::new(cx, "Doc 3"),
+                                );
+                            },
+                        );
+                        Divider::new(cx);
+                        MenuButton::new(cx, |_| debug!("Save"), |cx| Label::new(cx, "Save"));
+                        MenuButton::new(cx, |_| debug!("Save As"), |cx| Label::new(cx, "Save As"));
+                        Divider::new(cx);
+                        MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
+                    },
+                );
+                Submenu::new(
+                    cx,
+                    |cx| Label::new(cx, "Edit"),
+                    |cx| {
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Cut"),
+                            |cx| {
+                                HStack::new(cx, |cx| {
+                                    Svg::new(cx, ICON_CUT).class("icon");
+                                    Label::new(cx, "Cut");
+                                })
+                            },
+                        );
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Copy"),
+                            |cx| {
+                                HStack::new(cx, |cx| {
+                                    Svg::new(cx, ICON_COPY).class("icon");
+                                    Label::new(cx, "Copy");
+                                })
+                            },
+                        );
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Paste"),
+                            |cx| {
+                                HStack::new(cx, |cx| {
+                                    Svg::new(cx, ICON_CLIPBOARD).class("icon");
+                                    Label::new(cx, "Paste");
+                                })
+                            },
+                        );
+                    },
+                );
+                Submenu::new(
+                    cx,
+                    |cx| Label::new(cx, "Help"),
+                    |cx| {
+                        MenuButton::new(
+                            cx,
+                            |_| debug!("Show License"),
+                            |cx| Label::new(cx, "Show License"),
+                        );
+                        MenuButton::new(cx, |_| debug!("About"), |cx| Label::new(cx, "About"));
                     },
                 );
             })
@@ -576,11 +749,19 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         }
         "Progressbar" => {
             let progress = Signal::new(0.6f32);
-            ProgressBar::horizontal(cx, progress).width(Pixels(180.0));
+            ProgressBar::horizontal(cx, progress);
         }
         "Radiobutton" => {
-            let selected = Signal::new(true);
-            RadioButton::new(cx, selected).on_select(move |_cx| selected.set(true));
+            let selected = Signal::new(0usize);
+            HStack::new(cx, move |cx| {
+                for i in 0..3 {
+                    RadioButton::new(cx, selected.map(move |s| *s == i))
+                        .on_select(move |_cx| selected.set(i));
+                }
+            })
+            .alignment(Alignment::Center)
+            .gap(Pixels(8.0))
+            .height(Auto);
         }
         "Rating" => {
             let rating = Signal::new(3u32);
@@ -614,7 +795,8 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         }
         "Slider" => {
             let value = Signal::new(0.5f32);
-            Slider::new(cx, value).on_change(move |_cx, v| value.set(v)).width(Pixels(180.0));
+
+            Slider::new(cx, value).on_change(move |_cx, v| value.set(v));
         }
         "Spinbox" => {
             let value = Signal::new(10.0f64);
@@ -631,22 +813,172 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
             Switch::new(cx, enabled).on_toggle(move |_cx| enabled.update(|v| *v ^= true));
         }
         "Table" => {
-            let rows = Signal::new(vec![PreviewTableRow { id: 1, name: "Button".to_string() }]);
-            let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader>>> =
+            let rows = Signal::new(vec![PreviewTableRow {
+                id: 1,
+                name: "Button".to_string(),
+                category: "Input".to_string(),
+            }]);
+            let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader<String>>>> =
                 Signal::new(vec![
                     TableColumn::new(
                         "name",
-                        |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
+                        |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
                         |cx, row| {
                             let text = row.map(|r: &PreviewTableRow| r.name.clone());
                             Label::new(cx, text);
                         },
                     )
-                    .width(160.0),
+                    .width(120.0),
+                    TableColumn::new(
+                        "category",
+                        |cx, sort_dir| TableHeader::new(cx, "category", "Category", sort_dir),
+                        |cx, row| {
+                            let text = row.map(|r: &PreviewTableRow| r.category.clone());
+                            Label::new(cx, text);
+                        },
+                    )
+                    .width(100.0),
                 ]);
             Table::new(cx, rows, columns, |row: &PreviewTableRow| row.id)
                 .width(Stretch(1.0))
                 .height(Pixels(120.0));
+        }
+        "TreeView" => {
+            #[derive(Clone, PartialEq)]
+            struct PreviewTreeNode {
+                id: u32,
+                parent_id: Option<u32>,
+                name: String,
+            }
+
+            let rows = Signal::new(vec![
+                PreviewTreeNode { id: 1, parent_id: None, name: "Widgets".to_string() },
+                PreviewTreeNode { id: 2, parent_id: Some(1), name: "Layout".to_string() },
+                PreviewTreeNode { id: 3, parent_id: Some(1), name: "Data".to_string() },
+                PreviewTreeNode { id: 4, parent_id: Some(2), name: "HStack".to_string() },
+                PreviewTreeNode { id: 5, parent_id: Some(3), name: "Table".to_string() },
+            ]);
+
+            let selected = Signal::new(vec![2u32]);
+            let expanded = Signal::new(vec![1u32]);
+
+            TreeView::from_hierarchy(
+                cx,
+                rows,
+                move |rows: &Vec<PreviewTreeNode>| {
+                    rows.iter().filter(|row| row.parent_id.is_none()).map(|row| row.id).collect()
+                },
+                move |rows: &Vec<PreviewTreeNode>, parent_id: &u32| {
+                    rows.iter()
+                        .filter(|row| row.parent_id == Some(*parent_id))
+                        .map(|row| row.id)
+                        .collect()
+                },
+                |_rows: &Vec<PreviewTreeNode>, _node_id: &u32| true,
+                move |cx, row| {
+                    let row_id = row.get().id;
+                    let text = rows.map(move |rows| {
+                        rows.iter()
+                            .find(|node| node.id == row_id)
+                            .map(|node| node.name.clone())
+                            .unwrap_or_default()
+                    });
+
+                    Label::new(cx, text).hoverable(false);
+                },
+            )
+            .selected_row_ids(selected)
+            .expanded_row_ids(expanded)
+            .on_row_toggle(move |_cx, id, is_open| {
+                expanded.update(|rows| {
+                    if is_open {
+                        if !rows.contains(&id) {
+                            rows.push(id);
+                        }
+                    } else {
+                        rows.retain(|current| *current != id);
+                    }
+                });
+            })
+            .width(Stretch(1.0))
+            .height(Pixels(120.0));
+        }
+        "TreeTable" => {
+            #[derive(Clone, PartialEq)]
+            struct PreviewTreeRow {
+                id: u32,
+                parent_id: Option<u32>,
+                name: String,
+                kind: String,
+            }
+
+            let rows = Signal::new(vec![
+                PreviewTreeRow {
+                    id: 1,
+                    parent_id: None,
+                    name: "Data".to_string(),
+                    kind: "Folder".to_string(),
+                },
+                PreviewTreeRow {
+                    id: 2,
+                    parent_id: Some(1),
+                    name: "Table".to_string(),
+                    kind: "Widget".to_string(),
+                },
+                PreviewTreeRow {
+                    id: 3,
+                    parent_id: Some(1),
+                    name: "List".to_string(),
+                    kind: "Widget".to_string(),
+                },
+            ]);
+            let columns: Signal<Vec<TreeTableColumn<PreviewTreeRow, u32, TableHeader<String>>>> =
+                Signal::new(vec![
+                    TreeTableColumn::new(
+                        "name",
+                        |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
+                        |cx, row| {
+                            let row_for_first_cell: TreeTableRow<PreviewTreeRow, u32> = row.get();
+                            TreeTableFirstCell::new(cx, row_for_first_cell, move |cx, row| {
+                                Label::new(cx, row.row.name.clone());
+                            });
+                        },
+                    )
+                    .width(Pixels(140.0)),
+                    TreeTableColumn::new(
+                        "kind",
+                        |cx, sort_dir| TableHeader::new(cx, "kind", "Kind", sort_dir),
+                        |cx, row| {
+                            let text =
+                                row.map(|r: &TreeTableRow<PreviewTreeRow, u32>| r.row.kind.clone());
+                            Label::new(cx, text);
+                        },
+                    )
+                    .width(Pixels(90.0)),
+                ]);
+            let expanded = Signal::new(vec![1u32]);
+
+            TreeTable::from_rows(
+                cx,
+                rows,
+                columns,
+                |row: &PreviewTreeRow| row.id,
+                |row: &PreviewTreeRow| row.parent_id,
+            )
+            .expanded_row_ids(expanded)
+            .on_row_toggle(move |_cx, id, is_open| {
+                expanded.update(|rows| {
+                    if is_open {
+                        if !rows.contains(&id) {
+                            rows.push(id);
+                        }
+                    } else {
+                        rows.retain(|current| *current != id);
+                    }
+                });
+            })
+            .width(Stretch(1.0))
+            .height(Pixels(120.0));
         }
         "Tabview" => {
             let tabs = Signal::new(vec!["Tab1", "Tab2"]);
@@ -704,14 +1036,22 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         "VirtualTable" => {
             let rows = Signal::new(
                 (0u32..50)
-                    .map(|id| PreviewTableRow { id, name: format!("Widget {}", id) })
+                    .map(|id| PreviewTableRow {
+                        id,
+                        name: format!("Widget {}", id),
+                        category: if id % 2 == 0 {
+                            "Data".to_string()
+                        } else {
+                            "Input".to_string()
+                        },
+                    })
                     .collect::<Vec<_>>(),
             );
-            let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader>>> =
+            let columns: Signal<Vec<TableColumn<PreviewTableRow, TableHeader<String>>>> =
                 Signal::new(vec![
                     TableColumn::new(
                         "name",
-                        |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
+                        |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
                         |cx, row| {
                             let text = row.map(|r: &PreviewTableRow| r.name.clone());
                             Label::new(cx, text);
@@ -723,11 +1063,179 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                 .width(Stretch(1.0))
                 .height(Pixels(120.0));
         }
+        "VirtualTreeView" => {
+            #[derive(Clone, PartialEq)]
+            struct PreviewTreeNode {
+                id: u32,
+                parent_id: Option<u32>,
+                name: String,
+            }
+
+            let rows = Signal::new(vec![
+                PreviewTreeNode { id: 1, parent_id: None, name: "Widgets".to_string() },
+                PreviewTreeNode { id: 2, parent_id: Some(1), name: "Layout".to_string() },
+                PreviewTreeNode { id: 3, parent_id: Some(1), name: "Display".to_string() },
+                PreviewTreeNode { id: 4, parent_id: Some(1), name: "Data".to_string() },
+                PreviewTreeNode { id: 5, parent_id: Some(2), name: "Grid".to_string() },
+                PreviewTreeNode { id: 6, parent_id: Some(2), name: "VStack".to_string() },
+                PreviewTreeNode { id: 7, parent_id: Some(4), name: "Table".to_string() },
+            ]);
+
+            let expanded = Signal::new(vec![1u32, 2u32, 4u32]);
+
+            VirtualTreeView::from_hierarchy(
+                cx,
+                rows,
+                24.0,
+                move |rows: &Vec<PreviewTreeNode>| {
+                    rows.iter().filter(|row| row.parent_id.is_none()).map(|row| row.id).collect()
+                },
+                move |rows: &Vec<PreviewTreeNode>, parent_id: &u32| {
+                    rows.iter()
+                        .filter(|row| row.parent_id == Some(*parent_id))
+                        .map(|row| row.id)
+                        .collect()
+                },
+                |_rows: &Vec<PreviewTreeNode>, _node_id: &u32| true,
+                move |cx, row| {
+                    let row_id = row.get().id;
+                    let text = rows.map(move |rows| {
+                        rows.iter()
+                            .find(|node| node.id == row_id)
+                            .map(|node| node.name.clone())
+                            .unwrap_or_default()
+                    });
+
+                    Label::new(cx, text).hoverable(false);
+                },
+            )
+            .expanded_row_ids(expanded)
+            .on_row_toggle(move |_cx, id, is_open| {
+                expanded.update(|rows| {
+                    if is_open {
+                        if !rows.contains(&id) {
+                            rows.push(id);
+                        }
+                    } else {
+                        rows.retain(|current| *current != id);
+                    }
+                });
+            })
+            .width(Stretch(1.0))
+            .height(Pixels(120.0));
+        }
+        "VirtualTreeTable" => {
+            #[derive(Clone, PartialEq)]
+            struct PreviewTreeRow {
+                id: u32,
+                parent_id: Option<u32>,
+                name: String,
+                status: String,
+            }
+
+            let rows = Signal::new(vec![
+                PreviewTreeRow {
+                    id: 1,
+                    parent_id: None,
+                    name: "Widgets".to_string(),
+                    status: "Ready".to_string(),
+                },
+                PreviewTreeRow {
+                    id: 2,
+                    parent_id: Some(1),
+                    name: "Data".to_string(),
+                    status: "Ready".to_string(),
+                },
+                PreviewTreeRow {
+                    id: 3,
+                    parent_id: Some(2),
+                    name: "TreeTable".to_string(),
+                    status: "Stable".to_string(),
+                },
+                PreviewTreeRow {
+                    id: 4,
+                    parent_id: Some(2),
+                    name: "VirtualTreeTable".to_string(),
+                    status: "New".to_string(),
+                },
+            ]);
+
+            let columns: Signal<Vec<TreeTableColumn<TreeNodeRow<u32>, u32, TableHeader<String>>>> =
+                Signal::new(vec![
+                    TreeTableColumn::new(
+                        "name",
+                        |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
+                        move |cx, row| {
+                            let row_for_cell: TreeTableRow<TreeNodeRow<u32>, u32> = row.get();
+                            TreeTableFirstCell::new(cx, row_for_cell.clone(), move |cx, row| {
+                                let text = rows.map(move |rows| {
+                                    rows.iter()
+                                        .find(|r| r.id == row.id)
+                                        .map(|r| r.name.clone())
+                                        .unwrap_or_default()
+                                });
+                                Label::new(cx, text);
+                            });
+                        },
+                    )
+                    .width(Pixels(180.0)),
+                    TreeTableColumn::new(
+                        "status",
+                        |cx, sort_dir| TableHeader::new(cx, "status", "Status", sort_dir),
+                        move |cx, row| {
+                            let row_for_cell: TreeTableRow<TreeNodeRow<u32>, u32> = row.get();
+                            let text = rows.map(move |rows| {
+                                rows.iter()
+                                    .find(|r| r.id == row_for_cell.row.id)
+                                    .map(|r| r.status.clone())
+                                    .unwrap_or_default()
+                            });
+                            Label::new(cx, text);
+                        },
+                    )
+                    .width(Pixels(100.0)),
+                ]);
+
+            let expanded = Signal::new(vec![1u32, 2u32]);
+
+            VirtualTreeTable::from_hierarchy(
+                cx,
+                rows,
+                columns,
+                24.0,
+                move |rows: &Vec<PreviewTreeRow>| {
+                    rows.iter().filter(|row| row.parent_id.is_none()).map(|row| row.id).collect()
+                },
+                move |rows: &Vec<PreviewTreeRow>, parent_id: &u32| {
+                    rows.iter()
+                        .filter(|row| row.parent_id == Some(*parent_id))
+                        .map(|row| row.id)
+                        .collect()
+                },
+                |_rows: &Vec<PreviewTreeRow>, _node_id: &u32| true,
+            )
+            .expanded_row_ids(expanded)
+            .on_row_toggle(move |_cx, id, is_open| {
+                expanded.update(|rows| {
+                    if is_open {
+                        if !rows.contains(&id) {
+                            rows.push(id);
+                        }
+                    } else {
+                        rows.retain(|current| *current != id);
+                    }
+                });
+            })
+            .width(Stretch(1.0))
+            .height(Pixels(120.0));
+        }
         "VStack" => {
             VStack::new(cx, |cx| {
-                Element::new(cx).size(Pixels(24.0)).background_color(Color::red());
-                Element::new(cx).size(Pixels(24.0)).background_color(Color::green());
+                Element::new(cx).size(Pixels(30.0)).background_color(Color::red());
+                Element::new(cx).size(Pixels(30.0)).background_color(Color::green());
+                Element::new(cx).size(Pixels(30.0)).background_color(Color::blue());
             })
+            .alignment(Alignment::Center)
             .height(Auto)
             .gap(Pixels(6.0));
         }
@@ -737,10 +1245,13 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         }
         "ZStack" => {
             ZStack::new(cx, |cx| {
-                Element::new(cx).size(Pixels(44.0)).background_color(Color::red());
-                Element::new(cx).size(Pixels(36.0)).background_color(Color::blue());
+                Element::new(cx).size(Pixels(100.0)).background_color(Color::red());
+                Element::new(cx).size(Pixels(70.0)).background_color(Color::green());
+                Element::new(cx).size(Pixels(40.0)).background_color(Color::blue());
             })
-            .size(Auto);
+            .size(Auto)
+            .padding(Pixels(20.0))
+            .alignment(Alignment::Center);
         }
         _ => {
             Label::new(cx, "No preview");
@@ -754,7 +1265,7 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
 
 fn render_view_page(cx: &mut Context, view_name: &'static str) {
     match view_name {
-        "All" => all_views_page(cx),
+        ALL_VIEW_ID => all_views_page(cx),
         "Accordion" => accordion(cx),
         "Avatar" => avatar(cx),
         "Avatar Group" => avatar_group(cx),
@@ -770,6 +1281,7 @@ fn render_view_page(cx: &mut Context, view_name: &'static str) {
         "Divider" => divider(cx),
         "Dropdown" => dropdown(cx),
         "Element" => element(cx),
+        "Frame" => frame(cx),
         "Grid" => grid(cx),
         "HStack" => hstack(cx),
         "Image" => image(cx),
@@ -791,12 +1303,16 @@ fn render_view_page(cx: &mut Context, view_name: &'static str) {
         "Svg" => svg(cx),
         "Switch" => switch(cx),
         "Table" => table(cx),
+        "TreeView" => tree_view(cx),
+        "TreeTable" => tree_table(cx),
         "Tabview" => tabview(cx),
         "Textbox" => textbox(cx),
         "ToggleButton" => toggle_button(cx),
         "Tooltip" => tooltip(cx),
         "VirtualList" => virtual_list(cx),
         "VirtualTable" => virtual_table(cx),
+        "VirtualTreeView" => virtual_tree_view(cx),
+        "VirtualTreeTable" => virtual_tree_table(cx),
         "VStack" => vstack(cx),
         "XYPad" => xypad(cx),
         "ZStack" => zstack(cx),
@@ -822,26 +1338,20 @@ fn content_area(cx: &mut Context, selected_view: Signal<&'static str>) {
 }
 
 fn main() -> Result<(), ApplicationError> {
-    setup_logging()?;
+    // setup_logging()?;
 
     Application::new(|cx: &mut Context| {
-        cx.add_translation(
+        cx.load_translation(
             langid!("en-US"),
-            include_str!("../../resources/translations/en-US/helper.ftl"),
+            include_str!("../resources/translations/en-US/helper.ftl"),
         )
         .unwrap();
 
-        cx.add_translation(
-            langid!("fr"),
-            include_str!("../../resources/translations/fr/helper.ftl"),
-        )
-        .unwrap();
+        cx.load_translation(langid!("fr"), include_str!("../resources/translations/fr/helper.ftl"))
+            .unwrap();
 
-        cx.add_translation(
-            langid!("ar"),
-            include_str!("../../resources/translations/ar/helper.ftl"),
-        )
-        .unwrap();
+        cx.load_translation(langid!("ar"), include_str!("../resources/translations/ar/helper.ftl"))
+            .unwrap();
 
         cx.load_image(
             "vizia.png",
@@ -852,7 +1362,11 @@ fn main() -> Result<(), ApplicationError> {
         let app_data = AppData::new();
         app_data.build(cx);
 
-        cx.add_stylesheet(include_style!("src/style.css")).expect("Failed to add stylesheet");
+        cx.add_stylesheet(include_style!("resources/themes/theme.css"))
+            .expect("Failed to add stylesheet");
+
+        cx.add_stylesheet(include_style!("resources/themes/accents.css"))
+            .expect("Failed to add stylesheet");
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {
@@ -878,7 +1392,9 @@ fn main() -> Result<(), ApplicationError> {
                     move |cx| {
                         build_sidebar_content(cx, app_data.selected_view, app_data.search_text)
                     },
-                    move |_cx| {},
+                    move |cx| {
+                        Label::new(cx, "Sidebar Footer").class("sidebar-footer");
+                    },
                 );
                 VStack::new(cx, |cx| {
                     HStack::new(cx, |cx| {

@@ -18,7 +18,7 @@ pub(crate) fn text_system(cx: &mut Context) {
 
     let iterator = LayoutTreeIterator::full(&cx.tree);
     for entity in iterator {
-        if !cx.style.text_construction.contains(entity) {
+        if !cx.style.text_construction.contains(&entity) {
             continue;
         }
 
@@ -29,7 +29,8 @@ pub(crate) fn text_system(cx: &mut Context) {
                 build_paragraph(entity, &mut cx.style, &cx.tree, cx.text_context.font_collection())
             {
                 cx.text_context.text_paragraphs.insert(entity, paragraph);
-                cx.style.needs_relayout();
+                // Only this entity's text was (re)built; relayout incrementally from it.
+                cx.style.needs_relayout(entity);
                 cx.style.needs_text_layout(entity);
             }
         }
@@ -46,7 +47,7 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
     let iterator = LayoutTreeIterator::full(&cx.tree);
     let mut redraw_entities = Vec::new();
     for entity in iterator {
-        if !cx.style.text_layout.contains(entity) {
+        if !cx.style.text_layout.contains(&entity) {
             continue;
         }
 
@@ -201,6 +202,24 @@ pub fn build_paragraph(
     let mut paragraph_style = ParagraphStyle::default();
     // paragraph_style.turn_hinting_off();
 
+    // For fixed line-height lengths, use paragraph struts to enforce absolute line height.
+    if let Some(LineHeight::Length(length)) =
+        style.line_height.get_resolved(entity, &style.custom_line_height_props)
+    {
+        if let Some(line_height_px) = length.to_px() {
+            if line_height_px > 0.0 {
+                let mut strut_style = skia_safe::textlayout::StrutStyle::new();
+                strut_style
+                    .set_strut_enabled(true)
+                    .set_force_strut_height(true)
+                    .set_height_override(true)
+                    .set_height(1.0)
+                    .set_font_size(line_height_px * style.scale_factor());
+                paragraph_style.set_strut_style(strut_style);
+            }
+        }
+    }
+
     // Overflow
     match style.text_overflow.get(entity) {
         Some(&TextOverflow::Ellipsis) => {
@@ -310,7 +329,22 @@ fn add_block(
 
             if let Some(text_decoration_line) = style.text_decoration_line.get(entity).copied() {
                 text_style.set_decoration_type(text_decoration_line.into());
-                text_style.set_decoration_color(font_color);
+
+                if let Some(text_decoration_style) =
+                    style.text_decoration_style.get(entity).copied()
+                {
+                    text_style.set_decoration_style(text_decoration_style.into());
+                }
+
+                let text_decoration_color = match style
+                    .text_decoration_color
+                    .get_resolved(entity, &style.custom_color_props)
+                {
+                    Some(Color::CurrentColor) | None => font_color,
+                    Some(color) => color,
+                };
+
+                text_style.set_decoration_color(text_decoration_color);
             }
 
             // Font Families
@@ -359,6 +393,34 @@ fn add_block(
                 .and_then(|f| f.0.to_px())
                 .unwrap_or(16.0);
             text_style.set_font_size(font_size * style.scale_factor());
+
+            if let Some(letter_spacing) =
+                style.letter_spacing.get_resolved(entity, &style.custom_letter_spacing_props)
+            {
+                let spacing = match letter_spacing {
+                    LetterSpacing::Normal => 0.0,
+                    LetterSpacing::Length(length) => length.to_px().unwrap_or(0.0),
+                };
+                text_style.set_letter_spacing(spacing * style.scale_factor());
+            }
+
+            if let Some(line_height) =
+                style.line_height.get_resolved(entity, &style.custom_line_height_props)
+            {
+                let height = match line_height {
+                    LineHeight::Normal => None,
+                    LineHeight::Number(number) => Some(number),
+                    LineHeight::Percentage(percentage) => Some(percentage / 100.0),
+                    LineHeight::Length(length) => length
+                        .to_px()
+                        .and_then(|pixels| (font_size > 0.0).then_some(pixels / font_size)),
+                };
+
+                if let Some(height) = height {
+                    text_style.set_height_override(true);
+                    text_style.set_height(height);
+                }
+            }
 
             // Font Style
             match (

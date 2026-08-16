@@ -9,12 +9,15 @@ repository.workspace = true
 rust-version.workspace = true
 
 [features]
+default = []
 clipboard = ["copypasta"]
 x11 = ["copypasta?/x11"]
 wayland = ["copypasta?/wayland"]
-markdown = ["comrak"]
+markdown = ["comrak", "dep:open"]
 rayon = ["dep:rayon", "dep:dashmap", "hashbrown/rayon"]
 serde = ["vizia_reactive/serde"]
+tokio = ["dep:tokio"]
+url-loader = ["dep:reqwest", "reqwest/blocking"]
 
 [dependencies]
 vizia_storage.workspace = true
@@ -39,14 +42,16 @@ chrono.workspace = true
 hashbrown.workspace = true
 log.workspace = true
 indexmap.workspace = true
-qfilter.workspace = true
-web-time.workspace = true
 comrak = { workspace = true, optional = true }
-open.workspace = true
+open = { workspace = true, optional = true }
 fxhash.workspace = true
 rayon = { workspace = true, optional = true }
 dashmap = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
+reqwest = { workspace = true, optional = true, features = ["blocking", "json"] }
 
+[target.'cfg(target_os = "linux")'.dependencies]
+mundy = "0.2.3"
 
 [lib]
 doctest = false

@@ -43,14 +43,14 @@ use winit::{dpi::*, window::WindowId};
 
 pub struct WinState {
     pub entity: Entity,
-    gl_config: Config,
-    gl_context: glutin::context::PossiblyCurrentContext,
-    pub gl_surface: glutin::surface::Surface<glutin::surface::WindowSurface>,
     pub id: WindowId,
-    pub gr_context: skia_safe::gpu::DirectContext,
-    pub window: Arc<winit::window::Window>,
     pub surface: skia_safe::Surface,
     pub dirty_surface: skia_safe::Surface,
+    pub gr_context: skia_safe::gpu::DirectContext,
+    pub gl_surface: glutin::surface::Surface<glutin::surface::WindowSurface>,
+    gl_context: glutin::context::PossiblyCurrentContext,
+    gl_config: Config,
+    pub window: Arc<winit::window::Window>,
     pub should_close: bool,
     #[cfg(target_os = "windows")]
     pub is_initially_cloaked: bool,
@@ -58,7 +58,7 @@ pub struct WinState {
 
 impl Drop for WinState {
     fn drop(&mut self) {
-        self.gl_context.make_current(&self.gl_surface).unwrap();
+        let _ = self.gl_context.make_current(&self.gl_surface);
     }
 }
 
@@ -291,9 +291,12 @@ fn build_window(
 ///
 #[cfg(target_os = "windows")]
 pub fn set_cloak(window: &winit::window::Window, state: bool) -> bool {
-    use windows_sys::Win32::{
-        Foundation::{BOOL, FALSE, HWND, TRUE},
-        Graphics::Dwm::{DWMWA_CLOAK, DwmSetWindowAttribute},
+    use windows_sys::{
+        Win32::{
+            Foundation::{FALSE, HWND, TRUE},
+            Graphics::Dwm::{DWMWA_CLOAK, DwmSetWindowAttribute},
+        },
+        core::BOOL,
     };
 
     let RawWindowHandle::Win32(handle) = window.window_handle().unwrap().as_raw() else {

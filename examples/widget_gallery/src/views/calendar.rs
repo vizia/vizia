@@ -26,7 +26,7 @@ pub fn calendar(cx: &mut Context) {
     VStack::new(cx, |cx| {
         CalendarState { date }.build(cx);
 
-        Markdown::new(cx, "# Calendar");
+        Label::new(cx, Localized::new("calendar")).class("panel-title");
 
         Divider::new(cx);
 

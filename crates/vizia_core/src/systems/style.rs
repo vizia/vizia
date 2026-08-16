@@ -1,4 +1,4 @@
-use crate::{cache::CachedData, prelude::*};
+use crate::{cache::CachedData, prelude::*, text::resolved_text_direction};
 #[cfg(feature = "rayon")]
 use dashmap::{DashMap, ReadOnlyView};
 use hashbrown::HashMap;
@@ -30,6 +30,19 @@ pub(crate) struct Node<'s, 't> {
 impl std::fmt::Debug for Node<'_, '_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.entity)
+    }
+}
+
+impl Node<'_, '_> {
+    fn matches_direction(&self, expected: &Direction) -> bool {
+        match expected {
+            Direction::LeftToRight | Direction::RightToLeft => {
+                resolved_text_direction(self.store, self.entity) == *expected
+            }
+            Direction::Auto => {
+                self.store.direction.get(self.entity).copied() == Some(Direction::Auto)
+            }
+        }
     }
 }
 
@@ -172,57 +185,125 @@ impl Element for Node<'_, '_> {
         pc: &<Self::Impl as SelectorImpl>::NonTSPseudoClass,
         _context: &mut MatchingContext<'_, Self::Impl>,
     ) -> bool {
-        if let Some(psudeo_class_flag) = self.store.pseudo_classes.get(self.entity) {
-            match pc {
-                PseudoClass::Hover => psudeo_class_flag.contains(PseudoClassFlags::HOVER),
-                PseudoClass::Active => psudeo_class_flag.contains(PseudoClassFlags::ACTIVE),
-                PseudoClass::Over => psudeo_class_flag.contains(PseudoClassFlags::OVER),
-                PseudoClass::Focus => psudeo_class_flag.contains(PseudoClassFlags::FOCUS),
-                PseudoClass::FocusVisible => {
-                    psudeo_class_flag.contains(PseudoClassFlags::FOCUS_VISIBLE)
-                }
-                PseudoClass::FocusWithin => {
-                    psudeo_class_flag.contains(PseudoClassFlags::FOCUS_WITHIN)
-                }
-                PseudoClass::Enabled => {
-                    self.store.disabled.get(self.entity).map(|disabled| !*disabled).unwrap_or(true)
-                }
-                PseudoClass::Disabled => {
-                    self.store.disabled.get(self.entity).copied().unwrap_or_default()
-                }
-                PseudoClass::ReadOnly => psudeo_class_flag.contains(PseudoClassFlags::READ_ONLY),
-                PseudoClass::ReadWrite => psudeo_class_flag.contains(PseudoClassFlags::READ_WRITE),
-                PseudoClass::PlaceholderShown => {
-                    psudeo_class_flag.contains(PseudoClassFlags::PLACEHOLDER_SHOWN)
-                }
-                PseudoClass::Default => psudeo_class_flag.contains(PseudoClassFlags::DEFAULT),
-                PseudoClass::Checked => psudeo_class_flag.contains(PseudoClassFlags::CHECKED),
-                PseudoClass::Indeterminate => {
-                    psudeo_class_flag.contains(PseudoClassFlags::INDETERMINATE)
-                }
-                PseudoClass::Blank => psudeo_class_flag.contains(PseudoClassFlags::BLANK),
-                PseudoClass::Valid => psudeo_class_flag.contains(PseudoClassFlags::VALID),
-                PseudoClass::Invalid => psudeo_class_flag.contains(PseudoClassFlags::INVALID),
-                PseudoClass::InRange => psudeo_class_flag.contains(PseudoClassFlags::IN_RANGE),
-                PseudoClass::OutOfRange => {
-                    psudeo_class_flag.contains(PseudoClassFlags::OUT_OF_RANGE)
-                }
-                PseudoClass::Required => psudeo_class_flag.contains(PseudoClassFlags::REQUIRED),
-                PseudoClass::Optional => psudeo_class_flag.contains(PseudoClassFlags::OPTIONAL),
-                PseudoClass::UserValid => psudeo_class_flag.contains(PseudoClassFlags::USER_VALID),
-                PseudoClass::UserInvalid => {
-                    psudeo_class_flag.contains(PseudoClassFlags::USER_INVALID)
-                }
-                PseudoClass::Lang(_) => todo!(),
-                PseudoClass::Dir(_) => todo!(),
-                PseudoClass::Has(selector_list) => self.match_has(selector_list, _context),
-                PseudoClass::Custom(name) => {
-                    println!("custom: {}", name);
-                    todo!()
-                }
+        match pc {
+            PseudoClass::Hover => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::HOVER)),
+            PseudoClass::Active => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::ACTIVE)),
+            PseudoClass::Over => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::OVER)),
+            PseudoClass::Focus => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::FOCUS)),
+            PseudoClass::FocusVisible => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::FOCUS_VISIBLE)),
+            PseudoClass::FocusWithin => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::FOCUS_WITHIN)),
+            PseudoClass::Enabled => {
+                self.store.disabled.get(self.entity).map(|disabled| !*disabled).unwrap_or(true)
             }
-        } else {
-            false
+            PseudoClass::Disabled => {
+                self.store.disabled.get(self.entity).copied().unwrap_or_default()
+            }
+            PseudoClass::ReadOnly => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::READ_ONLY)),
+            PseudoClass::ReadWrite => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::READ_WRITE)),
+            PseudoClass::PlaceholderShown => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::PLACEHOLDER_SHOWN)),
+            PseudoClass::Default => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::DEFAULT)),
+            PseudoClass::Checked => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::CHECKED)),
+            PseudoClass::Indeterminate => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::INDETERMINATE)),
+            PseudoClass::Blank => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::BLANK)),
+            PseudoClass::Valid => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::VALID)),
+            PseudoClass::Invalid => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::INVALID)),
+            PseudoClass::InRange => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::IN_RANGE)),
+            PseudoClass::OutOfRange => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::OUT_OF_RANGE)),
+            PseudoClass::Required => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::REQUIRED)),
+            PseudoClass::Optional => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::OPTIONAL)),
+            PseudoClass::UserValid => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::USER_VALID)),
+            PseudoClass::UserInvalid => self
+                .store
+                .pseudo_classes
+                .get(self.entity)
+                .is_some_and(|flags| flags.contains(PseudoClassFlags::USER_INVALID)),
+            PseudoClass::Lang(_) => todo!(),
+            PseudoClass::Dir(direction) => self.matches_direction(direction),
+            PseudoClass::Has(selector_list) => self.match_has(selector_list, _context),
+            PseudoClass::Custom(name) => {
+                println!("custom: {}", name);
+                todo!()
+            }
         }
     }
 
@@ -354,18 +435,24 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
 
             if cx.style.font_color.inherit_inline(entity, parent)
                 | cx.style.font_size.inherit_inline(entity, parent)
+                | cx.style.letter_spacing.inherit_inline(entity, parent)
+                | cx.style.line_height.inherit_inline(entity, parent)
                 | cx.style.font_family.inherit_inline(entity, parent)
                 | cx.style.font_weight.inherit_inline(entity, parent)
                 | cx.style.font_slant.inherit_inline(entity, parent)
                 | cx.style.font_width.inherit_inline(entity, parent)
                 | cx.style.text_decoration_line.inherit_inline(entity, parent)
+                | cx.style.text_decoration_style.inherit_inline(entity, parent)
+                | cx.style.text_decoration_color.inherit_inline(entity, parent)
                 | cx.style.text_stroke_width.inherit_inline(entity, parent)
                 | cx.style.text_stroke_style.inherit_inline(entity, parent)
                 | cx.style.font_variation_settings.inherit_inline(entity, parent)
                 | cx.style.direction.inherit_inline(entity, parent)
             {
                 cx.style.needs_text_update(entity);
-                cx.style.needs_relayout();
+                // Only this entity's text changed; relayout incrementally from it (morphorm
+                // restarts from at least its parent) rather than forcing a full tree relayout.
+                cx.style.needs_relayout(entity);
             }
         }
     }
@@ -377,18 +464,23 @@ pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut 
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             if cx.style.font_color.inherit_shared(entity, parent)
                 | cx.style.font_size.inherit_shared(entity, parent)
+                | cx.style.letter_spacing.inherit_shared(entity, parent)
+                | cx.style.line_height.inherit_shared(entity, parent)
                 | cx.style.font_family.inherit_shared(entity, parent)
                 | cx.style.font_weight.inherit_shared(entity, parent)
                 | cx.style.font_slant.inherit_shared(entity, parent)
                 | cx.style.font_width.inherit_shared(entity, parent)
                 | cx.style.text_decoration_line.inherit_shared(entity, parent)
+                | cx.style.text_decoration_style.inherit_shared(entity, parent)
+                | cx.style.text_decoration_color.inherit_shared(entity, parent)
                 | cx.style.text_stroke_width.inherit_shared(entity, parent)
                 | cx.style.text_stroke_style.inherit_shared(entity, parent)
                 | cx.style.font_variation_settings.inherit_shared(entity, parent)
                 | cx.style.direction.inherit_shared(entity, parent)
             {
                 cx.style.needs_text_update(entity);
-                cx.style.needs_relayout();
+                // Only this entity's text changed; relayout incrementally from it.
+                cx.style.needs_relayout(entity);
             }
 
             if cx.style.disabled.inherit_shared(entity, parent)
@@ -463,6 +555,34 @@ fn link_variable_data(
         }
     }
 
+    // -- Letter-spacing variables --
+    let resolved_letter_spacings: HashMap<u64, _> = {
+        let props = &style.custom_letter_spacing_props;
+        props
+            .iter()
+            .filter_map(|(h, p)| p.get_with_variables(entity, props).map(|v| (*h, v)))
+            .collect()
+    };
+    for prop in style.custom_letter_spacing_props.values_mut() {
+        if prop.link_with_resolved(entity, matched_rules, &resolved_letter_spacings) {
+            redraw_entities.push(entity);
+        }
+    }
+
+    // -- Line-height variables --
+    let resolved_line_heights: HashMap<u64, _> = {
+        let props = &style.custom_line_height_props;
+        props
+            .iter()
+            .filter_map(|(h, p)| p.get_with_variables(entity, props).map(|v| (*h, v)))
+            .collect()
+    };
+    for prop in style.custom_line_height_props.values_mut() {
+        if prop.link_with_resolved(entity, matched_rules, &resolved_line_heights) {
+            redraw_entities.push(entity);
+        }
+    }
+
     // -- Units variables --
     let resolved_units: HashMap<u64, _> = {
         let props = &style.custom_units_props;
@@ -514,6 +634,16 @@ fn inherit_variable_data(
                     redraw_entities.push(entity);
                 }
             }
+            for prop in style.custom_letter_spacing_props.values_mut() {
+                if prop.inherit_shared(entity, parent) {
+                    redraw_entities.push(entity);
+                }
+            }
+            for prop in style.custom_line_height_props.values_mut() {
+                if prop.inherit_shared(entity, parent) {
+                    redraw_entities.push(entity);
+                }
+            }
             for prop in style.custom_units_props.values_mut() {
                 if prop.inherit_shared(entity, parent) {
                     redraw_entities.push(entity);
@@ -555,6 +685,11 @@ fn link_style_data(
     }
 
     if style.z_index.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.ignore_clipping.link(entity, matched_rules) {
+        should_reclip = true;
         should_redraw = true;
     }
 
@@ -648,6 +783,11 @@ fn link_style_data(
         should_redraw = true;
     }
 
+    if style.aspect_ratio.link(entity, matched_rules) {
+        should_relayout = true;
+        should_redraw = true;
+    }
+
     // Size Constraints
     if style.max_width.link(entity, matched_rules, &style.custom_units_props) {
         should_relayout = true;
@@ -690,18 +830,62 @@ fn link_style_data(
         should_redraw = true;
     }
 
-    // Border
-    if style.border_width.link(entity, matched_rules, &style.custom_length_props) {
+    // Border widths
+    if style.border_top_width.link(entity, matched_rules, &style.custom_length_props) {
         should_relayout = true;
         should_redraw = true;
         cache.path.remove(entity);
     }
 
-    if style.border_color.link(entity, matched_rules, &style.custom_color_props) {
+    if style.border_right_width.link(entity, matched_rules, &style.custom_length_props) {
+        should_relayout = true;
+        should_redraw = true;
+        cache.path.remove(entity);
+    }
+
+    if style.border_bottom_width.link(entity, matched_rules, &style.custom_length_props) {
+        should_relayout = true;
+        should_redraw = true;
+        cache.path.remove(entity);
+    }
+
+    if style.border_left_width.link(entity, matched_rules, &style.custom_length_props) {
+        should_relayout = true;
+        should_redraw = true;
+        cache.path.remove(entity);
+    }
+
+    // Border colors
+    if style.border_top_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
     }
 
-    if style.border_style.link(entity, matched_rules) {
+    if style.border_right_color.link(entity, matched_rules, &style.custom_color_props) {
+        should_redraw = true;
+    }
+
+    if style.border_bottom_color.link(entity, matched_rules, &style.custom_color_props) {
+        should_redraw = true;
+    }
+
+    if style.border_left_color.link(entity, matched_rules, &style.custom_color_props) {
+        should_redraw = true;
+    }
+
+    // Border styles
+    if style.border_top_style.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.border_right_style.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.border_bottom_style.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.border_left_style.link(entity, matched_rules) {
         should_redraw = true;
     }
 
@@ -794,7 +978,15 @@ fn link_style_data(
         should_redraw = true;
     }
 
+    if style.background_position.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
     if style.background_size.link(entity, matched_rules) {
+        should_redraw = true;
+    }
+
+    if style.background_repeat.link(entity, matched_rules) {
         should_redraw = true;
     }
 
@@ -805,6 +997,12 @@ fn link_style_data(
     }
 
     if style.font_size.link(entity, matched_rules, &style.custom_font_size_props) {
+        should_relayout = true;
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.letter_spacing.link(entity, matched_rules, &style.custom_letter_spacing_props) {
         should_relayout = true;
         should_redraw = true;
         should_reflow = true;
@@ -856,6 +1054,12 @@ fn link_style_data(
         should_reflow = true;
     }
 
+    if style.line_height.link(entity, matched_rules, &style.custom_line_height_props) {
+        should_redraw = true;
+        should_relayout = true;
+        should_reflow = true;
+    }
+
     if style.line_clamp.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;
@@ -874,42 +1078,22 @@ fn link_style_data(
         should_reflow = true;
     }
 
+    if style.text_decoration_style.link(entity, matched_rules) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
+    if style.text_decoration_color.link(entity, matched_rules, &style.custom_color_props) {
+        should_redraw = true;
+        should_reflow = true;
+    }
+
     if style.text_stroke_width.link(entity, matched_rules) {
         should_redraw = true;
         should_reflow = true;
     }
 
     if style.text_stroke_style.link(entity, matched_rules) {
-        should_redraw = true;
-        should_reflow = true;
-    }
-
-    if style.underline_style.link(entity, matched_rules) {
-        should_redraw = true;
-        should_reflow = true;
-    }
-
-    if style.underline_color.link(entity, matched_rules, &style.custom_color_props) {
-        should_redraw = true;
-        should_reflow = true;
-    }
-
-    if style.overline_style.link(entity, matched_rules) {
-        should_redraw = true;
-        should_reflow = true;
-    }
-
-    if style.overline_color.link(entity, matched_rules, &style.custom_color_props) {
-        should_redraw = true;
-        should_reflow = true;
-    }
-
-    if style.strikethrough_style.link(entity, matched_rules) {
-        should_redraw = true;
-        should_reflow = true;
-    }
-
-    if style.strikethrough_color.link(entity, matched_rules, &style.custom_color_props) {
         should_redraw = true;
         should_reflow = true;
     }
@@ -989,7 +1173,10 @@ fn link_style_data(
 
     //
     if should_relayout {
-        style.system_flags.set(SystemFlags::RELAYOUT, true);
+        // Register the specific entity for incremental relayout. Setting the RELAYOUT system flag
+        // alone would leave `style.relayout` empty and force a full tree relayout (see
+        // `layout_system`), e.g. every time a popover toggles its `display`.
+        style.needs_relayout(entity);
     }
 
     if should_redraw {
@@ -1023,6 +1210,48 @@ fn link_style_data(
     }
 }
 
+fn compute_matched_direction_rules(
+    entity: Entity,
+    store: &Style,
+    tree: &Tree<Entity>,
+    bloom: &BloomFilter,
+) -> Vec<(Rule, u32)> {
+    let mut matched_rules = Vec::with_capacity(4);
+
+    let mut cache = SelectorCaches::default();
+    let mut context = MatchingContext::new(
+        MatchingMode::Normal,
+        Some(bloom),
+        &mut cache,
+        QuirksMode::NoQuirks,
+        NeedsSelectorFlags::Yes,
+        MatchingForInvalidation::No,
+    );
+
+    let node = Node { entity, store, tree };
+
+    for (rule_id, rule) in store.rules.iter() {
+        if !store.direction.has_rule(*rule_id) {
+            continue;
+        }
+
+        let matches = matches_selector(&rule.selector, 0, Some(&rule.hashes), &node, &mut context);
+
+        if matches {
+            matched_rules.push((*rule_id, rule.selector.specificity()));
+        }
+    }
+
+    sort_matched_rules(&mut matched_rules);
+    matched_rules
+}
+
+fn sort_matched_rules(matched_rules: &mut [(Rule, u32)]) {
+    matched_rules.sort_by(|(rule_a, specificity_a), (rule_b, specificity_b)| {
+        specificity_b.cmp(specificity_a).then_with(|| rule_b.index().cmp(&rule_a.index()))
+    });
+}
+
 /// Compute a list of matching style rules for a given entity.
 pub(crate) fn compute_matched_rules(
     entity: Entity,
@@ -1052,8 +1281,7 @@ pub(crate) fn compute_matched_rules(
         }
     }
 
-    matched_rules.sort_by_key(|(_, s)| *s);
-    matched_rules.reverse();
+    sort_matched_rules(&mut matched_rules);
     matched_rules
 }
 
@@ -1243,12 +1471,48 @@ pub(crate) fn style_system(cx: &mut Context) {
     inline_inheritance_system(cx, &mut redraw_entities);
 
     if cx.style.restyle.is_empty() {
+        for entity in redraw_entities {
+            cx.needs_redraw(entity);
+        }
         return;
     }
 
+    let current_restyle = std::mem::take(&mut cx.style.restyle);
+
     let entities = TreeBreadthIterator::full(&cx.tree)
-        .filter(|e| cx.style.restyle.contains(e))
+        .filter(|e| current_restyle.contains(e))
         .collect::<Vec<_>>();
+
+    let mut direction_bloom = BloomFilter::default();
+    for entity in entities.iter().copied() {
+        compute_element_hash(entity, &cx.tree, &cx.style, &mut direction_bloom);
+        let matched_direction_rules =
+            compute_matched_direction_rules(entity, &cx.style, &cx.tree, &direction_bloom);
+
+        if cx.style.direction.link(entity, &matched_direction_rules) {
+            // Direction affects layout flow; mark this entity dirty so incremental layout runs.
+            cx.style.needs_relayout(entity);
+            redraw_entities.push(entity);
+
+            let iter = LayoutParentIterator::new(&cx.tree, entity);
+            for parent in iter {
+                if cx.style.display.get(parent).copied().unwrap_or_default() != Display::None {
+                    cx.style.needs_text_update(parent);
+                    break;
+                }
+            }
+        }
+    }
+
+    for entity in cx.tree.into_iter() {
+        if let Some(parent) = cx.tree.get_layout_parent(entity) {
+            if cx.style.direction.inherit_shared(entity, parent) {
+                cx.style.needs_text_update(entity);
+                // Only this entity's direction changed; relayout incrementally from it.
+                cx.style.needs_relayout(entity);
+            }
+        }
+    }
 
     let matched_rules = {
         #[cfg(feature = "rayon")]
@@ -1261,7 +1525,6 @@ pub(crate) fn style_system(cx: &mut Context) {
         }
     };
 
-    //  Apply matched rules to entities
     for entity in entities.iter() {
         if let Some(matched_rules) = matched_rules.get(entity) {
             link_variable_data(&mut cx.style, *entity, &mut redraw_entities, matched_rules);
@@ -1270,7 +1533,7 @@ pub(crate) fn style_system(cx: &mut Context) {
 
     inherit_variable_data(&mut cx.style, &cx.tree, &mut redraw_entities);
 
-    for entity in entities {
+    for entity in entities.iter().copied() {
         if let Some(matched_rules) = matched_rules.get(&entity) {
             link_style_data(
                 &mut cx.style,
@@ -1283,11 +1546,92 @@ pub(crate) fn style_system(cx: &mut Context) {
         }
     }
 
-    cx.style.restyle.clear();
-
     shared_inheritance_system(cx, &mut redraw_entities);
 
     for entity in redraw_entities {
         cx.needs_redraw(entity);
+    }
+
+    invalidate_focus_on_hidden(cx);
+}
+
+/// Re-validates `cx.focused` after style resolution.
+///
+/// `WindowEvent::KeyDown` dispatch in `event_manager` routes to
+/// `cx.focused` regardless of the focused view's visibility. Without
+/// re-validation, an entity that becomes `Display::None` (or whose
+/// ancestor does) via either a CSS rule or the `.display(...)` modifier
+/// keeps focus indefinitely; the existing cleanup in `Context::remove`
+/// only fires when an entity is *removed from the tree*, not when it
+/// merely becomes non-visible. The most user-visible symptom is a
+/// plug-in `Textbox` inside a modal that gets hidden via
+/// `Display::None` — every subsequent host keystroke continues to be
+/// routed to the invisible textbox.
+///
+/// Runs at the end of [`style_system`]: at this point `display` and
+/// `disabled` are authoritative for the frame, but layout / draw
+/// haven't consumed them yet, so re-routing here avoids one frame of
+/// incorrect dispatch.
+///
+/// When the focused entity (or any ancestor) is `Display::None`, or
+/// the focused entity is `disabled`, focus moves to the previous
+/// focusable element in tab order via [`focus_backward`]. If
+/// `focus_backward` returns `None` (no prior focusable in scope),
+/// focus falls back to [`Entity::root`] so keystrokes route to the
+/// window rather than to an invisible view.
+fn invalidate_focus_on_hidden(cx: &mut Context) {
+    use crate::style::Display;
+    use crate::tree::focus_backward;
+
+    let focused = cx.focused;
+    if focused == Entity::null() || focused == Entity::root() {
+        return;
+    }
+
+    let hidden = std::iter::once(focused)
+        .chain(focused.parent_iter(&cx.tree))
+        .any(|entity| cx.style.display.get(entity).copied().unwrap_or_default() == Display::None);
+    let disabled = cx.style.disabled.get(focused).cloned().unwrap_or_default();
+
+    if !hidden && !disabled {
+        return;
+    }
+
+    // `lock_focus_to` matches the scope used by `focus_prev` / `focus_next`
+    // for keyboard navigation: respect any active modal-focus lock from
+    // `lock_focus_to_within`, otherwise scope to the entire tree.
+    let lock_focus_to = cx.focus_stack.last().copied().unwrap_or(Entity::root());
+    let new_target =
+        focus_backward(&cx.tree, &cx.style, focused, lock_focus_to).unwrap_or(Entity::root());
+
+    cx.with_current(new_target, |cx| cx.focus());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sort_matched_rules;
+    use crate::style::Rule;
+    use vizia_id::GenerationalId;
+
+    #[test]
+    fn sort_matched_rules_uses_rule_order_for_specificity_ties() {
+        let mut matched_rules = vec![
+            (Rule::new(1, 0), 10),
+            (Rule::new(3, 0), 10),
+            (Rule::new(2, 0), 11),
+            (Rule::new(4, 0), 10),
+        ];
+
+        sort_matched_rules(&mut matched_rules);
+
+        assert_eq!(
+            matched_rules,
+            vec![
+                (Rule::new(2, 0), 11),
+                (Rule::new(4, 0), 10),
+                (Rule::new(3, 0), 10),
+                (Rule::new(1, 0), 10),
+            ]
+        );
     }
 }

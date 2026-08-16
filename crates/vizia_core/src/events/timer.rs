@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, rc::Rc};
 
-use web_time::{Duration, Instant};
+use std::time::{Duration, Instant};
 
 use crate::{context::EventContext, entity::Entity};
 

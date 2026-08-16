@@ -4,16 +4,9 @@ use crate::DemoRegion;
 
 pub fn label(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Label
-A label can be used to display a string of text.        
-        ",
-        );
+        Label::new(cx, Localized::new("label")).class("panel-title");
 
         Divider::new(cx);
-
-        Markdown::new(cx, "### Basic label");
 
         DemoRegion::new(cx, "Basic Label", |cx| {
             Label::new(cx, "Hello Vizia");

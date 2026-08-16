@@ -1,4 +1,5 @@
 use std::cell::RefCell;
+use std::ops::Range;
 use std::rc::Rc;
 
 use crate::prelude::*;
@@ -9,7 +10,7 @@ use crate::text::{
 };
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
 use skia_safe::textlayout::{RectHeightStyle, RectWidthStyle};
-use skia_safe::{Paint, PaintStyle, Rect};
+use skia_safe::{ClipOp, Paint, PaintStyle, Rect};
 use unicode_segmentation::UnicodeSegmentation;
 
 /// Events for modifying a textbox.
@@ -54,6 +55,10 @@ pub enum TextEvent {
     SetPlaceholder(String),
     /// Trigger the `on_blur` callback.
     Blur,
+    /// Set whether masked text should be visible.
+    SetMaskVisible(bool),
+    /// Toggle whether masked text should be visible.
+    ToggleMaskVisible,
     /// Toggle the visibility of the text Caret.
     ToggleCaret,
 }
@@ -77,10 +82,18 @@ pub struct Textbox<R, T> {
     placeholder: Signal<String>,
     show_placeholder: Signal<bool>,
     show_caret: Signal<bool>,
+    mask_char: Signal<Option<char>>,
+    max_length: Signal<Option<usize>>,
+    can_copy: Signal<bool>,
+    can_paste: Signal<bool>,
+    mask_visible: bool,
+    real_text: String,
     caret_timer: Timer,
     selection: Selection,
     preedit_backup: Option<PreeditBackup>,
     text_overflow: Option<TextOverflow>,
+    edited_since_focus: bool,
+    edited_once: bool,
 }
 
 // Determines whether the enter key submits the text or inserts a new line.
@@ -164,6 +177,10 @@ where
         let caret_timer = cx.environment().caret_timer;
         let initial_text = value.get_value(cx).to_string_local(cx);
         let show_caret = Signal::new(false);
+        let mask_char = Signal::new(None);
+        let max_length = Signal::new(None);
+        let can_copy = Signal::new(true);
+        let can_paste = Signal::new(true);
         let placeholder = Signal::new(String::from(""));
         let show_placeholder = Signal::new(initial_text.is_empty());
 
@@ -180,10 +197,18 @@ where
             placeholder,
             show_placeholder,
             show_caret,
+            mask_char,
+            max_length,
+            can_copy,
+            can_paste,
+            mask_visible: false,
+            real_text: initial_text.clone(),
             caret_timer,
             selection: Selection::new(0, 0),
             preedit_backup: None,
             text_overflow: None,
+            edited_since_focus: false,
+            edited_once: false,
         }
         .build(cx, move |cx| {
             cx.add_listener(move |textbox: &mut Self, cx, event| {
@@ -214,33 +239,118 @@ where
             handle.bind(placeholder, move |handle| {
                 let text = value_text.get();
                 let txt = text.to_string_local(&handle);
+                let mut display_text = String::new();
                 let handle = handle.modify(|textbox| {
+                    textbox.real_text = txt.clone();
                     textbox.show_placeholder.set_if_changed(txt.is_empty());
+                    display_text = textbox.display_text_from_real();
                 });
-                let placeholder_text = placeholder.get().to_string_local(&handle);
-
-                if show_placeholder.get() {
-                    handle.text(placeholder_text);
-                } else {
-                    handle.text(txt);
-                }
+                handle.text(display_text);
             });
         })
     }
 
+    fn display_text_from_real(&self) -> String {
+        if self.show_placeholder.get() {
+            return self.placeholder.get().clone();
+        }
+
+        if self.mask_visible {
+            return self.real_text.clone();
+        }
+
+        let Some(mask) = self.mask_char.get() else {
+            return self.real_text.clone();
+        };
+
+        let mut masked = String::with_capacity(self.real_text.len());
+        for grapheme in self.real_text.graphemes(true) {
+            if grapheme == "\n" {
+                masked.push('\n');
+            } else {
+                masked.push(mask);
+            }
+        }
+
+        masked
+    }
+
+    fn sync_display_text(&self, cx: &mut EventContext) {
+        cx.style.text.insert(cx.current, self.display_text_from_real());
+        cx.style.needs_text_update(cx.current);
+    }
+
+    fn grapheme_index_to_byte(text: &str, idx: usize) -> usize {
+        if idx == 0 {
+            return 0;
+        }
+
+        for (i, (byte, _)) in text.grapheme_indices(true).enumerate() {
+            if i == idx {
+                return byte;
+            }
+        }
+
+        text.len()
+    }
+
+    fn byte_to_grapheme_index(text: &str, byte_offset: usize) -> usize {
+        let mut idx = 0;
+        for (byte, _) in text.grapheme_indices(true) {
+            if byte >= byte_offset {
+                break;
+            }
+            idx += 1;
+        }
+        idx
+    }
+
+    fn selection_display_to_real(
+        display_text: &str,
+        real_text: &str,
+        selection: Selection,
+    ) -> Selection {
+        let anchor_g = Self::byte_to_grapheme_index(display_text, selection.anchor);
+        let active_g = Self::byte_to_grapheme_index(display_text, selection.active);
+        let anchor = Self::grapheme_index_to_byte(real_text, anchor_g);
+        let active = Self::grapheme_index_to_byte(real_text, active_g);
+        Selection::new(anchor, active).with_h_pos(selection.h_pos)
+    }
+
+    fn remap_selection_for_display_change(&mut self, old_display: &str, new_display: &str) {
+        let anchor_g = Self::byte_to_grapheme_index(old_display, self.selection.anchor);
+        let active_g = Self::byte_to_grapheme_index(old_display, self.selection.active);
+        self.selection.anchor = Self::grapheme_index_to_byte(new_display, anchor_g);
+        self.selection.active = Self::grapheme_index_to_byte(new_display, active_g);
+    }
+
     fn insert_text(&mut self, cx: &mut EventContext, txt: &str) {
         if let Some(text) = cx.style.text.get_mut(cx.current) {
+            let old_display = text.clone();
             if self.show_placeholder.get() && !txt.is_empty() {
                 text.clear();
                 self.show_placeholder.set(false);
             }
 
-            text.edit(self.selection.range(), txt);
+            let real_selection =
+                Self::selection_display_to_real(&old_display, &self.real_text, self.selection);
 
-            self.selection = Selection::caret(self.selection.min() + txt.len());
+            let clamped = self.clamp_insert_text(txt, real_selection.range());
 
-            self.show_placeholder.set(text.is_empty());
-            cx.style.needs_text_update(cx.current);
+            text.edit(self.selection.range(), &clamped);
+            self.real_text.edit(real_selection.range(), &clamped);
+
+            // Track the caret in grapheme space so we can remap it safely after
+            // display text is regenerated (for example when masking is enabled).
+            let new_caret_grapheme =
+                Self::byte_to_grapheme_index(text, self.selection.min() + clamped.len());
+
+            self.show_placeholder.set(self.real_text.is_empty());
+            self.sync_display_text(cx);
+            if let Some(new_display) = cx.style.text.get(cx.current) {
+                let new_caret = Self::grapheme_index_to_byte(new_display, new_caret_grapheme);
+                self.selection = Selection::caret(new_caret);
+            }
             cx.style.needs_access_update(cx.current);
         }
     }
@@ -256,6 +366,7 @@ where
         }
 
         if let Some(text) = cx.style.text.get_mut(cx.current) {
+            let old_display = text.clone();
             if self.show_placeholder.get() {
                 text.clear();
                 self.show_placeholder.set(false);
@@ -264,24 +375,31 @@ where
             if !self.selection.is_caret() {
                 let start = self.selection.min();
                 let end = self.selection.max();
+                let real_selection =
+                    Self::selection_display_to_real(&old_display, &self.real_text, self.selection);
 
                 if end > start && end <= text.len() {
                     text.replace_range(start..end, "");
                 }
+                if real_selection.max() <= self.real_text.len() {
+                    self.real_text.replace_range(real_selection.range(), "");
+                }
                 self.selection = Selection::caret(start);
             }
 
-            let preedit_backup = self
-                .preedit_backup
-                .get_or_insert_with(|| PreeditBackup::new(String::new(), self.selection));
+            let (original_selection, prev_preedit_text) = {
+                let preedit_backup = self
+                    .preedit_backup
+                    .get_or_insert_with(|| PreeditBackup::new(String::new(), self.selection));
+                (preedit_backup.original_selection, preedit_backup.prev_preedit.clone())
+            };
 
-            let original_selection = preedit_backup.original_selection;
-            let prev_preedit_text = &preedit_backup.prev_preedit;
+            let new_caret_grapheme;
 
             if prev_preedit_text == preedit_txt {
                 // Move the cursor only
-                let new_selection = Selection::caret(original_selection.min() + cursor.unwrap().0);
-                self.selection = new_selection;
+                let caret = original_selection.min() + cursor.unwrap().0;
+                new_caret_grapheme = Self::byte_to_grapheme_index(text, caret);
             } else {
                 // Bytes index
                 let start = original_selection.min();
@@ -292,27 +410,48 @@ where
                     text.replace_range(start..end, "");
                 }
 
-                text.insert_str(start, preedit_txt);
+                let original_real_selection = Self::selection_display_to_real(
+                    &old_display,
+                    &self.real_text,
+                    original_selection,
+                );
+                let real_start = original_real_selection.min();
+                let real_end =
+                    real_start + prev_preedit_text.chars().map(|c| c.len_utf8()).sum::<usize>();
+                let clamped_preedit = self.clamp_insert_text(preedit_txt, real_start..real_end);
+                if real_end > real_start && real_end <= self.real_text.len() {
+                    self.real_text.replace_range(real_start..real_end, "");
+                }
+                self.real_text.insert_str(real_start, &clamped_preedit);
+
+                text.insert_str(start, &clamped_preedit);
 
                 if let Some((cursor_index, _)) = cursor {
-                    let new_caret = original_selection.min() + cursor_index;
-                    self.selection = Selection::caret(new_caret);
+                    let new_caret =
+                        original_selection.min() + cursor_index.min(clamped_preedit.len());
+                    new_caret_grapheme = Self::byte_to_grapheme_index(text, new_caret);
                 } else {
                     // If there is no valid cursor, the default behavior is to move to the end of the text.
-                    let new_caret = original_selection.min() + preedit_txt.chars().count();
-                    self.selection = Selection::caret(new_caret);
+                    let new_caret = original_selection.min() + clamped_preedit.chars().count();
+                    new_caret_grapheme = Self::byte_to_grapheme_index(text, new_caret);
                 }
 
-                self.preedit_backup.as_mut().unwrap().set_prev_preedit(preedit_txt.to_string());
+                self.preedit_backup.as_mut().unwrap().set_prev_preedit(clamped_preedit);
             }
 
-            cx.style.needs_text_update(cx.current);
+            self.show_placeholder.set(self.real_text.is_empty());
+            self.sync_display_text(cx);
+            if let Some(new_display) = cx.style.text.get(cx.current) {
+                let new_caret = Self::grapheme_index_to_byte(new_display, new_caret_grapheme);
+                self.selection = Selection::caret(new_caret);
+            }
         }
     }
 
     fn clear_preedit(&mut self, cx: &mut EventContext) {
         if let Some(text) = cx.style.text.get_mut(cx.current) {
             if let Some(preedit_backup) = self.preedit_backup.as_ref() {
+                let old_display = text.clone();
                 let original_selection = preedit_backup.original_selection;
                 let prev_preedit_text = preedit_backup.prev_preedit.clone();
 
@@ -321,9 +460,23 @@ where
 
                 text.replace_range(start..end, "");
 
+                let original_real_selection = Self::selection_display_to_real(
+                    &old_display,
+                    &self.real_text,
+                    original_selection,
+                );
+                let real_start = original_real_selection.min();
+                let real_end =
+                    real_start + prev_preedit_text.chars().map(|c| c.len_utf8()).sum::<usize>();
+                if real_end <= self.real_text.len() {
+                    self.real_text.replace_range(real_start..real_end, "");
+                }
+
                 self.selection = original_selection;
 
                 self.preedit_backup = None;
+                self.show_placeholder.set(self.real_text.is_empty());
+                self.sync_display_text(cx);
             }
         }
     }
@@ -343,52 +496,67 @@ where
                     return;
                 }
                 if let Some(text) = cx.style.text.get_mut(cx.current) {
+                    let old_display = text.clone();
                     let del_offset = offset_for_delete_backwards(&self.selection, text);
                     let del_range = del_offset..self.selection.active;
+                    let real_del_range = Self::selection_display_to_real(
+                        &old_display,
+                        &self.real_text,
+                        Selection::new(del_range.start, del_range.end),
+                    )
+                    .range();
 
                     self.selection = Selection::caret(del_range.start);
 
                     text.edit(del_range, "");
+                    self.real_text.edit(real_del_range, "");
 
-                    cx.style.needs_text_update(cx.current);
+                    self.sync_display_text(cx);
                     cx.style.needs_access_update(cx.current);
                 }
             } else if let Some(text) = cx.style.text.get_mut(cx.current) {
                 if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
+                    let old_display = text.clone();
                     let to_delete = apply_movement(movement, self.selection, text, paragraph, true);
+                    let real_to_delete =
+                        Self::selection_display_to_real(&old_display, &self.real_text, to_delete);
                     self.selection = to_delete;
                     let new_cursor_pos = self.selection.min();
 
                     text.edit(to_delete.range(), "");
+                    self.real_text.edit(real_to_delete.range(), "");
                     self.selection = Selection::caret(new_cursor_pos);
 
-                    cx.style.needs_text_update(cx.current);
+                    self.sync_display_text(cx);
                     cx.style.needs_access_update(cx.current);
                 }
             }
         } else if let Some(text) = cx.style.text.get_mut(cx.current) {
+            let old_display = text.clone();
             let del_range = self.selection.range();
+            let real_del_range =
+                Self::selection_display_to_real(&old_display, &self.real_text, self.selection)
+                    .range();
 
             self.selection = Selection::caret(del_range.start);
 
             text.edit(del_range, "");
+            self.real_text.edit(real_del_range, "");
 
-            cx.style.needs_text_update(cx.current);
+            self.sync_display_text(cx);
             cx.style.needs_access_update(cx.current);
         }
 
-        if let Some(text) = cx.style.text.get_mut(cx.current) {
-            self.show_placeholder.set(text.is_empty());
-        }
+        self.show_placeholder.set(self.real_text.is_empty());
     }
 
     fn reset_text(&mut self, cx: &mut EventContext) {
         if let Some(text) = cx.style.text.get_mut(cx.current) {
             text.clear();
+            self.real_text.clear();
             self.selection = Selection::caret(0);
             self.show_placeholder.set(true);
-            *text = self.placeholder.get().clone();
-            cx.style.needs_text_update(cx.current);
+            self.sync_display_text(cx);
             cx.style.needs_access_update(cx.current);
         }
     }
@@ -571,19 +739,46 @@ where
     #[cfg(feature = "clipboard")]
     fn clone_selected(&self, cx: &mut EventContext) -> Option<String> {
         if let Some(text) = cx.style.text.get(cx.current) {
-            let substring = &text[self.selection.range()];
+            let real_selection =
+                Self::selection_display_to_real(text, &self.real_text, self.selection);
+            let substring = &self.real_text[real_selection.range()];
             return Some(substring.to_string());
         }
 
         None
     }
 
-    fn clone_text(&self, cx: &mut EventContext) -> String {
+    fn clone_text(&self, _cx: &mut EventContext) -> String {
         if self.show_placeholder.get() {
             return String::new();
         }
 
-        if let Some(text) = cx.style.text.get(cx.current) { text.clone() } else { String::new() }
+        self.real_text.clone()
+    }
+
+    fn clamp_insert_text(&self, txt: &str, replace_range: Range<usize>) -> String {
+        let Some(max_length) = self.max_length.get() else {
+            return txt.to_string();
+        };
+
+        let current_len = self.real_text.graphemes(true).count();
+        let replaced_len = self.real_text[replace_range].graphemes(true).count();
+        let preserved_len = current_len.saturating_sub(replaced_len);
+        let remaining = max_length.saturating_sub(preserved_len);
+
+        if remaining == 0 {
+            return String::new();
+        }
+
+        txt.graphemes(true).take(remaining).collect()
+    }
+
+    fn is_text_valid(&self, text: &str) -> bool {
+        if let Ok(value) = text.parse::<T>() {
+            if let Some(validate) = &self.validate { validate(&value) } else { true }
+        } else {
+            false
+        }
     }
 
     fn reset_caret_timer(&mut self, cx: &mut EventContext) {
@@ -696,8 +891,8 @@ where
                     // At end-of-text, use the previous grapheme box and place the caret on its trailing edge.
                     (current - 1, current, true)
                 } else {
-                    // Empty text or no valid grapheme box to anchor the caret.
-                    return;
+                    // Empty text: anchor caret to the paragraph's first position.
+                    (0, 1, false)
                 };
 
                 let rects = paragraph.get_rects_for_range(
@@ -864,6 +1059,94 @@ where
             handle.context().style.needs_access_update(entity);
         })
     }
+
+    /// Sets an optional character used to visually mask textbox text.
+    ///
+    /// Use `Some('*')` (or any character) to enable masking and `None` to disable it.
+    pub fn mask_char<U: Into<Option<char>> + Clone + 'static>(
+        self,
+        mask: impl Res<U> + 'static,
+    ) -> Self {
+        let mask = mask.to_signal(self.cx);
+        self.bind(mask, move |mut handle| {
+            let entity = handle.entity();
+            let new_mask = mask.get().into();
+            let mut display_text = String::new();
+            handle = handle.modify(|textbox| {
+                let old_display = textbox.display_text_from_real();
+                textbox.mask_char.set_if_changed(new_mask);
+                let new_display = textbox.display_text_from_real();
+                textbox.remap_selection_for_display_change(&old_display, &new_display);
+                display_text = new_display;
+            });
+            handle = handle.text(display_text);
+            handle.context().style.needs_text_update(entity);
+            handle.context().needs_redraw(entity);
+        })
+    }
+
+    /// Sets whether masked text should be visible.
+    pub fn mask_visible<U: Into<bool> + Clone + 'static>(
+        self,
+        visible: impl Res<U> + 'static,
+    ) -> Self {
+        let visible = visible.to_signal(self.cx);
+        self.bind(visible, move |mut handle| {
+            let entity = handle.entity();
+            let new_visible = visible.get().into();
+            let mut display_text = String::new();
+            let mut changed = false;
+
+            handle = handle.modify(|textbox| {
+                if textbox.mask_visible != new_visible {
+                    let old_display = textbox.display_text_from_real();
+                    textbox.mask_visible = new_visible;
+                    let new_display = textbox.display_text_from_real();
+                    textbox.remap_selection_for_display_change(&old_display, &new_display);
+                    display_text = new_display;
+                    changed = true;
+                }
+            });
+
+            if changed {
+                handle = handle.text(display_text);
+                handle.context().style.needs_text_update(entity);
+                handle.context().needs_redraw(entity);
+            }
+        })
+    }
+
+    /// Sets an optional maximum number of graphemes for textbox input.
+    ///
+    /// Use `Some(n)` to limit input length and `None` to remove the limit.
+    pub fn max_length<U: Into<Option<usize>> + Clone + 'static>(
+        self,
+        max_length: impl Res<U> + 'static,
+    ) -> Self {
+        let max_length = max_length.to_signal(self.cx);
+        self.bind(max_length, move |handle| {
+            let value = max_length.get().into();
+            handle.modify(|textbox| textbox.max_length.set_if_changed(value));
+        })
+    }
+
+    /// Sets whether text in this textbox can be copied to the clipboard.
+    pub fn can_copy<U: Into<bool> + Clone + 'static>(self, state: impl Res<U> + 'static) -> Self {
+        let state = state.to_signal(self.cx);
+        self.bind(state, move |handle| {
+            let value = state.get().into();
+            handle.modify(|textbox| textbox.can_copy.set_if_changed(value));
+        })
+    }
+
+    /// Sets whether text can be pasted into this textbox from the clipboard.
+    pub fn can_paste<U: Into<bool> + Clone + 'static>(self, state: impl Res<U> + 'static) -> Self {
+        let state = state.to_signal(self.cx);
+        self.bind(state, move |handle| {
+            let value = state.get().into();
+            handle.modify(|textbox| textbox.can_paste.set_if_changed(value));
+        })
+    }
 }
 
 /// Converts a byte offset (relative to line start) into a character index
@@ -942,7 +1225,10 @@ where
 
                 // Only iterate over glyphs within the actual text range
                 let glyph_end = line.end_index.min(text_len);
-                let estimated_chars = glyph_end - line.start_index;
+                if line.start_index > glyph_end {
+                    continue;
+                }
+                let estimated_chars = glyph_end.saturating_sub(line.start_index);
                 let mut character_lengths: Vec<u8> = Vec::with_capacity(estimated_chars);
                 let mut character_positions: Vec<f32> = Vec::with_capacity(estimated_chars);
                 let mut character_widths: Vec<f32> = Vec::with_capacity(estimated_chars);
@@ -966,11 +1252,14 @@ where
                 }
 
                 // Include the newline character for hard breaks, as AccessKit needs it
-                let line_end = if line.hard_break {
+                let mut line_end = if line.hard_break {
                     line.end_including_newline.min(text_len)
                 } else {
                     glyph_end
                 };
+                if line_end < line.start_index {
+                    line_end = line.start_index;
+                }
                 let line_text = text.get(line.start_index..line_end).unwrap_or("").to_owned();
 
                 if line.hard_break && line.end_including_newline <= text_len {
@@ -1056,7 +1345,7 @@ where
 
                 if cx.is_over() {
                     if !cx.is_disabled() {
-                        cx.focus_with_visibility(false);
+                        cx.focus_with_visibility(true);
                         cx.capture();
                         cx.lock_cursor_icon();
 
@@ -1071,7 +1360,6 @@ where
                         ));
                     }
                 } else {
-                    cx.emit(TextEvent::Submit(false));
                     cx.release();
 
                     // Forward event to hovered
@@ -1337,7 +1625,7 @@ where
                     #[cfg(not(target_os = "macos"))]
                     let modifier = Modifiers::CTRL;
 
-                    if cx.modifiers == &modifier {
+                    if cx.modifiers == &modifier && self.can_copy.get() {
                         cx.emit(TextEvent::Copy);
                     }
                 }
@@ -1348,7 +1636,7 @@ where
                     #[cfg(not(target_os = "macos"))]
                     let modifier = Modifiers::CTRL;
 
-                    if cx.modifiers == &modifier {
+                    if cx.modifiers == &modifier && self.can_paste.get() {
                         cx.emit(TextEvent::Paste);
                     }
                 }
@@ -1386,6 +1674,9 @@ where
                     return;
                 }
 
+                self.edited_since_focus = true;
+                self.edited_once = true;
+
                 if self.show_placeholder.get() {
                     self.reset_text(cx);
                 }
@@ -1394,15 +1685,7 @@ where
 
                 let text = self.clone_text(cx);
 
-                if let Ok(value) = &text.parse::<T>() {
-                    if let Some(validate) = &self.validate {
-                        cx.set_valid(validate(value));
-                    } else {
-                        cx.set_valid(true);
-                    }
-                } else {
-                    cx.set_valid(false);
-                }
+                cx.set_valid(self.is_text_valid(&text));
 
                 if self.edit {
                     if let Some(callback) = &self.on_edit {
@@ -1428,19 +1711,13 @@ where
 
             TextEvent::DeleteText(movement) => {
                 if self.edit {
+                    self.edited_since_focus = true;
+                    self.edited_once = true;
                     self.delete_text(cx, *movement);
 
                     let text = self.clone_text(cx);
 
-                    if let Ok(value) = &text.parse::<T>() {
-                        if let Some(validate) = &self.validate {
-                            cx.set_valid(validate(value));
-                        } else {
-                            cx.set_valid(true);
-                        }
-                    } else {
-                        cx.set_valid(false);
-                    }
+                    cx.set_valid(self.is_text_valid(&text));
 
                     if let Some(callback) = &self.on_edit {
                         (callback)(cx, text);
@@ -1462,7 +1739,8 @@ where
             TextEvent::StartEdit => {
                 if !cx.is_disabled() && !self.edit {
                     self.edit = true;
-                    cx.focus_with_visibility(false);
+                    self.edited_since_focus = false;
+                    cx.focus_with_visibility(true);
                     cx.capture();
                     self.reset_caret_timer(cx);
                     self.reset_ime_position(cx);
@@ -1472,6 +1750,7 @@ where
 
                     let text = self.value.get_value(cx);
                     let text = text.to_string_local(cx);
+                    self.real_text = text.clone();
 
                     if text.is_empty() {
                         self.show_placeholder.set(true);
@@ -1482,18 +1761,16 @@ where
                         self.select_all(cx);
                     }
 
-                    if let Ok(value) = &text.parse::<T>() {
-                        if let Some(validate) = &self.validate {
-                            cx.set_valid(validate(value));
-                        } else {
-                            cx.set_valid(true);
-                        }
+                    // Keep textbox pristine only until first user edit; once edited,
+                    // preserve validation across blur/focus cycles.
+                    if self.edited_once || !text.is_empty() {
+                        cx.set_valid(self.is_text_valid(&text));
                     } else {
-                        cx.set_valid(false);
+                        cx.set_valid(true);
                     }
                 }
 
-                cx.style.needs_text_update(cx.current);
+                self.sync_display_text(cx);
             }
 
             TextEvent::EndEdit => {
@@ -1502,8 +1779,7 @@ where
                 cx.release();
                 cx.stop_timer(self.caret_timer);
 
-                let text = self.value.get_value(cx);
-                let text = text.to_string_local(cx);
+                let text = self.clone_text(cx);
                 self.show_placeholder.set(text.is_empty());
 
                 if let Some(text_overflow) = self.text_overflow {
@@ -1514,14 +1790,8 @@ where
 
                 self.select_all(cx);
 
-                if let Ok(value) = &text.parse::<T>() {
-                    if let Some(validate) = &self.validate {
-                        cx.set_valid(validate(value));
-                    } else {
-                        cx.set_valid(true);
-                    }
-                } else {
-                    cx.set_valid(false);
+                if self.edited_since_focus {
+                    cx.set_valid(self.is_text_valid(&text));
                 }
 
                 // Reset transform to 0,0
@@ -1531,11 +1801,18 @@ where
                 // Reset cursor position
                 self.selection = Selection::caret(0);
 
-                cx.style.needs_text_update(cx.current);
+                self.sync_display_text(cx);
                 cx.style.needs_access_update(cx.current);
             }
 
             TextEvent::Blur => {
+                // Clicking outside a textbox can end editing while retaining keyboard focus
+                // (for example when clicking non-focusable chrome). Keep focus but remove
+                // the visible focus indicator for pointer-driven blur.
+                if cx.focused() == cx.current() {
+                    cx.focus_with_visibility(false);
+                }
+
                 if let Some(callback) = &self.on_blur {
                     (callback)(cx);
                 } else {
@@ -1544,13 +1821,33 @@ where
                 }
             }
 
+            TextEvent::SetMaskVisible(visible) => {
+                if self.mask_visible != *visible {
+                    let old_display = self.display_text_from_real();
+                    self.mask_visible = *visible;
+                    let new_display = self.display_text_from_real();
+                    self.remap_selection_for_display_change(&old_display, &new_display);
+                    self.sync_display_text(cx);
+                    cx.needs_redraw();
+                }
+            }
+
+            TextEvent::ToggleMaskVisible => {
+                let old_display = self.display_text_from_real();
+                self.mask_visible = !self.mask_visible;
+                let new_display = self.display_text_from_real();
+                self.remap_selection_for_display_change(&old_display, &new_display);
+                self.sync_display_text(cx);
+                cx.needs_redraw();
+            }
+
             TextEvent::Submit(reason) => {
                 if let Some(callback) = &self.on_submit {
-                    if cx.is_valid() {
-                        let text = self.clone_text(cx);
-                        if let Ok(value) = text.parse::<T>() {
-                            (callback)(cx, value, *reason);
-                        }
+                    let text = self.clone_text(cx);
+                    let is_valid = self.is_text_valid(&text);
+                    cx.set_valid(is_valid);
+                    if is_valid && let Ok(value) = text.parse::<T>() {
+                        (callback)(cx, value, *reason);
                     }
                 }
             }
@@ -1586,7 +1883,7 @@ where
             TextEvent::Copy =>
             {
                 #[cfg(feature = "clipboard")]
-                if self.edit {
+                if self.edit && self.can_copy.get() {
                     if let Some(selected_text) = self.clone_selected(cx) {
                         if !selected_text.is_empty() {
                             cx.set_clipboard(selected_text)
@@ -1599,7 +1896,7 @@ where
             TextEvent::Paste =>
             {
                 #[cfg(feature = "clipboard")]
-                if self.edit {
+                if self.edit && self.can_paste.get() {
                     if let Ok(text) = cx.get_clipboard() {
                         cx.emit(TextEvent::InsertText(text));
                     }
@@ -1612,21 +1909,15 @@ where
                 if self.edit {
                     if let Some(selected_text) = self.clone_selected(cx) {
                         if !selected_text.is_empty() {
+                            self.edited_since_focus = true;
+                            self.edited_once = true;
                             cx.set_clipboard(selected_text)
                                 .expect("Failed to add text to clipboard");
                             self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
 
                             let text = self.clone_text(cx);
 
-                            if let Ok(value) = &text.parse::<T>() {
-                                if let Some(validate) = &self.validate {
-                                    cx.set_valid(validate(value));
-                                } else {
-                                    cx.set_valid(true);
-                                }
-                            } else {
-                                cx.set_valid(false);
-                            }
+                            cx.set_valid(self.is_text_valid(&text));
 
                             if let Some(callback) = &self.on_edit {
                                 (callback)(cx, text);
@@ -1648,7 +1939,41 @@ where
         cx.draw_background(canvas);
         cx.draw_border(canvas);
         cx.draw_outline(canvas);
+
+        // Clip only the text content to the textbox shape so long text is contained
+        // without clipping outside effects such as outlines.
         canvas.save();
+        let path = cx.path();
+        canvas.clip_path(&path, ClipOp::Intersect, true);
+
+        let bounds = cx.bounds();
+        let padding_left = match cx.padding_left() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+        let padding_right = match cx.padding_right() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+        let padding_top = match cx.padding_top() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+        let padding_bottom = match cx.padding_bottom() {
+            Units::Pixels(val) => val,
+            _ => 0.0,
+        };
+
+        let content_left = bounds.x + padding_left;
+        let content_top = bounds.y + padding_top;
+        let content_right = (bounds.x + bounds.w - padding_right).max(content_left);
+        let content_bottom = (bounds.y + bounds.h - padding_bottom).max(content_top);
+        canvas.clip_rect(
+            Rect::new(content_left, content_top, content_right, content_bottom),
+            ClipOp::Intersect,
+            true,
+        );
+
         let transform = *self.transform.borrow();
         canvas.translate((transform.0, transform.1));
         cx.draw_text(canvas);

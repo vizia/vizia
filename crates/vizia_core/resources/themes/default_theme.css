@@ -10,6 +10,7 @@
     direction: ltr;
 
     --background: oklch(1 0 0);
+    --background-transparent: oklch(1 0 0 / 0%);
     --foreground: oklch(0.145 0 0);
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
@@ -44,10 +45,12 @@
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    --control-radius: 4px;
 }
 
 .dark {
     --background: oklch(0.145 0 0);
+    --background-transparent: oklch(0.145 0 0 / 0%);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);
     --card-foreground: oklch(0.985 0 0);
@@ -82,21 +85,22 @@
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+    --control-radius: 4px;
 }
 
 .rtl {
     direction: rtl;
 }
 
-.rtl svg {
+svg:dir(rtl) {
     transform: scaleX(-1);
 }
 
-.rtl checkbox svg {
+checkbox:dir(rtl) svg {
     transform: scaleX(1);
 }
 
-.rtl select svg {
+select:dir(rtl) svg {
     transform: scaleX(1);
 }
 
@@ -122,6 +126,13 @@ avatar {
     fill: var(--foreground);
 }
 
+/* AVATAR GROUP */
+
+avatar-group > avatar {
+    border-width: 2px;
+    border-color: var(--background);
+}
+
 /* BADGE */
 
 badge {
@@ -145,7 +156,7 @@ badge.error {
 /* BUTTON  */
 
 button {
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     background-color: var(--primary);
     color: var(--primary-foreground);
     fill: var(--primary-foreground);
@@ -188,7 +199,7 @@ button-group.secondary > button:active {
 
 button.outline,
 button-group.outline > button {
-    background-color: var(--background);
+    background-color: var(--background-transparent);
     border-width: 1px;
     border-color: var(--border);
     color: var(--foreground);
@@ -219,7 +230,7 @@ button-group.outline > button:active {
 
 button.text,
 button-group.text > button {
-    background-color: var(--background);
+    background-color: var(--background-transparent);
     color: var(--foreground);
     fill: var(--foreground);
     transition: background-color 100ms;
@@ -282,39 +293,39 @@ button-group.vertical > textbox {
 }
 
 button-group > :first-child {
-    corner-top-left-radius: 4px;
-    corner-bottom-left-radius: 4px;
+    corner-top-left-radius: var(--control-radius);
+    corner-bottom-left-radius: var(--control-radius);
 }
 
-.rtl button-group > :first-child {
+button-group:dir(rtl) > :first-child {
     corner-top-left-radius: 0px;
     corner-bottom-left-radius: 0px;
-    corner-top-right-radius: 4px;
-    corner-bottom-right-radius: 4px;
+    corner-top-right-radius: var(--control-radius);
+    corner-bottom-right-radius: var(--control-radius);
 }
 
 button-group > :last-child {
-    corner-top-right-radius: 4px;
-    corner-bottom-right-radius: 4px;
+    corner-top-right-radius: var(--control-radius);
+    corner-bottom-right-radius: var(--control-radius);
 }
 
-.rtl button-group > :last-child {
+button-group:dir(rtl) > :last-child {
     corner-top-right-radius: 0px;
     corner-bottom-right-radius: 0px;
-    corner-top-left-radius: 4px;
-    corner-bottom-left-radius: 4px;
+    corner-top-left-radius: var(--control-radius);
+    corner-bottom-left-radius: var(--control-radius);
 }
 
 button-group.vertical > :first-child {
     corner-radius: 0px;
-    corner-top-right-radius: 4px;
-    corner-top-left-radius: 4px;
+    corner-top-right-radius: var(--control-radius);
+    corner-top-left-radius: var(--control-radius);
 }
 
 button-group.vertical > :last-child {
     corner-radius: 0px;
-    corner-bottom-right-radius: 4px;
-    corner-bottom-left-radius: 4px;
+    corner-bottom-right-radius: var(--control-radius);
+    corner-bottom-left-radius: var(--control-radius);
 }
 
 /* CHECKBOX */
@@ -386,14 +397,14 @@ chip:disabled .icon {
 /* COMBOBOX */
 
 combobox {
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     background-color: var(--background);
 }
 
 combobox .title {
     border-width: 1px;
     border-color: var(--border);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 combobox > textbox:placeholder-shown {
@@ -412,7 +423,7 @@ combobox .list label:checked {
 
 calendar {
     background-color: var(--background);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     border-color: var(--border);
     border-width: 1px;
 }
@@ -425,7 +436,7 @@ calendar {
 .calendar-day {
     color: var(--foreground);
     cursor: hand;
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 .calendar-day:hover {
@@ -440,19 +451,19 @@ calendar {
 .calendar-day:checked {
     color: var(--primary-foreground);
     background-color: var(--primary);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 .calendar-day-selected {
     color: var(--primary-foreground);
     background-color: var(--primary);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 .calendar-day-selected:hover {
     color: var(--primary-foreground);
     background-color: var(--primary);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 .calendar-day-disabled {
@@ -503,7 +514,7 @@ knob:disabled .knob-track {
 knob .knob-head {
     background-color: var(--background);
     border-width: 2px;
-    border-color: var(--border);
+    border-color: var(--muted-foreground);
 }
 
 knob:disabled .knob-head {
@@ -511,7 +522,7 @@ knob:disabled .knob-head {
 }
 
 knob .knob-tick {
-    background-color: var(--border);
+    background-color: var(--muted-foreground);
     corner-radius: 1px;
 }
 
@@ -536,9 +547,11 @@ virtual-list.selectable list-item {
     background-color: transparent;
 }
 
-list.selectable list-item.focused,
-virtual-list.selectable list-item.focused {
-    background-color: var(--accent);
+list.selectable list-item:focus-visible,
+virtual-list.selectable list-item:focus-visible {
+    border-width: 2px;
+    border-color: var(--ring);
+    outline-width: 0px;
 }
 
 list.selectable list-item:hover,
@@ -554,29 +567,37 @@ virtual-list.selectable list-item:checked {
 /* TABLE */
 
 table,
-virtual-table {
+virtual-table,
+tree-table,
+virtual-tree-table {
     background-color: var(--background);
     border-width: 1px;
     border-color: var(--border);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     overflow: hidden;
 }
 
 table .table-header-row,
-virtual-table .table-header-row {
+virtual-table .table-header-row,
+tree-table .table-header-row,
+virtual-tree-table .table-header-row {
     background-color: var(--muted);
     border-bottom-width: 1px;
     border-bottom-color: var(--border);
 }
 
 table .table-header-cell,
-virtual-table .table-header-cell {
+virtual-table .table-header-cell,
+tree-table .table-header-cell,
+virtual-tree-table .table-header-cell {
     background-color: var(--muted);
     min-height: 34px;
 }
 
 table .table-header-content,
-virtual-table .table-header-content {
+virtual-table .table-header-content,
+tree-table .table-header-content,
+virtual-tree-table .table-header-content {
     padding-left: 10px;
     padding-right: 10px;
     gap: 8px;
@@ -584,69 +605,87 @@ virtual-table .table-header-content {
 }
 
 table .table-header-title,
-virtual-table .table-header-title {
+virtual-table .table-header-title,
+tree-table .table-header-title,
+virtual-tree-table .table-header-title {
     font-weight: 650;
 }
 
 table .table-sort-indicator,
-virtual-table .table-sort-indicator {
+virtual-table .table-sort-indicator,
+tree-table .table-sort-indicator,
+virtual-tree-table .table-sort-indicator {
     width: 14px;
+    height: 14px;
     color: var(--muted-foreground);
-    text-align: center;
 }
 
 table .table-body,
-virtual-table .table-body {
+virtual-table .table-body,
+tree-table .table-body,
+virtual-tree-table .table-body {
     background-color: var(--background);
 }
 
 table .table-body scrollview,
-virtual-table .table-body scrollview {
+virtual-table .table-body scrollview,
+tree-table .table-body scrollview,
+virtual-tree-table .table-body scrollview {
     min-width: auto;
 }
 
-table .table-row,
-virtual-table .table-row {
-    padding-top: 6px;
-    padding-bottom: 6px;
+.table-row {
     min-height: 30px;
-    border-bottom-width: 1px;
-    border-bottom-color: var(--border);
+    alignment: left;
 }
 
-table .table-row.odd,
-virtual-table .table-row.odd {
-    background-color: var(--muted);
+.table-row:hover {
+    background-color: var(--accent);
 }
 
-table .table-row.even,
-virtual-table .table-row.even {
+.table-row:focus-visible {
+    outline-color: var(--ring);
+    outline-width: 2px;
+    outline-offset: -2px;
+}
+
+.table-row.odd {
+    background-color: transparent;
+}
+
+.table-row.even {
     background-color: transparent;
 }
 
 table .table-cell-text,
-virtual-table .table-cell-text {
-    padding-left: 10px;
-    padding-right: 10px;
-    text-wrap: true;
+virtual-table .table-cell-text,
+tree-table .table-cell-text,
+virtual-tree-table .table-cell-text {
+    width: 1s;
 }
 
 table .table-cell,
-virtual-table .table-cell {
-    padding-left: 10px;
-    padding-right: 10px;
+virtual-table .table-cell,
+tree-table .table-cell,
+virtual-tree-table .table-cell {
+    padding-left: 8px;
+    padding-right: 8px;
     gap: 4px;
     alignment: left;
 }
 
 table .table-cell-meta,
-virtual-table .table-cell-meta {
+virtual-table .table-cell-meta,
+tree-table .table-cell-meta,
+virtual-tree-table .table-cell-meta {
     color: var(--muted-foreground);
     font-size: 12px;
 }
 
 table .table-header-cell resize-handle,
-virtual-table .table-header-cell resize-handle {
+virtual-table .table-header-cell resize-handle,
+tree-table .table-header-cell resize-handle,
+virtual-tree-table .table-header-cell resize-handle {
     width: 6px;
     right: -3px;
     top: 0px;
@@ -658,32 +697,185 @@ virtual-table .table-header-cell resize-handle {
 table .table-header-cell.resizable resize-handle:hover,
 table .table-header-cell.resizable:active resize-handle,
 virtual-table .table-header-cell.resizable resize-handle:hover,
-virtual-table .table-header-cell.resizable:active resize-handle {
+virtual-table .table-header-cell.resizable:active resize-handle,
+tree-table .table-header-cell.resizable resize-handle:hover,
+tree-table .table-header-cell.resizable:active resize-handle,
+virtual-tree-table .table-header-cell.resizable resize-handle:hover,
+virtual-tree-table .table-header-cell.resizable:active resize-handle {
     background-color: var(--ring);
 }
 
 table .table-header-cell.not-resizable resize-handle,
-virtual-table .table-header-cell.not-resizable resize-handle {
+virtual-table .table-header-cell.not-resizable resize-handle,
+tree-table .table-header-cell.not-resizable resize-handle,
+virtual-tree-table .table-header-cell.not-resizable resize-handle {
     display: none;
 }
 
 table list.selectable list-item:hover,
-virtual-table virtual-list.selectable list-item:hover {
+virtual-table virtual-list.selectable list-item:hover,
+tree-table list.selectable list-item:hover,
+virtual-tree-table virtual-list.selectable list-item:hover {
     background-color: var(--accent);
 }
 
 table list.selectable list-item.focused,
 table list.selectable list-item:checked,
 virtual-table virtual-list.selectable list-item.focused,
-virtual-table virtual-list.selectable list-item:checked {
+virtual-table virtual-list.selectable list-item:checked,
+tree-table list.selectable list-item.focused,
+tree-table list.selectable list-item:checked,
+virtual-tree-table virtual-list.selectable list-item.focused,
+virtual-tree-table virtual-list.selectable list-item:checked {
     background-color: var(--accent);
+}
+
+tree-table .tree-table-indent {
+    background-color: transparent;
+}
+
+virtual-tree-table .tree-table-indent {
+    background-color: transparent;
+}
+
+tree-table .tree-table-disclosure {
+    width: 20px;
+    height: 20px;
+}
+
+virtual-tree-table .tree-table-disclosure {
+    width: 20px;
+    height: 20px;
+}
+
+tree-table .tree-table-disclosure-placeholder {
+    width: 20px;
+    height: 20px;
+}
+
+virtual-tree-table .tree-table-disclosure-placeholder {
+    width: 20px;
+    height: 20px;
+}
+
+tree-table divider > .divider-line,
+virtual-tree-table divider > .divider-line {
+    height: 1px;
+    width: 1s;
+    background-color: var(--border);
+}
+
+.table-cell.selected {
+    background-color: var(--accent);
+}
+
+.table-cell:focus-visible {
+    outline-width: 2px;
+    outline-color: var(--ring);
+    outline-offset: -2px;
+}
+
+/* TREE VIEW */
+tree-view,
+virtual-tree-view {
+    background-color: var(--background);
+    border-width: 1px;
+    border-color: var(--border);
+    corner-radius: 4px;
+    overflow: hidden;
+    padding: 1px;
+}
+
+tree-view .tree-view-body,
+virtual-tree-view .tree-view-body {
+    background-color: transparent;
+}
+
+tree-view .tree-view-row,
+virtual-tree-view .tree-view-row {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    min-height: 30px;
+}
+
+.tree-view-row:focus-visible {
+    outline-color: var(--ring);
+    outline-width: 2px;
+    outline-offset: -2px;
+}
+
+tree-view .tree-view-row.odd,
+tree-view .tree-view-row.even,
+virtual-tree-view .tree-view-row.odd,
+virtual-tree-view .tree-view-row.even {
+    background-color: transparent;
+}
+
+tree-view .tree-view-row-content,
+virtual-tree-view .tree-view-row-content {
+    padding-left: 4px;
+    padding-right: 8px;
+    gap: 0px;
+    alignment: left;
+}
+
+tree-view .tree-view-indent,
+virtual-tree-view .tree-view-indent {
+    background-color: transparent;
+}
+
+tree-view .tree-view-disclosure,
+virtual-tree-view .tree-view-disclosure {
+    width: 20px;
+    height: 20px;
+}
+
+tree-view .tree-view-disclosure-placeholder,
+virtual-tree-view .tree-view-disclosure-placeholder {
+    width: 20px;
+    height: 20px;
+}
+
+tree-view .tree-view-row.collapsible,
+virtual-tree-view .tree-view-row.collapsible {
+    cursor: default;
+}
+
+tree-view .tree-view-body.selectable .tree-view-row:hover,
+virtual-tree-view .tree-view-body.selectable .tree-view-row:hover {
+    background-color: var(--accent);
+}
+
+tree-view .tree-view-body.selectable .tree-view-row.selected,
+virtual-tree-view .tree-view-body.selectable .tree-view-row.selected {
+    background-color: var(--accent);
+}
+
+tree-view divider > .divider-line,
+virtual-tree-view divider > .divider-line {
+    height: 1px;
+    width: 1s;
+    background-color: var(--border);
+}
+
+/* TREE TABLE */
+tree-table {
+    border-width: 1px;
+    border-color: var(--border);
+    padding: 1px;
+}
+
+virtual-tree-table {
+    border-width: 1px;
+    border-color: var(--border);
+    padding: 1px;
 }
 
 /* MENU */
 
 menubutton {
     background-color: transparent;
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 menubutton:focus-visible {
@@ -706,7 +898,7 @@ menubutton .shortcut {
 
 submenu {
     background-color: transparent;
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 submenu:checked {
@@ -755,7 +947,7 @@ progressbar:disabled .progressbar-bar {
 /* SELECT */
 
 select {
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
 }
 
 select list.selectable list-item:checked {
@@ -788,7 +980,7 @@ select list.selectable list-item:focus-visible {
 
 popup {
     background-color: var(--popover);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     border-width: 1px;
     border-color: var(--border);
     padding: 1px;
@@ -933,7 +1125,7 @@ slider .thumb {
 /* SPINBOX */
 
 spinbox {
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     border-width: 1px;
     border-color: var(--border);
     background-color: var(--background);
@@ -982,39 +1174,28 @@ switch:disabled .thumb {
 }
 
 /* TABVIEW */
-tabheader:disabled {
-    background-color: transparent;
+
+tab {
+    background-color: var(--muted);
 }
 
-tabheader:checked .indicator {
-    background-color: #51afef;
+tab:checked {
+    background-color: var(--background);
 }
 
-tabview .tabview-divider {
-    background-color: #c4c4c4;
+tab:focus-visible {
+    border-width: 2px;
+    border-color: var(--ring);
+    outline-width: 0px;
 }
 
-/* TABBAR */
-tabbar {
-    border: 1px solid #d6d6d6;
-}
-
-tabbar > list {
-    background-color: #e9e9e9;
-}
-
-tabbar list-item {
-    background-color: transparent;
-    border: 1px solid #d6d6d6;
-}
-
-tabbar list.selectable list-item:checked {
-    background-color: #ffffff;
+tablist scroll-content {
+    background-color: var(--border);
 }
 
 /* TEXTBOX */
 textbox {
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     border-width: 1px;
     border-color: var(--border);
     background-color: var(--background);
@@ -1023,8 +1204,10 @@ textbox {
     transition: background-color 100ms;
 }
 
-textbox:focus {
-    border-color: var(--ring);
+textbox:focus-visible {
+    outline-width: 3px;
+    outline-color: var(--ring);
+    outline-offset: 0px;
 }
 
 textbox:focus.caret {
@@ -1046,15 +1229,25 @@ textbox:disabled {
 }
 
 textbox:invalid {
-    border-color: var(--error);
-    transition: border-color 100ms;
-    border-width: 2px;
+    border-color: var(--destructive);
+    outline-width: 2px;
+    outline-color: var(--destructive);
+    outline-offset: 0px;
+    transition:
+        border-color 100ms,
+        outline-color 100ms;
+}
+
+textbox:invalid:focus-visible {
+    outline-width: 3px;
+    outline-color: var(--destructive);
+    outline-offset: 0px;
 }
 
 /* TOGGLE BUTTON */
 
 toggle-button {
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     border-width: 1px;
     border-color: var(--border);
     background-color: var(--background);
@@ -1079,17 +1272,13 @@ toggle-button:disabled {
 tooltip {
     padding: 8px;
     background-color: var(--primary);
-    corner-radius: 4px;
+    corner-radius: var(--control-radius);
     color: var(--primary-foreground);
     fill: var(--primary-foreground);
 }
 
 tooltip arrow {
     background-color: var(--primary);
-}
-
-xypad .thumb {
-    border-color: #000000ff;
 }
 
 collapsible {
@@ -1121,6 +1310,24 @@ card-header > .description {
     color: var(--muted-foreground);
 }
 
+/* FRAME */
+
+frame {
+    background-color: var(--background);
+    color: var(--foreground);
+    border-width: 1px;
+    border-color: var(--border);
+    corner-radius: 8px;
+    padding: 16px;
+}
+
+frame .frame-title {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-size: 14px;
+    font-weight: 500;
+}
+
 /* SIDEBAR */
 
 sidebar {
@@ -1148,10 +1355,6 @@ sidebar .sidebar-search {
     width: 1s;
     height: 32px;
     padding: 4px;
-}
-
-sidebar .sidebar-content {
-    padding: 12px;
 }
 
 sidebar collapsible.sidebar-group > .header > label.sidebar-group-label {
@@ -1203,4 +1406,14 @@ sidebar .sidebar-footer {
     padding: 8px;
     font-size: 11px;
     color: var(--muted-foreground);
+}
+
+/* XYPAD */
+
+xypad {
+    background-color: var(--muted);
+}
+
+xypad .thumb {
+    border-color: #000000ff;
 }

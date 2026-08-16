@@ -77,10 +77,6 @@ avatar-group {
     alignment: center;
 }
 
-avatar-group > avatar {
-    border: 2px solid #fff;
-}
-
 avatar-group.circle > avatar {
     corner-radius: 50%;
 }
@@ -113,6 +109,14 @@ avatar-group.large > avatar {
     padding: 12px;
 }
 
+/* STACKS */
+
+hstack,
+vstack {
+    width: 1s;
+    height: auto;
+}
+
 /* BADGE */
 
 badge {
@@ -143,9 +147,9 @@ toggle-button {
     padding-right: 8px;
 }
 
-button > *,
-toggle-button > * {
-    width: auto;
+button > hstack,
+toggle-button > hstack {
+    size: auto;
     alignment: center;
     horizontal-gap: 4px;
 }
@@ -392,7 +396,7 @@ popup scrollview scrollbar.vertical {
     right: 2px;
 }
 
-.rtl popup scrollview scrollbar.vertical {
+popup scrollview:dir(rtl) scrollbar.vertical {
     left: 2px;
     right: 1s;
 }
@@ -435,6 +439,10 @@ image {
 knob {
     size: 32px;
     corner-radius: 50%;
+}
+
+knob > zstack {
+    size: 1s;
 }
 
 .knob-track {
@@ -701,10 +709,6 @@ scrollview > scrollbar.vertical {
     left: 1s;
 }
 
-.rtl scrollview > scrollbar.vertical {
-    left: 0px;
-}
-
 /* SCROLLBAR */
 
 scrollbar.horizontal {
@@ -804,6 +808,7 @@ spinbox .spinbox-value {
 
 zstack {
     layout-type: overlay;
+    size: auto;
 }
 
 /* SWITCH */
@@ -827,16 +832,70 @@ switch:checked .thumb {
     transition: left 100ms;
 }
 
-.rtl switch .thumb {
-    left: 1s;
-    right: 1px;
-    transition: right 100ms;
+tab {
+    width: auto;
+    height: 1s;
+    min-height: auto;
+    alignment: left;
+    padding-left: 12px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-right: 4px;
+    min-gap: 8px;
+    gap: 1s;
 }
 
-.rtl switch:checked .thumb {
-    left: 1s;
-    right: 13px;
-    transition: right 100ms;
+tablist.vertical tab {
+    width: 1s;
+    min-width: auto;
+}
+
+tab button.close {
+    width: 16px;
+    height: 16px;
+    alignment: center;
+}
+
+tablist {
+    width: 1s;
+    height: auto;
+}
+
+tablist list {
+    width: 1s;
+    height: auto;
+}
+
+tablist scrollview {
+    height: auto;
+    width: 1s;
+}
+
+tablist scroll-content {
+    height: auto;
+    width: auto;
+    gap: 1px;
+}
+
+tablist.vertical {
+    height: 1s;
+    width: auto;
+}
+
+tablist.vertical list {
+    width: auto;
+    min-width: auto;
+    height: 1s;
+}
+
+tablist.vertical scrollview {
+    width: auto;
+    height: 1s;
+}
+
+tablist.vertical scroll-content {
+    width: auto;
+    height: auto;
 }
 
 /* TABVIEW */
@@ -846,7 +905,12 @@ tabview {
     height: 1s;
 }
 
-tabview > scrollview {
+tabview .tabview-content-wrapper {
+    width: 1s;
+    height: 1s;
+}
+
+tabview > tablist {
     width: 1s;
     height: auto;
 }
@@ -855,94 +919,42 @@ tabview.vertical {
     layout-type: row;
 }
 
-tabview.vertical > scrollview.vertical {
+tabview.vertical > tablist.vertical {
     width: auto;
     height: 1s;
 }
 
-tabview > scrollview > scroll-content {
+tabview > tablist > list {
+    width: 1s;
+    height: auto;
+}
+
+tabview.vertical > tablist.vertical > list {
+    width: auto;
+    height: 1s;
+}
+
+tabview > tablist > list > scrollview {
+    width: 1s;
+    height: auto;
+}
+
+tabview.vertical > tablist.vertical > list > scrollview {
+    width: auto;
+    height: 1s;
+}
+
+tabview > tablist > list > scrollview > scroll-content {
     layout-type: row;
 }
 
-tabview.vertical > scrollview.vertical > scroll-content {
+tabview.vertical > tablist.vertical > list > scrollview > scroll-content {
     layout-type: column;
-}
-
-tabheader {
-    width: auto;
-    height: 32px;
-    cursor: hand;
-}
-
-tabheader label {
-    height: 32px;
-    padding-left: 12px;
-    padding-right: 12px;
-    alignment: left;
-}
-
-tabheader .indicator {
-    height: 2px;
-    width: 1s;
-}
-
-tabheader.vertical .indicator {
-    width: 2px;
-    height: 1s;
-}
-
-tabbar {
-    height: auto;
-    gap: 4px;
-    padding-right: 4px;
-}
-
-tabbar button {
-    size: 30px;
-}
-
-tabbar > list > scrollview {
-    height: auto;
-    width: 1s;
-    max-width: auto;
-}
-
-tabbar > list {
-    height: auto;
-    max-width: auto;
-    width: 1s;
-}
-
-tabbar > list > scrollview > scroll-content {
-    height: auto;
-    layout-type: row;
-    max-width: auto;
-    width: auto;
-    gap: -1px;
-}
-
-tabbar list-item {
-    width: 100px;
-    height: 32px;
-    cursor: hand;
-}
-
-tabbar scrollbar.horizontal {
-    width: 1s;
-    height: 4px;
-}
-
-.tab {
-    width: auto;
-    min-width: 100px;
-    height: 30px;
-    alignment: left;
 }
 
 /* TEXTBOX */
 
 textbox {
-    overflow: hidden;
     width: auto;
     height: 32px;
     padding-left: 8px;
@@ -993,7 +1005,7 @@ virtual-list .list-item {
 /* XY PAD */
 
 xypad {
-    size: 50px;
+    size: 1s;
 }
 
 xypad .thumb {
@@ -1078,7 +1090,6 @@ accordion > collapsible.open > .header > .expand-icon {
 card {
     width: auto;
     height: auto;
-    min-width: 240px;
 }
 
 card-header,
@@ -1090,19 +1101,51 @@ card-footer {
 
 card-header {
     gap: 4px;
-    padding-top: 20px;
-    padding-left: 20px;
-    padding-right: 20px;
+    padding-top: 12px;
+    padding-left: 12px;
+    padding-right: 12px;
 }
 
 card-content {
     gap: 12px;
-    padding: 20px;
+    padding: 12px;
 }
 
 card-footer {
     gap: 8px;
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 20px;
+    padding-left: 12px;
+    padding-right: 12px;
+    padding-bottom: 12px;
+}
+
+/* FRAME */
+
+frame {
+    width: auto;
+    height: auto;
+    layout-type: column;
+}
+
+frame .frame-title {
+    padding-left: 8px;
+    padding-right: 8px;
+    size: auto;
+    translate: 0px -50%;
+    top: 0px;
+    position-type: absolute;
+}
+
+frame .frame-title.left {
+    left: 8px;
+    right: 1s;
+}
+
+frame .frame-title.center {
+    left: 1s;
+    right: 1s;
+}
+
+frame .frame-title.right {
+    right: 8px;
+    left: 1s;
 }

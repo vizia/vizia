@@ -75,10 +75,10 @@ pub fn table(cx: &mut Context) {
         r
     });
 
-    let columns: Signal<Vec<TableColumn<TableRow, TableHeader>>> = Signal::new(vec![
+    let columns: Signal<Vec<TableColumn<TableRow, TableHeader<String>>>> = Signal::new(vec![
         TableColumn::new(
             "name",
-            |cx, sort_dir| TableHeader::new(cx, "Name", sort_dir),
+            |cx, sort_dir| TableHeader::new(cx, "name", "Name", sort_dir),
             |cx, row| {
                 let text = row.map(|r: &TableRow| r.name.clone());
                 Label::new(cx, text).class("table-cell-text");
@@ -89,7 +89,7 @@ pub fn table(cx: &mut Context) {
         .resizable(true),
         TableColumn::new(
             "category",
-            |cx, sort_dir| TableHeader::new(cx, "Category", sort_dir),
+            |cx, sort_dir| TableHeader::new(cx, "category", "Category", sort_dir),
             |cx, row| {
                 let text = row.map(|r: &TableRow| r.category.clone());
                 Label::new(cx, text).class("table-cell-text");
@@ -100,7 +100,7 @@ pub fn table(cx: &mut Context) {
         .resizable(true),
         TableColumn::new(
             "status",
-            |cx, sort_dir| TableHeader::new(cx, "Status", sort_dir),
+            |cx, sort_dir| TableHeader::new(cx, "status", "Status", sort_dir),
             |cx, row| {
                 let text = row.map(|r: &TableRow| r.status.clone());
                 Label::new(cx, text).class("table-cell-text");
@@ -112,16 +112,11 @@ pub fn table(cx: &mut Context) {
     ]);
 
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Table
-A table displays tabular data with sortable, resizable columns and row selection. \
-Click a column header to sort. Click a row to select it.",
-        );
+        Label::new(cx, Localized::new("table")).class("panel-title");
 
         Divider::new(cx);
 
-        Markdown::new(cx, "### Basic Table");
+        Label::new(cx, Localized::new("basic-table")).class("section-title");
 
         DemoRegion::new(cx, "Basic Table", move |cx| {
             Table::new(cx, sorted_rows, columns, |row: &TableRow| row.id)

@@ -32,18 +32,23 @@ impl Cache for CachedData {
     }
 
     fn posx(&self, node: &Self::Node) -> f32 {
-        self.get_posx(*node)
+        // Morphorm works with positions relative to the parent, and `set_bounds` writes into
+        // `relative_bounds`, so these getters must read from `relative_bounds` too. Reading the
+        // absolute `bounds` here would make incremental relayout (which restarts from a non-root
+        // node and feeds its cached position back through `set_bounds`) double-count the parent
+        // offset, shifting the subtree off-screen.
+        self.relative_bounds.get(*node).map_or(0.0, |b| b.x)
     }
 
     fn posy(&self, node: &Self::Node) -> f32 {
-        self.get_posy(*node)
+        self.relative_bounds.get(*node).map_or(0.0, |b| b.y)
     }
 
     fn width(&self, node: &Self::Node) -> f32 {
-        self.get_width(*node)
+        self.relative_bounds.get(*node).map_or(0.0, |b| b.w)
     }
 
     fn height(&self, node: &Self::Node) -> f32 {
-        self.get_height(*node)
+        self.relative_bounds.get(*node).map_or(0.0, |b| b.h)
     }
 }

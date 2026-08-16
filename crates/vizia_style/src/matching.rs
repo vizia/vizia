@@ -24,7 +24,9 @@ mod test {
         matching::matches_selector_list,
     };
 
-    use crate::{CustomParseError, ParserOptions, SelectorIdent, SelectorParser, Selectors};
+    use crate::{
+        CustomParseError, Direction, ParserOptions, SelectorIdent, SelectorParser, Selectors,
+    };
 
     fn parse(input: &str) -> Result<SelectorList<Selectors>, ParseError<'_, CustomParseError<'_>>> {
         let mut parser_input = ParserInput::new(input);
@@ -60,6 +62,7 @@ mod test {
         element: HashMap<Entity, String>,
         classes: HashMap<Entity, HashSet<String>>,
         pseudo_class: HashMap<Entity, PseudoClass>,
+        direction: HashMap<Entity, Direction>,
     }
 
     #[derive(Debug, Clone)]
@@ -195,37 +198,40 @@ mod test {
             pc: &<Self::Impl as selectors::SelectorImpl>::NonTSPseudoClass,
             context: &mut selectors::context::MatchingContext<'_, Self::Impl>,
         ) -> bool {
-            if let Some(psudeo_class_flag) = self.store.pseudo_class.get(&self.entity) {
-                match pc {
-                    crate::PseudoClass::Hover => psudeo_class_flag.contains(PseudoClass::HOVER),
-                    crate::PseudoClass::Active => todo!(),
-                    crate::PseudoClass::Focus => todo!(),
-                    crate::PseudoClass::FocusVisible => todo!(),
-                    crate::PseudoClass::FocusWithin => todo!(),
-                    crate::PseudoClass::Enabled => todo!(),
-                    crate::PseudoClass::Disabled => todo!(),
-                    crate::PseudoClass::ReadOnly => todo!(),
-                    crate::PseudoClass::ReadWrite => todo!(),
-                    crate::PseudoClass::PlaceholderShown => todo!(),
-                    crate::PseudoClass::Default => todo!(),
-                    crate::PseudoClass::Checked => todo!(),
-                    crate::PseudoClass::Indeterminate => todo!(),
-                    crate::PseudoClass::Blank => todo!(),
-                    crate::PseudoClass::Valid => todo!(),
-                    crate::PseudoClass::Invalid => todo!(),
-                    crate::PseudoClass::InRange => todo!(),
-                    crate::PseudoClass::OutOfRange => todo!(),
-                    crate::PseudoClass::Required => todo!(),
-                    crate::PseudoClass::Optional => todo!(),
-                    crate::PseudoClass::UserValid => todo!(),
-                    crate::PseudoClass::UserInvalid => todo!(),
-                    crate::PseudoClass::Lang(_) => todo!(),
-                    crate::PseudoClass::Dir(_) => todo!(),
-                    crate::PseudoClass::Custom(_) => todo!(),
-                    _ => todo!(),
+            match pc {
+                crate::PseudoClass::Hover => self
+                    .store
+                    .pseudo_class
+                    .get(&self.entity)
+                    .is_some_and(|flags| flags.contains(PseudoClass::HOVER)),
+                crate::PseudoClass::Active => todo!(),
+                crate::PseudoClass::Focus => todo!(),
+                crate::PseudoClass::FocusVisible => todo!(),
+                crate::PseudoClass::FocusWithin => todo!(),
+                crate::PseudoClass::Enabled => todo!(),
+                crate::PseudoClass::Disabled => todo!(),
+                crate::PseudoClass::ReadOnly => todo!(),
+                crate::PseudoClass::ReadWrite => todo!(),
+                crate::PseudoClass::PlaceholderShown => todo!(),
+                crate::PseudoClass::Default => todo!(),
+                crate::PseudoClass::Checked => todo!(),
+                crate::PseudoClass::Indeterminate => todo!(),
+                crate::PseudoClass::Blank => todo!(),
+                crate::PseudoClass::Valid => todo!(),
+                crate::PseudoClass::Invalid => todo!(),
+                crate::PseudoClass::InRange => todo!(),
+                crate::PseudoClass::OutOfRange => todo!(),
+                crate::PseudoClass::Required => todo!(),
+                crate::PseudoClass::Optional => todo!(),
+                crate::PseudoClass::UserValid => todo!(),
+                crate::PseudoClass::UserInvalid => todo!(),
+                crate::PseudoClass::Lang(_) => todo!(),
+                crate::PseudoClass::Dir(direction) => {
+                    self.store.direction.get(&self.entity).copied().unwrap_or_default()
+                        == *direction
                 }
-            } else {
-                false
+                crate::PseudoClass::Custom(_) => todo!(),
+                _ => todo!(),
             }
         }
 
@@ -255,6 +261,7 @@ mod test {
             element: HashMap::new(),
             classes: HashMap::new(),
             pseudo_class: HashMap::new(),
+            direction: HashMap::new(),
         };
 
         let root = Entity(0);
@@ -288,6 +295,7 @@ mod test {
             element: HashMap::new(),
             classes: HashMap::new(),
             pseudo_class: HashMap::new(),
+            direction: HashMap::new(),
         };
 
         let root = Entity(0);
@@ -327,6 +335,7 @@ mod test {
             element: HashMap::new(),
             classes: HashMap::new(),
             pseudo_class: HashMap::new(),
+            direction: HashMap::new(),
         };
 
         let root = Entity(0);
@@ -428,6 +437,7 @@ mod test {
             element: HashMap::new(),
             classes: HashMap::new(),
             pseudo_class: HashMap::new(),
+            direction: HashMap::new(),
         };
 
         let root = Entity(0);
@@ -462,6 +472,37 @@ mod test {
 
             let result = matches_selector_list(&selector_list, &child_node, &mut context);
             assert!(!result);
+        }
+    }
+
+    #[test]
+    fn dir_match() {
+        let mut store = Store {
+            element: HashMap::new(),
+            classes: HashMap::new(),
+            pseudo_class: HashMap::new(),
+            direction: HashMap::new(),
+        };
+
+        let node_entity = Entity(0);
+        store.element.insert(node_entity, String::from("button"));
+        store.direction.insert(node_entity, Direction::RightToLeft);
+
+        let node = Node { entity: node_entity, store: &store };
+
+        if let Ok(selector_list) = parse(":dir(rtl)") {
+            let mut cache = SelectorCaches::default();
+            let mut context = MatchingContext::new(
+                MatchingMode::Normal,
+                None,
+                &mut cache,
+                QuirksMode::NoQuirks,
+                NeedsSelectorFlags::No,
+                MatchingForInvalidation::No,
+            );
+
+            let result = matches_selector_list(&selector_list, &node, &mut context);
+            assert!(result);
         }
     }
 }

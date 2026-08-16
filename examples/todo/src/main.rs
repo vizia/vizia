@@ -1,9 +1,25 @@
 use vizia::{icons::ICON_TRASH, prelude::*};
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Todo {
     title: String,
     completed: bool,
+}
+
+impl Todo {
+    /// Create a new todo
+    pub fn new(title: String) -> Self {
+        Self { title, completed: false }
+    }
+
+    /// Determines whether this todo matches the given filter criteria
+    pub fn match_filter(&self, filter: TodoFilter) -> bool {
+        match filter {
+            TodoFilter::All => true,
+            TodoFilter::Completed => self.completed,
+            TodoFilter::Active => !self.completed,
+        }
+    }
 }
 
 #[derive(Clone, PartialEq, Eq)]
@@ -13,52 +29,40 @@ pub enum TodoFilter {
     Active,
 }
 
+impl TodoFilter {
+    /// Checks if the filter shows all todos regardless of completion status
+    #[inline]
+    fn is_all(&self) -> bool {
+        matches!(self, TodoFilter::All)
+    }
+
+    /// Checks if the filter shows only completed todos
+    #[inline]
+    fn is_completed(&self) -> bool {
+        matches!(self, TodoFilter::Completed)
+    }
+
+    /// Checks if the filter shows only active (incomplete) todos
+    #[inline]
+    fn is_active(&self) -> bool {
+        matches!(self, TodoFilter::Active)
+    }
+}
+
 pub struct TodoApp {
     text: Signal<String>,
     filter: Signal<TodoFilter>,
     todos: Signal<Vec<Todo>>,
-    indices: Signal<Vec<usize>>,
 }
 
 impl TodoApp {
-    pub fn new() -> Self {
+    fn new() -> Self {
         let todos = Signal::new(vec![
-            Todo { title: "Learn Vizia".to_string(), completed: false },
-            Todo { title: "Build an app".to_string(), completed: false },
+            Todo::new("Learn Vizia".to_string()),
+            Todo::new("Build an app".to_string()),
         ]);
 
-        let mut todoapp = Self {
-            text: Signal::new("".to_string()),
-            filter: Signal::new(TodoFilter::All),
-            todos,
-            indices: Signal::new(vec![]),
-        };
-
-        todoapp.filter_todos();
-
-        todoapp
-    }
-
-    pub fn filter_todos(&mut self) {
-        let filter = self.filter.get();
-        let indices = self
-            .todos
-            .get()
-            .iter()
-            .enumerate()
-            .filter_map(|(i, todo)| match filter {
-                TodoFilter::All => Some(i),
-                TodoFilter::Completed => todo.completed.then_some(i),
-                TodoFilter::Active => (!todo.completed).then_some(i),
-            })
-            .collect();
-        self.indices.set(indices);
-    }
-}
-
-impl Default for TodoApp {
-    fn default() -> Self {
-        Self::new()
+        Self { text: Signal::new("".to_string()), filter: Signal::new(TodoFilter::All), todos }
     }
 }
 
@@ -66,29 +70,9 @@ pub enum TodoEvent {
     SetText(String),
     AddTodo(String),
     RemoveTodo(usize),
-    ToggleAll,
     Toggle(usize),
     ClearCompleted,
     SetFilter(TodoFilter),
-}
-
-/// Per-item model that bridges the `Signal<usize>` index to `Send + Sync` action callbacks.
-struct TodoItemModel {
-    index: Signal<usize>,
-}
-
-enum TodoItemEvent {
-    RequestDelete,
-}
-
-impl Model for TodoItemModel {
-    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
-        event.map(|app_event, _| match app_event {
-            TodoItemEvent::RequestDelete => {
-                cx.emit(TodoEvent::RemoveTodo(self.index.get()));
-            }
-        });
-    }
 }
 
 impl Model for TodoApp {
@@ -99,45 +83,30 @@ impl Model for TodoApp {
             }
 
             TodoEvent::AddTodo(title) => {
-                self.todos.update(|todos| todos.push(Todo { title, completed: false }));
+                self.todos.update(|todos| todos.push(Todo::new(title)));
                 self.text.set(String::new());
-                self.filter_todos();
             }
 
             TodoEvent::RemoveTodo(index) => {
                 self.todos.update(|todos| {
                     todos.remove(index);
                 });
-                self.filter_todos();
-            }
-
-            TodoEvent::ToggleAll => {
-                self.todos.update(|todos| {
-                    let all_completed = todos.iter().all(|todo| todo.completed);
-                    for todo in todos.iter_mut() {
-                        todo.completed = !all_completed;
-                    }
-                });
-                self.filter_todos();
             }
 
             TodoEvent::Toggle(index) => {
                 self.todos.update(|todos| {
                     todos[index].completed = !todos[index].completed;
                 });
-                self.filter_todos();
             }
 
             TodoEvent::ClearCompleted => {
                 self.todos.update(|todos| {
                     todos.retain(|todo| !todo.completed);
                 });
-                self.filter_todos();
             }
 
             TodoEvent::SetFilter(filter) => {
                 self.filter.set(filter);
-                self.filter_todos();
             }
         });
     }
@@ -147,17 +116,17 @@ fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
         cx.add_stylesheet(include_style!("src/style.css")).expect("failed to load style");
 
-        let app = TodoApp::new();
-        let text = app.text;
-        let filter = app.filter;
-        let todos = app.todos;
-        let indices = app.indices;
+        let app @ TodoApp { text, filter, todos } = TodoApp::new();
+        let filtered_todos = Memo::new(move |_| {
+            todos
+                .get()
+                .into_iter()
+                .filter(|todo| todo.match_filter(filter.get()))
+                .collect::<Vec<_>>()
+        });
         let items_left = Memo::new(move |_| {
             format!("{} items left!", todos.get().iter().filter(|todo| !todo.completed).count())
         });
-        let all_filter_selected = Memo::new(move |_| filter.get() == TodoFilter::All);
-        let active_filter_selected = Memo::new(move |_| filter.get() == TodoFilter::Active);
-        let completed_filter_selected = Memo::new(move |_| filter.get() == TodoFilter::Completed);
 
         app.build(cx);
 
@@ -176,22 +145,17 @@ fn main() -> Result<(), ApplicationError> {
                 });
             Divider::new(cx);
 
-            List::new(cx, indices, move |cx, _, index| {
-                TodoItemModel { index }.build(cx);
-
-                let title = Memo::new(move |_| todos.get()[index.get()].title.clone());
-                let completed = Memo::new(move |_| todos.get()[index.get()].completed);
+            List::new(cx, filtered_todos, move |cx, idx, todo| {
+                let Todo { title, completed } = todo.get();
 
                 HStack::new(cx, |cx| {
                     Checkbox::new(cx, completed)
-                        .on_toggle(move |cx| cx.emit(TodoEvent::Toggle(index.get())));
-
+                        .on_toggle(move |cx| cx.emit(TodoEvent::Toggle(idx)));
                     Label::new(cx, title).class("todo-item_text");
-
                     Button::new(cx, |cx| Svg::new(cx, ICON_TRASH))
                         .class("todo-item_button")
                         .variant(ButtonVariant::Text)
-                        .on_press(|cx| cx.emit(TodoItemEvent::RequestDelete));
+                        .on_press(move |cx| cx.emit(TodoEvent::RemoveTodo(idx)));
                 })
                 .class("todo-item")
                 .toggle_class("done", completed);
@@ -203,15 +167,19 @@ fn main() -> Result<(), ApplicationError> {
                 Label::new(cx, items_left).class("todo-footer_text");
 
                 ButtonGroup::new(cx, |cx| {
-                    ToggleButton::new(cx, all_filter_selected, |cx| Label::new(cx, "All"))
-                        .on_press(|cx| cx.emit(TodoEvent::SetFilter(TodoFilter::All)))
-                        .class("todo-footer_button");
+                    ToggleButton::new(cx, filter.map(TodoFilter::is_all), |cx| {
+                        Label::new(cx, "All")
+                    })
+                    .on_press(|cx| cx.emit(TodoEvent::SetFilter(TodoFilter::All)))
+                    .class("todo-footer_button");
 
-                    ToggleButton::new(cx, active_filter_selected, |cx| Label::new(cx, "Active"))
-                        .on_press(|cx| cx.emit(TodoEvent::SetFilter(TodoFilter::Active)))
-                        .class("todo-footer_button");
+                    ToggleButton::new(cx, filter.map(TodoFilter::is_active), |cx| {
+                        Label::new(cx, "Active")
+                    })
+                    .on_press(|cx| cx.emit(TodoEvent::SetFilter(TodoFilter::Active)))
+                    .class("todo-footer_button");
 
-                    ToggleButton::new(cx, completed_filter_selected, |cx| {
+                    ToggleButton::new(cx, filter.map(TodoFilter::is_completed), |cx| {
                         Label::new(cx, "Completed")
                     })
                     .on_press(|cx| cx.emit(TodoEvent::SetFilter(TodoFilter::Completed)))

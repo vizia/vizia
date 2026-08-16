@@ -1,8 +1,9 @@
 use crate::{
-    Alignment, Angle, BackgroundImage, BackgroundSize, BlendMode, Border, BorderStyle, BorderWidth,
-    ClipPath, Color, CornerRadius, CornerShape, CursorIcon, CustomParseError, CustomProperty,
-    Direction, Display, Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight,
-    FontWidth, LayoutType, LayoutWrap, Length, LengthOrPercentage, LineClamp, Opacity, Outline,
+    Alignment, Angle, AspectRatio, BackgroundImage, BackgroundRepeat, BackgroundSize, BlendMode,
+    Border, BorderStyle, BorderStyleKeyword, BorderWidth, BorderWidthValue, ClipPath, Color,
+    CornerRadius, CornerShape, CursorIcon, CustomParseError, CustomProperty, Direction, Display,
+    Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWidth, LayoutType,
+    LayoutWrap, Length, LengthOrPercentage, LetterSpacing, LineClamp, LineHeight, Opacity, Outline,
     Overflow, Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign,
     TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
     TextStrokeStyle, Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
@@ -47,6 +48,7 @@ define_property! {
         "top": Top(Units),
         "size": Size(Units),
         "height": Height(Units),
+        "aspect-ratio": AspectRatio(AspectRatio),
         "bottom": Bottom(Units),
 
         // Constraints
@@ -80,13 +82,18 @@ define_property! {
         // Border Shorthand
         "border": Border(Border),
 
+        // Border Side Shorthands
+        "border-top": BorderTop(Border),
+        "border-right": BorderRight(Border),
+        "border-bottom": BorderBottom(Border),
+        "border-left": BorderLeft(Border),
+
         // Border Color
         "border-color": BorderColor(Color),
-        // TODO: Support coloring individual borders.
-        // "border-top-color": BorderTopColor(Color),
-        // "border-right-color": BorderRightColor(Color),
-        // "border-bottom-color": BorderBottomColor(Color),
-        // "border-left-color": BorderLeftColor(Color),
+        "border-top-color": BorderTopColor(Color),
+        "border-right-color": BorderRightColor(Color),
+        "border-bottom-color": BorderBottomColor(Color),
+        "border-left-color": BorderLeftColor(Color),
 
         // Corner Shape
         "corner-shape": CornerShape(Rect<CornerShape>),
@@ -103,19 +110,18 @@ define_property! {
         "corner-bottom-right-radius": CornerBottomRightRadius(LengthOrPercentage),
 
         // Border Style
-        // TODO: Support styling borders.
         "border-style": BorderStyle(BorderStyle),
-        // "border-top-style": BorderTopStyle(BorderStyleKeyword),
-        // "border-right-style": BorderRightStyle(BorderStyleKeyword),
-        // "border-bottom-style": BorderBottomStyle(BorderStyleKeyword),
-        // "border-left-style": BorderLeftStyle(BorderStyleKeyword),
+        "border-top-style": BorderTopStyle(BorderStyleKeyword),
+        "border-right-style": BorderRightStyle(BorderStyleKeyword),
+        "border-bottom-style": BorderBottomStyle(BorderStyleKeyword),
+        "border-left-style": BorderLeftStyle(BorderStyleKeyword),
 
         // Border Width
         "border-width": BorderWidth(BorderWidth),
-        // "border-top-width": BorderTopWidth(BorderWidthValue),
-        // "border-right-width": BorderRightWidth(BorderWidthValue),
-        // "border-bottom-width": BorderBottomWidth(BorderWidthValue),
-        // "border-left-width": BorderLeftWidth(BorderWidthValue),
+        "border-top-width": BorderTopWidth(BorderWidthValue),
+        "border-right-width": BorderRightWidth(BorderWidthValue),
+        "border-bottom-width": BorderBottomWidth(BorderWidthValue),
+        "border-left-width": BorderLeftWidth(BorderWidthValue),
 
 
         // ----- Outline -----
@@ -150,6 +156,8 @@ define_property! {
         // Background
         "background-color": BackgroundColor(Color),
         "background-image": BackgroundImage(Vec<BackgroundImage<'i>>),
+        "background-position": BackgroundPosition(Vec<Position>),
+        "background-repeat": BackgroundRepeat(Vec<BackgroundRepeat>),
         "background-size": BackgroundSize(Vec<BackgroundSize>),
 
         "fill": Fill(Color),
@@ -167,21 +175,19 @@ define_property! {
         "text-wrap": TextWrap(bool),
         "text-align": TextAlign(TextAlign),
         "text-overflow": TextOverflow(TextOverflow),
+        "letter-spacing": LetterSpacing(LetterSpacing),
+        "line-height": LineHeight(LineHeight),
         "line-clamp": LineClamp(LineClamp),
         "text-decoration": TextDecoration(TextDecoration),
         "text-decoration-line": TextDecorationLine(TextDecorationLine),
+        "text-decoration-color": TextDecorationColor(Color),
+        "text-decoration-style": TextDecorationStyle(TextDecorationStyle),
         "text-stroke": TextStroke(TextStroke),
         "text-stroke-width": TextStrokeWidth(Length),
         "text-stroke-style": TextStrokeStyle(TextStrokeStyle),
-        "underline-style": UnderlineStyle(TextDecorationStyle),
         "underline-thickness": UnderlineThickness(LengthOrPercentage),
-        "underline-color": UnderlineColor(Color),
-        "overline-style": OverlineStyle(TextDecorationStyle),
         "overline-thickness": OverlineThickness(LengthOrPercentage),
-        "overline-color": OverlineColor(Color),
-        "strikethrough-style": StrikethroughStyle(TextDecorationStyle),
         "strikethrough-thickness": StrikethroughThickness(LengthOrPercentage),
-        "strikethrough-color": StrikethroughColor(Color),
 
         // Shadow
         "shadow": Shadow(Vec<Shadow>),
@@ -218,6 +224,70 @@ mod tests {
         let mut parser = Parser::new(&mut parser_input);
         let _parsed_property =
             Property::parse_value(CowRcStr::from("background-color"), &mut parser);
+    }
+
+    #[test]
+    fn parse_background_position_property() {
+        let mut parser_input = ParserInput::new("center");
+        let mut parser = Parser::new(&mut parser_input);
+        let parsed_property =
+            Property::parse_value(CowRcStr::from("background-position"), &mut parser)
+                .expect("Failed to parse background-position");
+
+        match parsed_property {
+            Property::BackgroundPosition(positions) => {
+                assert_eq!(positions.len(), 1);
+                assert!(positions[0].is_center());
+            }
+
+            _ => panic!("background-position parsed to wrong property"),
+        }
+    }
+
+    #[test]
+    fn parse_background_position_property_rejects_empty_value() {
+        let mut parser_input = ParserInput::new("");
+        let mut parser = Parser::new(&mut parser_input);
+        let parsed_property =
+            Property::parse_value(CowRcStr::from("background-position"), &mut parser)
+                .expect("Property parsing should fall back to Unparsed");
+
+        assert!(!matches!(parsed_property, Property::BackgroundPosition(_)));
+    }
+
+    #[test]
+    fn parse_background_repeat_property() {
+        let mut parser_input = ParserInput::new("repeat-x, no-repeat");
+        let mut parser = Parser::new(&mut parser_input);
+        let parsed_property =
+            Property::parse_value(CowRcStr::from("background-repeat"), &mut parser)
+                .expect("Failed to parse background-repeat");
+
+        match parsed_property {
+            Property::BackgroundRepeat(repeats) => {
+                assert_eq!(repeats.len(), 2);
+                assert_eq!(repeats[0], BackgroundRepeat::RepeatX);
+                assert_eq!(repeats[1], BackgroundRepeat::NoRepeat);
+            }
+
+            _ => panic!("background-repeat parsed to wrong property"),
+        }
+    }
+
+    #[test]
+    fn parse_aspect_ratio_property() {
+        let mut parser_input = ParserInput::new("auto 16/9");
+        let mut parser = Parser::new(&mut parser_input);
+        let parsed_property = Property::parse_value(CowRcStr::from("aspect-ratio"), &mut parser)
+            .expect("Failed to parse aspect-ratio");
+
+        match parsed_property {
+            Property::AspectRatio(AspectRatio::AutoRatio(ratio)) => {
+                assert_eq!(ratio, 16.0 / 9.0);
+            }
+
+            _ => panic!("aspect-ratio parsed to wrong property"),
+        }
     }
 
     #[test]

@@ -180,8 +180,20 @@ impl<'a> KeyframeBuilder<'a> {
         self
     }
 
+    pub fn background_position(mut self, val: impl Into<Vec<Position>>) -> Self {
+        self.properties.push(Property::BackgroundPosition(val.into()));
+
+        self
+    }
+
     pub fn background_size(mut self, val: impl Into<Vec<BackgroundSize>>) -> Self {
         self.properties.push(Property::BackgroundSize(val.into()));
+
+        self
+    }
+
+    pub fn background_repeat(mut self, val: impl Into<Vec<BackgroundRepeat>>) -> Self {
+        self.properties.push(Property::BackgroundRepeat(val.into()));
 
         self
     }
@@ -204,6 +216,12 @@ impl<'a> KeyframeBuilder<'a> {
 
     pub fn font_size(mut self, val: impl Into<FontSize>) -> Self {
         self.properties.push(Property::FontSize(val.into()));
+
+        self
+    }
+
+    pub fn letter_spacing(mut self, val: impl Into<LetterSpacing>) -> Self {
+        self.properties.push(Property::LetterSpacing(val.into()));
 
         self
     }

@@ -239,6 +239,7 @@ impl_res_clone!(std::ops::Range<f32>);
 impl_res_simple!(Direction);
 impl_res_simple!(LayoutWrap);
 impl_res_clone!(BackgroundSize);
+impl_res_simple!(FontSizeKeyword);
 
 impl<'i> Res<FontFamily<'i>> for FontFamily<'i> {
     fn get_value(&self, _: &impl DataContext) -> Self {
@@ -314,6 +315,12 @@ impl Res<LayoutType> for LayoutType {
 
 impl Res<PositionType> for PositionType {
     fn get_value(&self, _: &impl DataContext) -> PositionType {
+        *self
+    }
+}
+
+impl Res<BorderStyleKeyword> for BorderStyleKeyword {
+    fn get_value(&self, _: &impl DataContext) -> BorderStyleKeyword {
         *self
     }
 }

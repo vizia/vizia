@@ -283,19 +283,16 @@ where
                     });
 
                     let thumb = cx.get_entities_by_class("thumb").first().copied().unwrap();
+                    let current = cx.current();
+                    let bounds = cx.transformed_bounds(current);
+                    let thumb_bounds = cx.transformed_bounds(thumb);
                     let thumb_size = match self.orientation.get() {
-                        Orientation::Horizontal => cx.cache.get_width(thumb),
-                        Orientation::Vertical => cx.cache.get_height(thumb),
+                        Orientation::Horizontal => thumb_bounds.width(),
+                        Orientation::Vertical => thumb_bounds.height(),
                     };
                     let min = self.range.get().start;
                     let max = self.range.get().end;
                     let step = self.step.get();
-
-                    let current = cx.current();
-                    let width = cx.cache.get_width(current);
-                    let height = cx.cache.get_height(current);
-                    let posx = cx.cache.get_posx(current);
-                    let posy = cx.cache.get_posy(current);
 
                     let is_rtl = matches!(
                         cx.style.direction.get(current).copied(),
@@ -304,14 +301,19 @@ where
 
                     let mut dx = match self.orientation.get() {
                         Orientation::Horizontal => {
-                            let raw_dx = (cx.mouse.left.pos_down.0 - posx - thumb_size / 2.0)
-                                / (width - thumb_size);
+                            let span = (bounds.width() - thumb_size).max(f32::EPSILON);
+                            let raw_dx =
+                                (cx.mouse.left.pos_down.0 - bounds.left() - thumb_size / 2.0)
+                                    / span;
                             if is_rtl { 1.0 - raw_dx } else { raw_dx }
                         }
 
                         Orientation::Vertical => {
-                            (height - (cx.mouse.left.pos_down.1 - posy) - thumb_size / 2.0)
-                                / (height - thumb_size)
+                            let span = (bounds.height() - thumb_size).max(f32::EPSILON);
+                            (bounds.height()
+                                - (cx.mouse.left.pos_down.1 - bounds.top())
+                                - thumb_size / 2.0)
+                                / span
                         }
                     };
 
@@ -342,20 +344,17 @@ where
             WindowEvent::MouseMove(x, y) => {
                 if self.is_dragging {
                     let thumb = cx.get_entities_by_class("thumb").first().copied().unwrap();
+                    let current = cx.current();
+                    let bounds = cx.transformed_bounds(current);
+                    let thumb_bounds = cx.transformed_bounds(thumb);
                     let thumb_size = match self.orientation.get() {
-                        Orientation::Horizontal => cx.cache.get_width(thumb),
-                        Orientation::Vertical => cx.cache.get_height(thumb),
+                        Orientation::Horizontal => thumb_bounds.width(),
+                        Orientation::Vertical => thumb_bounds.height(),
                     };
 
                     let min = self.range.get().start;
                     let max = self.range.get().end;
                     let step = self.step.get();
-
-                    let current = cx.current();
-                    let width = cx.cache.get_width(current);
-                    let height = cx.cache.get_height(current);
-                    let posx = cx.cache.get_posx(current);
-                    let posy = cx.cache.get_posy(current);
 
                     let is_rtl = matches!(
                         cx.style.direction.get(current).copied(),
@@ -364,12 +363,14 @@ where
 
                     let mut dx = match self.orientation.get() {
                         Orientation::Horizontal => {
-                            let raw_dx = (*x - posx - thumb_size / 2.0) / (width - thumb_size);
+                            let span = (bounds.width() - thumb_size).max(f32::EPSILON);
+                            let raw_dx = (*x - bounds.left() - thumb_size / 2.0) / span;
                             if is_rtl { 1.0 - raw_dx } else { raw_dx }
                         }
 
                         Orientation::Vertical => {
-                            (height - (*y - posy) - thumb_size / 2.0) / (height - thumb_size)
+                            let span = (bounds.height() - thumb_size).max(f32::EPSILON);
+                            (bounds.height() - (*y - bounds.top()) - thumb_size / 2.0) / span
                         }
                     };
 

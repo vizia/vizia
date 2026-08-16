@@ -76,6 +76,7 @@ impl Popover {
                 });
             })
             .position_type(PositionType::Absolute)
+            .ignore_clipping(true)
             .space(Pixels(0.0))
     }
 }
@@ -89,8 +90,7 @@ impl View for Popover {
         event.map(|window_event, _| match window_event {
             // Reposition popup if there isn't enough room for it.
             WindowEvent::GeometryChanged(_) => {
-                let parent = cx.parent();
-                let parent_bounds = cx.cache.get_bounds(parent);
+                let parent_bounds = cx.parent_transformed_bounds();
                 let bounds = cx.bounds();
                 let window_bounds = cx.cache.get_bounds(cx.parent_window());
                 let scale = cx.scale_factor();
@@ -282,6 +282,28 @@ impl View for Popover {
                         (parent_bounds.width() / scale) + arrow_size,
                         -(bounds.height() - parent_bounds.height()) / scale,
                     ),
+
+                    Placement::Cursor => {
+                        let cursor_x = cx.mouse().cursor_x;
+                        let cursor_y = cx.mouse().cursor_y;
+
+                        let max_x = window_bounds.right() - bounds.width();
+                        let max_y = window_bounds.bottom() - bounds.height();
+
+                        let clamped_x = if max_x < window_bounds.left() {
+                            window_bounds.left()
+                        } else {
+                            cursor_x.clamp(window_bounds.left(), max_x)
+                        };
+
+                        let clamped_y = if max_y < window_bounds.top() {
+                            window_bounds.top()
+                        } else {
+                            cursor_y.clamp(window_bounds.top(), max_y)
+                        };
+
+                        ((clamped_x - bounds.x) / scale, (clamped_y - bounds.y) / scale)
+                    }
 
                     _ => (0.0, 0.0),
                 };

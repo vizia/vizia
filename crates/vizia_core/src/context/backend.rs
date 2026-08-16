@@ -102,7 +102,7 @@ impl BackendContext {
 
         self.0.style.pseudo_classes.insert(window_entity, PseudoClassFlags::OVER);
         self.0.style.restyle.insert(window_entity);
-        self.0.style.reaccess.insert(window_entity).unwrap();
+        self.0.style.reaccess.insert(window_entity);
 
         self.0.style.position_type.insert(window_entity, PositionType::Absolute);
 
@@ -163,7 +163,7 @@ impl BackendContext {
         self.0.style.width.insert(window_entity, Units::Pixels(logical_width));
         self.0.style.height.insert(window_entity, Units::Pixels(logical_height));
 
-        self.0.style.needs_relayout();
+        self.0.style.needs_relayout(window_entity);
         self.0.style.needs_retransform(window_entity);
         self.0.style.needs_reclip(window_entity);
     }
@@ -194,8 +194,12 @@ impl BackendContext {
     /// You should not call this method unless you are writing a windowing backend, in which case
     /// you should consult the existing windowing backends for usage information.
     #[cfg(feature = "clipboard")]
-    pub fn set_clipboard_provider(&mut self, clipboard: Box<dyn ClipboardProvider>) {
-        self.0.clipboard = clipboard;
+    pub fn set_clipboard_provider(
+        &mut self,
+        window: Entity,
+        clipboard: Box<dyn ClipboardProvider>,
+    ) {
+        self.0.clipboards.insert(window, clipboard);
     }
 
     /// Send an event with custom origin and propagation information.
@@ -221,8 +225,8 @@ impl BackendContext {
     pub fn process_style_updates(&mut self) {
         style_system(&mut self.0);
 
-        // Load any unloaded images and remove unused images.
-        image_system(&mut self.0);
+        // Load queued resources and maintain image cache.
+        resource_system(&mut self.0);
     }
 
     // Returns true if animations are playing
@@ -236,7 +240,7 @@ impl BackendContext {
         layout_system(&mut self.0);
     }
 
-    pub fn emit_origin<M: Send + Any>(&mut self, message: M) {
+    pub fn emit_origin<M: Any>(&mut self, message: M) {
         self.0.event_queue.push_back(
             Event::new(message)
                 .target(self.0.current)
@@ -245,7 +249,7 @@ impl BackendContext {
         );
     }
 
-    pub fn emit_window_event<M: Send + Any>(&mut self, window_entity: Entity, message: M) {
+    pub fn emit_window_event<M: Any>(&mut self, window_entity: Entity, message: M) {
         self.0.event_queue.push_back(
             Event::new(message)
                 .target(window_entity)
@@ -259,7 +263,7 @@ impl BackendContext {
         self.0.style.system_flags = SystemFlags::all();
         self.0.needs_redraw(window_entity);
         self.0.style.needs_restyle(window_entity);
-        self.0.style.needs_relayout();
+        self.0.style.needs_relayout(window_entity);
         let iter = LayoutTreeIterator::full(&self.0.tree);
         for entity in iter {
             self.0.style.needs_text_layout(entity);

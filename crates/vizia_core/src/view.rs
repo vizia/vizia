@@ -266,8 +266,6 @@ pub trait View: 'static + Sized {
 
         cx.draw_border(canvas);
 
-        cx.draw_outline(canvas);
-
         cx.draw_text(canvas);
     }
 

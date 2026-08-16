@@ -4,12 +4,7 @@ use crate::components::DemoRegion;
 
 pub fn badge(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Badge
-A badge is used to highlight an item's status, category, or count. Badges can contain text, \
-numbers, or icons, and may be styled with semantic colour variants.",
-        );
+        Label::new(cx, Localized::new("badge")).class("panel-title");
 
         Divider::new(cx);
 

@@ -8,6 +8,17 @@ pub struct XYPad {
 }
 
 impl XYPad {
+    fn normalized_from_cursor(cx: &EventContext, current: Entity, x: f32, y: f32) -> (f32, f32) {
+        let bounds = cx.transformed_bounds(current);
+        let width = bounds.width().max(f32::EPSILON);
+        let height = bounds.height().max(f32::EPSILON);
+
+        let dx = ((x - bounds.left()) / width).clamp(0.0, 1.0);
+        let dy = ((y - bounds.top()) / height).clamp(0.0, 1.0);
+
+        (dx, dy)
+    }
+
     /// creates a new [XYPad] view.
     pub fn new<R: Res<(f32, f32)> + 'static>(cx: &mut Context, value: R) -> Handle<Self> {
         let value_state = value.to_signal(cx);
@@ -49,16 +60,10 @@ impl View for XYPad {
                     return;
                 }
                 let current = cx.current();
-                cx.capture();
-                let mouse = cx.mouse();
-                if meta.target == current {
-                    let mut dx = (mouse.left.pos_down.0 - cx.cache.get_posx(current))
-                        / cx.cache.get_width(current);
-                    let mut dy = (mouse.left.pos_down.1 - cx.cache.get_posy(current))
-                        / cx.cache.get_height(current);
-
-                    dx = dx.clamp(0.0, 1.0);
-                    dy = dy.clamp(0.0, 1.0);
+                let (mouse_x, mouse_y) = cx.mouse.left.pos_down;
+                if meta.target == current || meta.target.is_descendant_of(cx.tree, current) {
+                    cx.capture();
+                    let (dx, dy) = Self::normalized_from_cursor(cx, current, mouse_x, mouse_y);
 
                     self.is_dragging = true;
 
@@ -72,19 +77,12 @@ impl View for XYPad {
                 cx.set_active(false);
                 cx.release();
                 self.is_dragging = false;
-                if meta.target == cx.current() {
-                    cx.release();
-                }
             }
 
             WindowEvent::MouseMove(x, y) => {
                 if self.is_dragging {
                     let current = cx.current();
-                    let mut dx = (*x - cx.cache.get_posx(current)) / cx.cache.get_width(current);
-                    let mut dy = (*y - cx.cache.get_posy(current)) / cx.cache.get_height(current);
-
-                    dx = dx.clamp(0.0, 1.0);
-                    dy = dy.clamp(0.0, 1.0);
+                    let (dx, dy) = Self::normalized_from_cursor(cx, current, *x, *y);
 
                     if let Some(callback) = &self.on_change {
                         (callback)(cx, dx, 1.0 - dy);

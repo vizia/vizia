@@ -5,20 +5,21 @@ use crate::components::DemoRegion;
 
 pub fn button(cx: &mut Context) {
     VStack::new(cx, |cx| {
-        Markdown::new(
-            cx,
-            "# Button
-A button can be used to send an event when pressed. Typically they are used to trigger an action.
-        ",
-        );
+        VStack::new(cx, |cx| {
+            Label::new(cx, Localized::new("button-title")).class("panel-title");
+            Label::new(cx, Localized::new("button-title").attribute("description"))
+                .class("panel-description");
+        })
+        .height(Auto)
+        .gap(Pixels(4.0));
 
         Divider::new(cx);
 
-        DemoRegion::new(cx, "Basic Button", |cx| {
-            Button::new(cx, |cx| Label::new(cx, "Button"));
+        DemoRegion::new(cx, Localized::new("demo-region-basic-button"), |cx| {
+            Button::new(cx, |cx| Label::new(cx, Localized::new("button")));
         });
 
-        DemoRegion::new(cx, "Button Variants", |cx| {
+        DemoRegion::new(cx, Localized::new("demo-region-button-variants"), |cx| {
             HStack::new(cx, |cx| {
                 // Basic Button
                 Button::new(cx, |cx| Label::new(cx, Localized::new("button")))
@@ -40,7 +41,7 @@ A button can be used to send an event when pressed. Typically they are used to t
             .gap(Pixels(8.0));
         });
 
-        DemoRegion::new(cx, "Button with Icon", |cx| {
+        DemoRegion::new(cx, Localized::new("demo-region-button-with-icon"), |cx| {
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| {
                     HStack::new(cx, |cx| {
@@ -77,7 +78,7 @@ A button can be used to send an event when pressed. Typically they are used to t
             .gap(Pixels(8.0));
         });
 
-        DemoRegion::new(cx, "Icon Button", |cx| {
+        DemoRegion::new(cx, Localized::new("demo-region-icon-button"), |cx| {
             HStack::new(cx, |cx| {
                 Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"));
                 Button::new(cx, |cx| Svg::new(cx, ICON_CHECK).class("icon"))

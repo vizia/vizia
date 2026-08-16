@@ -1,8 +1,9 @@
 use morphorm::Units;
 use vizia_style::{
-    Angle, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter, FontSize, Gradient, Length,
-    LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LineDirection, LinearGradient,
-    Opacity, PercentageOrNumber, RGBA, Rect, Scale, Shadow, Transform, Translate,
+    Angle, BackgroundRepeat, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter, FontSize,
+    Gradient, Length, LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LetterSpacing,
+    LineDirection, LineHeight, LinearGradient, Opacity, PercentageOrNumber, Position, RGBA, Rect,
+    Scale, Shadow, Transform, Translate,
 };
 
 use skia_safe::Matrix;
@@ -250,6 +251,49 @@ impl Interpolator for BackgroundSize {
     }
 }
 
+impl Interpolator for BackgroundRepeat {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        if t < 0.5 { *start } else { *end }
+    }
+}
+
+impl Interpolator for Position {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        fn interpolate_axis<T: Copy + Into<LengthOrPercentage>>(
+            start: &vizia_style::PositionComponent<T>,
+            end: &vizia_style::PositionComponent<T>,
+            t: f32,
+        ) -> vizia_style::PositionComponent<T> {
+            let start_value = start.to_length_or_percentage();
+            let end_value = end.to_length_or_percentage();
+
+            match (&start_value, &end_value) {
+                (LengthOrPercentage::Length(_), LengthOrPercentage::Length(_))
+                | (LengthOrPercentage::Percentage(_), LengthOrPercentage::Percentage(_)) => {
+                    vizia_style::PositionComponent::Length(LengthOrPercentage::interpolate(
+                        &start_value,
+                        &end_value,
+                        t,
+                    ))
+                }
+
+                _ => {
+                    if t < 0.5 {
+                        start.clone()
+                    } else {
+                        end.clone()
+                    }
+                }
+            }
+        }
+
+        Position {
+            x: interpolate_axis(&start.x, &end.x, t),
+            y: interpolate_axis(&start.y, &end.y, t),
+        }
+    }
+}
+
 impl Interpolator for Gradient {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
@@ -336,6 +380,36 @@ impl<T: Interpolator + Clone + Default> Interpolator for Option<T> {
 impl Interpolator for FontSize {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         FontSize(Length::interpolate(&start.0, &end.0, t))
+    }
+}
+
+impl Interpolator for LetterSpacing {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (LetterSpacing::Normal, LetterSpacing::Normal) => LetterSpacing::Normal,
+            (LetterSpacing::Length(start), LetterSpacing::Length(end)) => {
+                LetterSpacing::Length(Length::interpolate(start, end, t))
+            }
+            _ => end.clone(),
+        }
+    }
+}
+
+impl Interpolator for LineHeight {
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (LineHeight::Normal, LineHeight::Normal) => LineHeight::Normal,
+            (LineHeight::Number(start), LineHeight::Number(end)) => {
+                LineHeight::Number(f32::interpolate(start, end, t))
+            }
+            (LineHeight::Percentage(start), LineHeight::Percentage(end)) => {
+                LineHeight::Percentage(f32::interpolate(start, end, t))
+            }
+            (LineHeight::Length(start), LineHeight::Length(end)) => {
+                LineHeight::Length(Length::interpolate(start, end, t))
+            }
+            _ => end.clone(),
+        }
     }
 }
 

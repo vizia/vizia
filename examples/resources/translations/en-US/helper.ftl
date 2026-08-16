@@ -17,6 +17,7 @@ outline-button = Outline Button
 text-button = Text Button
 button-with-icon = Button with Icon
 checkbox = Checkbox
+frame = Frame
 one = One
 two = Two
 three = Three
@@ -85,6 +86,17 @@ view-title-switch = Switch
 view-title-zstack = ZStack
 view-title-combobox = Combobox
 view-title-rating = Rating
+view-title-frame = Frame
+frame-example-heading = Frame Widget Examples
+frame-title-settings = Settings
+frame-title-user-profile = User Profile
+frame-title-details = Details
+frame-demo-title-positions = Frame with Title Positions
+frame-demo-without-title = Frame without Title
+frame-demo-complex-content = Frame with Complex Content
+frame-title-top-left = Top-Left
+frame-title-top-center = Top-Center
+frame-title-top-right = Top-Right
 
 ## Textbox and scrolling
 textbox-placeholder-type = Type something...
