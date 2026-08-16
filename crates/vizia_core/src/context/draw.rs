@@ -2413,7 +2413,12 @@ impl DrawContext<'_> {
 
                 canvas.save();
                 if let Some(ambient_clip) = &ambient_clip {
+                    // `ambient_clip` is baked in absolute/world space, but the canvas is
+                    // currently in this entity's local (transformed) space, so clip in
+                    // world space first, then restore the local transform for the shadow.
+                    canvas.reset_matrix();
                     canvas.clip_path(ambient_clip, ClipOp::Intersect, true);
+                    canvas.set_matrix(&self.transform().into());
                 }
                 canvas.clip_path(
                     &path,
