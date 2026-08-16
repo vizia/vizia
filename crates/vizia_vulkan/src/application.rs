@@ -172,14 +172,21 @@ impl VulkanApplication {
         if let Some(target_state) = self.render_target.as_mut() {
             let skia_context = self.state.skia_context_mut();
 
+            let target_unchanged = target_state.target.image == new_target.image
+                && target_state.target.extent == new_target.extent
+                && target_state.target.format == new_target.format
+                && target_state.target.sample_count == new_target.sample_count;
+
             if unsafe { target_state.replace_render_target(skia_context, new_target) } {
                 self.cx.set_window_size(
                     Entity::root(),
                     target_state.target.extent.width as f32,
                     target_state.target.extent.height as f32,
                 );
-                self.cx.needs_refresh(Entity::root());
-                self.needs_render = true;
+                if !target_unchanged {
+                    self.cx.needs_refresh(Entity::root());
+                    self.needs_render = true;
+                }
                 return true;
             }
         }
