@@ -213,6 +213,10 @@ name = "button_group"
 path = "examples/views/button_group.rs"
 
 [[example]]
+name = "breadcrumb"
+path = "examples/views/breadcrumb.rs"
+
+[[example]]
 name = "checkbox"
 path = "examples/views/checkbox.rs"
 

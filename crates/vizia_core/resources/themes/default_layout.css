@@ -346,6 +346,22 @@ popup {
     right: 1s;
 }
 
+breadcrumb .breadcrumb-overflow-dropdown > popup {
+    min-width: auto;
+    width: auto;
+    left: auto;
+    right: auto;
+}
+
+breadcrumb .breadcrumb-overflow-dropdown > popup > .breadcrumb-overflow-list {
+    width: auto;
+    min-width: auto;
+}
+
+breadcrumb .breadcrumb-overflow-dropdown > popup .breadcrumb-overflow-item {
+    width: auto;
+}
+
 /* SIDEBAR */
 
 sidebar {

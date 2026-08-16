@@ -3,6 +3,7 @@
 mod accordion;
 mod avatar;
 mod badge;
+mod breadcrumb;
 mod button;
 mod calendar;
 mod card;
@@ -50,6 +51,7 @@ mod xypad;
 pub use accordion::*;
 pub use avatar::*;
 pub use badge::*;
+pub use breadcrumb::*;
 pub use button::*;
 pub use calendar::*;
 pub use card::*;
