@@ -153,6 +153,7 @@ pub(crate) fn draw_system(
             zentity.index,
             &mut queue,
             zentity.visible,
+            false,
         );
         canvas.restore();
     }
@@ -220,6 +221,7 @@ fn draw_entity(
     current_z: i32,
     queue: &mut BinaryHeap<ZEntity>,
     visible: bool,
+    ancestor_backdrop_clip: bool,
 ) {
     let current = cx.current;
 
@@ -232,6 +234,14 @@ fn draw_entity(
 
     if z_index > current_z {
         queue.push(ZEntity { index: z_index, entity: current, visible });
+        return;
+    }
+
+    // A Skia clip cannot be expanded until its saved canvas state is restored. Defer views which
+    // explicitly escape ancestor clipping so a backdrop clip higher in the recursive draw cannot
+    // accidentally constrain popovers and other overlays.
+    if ancestor_backdrop_clip && !should_apply_entity_clip(cx.style, current) {
+        queue.push(ZEntity { index: current_z.max(z_index), entity: current, visible });
         return;
     }
 
@@ -259,7 +269,9 @@ fn draw_entity(
         paint.set_blend_mode(blend_mode.into());
 
         let rect: Rect = cx.bounds().into();
-        let mut backdrop_image_filter = ImageFilter::crop(rect, None, None).unwrap();
+        let transformed_rect =
+            cx.cache.transform.get(current).map_or(rect, |transform| transform.map_rect(rect).0);
+        let mut backdrop_image_filter = ImageFilter::crop(transformed_rect, None, None).unwrap();
 
         if let Some(filter) = filter {
             match filter {
@@ -281,7 +293,7 @@ fn draw_entity(
                     backdrop_image_filter =
                         backdrop_image_filter.blur(None, (sigma, sigma), None).unwrap();
                     SaveLayerRec::default()
-                        .bounds(&rect)
+                        .bounds(&transformed_rect)
                         .paint(&paint)
                         .backdrop(&backdrop_image_filter)
                 }
@@ -331,12 +343,21 @@ fn draw_entity(
     }
     canvas.restore();
     let child_iter = DrawChildIterator::new(cx.tree, cx.current);
+    let descendants_are_backdrop_clipped = ancestor_backdrop_clip || backdrop_clip_count.is_some();
 
     // Draw its children
     for child in child_iter {
         cx.current = child;
         // TODO: Skip views with zero-sized bounding boxes here? Or let user decide if they want to skip?
-        draw_entity(cx, dirty_rect, canvas, current_z, queue, is_visible);
+        draw_entity(
+            cx,
+            dirty_rect,
+            canvas,
+            current_z,
+            queue,
+            is_visible,
+            descendants_are_backdrop_clipped,
+        );
     }
 
     cx.current = current;
