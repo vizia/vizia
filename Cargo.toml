@@ -153,10 +153,6 @@ name = "animation"
 path = "examples/animation.rs"
 
 [[example]]
-name = "backdrop_filter"
-path = "examples/backdrop_filter.rs"
-
-[[example]]
 name = "cursor_icon"
 path = "examples/cursor_icon.rs"
 
