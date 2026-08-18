@@ -153,6 +153,7 @@ pub(crate) fn draw_system(
             zentity.index,
             &mut queue,
             zentity.visible,
+            false,
         );
         canvas.restore();
     }
@@ -220,6 +221,7 @@ fn draw_entity(
     current_z: i32,
     queue: &mut BinaryHeap<ZEntity>,
     visible: bool,
+    ancestor_backdrop_clip: bool,
 ) {
     let current = cx.current;
 
@@ -235,9 +237,27 @@ fn draw_entity(
         return;
     }
 
+    // A Skia clip cannot be expanded until its saved canvas state is restored. Defer views which
+    // explicitly escape ancestor clipping so a backdrop clip higher in the recursive draw cannot
+    // accidentally constrain popovers and other overlays.
+    if ancestor_backdrop_clip && !should_apply_entity_clip(cx.style, current) {
+        queue.push(ZEntity { index: current_z.max(z_index), entity: current, visible });
+        return;
+    }
+
     let filter = cx.filter();
     let backdrop_filter = cx.backdrop_filter();
     let blend_mode = cx.style.blend_mode.get(current).copied().unwrap_or_default();
+
+    // Backdrop layers must be created inside the entity clip. Creating the
+    // layer first allows image-filter output to bleed past rounded clips.
+    let backdrop_clip_count = backdrop_filter.map(|_| {
+        let count = canvas.save();
+        if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
+            canvas.clip_path(clip_path, ClipOp::Intersect, true);
+        }
+        count
+    });
 
     let layer_count = if cx.opacity() != 1.0
         || filter.is_some()
@@ -249,7 +269,9 @@ fn draw_entity(
         paint.set_blend_mode(blend_mode.into());
 
         let rect: Rect = cx.bounds().into();
-        let mut backdrop_image_filter = ImageFilter::crop(rect, None, None).unwrap();
+        let transformed_rect =
+            cx.cache.transform.get(current).map_or(rect, |transform| transform.map_rect(rect).0);
+        let mut backdrop_image_filter = ImageFilter::crop(transformed_rect, None, None).unwrap();
 
         if let Some(filter) = filter {
             match filter {
@@ -270,7 +292,10 @@ fn draw_entity(
                     let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
                     backdrop_image_filter =
                         backdrop_image_filter.blur(None, (sigma, sigma), None).unwrap();
-                    SaveLayerRec::default().paint(&paint).backdrop(&backdrop_image_filter)
+                    SaveLayerRec::default()
+                        .bounds(&transformed_rect)
+                        .paint(&paint)
+                        .backdrop(&backdrop_image_filter)
                 }
             }
         } else {
@@ -283,10 +308,11 @@ fn draw_entity(
     };
 
     canvas.save();
-    if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
-        canvas.clip_path(clip_path, ClipOp::Intersect, true);
+    if backdrop_filter.is_none() {
+        if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
+            canvas.clip_path(clip_path, ClipOp::Intersect, true);
+        }
     }
-
     if let Some(transform) = cx.cache.transform.get(current) {
         canvas.set_matrix(&(transform.into()));
     }
@@ -317,12 +343,21 @@ fn draw_entity(
     }
     canvas.restore();
     let child_iter = DrawChildIterator::new(cx.tree, cx.current);
+    let descendants_are_backdrop_clipped = ancestor_backdrop_clip || backdrop_clip_count.is_some();
 
     // Draw its children
     for child in child_iter {
         cx.current = child;
         // TODO: Skip views with zero-sized bounding boxes here? Or let user decide if they want to skip?
-        draw_entity(cx, dirty_rect, canvas, current_z, queue, is_visible);
+        draw_entity(
+            cx,
+            dirty_rect,
+            canvas,
+            current_z,
+            queue,
+            is_visible,
+            descendants_are_backdrop_clipped,
+        );
     }
 
     cx.current = current;
@@ -343,6 +378,9 @@ fn draw_entity(
     }
 
     if let Some(count) = layer_count {
+        canvas.restore_to_count(count);
+    }
+    if let Some(count) = backdrop_clip_count {
         canvas.restore_to_count(count);
     }
 }
