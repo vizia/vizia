@@ -4,17 +4,16 @@ const STYLE: &str = r#"
     :root {
         background-color: #111318;
         color: #fafafa;
+        padding: 40px;
     }
 
     .demo {
-        width: 680px;
-        height: 400px;
-        space: 1s;
+        size: 1s;
     }
 
     .backdrop {
         size: 1s;
-        border-radius: 36px;
+        corner-radius: 36px;
         overflow: hidden;
     }
 
@@ -35,7 +34,7 @@ const STYLE: &str = r#"
         row-gap: 12px;
         background-color: #26262673;
         border: 1px solid #ffffff38;
-        border-radius: 32px;
+        corner-radius: 32px;
         overflow: hidden;
         backdrop-filter: blur(28px);
     }
