@@ -239,6 +239,16 @@ fn draw_entity(
     let backdrop_filter = cx.backdrop_filter();
     let blend_mode = cx.style.blend_mode.get(current).copied().unwrap_or_default();
 
+    // Backdrop layers must be created inside the entity clip. Creating the
+    // layer first allows image-filter output to bleed past rounded clips.
+    let backdrop_clip_count = backdrop_filter.map(|_| {
+        let count = canvas.save();
+        if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
+            canvas.clip_path(clip_path, ClipOp::Intersect, true);
+        }
+        count
+    });
+
     let layer_count = if cx.opacity() != 1.0
         || filter.is_some()
         || backdrop_filter.is_some()
@@ -270,7 +280,10 @@ fn draw_entity(
                     let sigma = radius.to_px().unwrap() * cx.scale_factor() / 2.0;
                     backdrop_image_filter =
                         backdrop_image_filter.blur(None, (sigma, sigma), None).unwrap();
-                    SaveLayerRec::default().paint(&paint).backdrop(&backdrop_image_filter)
+                    SaveLayerRec::default()
+                        .bounds(&rect)
+                        .paint(&paint)
+                        .backdrop(&backdrop_image_filter)
                 }
             }
         } else {
@@ -283,10 +296,11 @@ fn draw_entity(
     };
 
     canvas.save();
-    if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
-        canvas.clip_path(clip_path, ClipOp::Intersect, true);
+    if backdrop_filter.is_none() {
+        if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
+            canvas.clip_path(clip_path, ClipOp::Intersect, true);
+        }
     }
-
     if let Some(transform) = cx.cache.transform.get(current) {
         canvas.set_matrix(&(transform.into()));
     }
@@ -343,6 +357,9 @@ fn draw_entity(
     }
 
     if let Some(count) = layer_count {
+        canvas.restore_to_count(count);
+    }
+    if let Some(count) = backdrop_clip_count {
         canvas.restore_to_count(count);
     }
 }
