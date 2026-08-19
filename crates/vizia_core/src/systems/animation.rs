@@ -1,6 +1,7 @@
 use morphorm::Node;
 
-use crate::{layout::node::SubLayout, prelude::*};
+use crate::{animation::view_progress, layout::node::SubLayout, prelude::*};
+use vizia_style::{AnimationScroller, AnimationTimeline, AnimationTimelineAxis};
 
 macro_rules! process_auto_animations {
     ($cx:expr, $property:expr, $height:expr) => {
@@ -77,6 +78,119 @@ macro_rules! process_auto_animations {
     };
 }
 
+fn nearest_scroll_source(cx: &Context, entity: Entity) -> Option<Entity> {
+    let mut current = cx.tree.get_layout_parent(entity);
+    while let Some(entity) = current {
+        if cx.style.scroll_timeline_sources.contains_key(&entity) {
+            return Some(entity);
+        }
+        current = cx.tree.get_layout_parent(entity);
+    }
+    None
+}
+
+fn root_scroll_source(cx: &Context, entity: Entity) -> Option<Entity> {
+    let mut current = Some(entity);
+    let mut result = None;
+    while let Some(entity) = current {
+        if cx.style.scroll_timeline_sources.contains_key(&entity) {
+            result = Some(entity);
+        }
+        current = cx.tree.get_layout_parent(entity);
+    }
+    result
+}
+
+fn source_progress(cx: &Context, source: Entity, axis: AnimationTimelineAxis) -> Option<f32> {
+    cx.entity_manager
+        .is_alive(source)
+        .then(|| cx.style.scroll_timeline_sources.get(&source).copied())
+        .flatten()
+        .map(|source| source.progress(axis))
+}
+
+fn view_timeline_progress(
+    cx: &Context,
+    entity: Entity,
+    axis: AnimationTimelineAxis,
+) -> Option<f32> {
+    let source_entity = nearest_scroll_source(cx, entity)?;
+    let source = cx.style.scroll_timeline_sources.get(&source_entity).copied()?;
+    let subject = cx.cache.get_bounds(entity);
+    let viewport = cx.cache.get_bounds(source_entity);
+    Some(match axis {
+        AnimationTimelineAxis::Block | AnimationTimelineAxis::Y => {
+            let offset = (source.inner_height - source.container_height).max(0.0) * source.y;
+            view_progress(subject.y, subject.h, viewport.y, viewport.h, offset)
+        }
+        AnimationTimelineAxis::Inline | AnimationTimelineAxis::X => {
+            let offset = (source.inner_width - source.container_width).max(0.0) * source.x;
+            view_progress(subject.x, subject.w, viewport.x, viewport.w, offset)
+        }
+    })
+}
+
+fn timeline_progress_changed(previous: Option<f32>, next: Option<f32>) -> bool {
+    match (previous, next) {
+        (Some(previous), Some(next)) => (previous - next).abs() > f32::EPSILON,
+        (None, None) => false,
+        _ => true,
+    }
+}
+
+fn refresh_progress_timelines(cx: &mut Context) {
+    let requests = cx
+        .style
+        .css_animation_instances
+        .iter()
+        .flat_map(|(entity, instances)| {
+            instances.iter().map(move |instance| {
+                (
+                    *entity,
+                    instance.instance_id,
+                    instance.timeline.clone(),
+                    instance.timeline_driven,
+                    instance.timeline_progress,
+                )
+            })
+        })
+        .collect::<Vec<_>>();
+
+    let mut samples = Vec::new();
+    for (entity, instance_id, timeline, was_driven, previous_progress) in requests {
+        let (driven, progress) = match timeline {
+            AnimationTimeline::Auto => (false, None),
+            AnimationTimeline::None => (true, None),
+            AnimationTimeline::Named(name) => {
+                let progress =
+                    cx.style.named_scroll_timelines.get(&name).copied().and_then(|source| {
+                        source_progress(cx, source, AnimationTimelineAxis::Block)
+                    });
+                (true, progress)
+            }
+            AnimationTimeline::Scroll { scroller, axis } => {
+                let source = match scroller {
+                    AnimationScroller::Self_ => {
+                        cx.style.scroll_timeline_sources.contains_key(&entity).then_some(entity)
+                    }
+                    AnimationScroller::Nearest => nearest_scroll_source(cx, entity),
+                    AnimationScroller::Root => root_scroll_source(cx, entity),
+                };
+                (true, source.and_then(|source| source_progress(cx, source, axis)))
+            }
+            AnimationTimeline::View { axis } => (true, view_timeline_progress(cx, entity, axis)),
+        };
+
+        if driven != was_driven || timeline_progress_changed(previous_progress, progress) {
+            samples.push((entity, instance_id, driven, progress));
+        }
+    }
+
+    for (entity, instance_id, driven, progress) in samples {
+        cx.style.set_css_timeline_progress(entity, instance_id, driven, progress);
+    }
+}
+
 pub(crate) fn animation_system(cx: &mut Context) -> bool {
     cx.style.play_pending_animations();
 
@@ -88,29 +202,67 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     // Tick all animations
 
     let time = Instant::now();
+    refresh_progress_timelines(cx);
 
     let mut redraw_entities = Vec::new();
     let mut reflow_entities = Vec::new();
     let mut relayout_entities = Vec::new();
     let mut retransform_entities = Vec::new();
     let mut reclip_entities = Vec::new();
+    let mut repath_entities = Vec::new();
+    let mut has_active_layout_animations = false;
 
     // Properties which affect rendering
     // Opacity
     redraw_entities.extend(cx.style.opacity.tick(time));
+    // Filters. Track only the entities which can require filter-aware dirty-bound work.
+    let filter_entities = cx.style.filter.tick(time);
+    cx.style.filter_entities.extend(filter_entities.iter().copied());
+    redraw_entities.extend(filter_entities);
+    let backdrop_filter_entities = cx.style.backdrop_filter.tick(time);
+    cx.style.filter_entities.extend(backdrop_filter_entities.iter().copied());
+    redraw_entities.extend(backdrop_filter_entities);
     // Corner Colour
     redraw_entities.extend(cx.style.border_top_color.tick(time));
     redraw_entities.extend(cx.style.border_right_color.tick(time));
     redraw_entities.extend(cx.style.border_bottom_color.tick(time));
     redraw_entities.extend(cx.style.border_left_color.tick(time));
-    // Corner Radius
-    redraw_entities.extend(cx.style.corner_top_left_radius.tick(time));
-    redraw_entities.extend(cx.style.corner_top_right_radius.tick(time));
-    redraw_entities.extend(cx.style.corner_bottom_left_radius.tick(time));
-    redraw_entities.extend(cx.style.corner_bottom_right_radius.tick(time));
+    // Corner Radius and smoothing. Radius changes also affect rounded clipping.
+    let corner_top_left = cx.style.corner_top_left_radius.tick(time);
+    let corner_top_right = cx.style.corner_top_right_radius.tick(time);
+    let corner_bottom_left = cx.style.corner_bottom_left_radius.tick(time);
+    let corner_bottom_right = cx.style.corner_bottom_right_radius.tick(time);
+    redraw_entities.extend(corner_top_left.iter().copied());
+    redraw_entities.extend(corner_top_right.iter().copied());
+    redraw_entities.extend(corner_bottom_left.iter().copied());
+    redraw_entities.extend(corner_bottom_right.iter().copied());
+    repath_entities.extend(corner_top_left.iter().copied());
+    repath_entities.extend(corner_top_right.iter().copied());
+    repath_entities.extend(corner_bottom_left.iter().copied());
+    repath_entities.extend(corner_bottom_right.iter().copied());
+    reclip_entities.extend(corner_top_left);
+    reclip_entities.extend(corner_top_right);
+    reclip_entities.extend(corner_bottom_left);
+    reclip_entities.extend(corner_bottom_right);
+    let corner_top_left_smoothing = cx.style.corner_top_left_smoothing.tick(time);
+    let corner_top_right_smoothing = cx.style.corner_top_right_smoothing.tick(time);
+    let corner_bottom_left_smoothing = cx.style.corner_bottom_left_smoothing.tick(time);
+    let corner_bottom_right_smoothing = cx.style.corner_bottom_right_smoothing.tick(time);
+    for entities in [
+        &corner_top_left_smoothing,
+        &corner_top_right_smoothing,
+        &corner_bottom_left_smoothing,
+        &corner_bottom_right_smoothing,
+    ] {
+        redraw_entities.extend(entities.iter().copied());
+        reclip_entities.extend(entities.iter().copied());
+        repath_entities.extend(entities.iter().copied());
+    }
     // Background
     redraw_entities.extend(cx.style.background_color.tick(time));
     redraw_entities.extend(cx.style.background_image.tick(time));
+    redraw_entities.extend(cx.style.background_position.tick(time));
+    redraw_entities.extend(cx.style.background_repeat.tick(time));
     redraw_entities.extend(cx.style.background_size.tick(time));
     // Box Shadow
     redraw_entities.extend(cx.style.shadow.tick(time));
@@ -129,8 +281,13 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
 
     redraw_entities.extend(cx.style.fill.tick(time));
 
-    // Font Color
+    // Font and decoration colors are baked into Skia's paragraph text styles, so a redraw alone
+    // would keep painting the paragraph with its previous colors. Rebuild the paragraph whenever
+    // either animated value changes. Caret and selection colors are read directly while drawing.
     reflow_entities.extend(cx.style.font_color.tick(time));
+    redraw_entities.extend(cx.style.caret_color.tick(time));
+    redraw_entities.extend(cx.style.selection_color.tick(time));
+    reflow_entities.extend(cx.style.text_decoration_color.tick(time));
     // Font Size
     reflow_entities.extend(cx.style.font_size.tick(time));
     // Letter Spacing
@@ -138,39 +295,47 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     // Line Height
     reflow_entities.extend(cx.style.line_height.tick(time));
 
-    // Properties which affect layout
+    // Properties which affect layout. Keep the animation frame loop alive while
+    // avoiding a relayout when a stepped/paused animation sampled the same value.
+    macro_rules! tick_layout {
+        ($store:expr) => {{
+            has_active_layout_animations |= $store.has_animations();
+            relayout_entities.extend($store.tick_changed(time));
+        }};
+    }
+
     relayout_entities.extend(cx.style.display.tick(time));
     // Border Width
-    relayout_entities.extend(cx.style.border_top_width.tick(time));
-    relayout_entities.extend(cx.style.border_right_width.tick(time));
-    relayout_entities.extend(cx.style.border_bottom_width.tick(time));
-    relayout_entities.extend(cx.style.border_left_width.tick(time));
+    tick_layout!(cx.style.border_top_width);
+    tick_layout!(cx.style.border_right_width);
+    tick_layout!(cx.style.border_bottom_width);
+    tick_layout!(cx.style.border_left_width);
     // Space
-    relayout_entities.extend(cx.style.left.tick(time));
-    relayout_entities.extend(cx.style.right.tick(time));
-    relayout_entities.extend(cx.style.top.tick(time));
-    relayout_entities.extend(cx.style.bottom.tick(time));
+    tick_layout!(cx.style.left);
+    tick_layout!(cx.style.right);
+    tick_layout!(cx.style.top);
+    tick_layout!(cx.style.bottom);
     // Size
-    relayout_entities.extend(cx.style.width.tick(time));
-    relayout_entities.extend(cx.style.height.tick(time));
+    tick_layout!(cx.style.width);
+    tick_layout!(cx.style.height);
     // Min/Max Size
-    relayout_entities.extend(cx.style.max_width.tick(time));
-    relayout_entities.extend(cx.style.max_height.tick(time));
-    relayout_entities.extend(cx.style.min_width.tick(time));
-    relayout_entities.extend(cx.style.min_height.tick(time));
+    tick_layout!(cx.style.max_width);
+    tick_layout!(cx.style.max_height);
+    tick_layout!(cx.style.min_width);
+    tick_layout!(cx.style.min_height);
     // Min/Max Gap
-    relayout_entities.extend(cx.style.max_horizontal_gap.tick(time));
-    relayout_entities.extend(cx.style.max_vertical_gap.tick(time));
-    relayout_entities.extend(cx.style.min_horizontal_gap.tick(time));
-    relayout_entities.extend(cx.style.min_vertical_gap.tick(time));
+    tick_layout!(cx.style.max_horizontal_gap);
+    tick_layout!(cx.style.max_vertical_gap);
+    tick_layout!(cx.style.min_horizontal_gap);
+    tick_layout!(cx.style.min_vertical_gap);
     // Row/Col Between
-    relayout_entities.extend(cx.style.vertical_gap.tick(time));
-    relayout_entities.extend(cx.style.horizontal_gap.tick(time));
+    tick_layout!(cx.style.vertical_gap);
+    tick_layout!(cx.style.horizontal_gap);
     // Child Space
-    relayout_entities.extend(cx.style.padding_left.tick(time));
-    relayout_entities.extend(cx.style.padding_right.tick(time));
-    relayout_entities.extend(cx.style.padding_top.tick(time));
-    relayout_entities.extend(cx.style.padding_bottom.tick(time));
+    tick_layout!(cx.style.padding_left);
+    tick_layout!(cx.style.padding_right);
+    tick_layout!(cx.style.padding_top);
+    tick_layout!(cx.style.padding_bottom);
 
     // Tick animations on custom color properties
     for store in cx.style.custom_color_props.values_mut() {
@@ -194,11 +359,25 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     }
     // Tick animations on custom units properties
     for store in cx.style.custom_units_props.values_mut() {
-        relayout_entities.extend(store.tick(time));
+        has_active_layout_animations |= store.has_animations();
+        relayout_entities.extend(store.tick_changed(time));
     }
     // Tick animations on custom opacity properties
     for store in cx.style.custom_opacity_props.values_mut() {
         redraw_entities.extend(store.tick(time));
+    }
+    // Tick animations on custom shadow properties.
+    for store in cx.style.custom_shadow_props.values_mut() {
+        redraw_entities.extend(store.tick(time));
+    }
+
+    // CSS animation lifecycle events are emitted once per named animation.
+    let lifecycle_events = cx.style.tick_css_animation_events(time);
+    for lifecycle_event in lifecycle_events {
+        let entity = lifecycle_event.entity;
+        cx.event_queue.push_back(
+            Event::new(lifecycle_event).target(entity).origin(entity).propagate(Propagation::Up),
+        );
     }
 
     for entity in relayout_entities.iter() {
@@ -218,12 +397,17 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
         cx.needs_redraw(*entity);
     }
 
+    for entity in repath_entities {
+        cx.cache.path.remove(entity);
+    }
+
     for entity in reclip_entities.iter() {
         cx.needs_reclip(*entity);
         cx.needs_redraw(*entity);
     }
 
-    !redraw_entities.is_empty()
+    has_active_layout_animations
+        | !redraw_entities.is_empty()
         | !relayout_entities.is_empty()
         | !reflow_entities.is_empty()
         | !retransform_entities.is_empty()

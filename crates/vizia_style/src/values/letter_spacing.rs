@@ -24,6 +24,20 @@ impl<'i> Parse<'i> for LetterSpacing {
         }
 
         let location = input.current_source_location();
+        if input
+            .try_parse(|input| -> Result<(), ParseError<'i, CustomParseError<'i>>> {
+                let value = input.expect_number()?;
+                if value == 0.0 {
+                    Ok(())
+                } else {
+                    Err(input.new_custom_error(CustomParseError::InvalidValue))
+                }
+            })
+            .is_ok()
+        {
+            return Ok(LetterSpacing::Length(Length::Value(crate::LengthValue::Px(0.0))));
+        }
+
         let length = input.try_parse(Length::parse)?;
         if let Length::Value(length_value) = &length {
             let (value, _) = length_value.to_unit_value();

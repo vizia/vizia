@@ -67,6 +67,20 @@ impl<'a> KeyframeBuilder<'a> {
         self
     }
 
+    /// Set the foreground filter for the keyframe.
+    pub fn filter(mut self, val: impl Into<Filter>) -> Self {
+        self.properties.push(Property::Filter(val.into()));
+
+        self
+    }
+
+    /// Set the backdrop filter for the keyframe.
+    pub fn backdrop_filter(mut self, val: impl Into<Filter>) -> Self {
+        self.properties.push(Property::BackdropFilter(val.into()));
+
+        self
+    }
+
     // TRANSFORM
 
     /// Set the transform value for the keyframe.

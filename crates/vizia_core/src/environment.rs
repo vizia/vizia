@@ -1,10 +1,7 @@
 //! A model for system specific state which can be accessed by any model or view.
 use crate::prelude::*;
 
-#[cfg(target_os = "linux")]
-use mundy::Interest;
-#[cfg(target_os = "linux")]
-use mundy::Preferences;
+use mundy::{Interest, Preferences, ReducedMotion};
 use unic_langid::CharacterDirection;
 use unic_langid::LanguageIdentifier;
 
@@ -43,6 +40,8 @@ pub struct Environment {
     /// Whether the layout debug overlay is enabled. When set, views which underwent layout in the
     /// most recent layout pass are outlined in orange until the next layout pass.
     pub debug_layout: bool,
+    /// Whether the operating system requests reduced motion.
+    pub prefers_reduced_motion: bool,
 }
 
 fn direction_from_locale(locale: &LanguageIdentifier) -> Direction {
@@ -65,6 +64,17 @@ fn apply_direction_class(cx: &mut EventContext, direction: Direction) {
             cx.toggle_class("rtl", rtl);
         });
     }
+}
+
+fn detect_reduced_motion() -> bool {
+    #[cfg(target_os = "macos")]
+    if std::thread::current().name() != Some("main") {
+        return false;
+    }
+
+    let preferences =
+        Preferences::once_blocking(Interest::ReducedMotion, Duration::from_millis(100));
+    preferences.is_some_and(|preferences| preferences.reduced_motion == ReducedMotion::Reduce)
 }
 
 fn detect_theme() -> ThemeMode {
@@ -99,6 +109,8 @@ impl Environment {
         });
         let direction = direction_from_locale(&locale);
         cx.style.debug_layout = false;
+        let prefers_reduced_motion = detect_reduced_motion();
+        cx.style.system_reduced_motion = prefers_reduced_motion;
         Self {
             locale: Signal::new(locale.clone()),
             direction: Signal::new(direction),
@@ -109,6 +121,7 @@ impl Environment {
             caret_timer,
             drag_distance: Signal::new(4),
             debug_layout: false,
+            prefers_reduced_motion,
         }
     }
 
@@ -145,6 +158,8 @@ pub enum EnvironmentEvent {
     SetDebugLayout(bool),
     /// Toggle the layout debug overlay on or off.
     ToggleDebugLayout,
+    /// Update the OS-reported reduced-motion preference.
+    SetReducedMotion(bool),
 }
 
 impl Model for Environment {
@@ -228,6 +243,14 @@ impl Model for Environment {
                     cx.style.laid_out.clear();
                 }
                 cx.needs_redraw();
+            }
+
+            EnvironmentEvent::SetReducedMotion(reduced) => {
+                if self.prefers_reduced_motion != reduced {
+                    self.prefers_reduced_motion = reduced;
+                    cx.style.system_reduced_motion = reduced;
+                    cx.needs_restyle();
+                }
             }
         });
 

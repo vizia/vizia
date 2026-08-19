@@ -1379,11 +1379,12 @@ sidebar button.sidebar-menu-button:hover {
 }
 
 sidebar button.sidebar-menu-button.sidebar-menu-button-active {
-    background-color: var(--sidebar-accent);
+    background-color: var(--sidebar-primary);
+    color: var(--sidebar-primary-foreground);
 }
 
 sidebar button.sidebar-menu-button.sidebar-menu-button-active > label {
-    color: var(--secondary-foreground);
+    color: var(--sidebar-primary-foreground);
 }
 
 sidebar label.sidebar-empty-state {

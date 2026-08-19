@@ -86,8 +86,11 @@ pub use vizia_style::{
 
 use cssparser::Token as CssToken;
 use vizia_style::{
-    BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, Selectors, StyleSheet,
-    TokenList, TokenOrValue, Variable,
+    AnimationComposition, AnimationCompositions, AnimationDelays, AnimationDirections,
+    AnimationDurations, AnimationFillModes, AnimationIterationCounts, AnimationNames,
+    AnimationPlayStates, AnimationTimeline, AnimationTimelines, AnimationTimingFunctions,
+    BlendMode, KeyframeSelector, ParserOptions, Property, Selectors, StyleSheet, TokenList,
+    TokenOrValue, Variable,
 };
 
 mod rule;
@@ -99,7 +102,13 @@ pub(crate) use pseudoclass::*;
 mod transform;
 pub(crate) use transform::*;
 
-use crate::animation::{AnimationState, Interpolator, Keyframe, TimingFunction};
+mod css_animation;
+pub(crate) use css_animation::CssAnimationInstance;
+
+use crate::animation::{
+    AnimationEvent, AnimationState, Compositor, Interpolator, Keyframe, ScrollTimelineSource,
+    TimingFunction,
+};
 use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::style_set::StyleSet;
 use bitflags::bitflags;
@@ -120,6 +129,113 @@ bitflags! {
         const NAVIGABLE = 1 << 3;
         // Whether a view can be dragged during a drag and drop.
         const DRAGGABLE = 1 << 4;
+    }
+}
+
+#[cfg(test)]
+mod animation_tests {
+    use super::*;
+    use crate::animation::{AnimationBuilder, CssAnimationTiming};
+    use std::time::Duration;
+    use vizia_style::AnimationFillMode;
+
+    fn blur_radius(filter: &Filter) -> f32 {
+        match filter {
+            Filter::None => 0.0,
+            Filter::Blur(radius) => radius.to_px().expect("test blur radius should use pixels"),
+            Filter::List(filters) if filters.len() == 1 => blur_radius(&filters[0]),
+            Filter::List(_) => panic!("expected a single blur filter in this test"),
+        }
+    }
+
+    #[test]
+    fn filter_keyframes_are_registered_played_and_interpolated() {
+        let mut style = Style::default();
+        let animation = style.add_animation(
+            AnimationBuilder::new()
+                .keyframe(0.0, |key| key.filter(Filter::Blur(Length::px(20.0))))
+                .keyframe(1.0, |key| key.filter(Filter::Blur(Length::px(0.0)))),
+        );
+        let entity = Entity::root();
+        let start = Instant::now();
+
+        style.play_animation(entity, animation, start, Duration::from_secs(1), Duration::default());
+        style.filter.tick(start + Duration::from_millis(500));
+
+        assert!(style.filter.has_active_animation(entity, animation));
+        assert!((blur_radius(style.filter.get(entity).unwrap()) - 10.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn level_two_translate_effect_stack_adds_in_stable_order() {
+        let mut style = Style::default();
+        let first = style.add_animation(
+            AnimationBuilder::new()
+                .keyframe(0.0, |key| key.translate((Length::px(10.0), Length::px(0.0))))
+                .keyframe(1.0, |key| key.translate((Length::px(10.0), Length::px(0.0)))),
+        );
+        let second = style.add_animation(
+            AnimationBuilder::new()
+                .keyframe(0.0, |key| key.translate((Length::px(20.0), Length::px(0.0))))
+                .keyframe(1.0, |key| key.translate((Length::px(20.0), Length::px(0.0)))),
+        );
+        let entity = Entity::root();
+        style.translate.insert(entity, Translate::default());
+        let now = Instant::now();
+        let timing = CssAnimationTiming {
+            duration: 1.0,
+            fill_mode: AnimationFillMode::Both,
+            ..Default::default()
+        };
+
+        style.translate.play_css_animation(
+            entity,
+            first,
+            10,
+            0,
+            now,
+            timing,
+            TimingFunction::linear(),
+            AnimationComposition::Add,
+            &[],
+        );
+        style.translate.play_css_animation(
+            entity,
+            second,
+            11,
+            1,
+            now,
+            timing,
+            TimingFunction::linear(),
+            AnimationComposition::Add,
+            &[],
+        );
+        style.translate.tick(now + Duration::from_millis(500));
+
+        let value = style.translate.get(entity).expect("composed translate output");
+        assert_eq!(
+            value.x,
+            LengthOrPercentage::Length(Length::px(30.0)),
+            "two additive effects should compose instead of the later one replacing the first",
+        );
+    }
+
+    #[test]
+    fn backdrop_filter_keyframes_are_registered_played_and_interpolated() {
+        let mut style = Style::default();
+        let animation = style.add_animation(
+            AnimationBuilder::new()
+                .keyframe(0.0, |key| key.backdrop_filter(Filter::Blur(Length::px(0.0))))
+                .keyframe(1.0, |key| key.backdrop_filter(Filter::Blur(Length::px(16.0)))),
+        );
+        let entity = Entity::root();
+        let start = Instant::now();
+
+        style.play_animation(entity, animation, start, Duration::from_secs(1), Duration::default());
+        style.backdrop_filter.tick(start + Duration::from_millis(250));
+
+        assert!(style.backdrop_filter.has_active_animation(entity, animation));
+        assert!((blur_radius(style.backdrop_filter.get(entity).unwrap()) - 4.0).abs() < 0.01);
     }
 }
 
@@ -201,8 +317,29 @@ pub struct Style {
     // Creates and destroys animation ids
     pub(crate) animation_manager: IdManager<Animation>,
     pub(crate) animations: HashMap<String, Animation>,
+    pub(crate) css_animation_names: HashSet<String>,
     // List of animations to be started on the next frame
     pub(crate) pending_animations: Vec<(Entity, Animation, Duration, Duration)>,
+
+    // CSS Animations Level 1 computed declaration lists.
+    pub(crate) animation_name: StyleSet<AnimationNames>,
+    pub(crate) animation_duration: StyleSet<AnimationDurations>,
+    pub(crate) animation_delay: StyleSet<AnimationDelays>,
+    pub(crate) animation_timing_function: StyleSet<AnimationTimingFunctions>,
+    pub(crate) animation_iteration_count: StyleSet<AnimationIterationCounts>,
+    pub(crate) animation_direction: StyleSet<AnimationDirections>,
+    pub(crate) animation_fill_mode: StyleSet<AnimationFillModes>,
+    pub(crate) animation_play_state: StyleSet<AnimationPlayStates>,
+    pub(crate) animation_composition: StyleSet<AnimationCompositions>,
+    pub(crate) animation_timeline: StyleSet<AnimationTimelines>,
+    pub(crate) css_animation_instances: HashMap<Entity, Vec<CssAnimationInstance>>,
+    pub(crate) scroll_timeline_sources: HashMap<Entity, ScrollTimelineSource>,
+    pub(crate) named_scroll_timelines: HashMap<String, Entity>,
+    pub(crate) next_css_animation_instance_id: u64,
+    pub(crate) animation_timelines: HashMap<Animation, Vec<(f32, TimingFunction)>>,
+    pub(crate) pending_animation_events: Vec<AnimationEvent>,
+    pub(crate) system_reduced_motion: bool,
+    pub(crate) reduced_motion_override: Option<bool>,
 
     // List of rules
     pub(crate) rules: IndexMap<Rule, StyleRule>,
@@ -259,6 +396,9 @@ pub struct Style {
     // Filters
     pub(crate) filter: AnimatableSet<Filter>,
     pub(crate) backdrop_filter: AnimatableSet<Filter>,
+    /// Entities which currently have, or are actively animating, a filter/backdrop-filter.
+    /// Draw uses this sparse set instead of scanning the entire layout tree every frame.
+    pub(crate) filter_entities: HashSet<Entity>,
 
     pub(crate) blend_mode: StyleSet<BlendMode>,
 
@@ -459,7 +599,9 @@ impl Style {
         time: f32,
         properties: &[Property],
     ) {
-        fn insert_keyframe<T: 'static + Interpolator + Debug + Clone + PartialEq + Default>(
+        fn insert_keyframe<
+            T: 'static + Interpolator + Compositor + Debug + Clone + PartialEq + Default,
+        >(
             storage: &mut AnimatableSet<T>,
             animation_id: Animation,
             time: f32,
@@ -475,7 +617,9 @@ impl Style {
             }
         }
 
-        fn insert_keyframe2<T: 'static + Interpolator + Debug + Clone + PartialEq + Default>(
+        fn insert_keyframe2<
+            T: 'static + Interpolator + Compositor + Debug + Clone + PartialEq + Default,
+        >(
             storage: &mut AnimatableVarSet<T>,
             animation_id: Animation,
             time: f32,
@@ -504,6 +648,14 @@ impl Style {
 
                 Property::ClipPath(value) => {
                     insert_keyframe(&mut self.clip_path, animation_id, time, value.clone());
+                }
+
+                Property::Filter(value) => {
+                    insert_keyframe(&mut self.filter, animation_id, time, value.clone());
+                }
+
+                Property::BackdropFilter(value) => {
+                    insert_keyframe(&mut self.backdrop_filter, animation_id, time, value.clone());
                 }
 
                 // TRANSFORM
@@ -929,6 +1081,112 @@ impl Style {
                     insert_keyframe2(&mut self.fill, animation_id, time, *value);
                 }
 
+                Property::Custom(custom) => {
+                    let mut hasher = DefaultHasher::new();
+                    custom.name.hash(&mut hasher);
+                    let variable_name_hash = hasher.finish();
+
+                    for token in &custom.value.0 {
+                        match token {
+                            TokenOrValue::Color(color) => {
+                                let store =
+                                    self.custom_color_props.entry(variable_name_hash).or_default();
+                                insert_keyframe2(store, animation_id, time, *color);
+                            }
+                            TokenOrValue::Token(CssToken::Dimension { value, unit, .. })
+                                if unit.as_ref().eq_ignore_ascii_case("px") =>
+                            {
+                                let length = Length::Value(LengthValue::Px(*value));
+                                insert_keyframe2(
+                                    self.custom_length_props.entry(variable_name_hash).or_default(),
+                                    animation_id,
+                                    time,
+                                    LengthOrPercentage::Length(length.clone()),
+                                );
+                                insert_keyframe2(
+                                    self.custom_font_size_props
+                                        .entry(variable_name_hash)
+                                        .or_default(),
+                                    animation_id,
+                                    time,
+                                    FontSize(length.clone()),
+                                );
+                                insert_keyframe2(
+                                    self.custom_letter_spacing_props
+                                        .entry(variable_name_hash)
+                                        .or_default(),
+                                    animation_id,
+                                    time,
+                                    LetterSpacing::Length(length.clone()),
+                                );
+                                insert_keyframe2(
+                                    self.custom_line_height_props
+                                        .entry(variable_name_hash)
+                                        .or_default(),
+                                    animation_id,
+                                    time,
+                                    LineHeight::Length(length),
+                                );
+                                insert_keyframe2(
+                                    self.custom_units_props.entry(variable_name_hash).or_default(),
+                                    animation_id,
+                                    time,
+                                    Units::Pixels(*value),
+                                );
+                            }
+                            TokenOrValue::Token(CssToken::Percentage { unit_value, .. }) => {
+                                insert_keyframe2(
+                                    self.custom_length_props.entry(variable_name_hash).or_default(),
+                                    animation_id,
+                                    time,
+                                    LengthOrPercentage::Percentage(*unit_value * 100.0),
+                                );
+                                insert_keyframe2(
+                                    self.custom_line_height_props
+                                        .entry(variable_name_hash)
+                                        .or_default(),
+                                    animation_id,
+                                    time,
+                                    LineHeight::Percentage(*unit_value * 100.0),
+                                );
+                                insert_keyframe2(
+                                    self.custom_units_props.entry(variable_name_hash).or_default(),
+                                    animation_id,
+                                    time,
+                                    Units::Percentage(*unit_value * 100.0),
+                                );
+                                insert_keyframe2(
+                                    self.custom_opacity_props
+                                        .entry(variable_name_hash)
+                                        .or_default(),
+                                    animation_id,
+                                    time,
+                                    Opacity(*unit_value),
+                                );
+                            }
+                            TokenOrValue::Token(CssToken::Number { value, .. }) => {
+                                insert_keyframe2(
+                                    self.custom_opacity_props
+                                        .entry(variable_name_hash)
+                                        .or_default(),
+                                    animation_id,
+                                    time,
+                                    Opacity(*value),
+                                );
+                                insert_keyframe2(
+                                    self.custom_line_height_props
+                                        .entry(variable_name_hash)
+                                        .or_default(),
+                                    animation_id,
+                                    time,
+                                    LineHeight::Number(*value),
+                                );
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+
                 _ => {}
             }
         }
@@ -974,6 +1232,8 @@ impl Style {
         self.display.play_animation(entity, animation, start_time, duration, delay);
         self.opacity.play_animation(entity, animation, start_time, duration, delay);
         self.clip_path.play_animation(entity, animation, start_time, duration, delay);
+        self.filter.play_animation(entity, animation, start_time, duration, delay);
+        self.backdrop_filter.play_animation(entity, animation, start_time, duration, delay);
 
         self.transform.play_animation(entity, animation, start_time, duration, delay);
         self.transform_origin.play_animation(entity, animation, start_time, duration, delay);
@@ -1083,6 +1343,8 @@ impl Style {
         self.display.has_active_animation(entity, animation)
             | self.opacity.has_active_animation(entity, animation)
             | self.clip_path.has_active_animation(entity, animation)
+            | self.filter.has_active_animation(entity, animation)
+            | self.backdrop_filter.has_active_animation(entity, animation)
             | self.transform.has_active_animation(entity, animation)
             | self.transform_origin.has_active_animation(entity, animation)
             | self.translate.has_active_animation(entity, animation)
@@ -1173,6 +1435,7 @@ impl Style {
                         let name = keyframes_rule.name.as_string();
 
                         let animation_id = self.animation_manager.create();
+                        let mut animation_timeline: Vec<(f32, TimingFunction)> = Vec::new();
 
                         for keyframes in keyframes_rule.keyframes {
                             for selector in keyframes.selectors.iter() {
@@ -1184,6 +1447,32 @@ impl Style {
                                     }
                                 };
 
+                                let keyframe_timing = keyframes
+                                    .declarations
+                                    .declarations
+                                    .iter()
+                                    .rev()
+                                    .find_map(|property| match property {
+                                        Property::AnimationTimingFunction(functions) => {
+                                            functions.0.first().copied()
+                                        }
+                                        _ => None,
+                                    })
+                                    .map(TimingFunction::from_easing);
+                                if let Some((_, existing_timing)) = animation_timeline
+                                    .iter_mut()
+                                    .rev()
+                                    .find(|(offset, _)| (*offset - time).abs() <= f32::EPSILON)
+                                {
+                                    if let Some(keyframe_timing) = keyframe_timing {
+                                        *existing_timing = keyframe_timing;
+                                    }
+                                } else {
+                                    animation_timeline.push((
+                                        time,
+                                        keyframe_timing.unwrap_or(TimingFunction::AnimationDefault),
+                                    ));
+                                }
                                 self.add_keyframe(
                                     animation_id,
                                     time,
@@ -1192,6 +1481,8 @@ impl Style {
                             }
                         }
 
+                        self.animation_timelines.insert(animation_id, animation_timeline);
+                        self.css_animation_names.insert(name.clone());
                         self.animations.insert(name, animation_id);
                     }
 
@@ -1219,6 +1510,16 @@ impl Style {
             "clip-path" => {
                 self.clip_path.insert_animation(animation, self.add_transition(transition));
                 self.clip_path.insert_transition(rule_id, animation);
+            }
+
+            "filter" => {
+                self.filter.insert_animation(animation, self.add_transition(transition));
+                self.filter.insert_transition(rule_id, animation);
+            }
+
+            "backdrop-filter" => {
+                self.backdrop_filter.insert_animation(animation, self.add_transition(transition));
+                self.backdrop_filter.insert_transition(rule_id, animation);
             }
 
             "transform" => {
@@ -1707,6 +2008,98 @@ impl Style {
     }
 
     fn insert_property(&mut self, rule_id: Rule, property: &Property) {
+        match property {
+            Property::AnimationName(value) => {
+                self.animation_name.insert_rule(rule_id, value.clone());
+                return;
+            }
+            Property::AnimationDuration(value) => {
+                self.animation_duration.insert_rule(rule_id, value.clone());
+                return;
+            }
+            Property::AnimationDelay(value) => {
+                self.animation_delay.insert_rule(rule_id, value.clone());
+                return;
+            }
+            Property::AnimationTimingFunction(value) => {
+                self.animation_timing_function.insert_rule(rule_id, value.clone());
+                return;
+            }
+            Property::AnimationIterationCount(value) => {
+                self.animation_iteration_count.insert_rule(rule_id, value.clone());
+                return;
+            }
+            Property::AnimationDirection(value) => {
+                self.animation_direction.insert_rule(rule_id, value.clone());
+                return;
+            }
+            Property::AnimationFillMode(value) => {
+                self.animation_fill_mode.insert_rule(rule_id, value.clone());
+                return;
+            }
+            Property::AnimationPlayState(value) => {
+                self.animation_play_state.insert_rule(rule_id, value.clone());
+                return;
+            }
+            Property::AnimationComposition(value) => {
+                self.animation_composition.insert_rule(rule_id, value.clone());
+                return;
+            }
+            Property::AnimationTimeline(value) => {
+                self.animation_timeline.insert_rule(rule_id, value.clone());
+                return;
+            }
+            Property::Animation(value) => {
+                self.animation_name.insert_rule(
+                    rule_id,
+                    AnimationNames(value.0.iter().map(|item| item.name.clone()).collect()),
+                );
+                self.animation_duration.insert_rule(
+                    rule_id,
+                    AnimationDurations(value.0.iter().map(|item| item.duration).collect()),
+                );
+                self.animation_delay.insert_rule(
+                    rule_id,
+                    AnimationDelays(value.0.iter().map(|item| item.delay).collect()),
+                );
+                self.animation_timing_function.insert_rule(
+                    rule_id,
+                    AnimationTimingFunctions(
+                        value.0.iter().map(|item| item.timing_function).collect(),
+                    ),
+                );
+                self.animation_iteration_count.insert_rule(
+                    rule_id,
+                    AnimationIterationCounts(
+                        value.0.iter().map(|item| item.iteration_count).collect(),
+                    ),
+                );
+                self.animation_direction.insert_rule(
+                    rule_id,
+                    AnimationDirections(value.0.iter().map(|item| item.direction).collect()),
+                );
+                self.animation_fill_mode.insert_rule(
+                    rule_id,
+                    AnimationFillModes(value.0.iter().map(|item| item.fill_mode).collect()),
+                );
+                self.animation_play_state.insert_rule(
+                    rule_id,
+                    AnimationPlayStates(value.0.iter().map(|item| item.play_state).collect()),
+                );
+                self.animation_composition.insert_rule(
+                    rule_id,
+                    AnimationCompositions(
+                        value.0.iter().map(|_| AnimationComposition::Replace).collect(),
+                    ),
+                );
+                self.animation_timeline.insert_rule(
+                    rule_id,
+                    AnimationTimelines(value.0.iter().map(|_| AnimationTimeline::Auto).collect()),
+                );
+                return;
+            }
+            _ => {}
+        }
         fn variable_hash(var: &Variable<'_>) -> u64 {
             let mut s = DefaultHasher::new();
             var.name.hash(&mut s);
@@ -3085,17 +3478,8 @@ impl Style {
         &self,
         transition: &Transition,
     ) -> AnimationState<T> {
-        let timing_function = transition
-            .timing_function
-            .map(|easing| match easing {
-                EasingFunction::Linear => TimingFunction::linear(),
-                EasingFunction::Ease => TimingFunction::ease(),
-                EasingFunction::EaseIn => TimingFunction::ease_in(),
-                EasingFunction::EaseOut => TimingFunction::ease_out(),
-                EasingFunction::EaseInOut => TimingFunction::ease_in_out(),
-                EasingFunction::CubicBezier(x1, y1, x2, y2) => TimingFunction::new(x1, y1, x2, y2),
-            })
-            .unwrap_or_default();
+        let timing_function =
+            transition.timing_function.map(TimingFunction::from_easing).unwrap_or_default();
 
         AnimationState::new(Animation::null())
             .with_duration(transition.duration)
@@ -3122,6 +3506,15 @@ impl Style {
 
     // Remove style data for the given entity.
     pub(crate) fn remove(&mut self, entity: Entity) {
+        self.cancel_css_animations(entity, Instant::now());
+        self.animation_name.remove(entity);
+        self.animation_duration.remove(entity);
+        self.animation_delay.remove(entity);
+        self.animation_timing_function.remove(entity);
+        self.animation_iteration_count.remove(entity);
+        self.animation_direction.remove(entity);
+        self.animation_fill_mode.remove(entity);
+        self.animation_play_state.remove(entity);
         self.relayout.remove(&entity);
         self.laid_out.remove(&entity);
         self.ids.remove(entity);
@@ -3319,6 +3712,9 @@ impl Style {
         for store in self.custom_opacity_props.values_mut() {
             store.remove(entity);
         }
+        for store in self.custom_shadow_props.values_mut() {
+            store.remove(entity);
+        }
     }
 
     pub(crate) fn needs_restyle(&mut self, entity: Entity) {
@@ -3361,6 +3757,23 @@ impl Style {
 
     // Remove all shared style data.
     pub(crate) fn clear_style_rules(&mut self) {
+        let now = Instant::now();
+        let animated_entities: Vec<Entity> = self.css_animation_instances.keys().copied().collect();
+        for entity in animated_entities {
+            self.cancel_css_animations(entity, now);
+        }
+        self.animation_name.clear_rules();
+        self.animation_duration.clear_rules();
+        self.animation_delay.clear_rules();
+        self.animation_timing_function.clear_rules();
+        self.animation_iteration_count.clear_rules();
+        self.animation_direction.clear_rules();
+        self.animation_fill_mode.clear_rules();
+        self.animation_play_state.clear_rules();
+        self.animation_timelines.clear();
+        for name in std::mem::take(&mut self.css_animation_names) {
+            self.animations.remove(&name);
+        }
         self.disabled.clear_rules();
         // Display
         self.display.clear_rules();

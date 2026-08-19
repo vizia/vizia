@@ -1,10 +1,13 @@
 use crate::{
-    Alignment, Angle, AspectRatio, BackgroundImage, BackgroundRepeat, BackgroundSize, BlendMode,
-    Border, BorderStyle, BorderStyleKeyword, BorderWidth, BorderWidthValue, ClipPath, Color,
-    CornerRadius, CursorIcon, CustomParseError, CustomProperty, Direction, Display, Filter,
-    FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWidth, LayoutType, LayoutWrap,
-    Length, LengthOrPercentage, LetterSpacing, LineClamp, LineHeight, Opacity, Outline, Overflow,
-    Parse, PointerEvents, Position, PositionType, Scale, Shadow, TextAlign, TextDecoration,
+    Alignment, Angle, AnimationCompositions, AnimationDelays, AnimationDirections,
+    AnimationDurations, AnimationFillModes, AnimationIterationCounts, AnimationNames,
+    AnimationPlayStates, AnimationShorthand, AnimationTimelines, AnimationTimingFunctions,
+    AspectRatio, BackgroundImage, BackgroundRepeat, BackgroundSize, BlendMode, Border, BorderStyle,
+    BorderStyleKeyword, BorderWidth, BorderWidthValue, ClipPath, Color, CornerRadius, CornerShape,
+    CursorIcon, CustomParseError, CustomProperty, Direction, Display, Filter, FontFamily, FontSize,
+    FontSlant, FontVariation, FontWeight, FontWidth, LayoutType, LayoutWrap, Length,
+    LengthOrPercentage, LetterSpacing, LineClamp, LineHeight, Opacity, Outline, Overflow, Parse,
+    PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
     TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
     Transition, Translate, Units, UnparsedProperty, Visibility, define_property,
 };
@@ -189,6 +192,17 @@ define_property! {
         "backdrop-filter": BackdropFilter(Filter),
 
         // Animations
+        "animation-name": AnimationName(AnimationNames),
+        "animation-duration": AnimationDuration(AnimationDurations),
+        "animation-delay": AnimationDelay(AnimationDelays),
+        "animation-timing-function": AnimationTimingFunction(AnimationTimingFunctions),
+        "animation-iteration-count": AnimationIterationCount(AnimationIterationCounts),
+        "animation-direction": AnimationDirection(AnimationDirections),
+        "animation-fill-mode": AnimationFillMode(AnimationFillModes),
+        "animation-play-state": AnimationPlayState(AnimationPlayStates),
+        "animation-composition": AnimationComposition(AnimationCompositions),
+        "animation-timeline": AnimationTimeline(AnimationTimelines),
+        "animation": Animation(AnimationShorthand),
         "transition": Transition(Vec<Transition>),
 
         // Transform
@@ -289,5 +303,16 @@ mod tests {
         let parsed_property = Property::parse_value(CowRcStr::from("filter"), &mut parser).unwrap();
 
         assert_eq!(parsed_property, Property::Filter(Filter::Blur(Length::px(5.0))));
+
+        let mut parser_input = ParserInput::new("blur(2px) blur(8px)");
+        let mut parser = Parser::new(&mut parser_input);
+        let parsed_property = Property::parse_value(CowRcStr::from("filter"), &mut parser).unwrap();
+        assert_eq!(
+            parsed_property,
+            Property::Filter(Filter::List(vec![
+                Filter::Blur(Length::px(2.0)),
+                Filter::Blur(Length::px(8.0)),
+            ]))
+        );
     }
 }

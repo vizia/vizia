@@ -1,6 +1,6 @@
 use vizia_storage::LayoutTreeIterator;
 
-use crate::{animation::Interpolator, prelude::*};
+use crate::prelude::*;
 
 /// Applies transforms to the layout tree.
 pub(crate) fn transform_system(cx: &mut Context) {
@@ -54,27 +54,11 @@ pub(crate) fn transform_system(cx: &mut Context) {
 
                 // Apply transform functions.
                 if let Some(transforms) = cx.style.transform.get(entity) {
-                    // Check if the transform is currently animating
-                    // Get the animation state
-                    // Manually interpolate the value to get the overall transform for the current frame
-                    if let Some(animation_state) = cx.style.transform.get_active_animation(entity) {
-                        if let Some(start) = animation_state.keyframes.first() {
-                            if let Some(end) = animation_state.keyframes.last() {
-                                let start_transform =
-                                    start.value.as_transform(bounds, scale_factor);
-                                let end_transform = end.value.as_transform(bounds, scale_factor);
-                                let t = animation_state.t;
-                                let animated_transform = skia_safe::Matrix::interpolate(
-                                    &start_transform,
-                                    &end_transform,
-                                    t,
-                                );
-                                transform = transform * animated_transform;
-                            }
-                        }
-                    } else {
-                        transform = transform * transforms.as_transform(bounds, scale_factor);
-                    }
+                    // AnimatableSet::tick() already exposes the fully sampled value here,
+                    // including easing, looping, direction and CSS effect composition.
+                    // Re-interpolating the first/last keyframes discarded that result and
+                    // made transform-list animations appear stuck after their first sample.
+                    transform = transform * transforms.as_transform(bounds, scale_factor);
                 }
 
                 transform = transform * origin;

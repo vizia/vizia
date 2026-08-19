@@ -1,6 +1,10 @@
-use crate::animation::{AnimationState, Interpolator};
+use crate::animation::{
+    AnimationState, Compositor, CssAnimationTiming, Interpolator, Keyframe, TimingFunction,
+};
 use crate::prelude::*;
+use hashbrown::HashMap;
 use vizia_storage::{SparseSet, SparseSetGeneric, SparseSetIndex};
+use vizia_style::AnimationComposition;
 
 const INDEX_MASK: u32 = u32::MAX / 4;
 const INLINE_MASK: u32 = 1 << 31;
@@ -141,11 +145,13 @@ pub(crate) struct AnimatableSet<T: Interpolator> {
     animations: SparseSet<AnimationState<T>>,
     /// Animations which are currently playing
     active_animations: Vec<AnimationState<T>>,
+    /// Final Level 2 CSS effect-stack result per entity.
+    css_composed_outputs: HashMap<Entity, T>,
 }
 
 impl<T> AnimatableSet<T>
 where
-    T: 'static + Default + Clone + Interpolator + PartialEq + std::fmt::Debug,
+    T: 'static + Default + Clone + Interpolator + Compositor + PartialEq + std::fmt::Debug,
 {
     /// Insert an inline value for an entity.
     pub fn insert(&mut self, entity: Entity, value: T) {
@@ -154,17 +160,15 @@ where
 
     /// Remove an entity and any inline data.
     pub fn remove(&mut self, entity: Entity) -> Option<T> {
+        self.css_composed_outputs.remove(&entity);
         let entity_index = entity.index();
 
         if entity_index < self.inline_data.sparse.len() {
-            let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
-
-            if active_anim_index < self.active_animations.len() {
-                let anim_state = &mut self.active_animations[active_anim_index];
-                anim_state.t = 1.0;
-
-                self.remove_innactive_animations();
+            for state in self.active_animations.iter_mut() {
+                state.entities.remove(&entity);
             }
+            self.inline_data.sparse[entity_index].anim_index = u32::MAX;
+            self.remove_innactive_animations();
 
             let data_index = self.inline_data.sparse[entity_index].data_index;
             if data_index.is_inline() && !data_index.is_inherited() {
@@ -312,7 +316,80 @@ where
         }
     }
 
-    /// Play an animation for a given entity.
+    fn get_base(&self, entity: Entity) -> Option<&T> {
+        let entity_index = entity.index();
+        if entity_index >= self.inline_data.sparse.len() {
+            return None;
+        }
+        let data_index = self.inline_data.sparse[entity_index].data_index;
+        if data_index.is_inline() {
+            if data_index.index() < self.inline_data.dense.len() {
+                return Some(&self.inline_data.dense[data_index.index()].value);
+            }
+        } else if data_index.index() < self.shared_data.dense.len() {
+            return Some(&self.shared_data.dense[data_index.index()].value);
+        }
+        None
+    }
+
+    fn normalize_css_keyframes(
+        description: &AnimationState<T>,
+        timeline: &[(f32, TimingFunction)],
+        underlying: T,
+    ) -> Vec<Keyframe<T>> {
+        let mut offsets: Vec<(f32, TimingFunction)> = timeline.to_vec();
+        if offsets.is_empty() {
+            offsets.extend(description.keyframes.iter().map(|key| (key.time, key.timing_function)));
+        }
+        if !offsets.iter().any(|(time, _)| (*time).abs() <= f32::EPSILON) {
+            offsets.push((0.0, TimingFunction::AnimationDefault));
+        }
+        if !offsets.iter().any(|(time, _)| (*time - 1.0).abs() <= f32::EPSILON) {
+            offsets.push((1.0, TimingFunction::AnimationDefault));
+        }
+        offsets.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let mut normalized_offsets: Vec<(f32, TimingFunction)> = Vec::with_capacity(offsets.len());
+        for (time, timing) in offsets {
+            if let Some(last) = normalized_offsets.last_mut() {
+                if (last.0 - time).abs() <= f32::EPSILON {
+                    last.1 = timing;
+                    continue;
+                }
+            }
+            normalized_offsets.push((time, timing));
+        }
+
+        normalized_offsets
+            .into_iter()
+            .map(|(time, timing_function)| {
+                let value = description
+                    .keyframes
+                    .iter()
+                    .rev()
+                    .find(|key| (key.time - time).abs() <= f32::EPSILON)
+                    .map(|key| key.value.clone())
+                    .unwrap_or_else(|| underlying.clone());
+                Keyframe { time, value, timing_function }
+            })
+            .collect()
+    }
+
+    fn refresh_animation_index(&mut self, entity: Entity) {
+        let entity_index = entity.index();
+        if entity_index >= self.inline_data.sparse.len() {
+            return;
+        }
+        self.inline_data.sparse[entity_index].anim_index = self
+            .active_animations
+            .iter()
+            .enumerate()
+            .rev()
+            .find(|(_, state)| state.css_instance_id.is_none() && state.entities.contains(&entity))
+            .map(|(index, _)| index as u32)
+            .unwrap_or(u32::MAX);
+    }
+
+    /// Play an animation for a given entity through the legacy Rust animation API.
     pub(crate) fn play_animation(
         &mut self,
         entity: Entity,
@@ -322,140 +399,321 @@ where
         delay: Duration,
     ) {
         let entity_index = entity.index();
-
-        if !self.animations.contains(animation) {
+        let Some(description) = self.animations.get(animation).cloned() else {
+            return;
+        };
+        if description.keyframes.is_empty() {
             return;
         }
 
-        // If there is no inline or shared data for the entity then add the entity as animation only
         if entity_index >= self.inline_data.sparse.len() {
             self.inline_data.sparse.resize(entity_index + 1, InlineIndex::null());
         }
 
-        if entity_index < self.inline_data.sparse.len() {
-            let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
-            if active_anim_index < self.active_animations.len() {
-                let anim_state = &mut self.active_animations[active_anim_index];
-                if anim_state.id == animation {
-                    anim_state.active = true;
-                    anim_state.t = 0.0;
-                    anim_state.start_time = start_time;
-                    anim_state.output = Some(
-                        self.animations
-                            .get(animation)
-                            .cloned()
-                            .unwrap()
-                            .keyframes
-                            .first()
-                            .unwrap()
-                            .value
-                            .clone(),
-                    );
-                } else {
-                    anim_state.output = Some(
-                        self.animations
-                            .get(animation)
-                            .cloned()
-                            .unwrap()
-                            .keyframes
-                            .first()
-                            .unwrap()
-                            .value
-                            .clone(),
-                    );
-                    anim_state.entities.remove(&entity);
-                }
+        // Preserve legacy single-animation behavior without destroying CSS animations that may
+        // have higher cascade precedence on the same property.
+        for state in self.active_animations.iter_mut() {
+            if state.css_clock.is_none() && state.entities.contains(&entity) {
+                state.entities.remove(&entity);
             }
-
-            // Safe to unwrap because already checked that the animation exists
-            let mut anim_state = self.animations.get(animation).cloned().unwrap();
-            anim_state.duration = duration;
-            anim_state.id = animation;
-            anim_state.delay = delay;
-            anim_state.dt = delay.as_secs_f32() / duration.as_secs_f32();
-            anim_state.output = Some(
-                self.animations
-                    .get(animation)
-                    .cloned()
-                    .unwrap()
-                    .keyframes
-                    .first()
-                    .unwrap()
-                    .value
-                    .clone(),
-            );
-            anim_state.play(entity);
-            self.inline_data.sparse[entity_index].anim_index = self.active_animations.len() as u32;
-            self.active_animations.push(anim_state);
         }
+
+        let mut anim_state = description;
+        anim_state.duration = duration;
+        anim_state.id = animation;
+        anim_state.delay = delay;
+        anim_state.dt =
+            if duration.is_zero() { 0.0 } else { delay.as_secs_f32() / duration.as_secs_f32() };
+        anim_state.start_time = start_time;
+        anim_state.output = anim_state.keyframes.first().map(|key| key.value.clone());
+        anim_state.active = true;
+        anim_state.t = 0.0;
+        anim_state.entities.insert(entity);
+        self.active_animations.push(anim_state);
+        self.refresh_animation_index(entity);
     }
 
-    /// Stop an animation for a given entity.
-    #[allow(dead_code)]
-    pub(crate) fn stop_animation(&mut self, entity: Entity, animation: Animation) {
+    // CSS playback is installed as one cohesive operation across both store variants.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn play_css_animation(
+        &mut self,
+        entity: Entity,
+        animation: Animation,
+        instance_id: u64,
+        order: usize,
+        start_time: Instant,
+        timing: CssAnimationTiming,
+        default_timing: TimingFunction,
+        composition: AnimationComposition,
+        timeline: &[(f32, TimingFunction)],
+    ) {
         let entity_index = entity.index();
+        let Some(description) = self.animations.get(animation).cloned() else {
+            return;
+        };
 
-        if entity_index < self.inline_data.sparse.len() {
-            let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
-            if active_anim_index < self.active_animations.len() {
-                let anim_state = &mut self.active_animations[active_anim_index];
-                if anim_state.id == animation {
-                    anim_state.entities.remove(&entity);
-                }
+        let underlying = self.get_base(entity).cloned().unwrap_or_default();
+        if entity_index >= self.inline_data.sparse.len() {
+            self.inline_data.sparse.resize(entity_index + 1, InlineIndex::null());
+        }
+
+        // Restarting the same named animation replaces only that instance. Other CSS animations
+        // keep progressing underneath so later list entries can temporarily override them.
+        for state in self.active_animations.iter_mut() {
+            if state.css_instance_id == Some(instance_id) {
+                state.entities.remove(&entity);
             }
-            self.inline_data.sparse[entity_index].anim_index = u32::MAX;
+        }
+
+        let mut state = description;
+        state.keyframes = Self::normalize_css_keyframes(&state, timeline, underlying);
+        state.configure_css(timing, default_timing, start_time);
+        state.css_instance_id = Some(instance_id);
+        state.css_order = order;
+        state.css_composition = composition;
+        state.output = None;
+        state.entities.insert(entity);
+        self.active_animations.push(state);
+        self.refresh_animation_index(entity);
+    }
+
+    // Updating one CSS effect is an atomic store operation: identity, order, timing,
+    // easing, composition and the sampling timestamp must remain synchronized.
+    #[allow(clippy::too_many_arguments)]
+    pub(crate) fn update_css_animation(
+        &mut self,
+        entity: Entity,
+        instance_id: u64,
+        order: usize,
+        timing: CssAnimationTiming,
+        default_timing: TimingFunction,
+        composition: AnimationComposition,
+        now: Instant,
+    ) {
+        for state in self.active_animations.iter_mut() {
+            if state.css_instance_id == Some(instance_id) && state.entities.contains(&entity) {
+                state.css_order = order;
+                state.css_composition = composition;
+                state.update_css_timing(timing, default_timing, now);
+            }
         }
     }
 
-    /// Tick the animation for the given time and return a list of entities which have been animated.
+    pub(crate) fn control_css_animation(
+        &mut self,
+        entity: Entity,
+        instance_id: u64,
+        control: crate::animation::CssAnimationControl,
+        now: Instant,
+    ) -> bool {
+        let mut found = false;
+        for state in self.active_animations.iter_mut() {
+            if state.css_instance_id == Some(instance_id) && state.entities.contains(&entity) {
+                if let Some(clock) = state.css_clock.as_mut() {
+                    let applied = clock.apply_control(control, now);
+                    if applied
+                        && matches!(
+                            control,
+                            crate::animation::CssAnimationControl::Resume
+                                | crate::animation::CssAnimationControl::Seek(_)
+                                | crate::animation::CssAnimationControl::SetPlaybackRate(_)
+                                | crate::animation::CssAnimationControl::Reverse
+                        )
+                    {
+                        state.t = 0.0;
+                    }
+                    found |= applied;
+                }
+            }
+        }
+        found
+    }
+
+    pub(crate) fn set_css_timeline_progress(
+        &mut self,
+        entity: Entity,
+        instance_id: u64,
+        driven: bool,
+        progress: Option<f32>,
+    ) {
+        for state in self.active_animations.iter_mut() {
+            if state.css_instance_id == Some(instance_id) && state.entities.contains(&entity) {
+                state.css_timeline_driven = driven;
+                state.css_timeline_progress = progress;
+                if driven {
+                    // Progress timelines are reversible, so reaching 100% must not remove the effect.
+                    state.t = 0.0;
+                }
+            }
+        }
+    }
+
+    fn refresh_css_composed_outputs(&mut self) {
+        let mut effects: HashMap<Entity, Vec<(usize, u64, AnimationComposition, T)>> =
+            HashMap::new();
+
+        for state in &self.active_animations {
+            let Some(instance_id) = state.css_instance_id else {
+                continue;
+            };
+            let Some(output) = state.get_output() else {
+                continue;
+            };
+            for entity in state.entities.iter().copied() {
+                effects.entry(entity).or_default().push((
+                    state.css_order,
+                    instance_id,
+                    state.css_composition,
+                    output.clone(),
+                ));
+            }
+        }
+
+        let bases = effects
+            .keys()
+            .copied()
+            .map(|entity| (entity, self.get_base(entity).cloned().unwrap_or_default()))
+            .collect::<HashMap<_, _>>();
+
+        self.css_composed_outputs.clear();
+        for (entity, mut stack) in effects {
+            stack.sort_by_key(|(order, instance_id, _, _)| (*order, *instance_id));
+            let mut value = bases.get(&entity).cloned().unwrap_or_default();
+            for (_, _, composition, effect) in stack {
+                value = T::compose(&value, &effect, composition);
+            }
+            self.css_composed_outputs.insert(entity, value);
+        }
+    }
+
+    pub(crate) fn stop_css_animation(&mut self, entity: Entity, instance_id: u64) {
+        for state in self.active_animations.iter_mut() {
+            if state.css_instance_id == Some(instance_id) {
+                state.entities.remove(&entity);
+            }
+        }
+        self.refresh_animation_index(entity);
+        self.refresh_css_composed_outputs();
+    }
+
+    /// Tick the animation for the given time and return entities whose animated value may change.
     pub fn tick(&mut self, time: Instant) -> Vec<Entity> {
         self.remove_innactive_animations();
 
-        if self.has_animations() {
-            for state in self.active_animations.iter_mut() {
-                // If the animation is already finished then skip
-                if state.t == 1.0 {
+        if !self.has_animations() {
+            self.refresh_css_composed_outputs();
+            return Vec::new();
+        }
+
+        for state in self.active_animations.iter_mut() {
+            if state.t == 1.0 {
+                continue;
+            }
+
+            if let Some(clock) = &state.css_clock {
+                let sample = if state.css_timeline_driven {
+                    clock.timing.sample_timeline_progress(
+                        clock.map_timeline_progress(state.css_timeline_progress),
+                    )
+                } else {
+                    clock.sample(time)
+                };
+                state.t = if state.css_timeline_driven {
+                    0.0
+                } else if sample.finished {
+                    1.0
+                } else {
+                    0.0
+                };
+                let Some(progress) = sample.progress else {
+                    state.output = None;
+                    continue;
+                };
+
+                if state.keyframes.is_empty() {
+                    state.output = None;
                     continue;
                 }
-
-                if state.keyframes.len() == 1 {
+                if state.keyframes.len() == 1 || progress <= state.keyframes[0].time {
                     state.output = Some(state.keyframes[0].value.clone());
                     continue;
                 }
-
-                let elapsed_time = time.duration_since(state.start_time);
-                let mut normalised_time =
-                    (elapsed_time.as_secs_f32() / state.duration.as_secs_f32()) - state.dt;
-
-                normalised_time = normalised_time.clamp(0.0, 1.0);
+                if progress >= state.keyframes.last().unwrap().time {
+                    state.output = Some(state.keyframes.last().unwrap().value.clone());
+                    continue;
+                }
 
                 let mut i = 0;
-                while i < state.keyframes.len() - 1 && state.keyframes[i + 1].time < normalised_time
-                {
+                while i + 1 < state.keyframes.len() && state.keyframes[i + 1].time < progress {
                     i += 1;
                 }
                 let start = &state.keyframes[i];
                 let end = &state.keyframes[i + 1];
-
-                let normalised_elapsed_time =
-                    (normalised_time - start.time) / (end.time - start.time);
-
-                state.t = normalised_time;
-
-                let timing_t = start.timing_function.value(normalised_elapsed_time);
-                state.output = Some(T::interpolate(&start.value, &end.value, timing_t));
+                let span = end.time - start.time;
+                let local = if span.abs() <= f32::EPSILON {
+                    1.0
+                } else {
+                    ((progress - start.time) / span).clamp(0.0, 1.0)
+                };
+                let timing = if start.timing_function == TimingFunction::AnimationDefault {
+                    state.css_default_timing
+                } else {
+                    start.timing_function
+                };
+                let eased = timing.value_with_before(local, sample.before);
+                state.output = Some(T::interpolate(&start.value, &end.value, eased));
+                continue;
             }
 
-            self.active_animations
-                .iter()
-                .flat_map(|state| state.entities.clone())
-                .collect::<Vec<Entity>>()
-        } else {
-            Vec::new()
+            if state.keyframes.is_empty() {
+                state.output = None;
+                state.t = 1.0;
+                continue;
+            }
+            if state.keyframes.len() == 1 {
+                state.output = Some(state.keyframes[0].value.clone());
+                let elapsed = time.saturating_duration_since(state.start_time);
+                if elapsed >= state.delay.saturating_add(state.duration) {
+                    state.t = 1.0;
+                }
+                continue;
+            }
+
+            let elapsed_time = time.saturating_duration_since(state.start_time);
+            let mut normalised_time = if state.duration.is_zero() {
+                1.0
+            } else {
+                (elapsed_time.as_secs_f32() / state.duration.as_secs_f32()) - state.dt
+            };
+            normalised_time = normalised_time.clamp(0.0, 1.0);
+
+            let mut i = 0;
+            while i + 1 < state.keyframes.len() && state.keyframes[i + 1].time < normalised_time {
+                i += 1;
+            }
+            let start = &state.keyframes[i];
+            let end = &state.keyframes[(i + 1).min(state.keyframes.len() - 1)];
+            let span = end.time - start.time;
+            let local = if span.abs() <= f32::EPSILON {
+                1.0
+            } else {
+                ((normalised_time - start.time) / span).clamp(0.0, 1.0)
+            };
+            state.t = normalised_time;
+            let timing_t = start.timing_function.value(local);
+            state.output = Some(T::interpolate(&start.value, &end.value, timing_t));
         }
+
+        self.refresh_css_composed_outputs();
+
+        self.active_animations
+            .iter()
+            .filter(|state| state.t < 1.0)
+            .flat_map(|state| state.entities.iter().copied())
+            .collect()
     }
 
-    // Returns true if the given entity is linked to an active animation
+    // Returns true if the given entity is linked to an active animation    // Returns true if the given entity is linked to an active animation
     // pub fn is_animating(&self, entity: Entity) -> bool {
     //     let entity_index = entity.index();
     //     if entity_index < self.inline_data.sparse.len() {
@@ -508,17 +766,9 @@ where
 
     /// Returns true if the given entity is linked to an active animation.
     pub fn has_active_animation(&self, entity: Entity, animation: Animation) -> bool {
-        let entity_index = entity.index();
-        if entity_index < self.inline_data.sparse.len() {
-            let anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
-            if anim_index < self.active_animations.len()
-                && self.active_animations[anim_index].id == animation
-            {
-                return true;
-            }
-        }
-
-        false
+        self.active_animations
+            .iter()
+            .any(|state| state.id == animation && state.entities.contains(&entity))
     }
 
     // Returns a reference to any inline data on the entity if it exists.
@@ -564,20 +814,6 @@ where
         self.animations.get_mut(animation)
     }
 
-    /// Returns a reference to the active animation linked to the given entity if it exists,
-    /// else returns None.
-    pub(crate) fn get_active_animation(&self, entity: Entity) -> Option<&AnimationState<T>> {
-        let entity_index = entity.index();
-        if entity_index < self.inline_data.sparse.len() {
-            let anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
-            if anim_index < self.active_animations.len() {
-                return Some(&self.active_animations[anim_index]);
-            }
-        }
-
-        None
-    }
-
     /// Returns a reference to the active animations.
     #[allow(dead_code)]
     pub(crate) fn get_active_animations(&mut self) -> Option<&Vec<AnimationState<T>>> {
@@ -588,11 +824,17 @@ where
     pub fn get(&self, entity: Entity) -> Option<&T> {
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
-            // Animations override inline and shared styling
-            let animation_index = self.inline_data.sparse[entity_index].anim_index as usize;
+            // CSS Animations Level 2 effect stack, already sampled in stable composite order.
+            if let Some(output) = self.css_composed_outputs.get(&entity) {
+                return Some(output);
+            }
 
+            // Preserve the legacy/transition animation path when no CSS animation applies.
+            let animation_index = self.inline_data.sparse[entity_index].anim_index as usize;
             if animation_index < self.active_animations.len() {
-                return self.active_animations[animation_index].get_output();
+                if let Some(output) = self.active_animations[animation_index].get_output() {
+                    return Some(output);
+                }
             }
 
             let data_index = self.inline_data.sparse[entity_index].data_index;

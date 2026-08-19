@@ -49,8 +49,6 @@ rayon = { workspace = true, optional = true }
 dashmap = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 reqwest = { workspace = true, optional = true, features = ["blocking", "json"] }
-
-[target.'cfg(target_os = "linux")'.dependencies]
 mundy = "0.2.3"
 
 [lib]

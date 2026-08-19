@@ -62,8 +62,13 @@ pub struct Keyframe<'i> {
 
 impl<'i> Parse<'i> for KeyframeSelector {
     fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+        let location = input.current_source_location();
         if let Ok(val) = input.try_parse(Percentage::parse) {
-            return Ok(KeyframeSelector::Percentage(val));
+            if (0.0..=100.0).contains(&val.0) {
+                return Ok(KeyframeSelector::Percentage(val));
+            }
+
+            return Err(location.new_custom_error(CustomParseError::InvalidValue));
         }
 
         let location = input.current_source_location();

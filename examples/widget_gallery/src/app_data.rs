@@ -4,6 +4,7 @@ pub const ALL_VIEW_ID: &str = "All";
 pub const ALL_VIEW_KEY: &str = "all";
 
 pub const CATEGORIES: &[(&str, &[(&str, &str)])] = &[
+    ("category-animation", &[("Animation", "animation")]),
     (
         "category-layout",
         &[
@@ -75,7 +76,13 @@ pub const CATEGORIES: &[(&str, &[(&str, &str)])] = &[
     ),
     (
         "category-feedback",
-        &[("Popup", "popup"), ("Progressbar", "progress-bar"), ("Tooltip", "tooltip")],
+        &[
+            ("Popup", "popup"),
+            ("Progressbar", "progress-bar"),
+            ("Skeleton", "skeleton"),
+            ("Throbber", "throbber"),
+            ("Tooltip", "tooltip"),
+        ],
     ),
     (
         "category-containers",

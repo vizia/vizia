@@ -1,6 +1,15 @@
 pub mod avatar;
 pub use avatar::*;
 
+pub mod animation;
+pub use animation::*;
+
+pub mod skeleton;
+pub use skeleton::*;
+
+pub mod throbber;
+pub use throbber::*;
+
 pub mod avatar_group;
 pub use avatar_group::*;
 
