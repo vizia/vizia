@@ -1,5 +1,8 @@
 use log::debug;
-use vizia::prelude::*;
+use vizia::{
+    icons::{ICON_CLIPBOARD, ICON_COPY, ICON_CUT},
+    prelude::*,
+};
 
 use crate::components::DemoRegion;
 
@@ -69,8 +72,73 @@ pub fn menu(cx: &mut Context) {
                     Divider::new(cx);
                     MenuButton::new(cx, |_| debug!("Quit"), |cx| Label::new(cx, "Quit"));
                 },
-            )
-            .width(Pixels(100.0));
+            );
+        });
+
+        DemoRegion::new(cx, "Icon Menu", |cx| {
+            Submenu::new(
+                cx,
+                |cx| Svg::new(cx, ICON_CLIPBOARD).class("icon"),
+                |cx| {
+                    MenuButton::new(
+                        cx,
+                        |_| debug!("Cut"),
+                        |cx| {
+                            HStack::new(cx, |cx| {
+                                Svg::new(cx, ICON_CUT).class("icon");
+                                Label::new(cx, "Cut");
+                            })
+                        },
+                    );
+                    MenuButton::new(
+                        cx,
+                        |_| debug!("Copy"),
+                        |cx| {
+                            HStack::new(cx, |cx| {
+                                Svg::new(cx, ICON_COPY).class("icon");
+                                Label::new(cx, "Copy");
+                            })
+                        },
+                    );
+                    MenuButton::new(
+                        cx,
+                        |_| debug!("Paste"),
+                        |cx| {
+                            HStack::new(cx, |cx| {
+                                Svg::new(cx, ICON_CLIPBOARD).class("icon");
+                                Label::new(cx, "Paste");
+                            })
+                        },
+                    );
+                },
+            );
+        });
+
+        DemoRegion::new(cx, "Context Menu", |cx| {
+            Label::new(cx, "Right-click here").class("context-target").menu(|cx| {
+                Menu::new(cx, Placement::Cursor, true, |cx| {
+                    MenuButton::new(cx, |_| debug!("Cut"), |cx| Label::new(cx, "Cut"));
+                    MenuButton::new(cx, |_| debug!("Copy"), |cx| Label::new(cx, "Copy"));
+                    MenuButton::new(cx, |_| debug!("Paste"), |cx| Label::new(cx, "Paste"));
+                    Divider::new(cx);
+                    Submenu::new(
+                        cx,
+                        |cx| Label::new(cx, "Sort"),
+                        |cx| {
+                            MenuButton::new(
+                                cx,
+                                |_| debug!("Sort ascending"),
+                                |cx| Label::new(cx, "Ascending"),
+                            );
+                            MenuButton::new(
+                                cx,
+                                |_| debug!("Sort descending"),
+                                |cx| Label::new(cx, "Descending"),
+                            );
+                        },
+                    );
+                })
+            });
         });
     })
     .class("panel");

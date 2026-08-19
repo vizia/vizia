@@ -310,6 +310,22 @@ fn focus_last_sibling(cx: &mut EventContext) -> bool {
     false
 }
 
+/// The z-index applied to a top-level menu popup. Nested submenu popups are stacked on top of
+/// this by adding one for each level of nesting so that a deeper submenu always renders (and is
+/// hit-tested) above the popups it is nested within, even when it visually overlaps them.
+const MENU_POPUP_BASE_Z_INDEX: i32 = 100;
+
+// Counts how many ancestor entities are themselves [Popover] popups, giving the nesting depth
+// of a about-to-be-created popup. Used to derive a z-index that keeps deeper submenus on top.
+fn ancestor_popup_depth(cx: &Context) -> i32 {
+    cx.current
+        .parent_iter(&cx.tree)
+        .filter(|entity| {
+            cx.views.get(entity).map(|view| view.downcast_ref::<Popover>().is_some()).unwrap_or(false)
+        })
+        .count() as i32
+}
+
 /// A popup menu view used by submenus and context menus.
 pub struct Menu {}
 
@@ -322,6 +338,7 @@ impl Menu {
         content: impl Fn(&mut Context),
     ) -> Handle<'_, Popover> {
         let focus_on_open = focus_on_open.to_signal(cx);
+        let z_index = MENU_POPUP_BASE_Z_INDEX + ancestor_popup_depth(cx);
 
         Popover::new(cx, move |cx| {
             let popup = cx.current();
@@ -373,6 +390,7 @@ impl Menu {
         .lock_focus_to_within()
         .placement(placement)
         .arrow_size(Pixels(0.0))
+        .z_index(z_index)
     }
 }
 
@@ -397,13 +415,20 @@ impl Submenu {
         content: impl Fn(&mut Context) -> Handle<V> + 'static,
         menu: impl Fn(&mut Context) + 'static,
     ) -> Handle<Self> {
-        let is_submenu = cx.try_data::<Submenu>().is_some();
+        let is_submenu = cx.try_data::<Popover>().is_some();
         let is_menu_bar_item = cx.try_data::<MenuBar>().is_some();
 
         let is_open = Signal::new(false);
         let focus_on_open = Signal::new(false);
-        let submenu_popup_placement =
-            if is_submenu { Placement::RightStart } else { Placement::BottomStart };
+        let is_rtl = cx.environment().direction;
+        let submenu_popup_placement = Memo::new(move |_| {
+            let rtl = is_rtl.get() == Direction::RightToLeft;
+            if is_submenu {
+                if rtl { Placement::LeftStart } else { Placement::RightStart }
+            } else {
+                if rtl { Placement::BottomEnd } else { Placement::BottomStart }
+            }
+        });
 
         let handle = Self { is_open, focus_on_open, open_on_hover: is_submenu, is_submenu }
             .build(cx, |cx| {
@@ -456,14 +481,7 @@ impl Submenu {
                     let open = is_open.get();
                     if open {
                         Menu::new(cx, submenu_popup_placement, focus_on_open, |cx| (menu)(cx))
-                            .checked(is_open)
-                            .on_hover(|cx| {
-                                cx.emit_custom(
-                                    Event::new(MenuEvent::Close)
-                                        .target(cx.current)
-                                        .propagate(Propagation::Subtree),
-                                )
-                            });
+                            .checked(is_open);
                     }
                 });
             })

@@ -545,18 +545,20 @@ submenu > hstack {
 
 submenu {
     height: 32px;
-    width: 1s;
+    width: auto;
     min-width: auto;
     padding-left: 8px;
-    /* padding-right: 8px; */
+    padding-right: 8px;
     alignment: left;
     gap: 1s;
     min-gap: 12px;
 }
 
 submenu submenu,
+popup submenu,
 dropdown > popup > submenu {
     width: 1s;
+    padding-right: 0px;
 }
 
 submenu .icon,
@@ -568,13 +570,6 @@ menubutton .shortcut {
     left: 1s;
 }
 
-/* submenu submenu label,
-dropdown > popup > submenu label {
-    alignment: center;
-    size: 1s;
-    width: 1s;
-} */
-
 submenu > popup {
     height: auto;
     width: auto;
@@ -583,18 +578,21 @@ submenu > popup {
 }
 
 submenu submenu > popup,
+popup submenu > popup,
 menubar submenu > popup {
     opacity: 0;
     display: none;
 }
 
 submenu submenu > popup:checked,
+popup submenu > popup:checked,
 menubar submenu > popup:checked {
     opacity: 1;
     display: flex;
 }
 
 submenu submenu > popup,
+popup submenu > popup,
 menubar submenu > popup {
     top: 0px;
     left: 100%;
@@ -611,7 +609,7 @@ submenu > .arrow {
 }
 
 submenu submenu > .arrow,
-menu submenu > .arrow {
+popup submenu > .arrow {
     display: flex;
 }
 
