@@ -361,7 +361,7 @@ struct PreviewTableRow {
 fn render_view_preview(cx: &mut Context, view_name: &'static str) {
     VStack::new(cx, |cx| match view_name {
         "Animation" => {
-            Label::new(cx, "Replay").class("animation-card").width(Pixels(120.0));
+            TextThrobber::with_indicator(cx, "Vizia UI", TextThrobberIndicator::Dots);
         }
         "Accordion" => {
             let items = Signal::new(vec![
