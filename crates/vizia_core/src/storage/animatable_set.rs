@@ -889,17 +889,20 @@ where
                                 // Transitioning back to previous rule
                                 current_anim_state.from_rule = current_anim_state.to_rule;
                                 current_anim_state.to_rule = rule_data_index;
+                                // Restart from the sampled output rather than mirroring the old
+                                // timeline. Multiple state changes can be processed before the
+                                // next animation tick, in which case `t` no longer describes the
+                                // current direction and mirroring it causes a visible jump.
                                 current_anim_state.keyframes.first_mut().unwrap().value =
-                                    self.shared_data.dense[current_anim_state.from_rule]
-                                        .value
-                                        .clone();
+                                    current_value;
 
                                 current_anim_state.keyframes.last_mut().unwrap().value =
                                     self.shared_data.dense[current_anim_state.to_rule]
                                         .value
                                         .clone();
 
-                                current_anim_state.dt = current_anim_state.t - 1.0;
+                                current_anim_state.t = 0.0;
+                                current_anim_state.dt = 0.0;
                                 current_anim_state.start_time = Instant::now();
                             } else {
                                 // Transitioning to new rule
@@ -1071,5 +1074,52 @@ mod tests {
         let mut animatable_storage = AnimatableSet::default();
         animatable_storage.insert(Entity::root(), 5.0);
         //assert_eq!(animatable_storage.entity_indices.first().unwrap().data_index, DataIndex::inline(0));
+    }
+
+    #[test]
+    fn rapid_transition_reversals_restart_from_sampled_value() {
+        let mut storage = AnimatableSet::<f32>::default();
+        let entity = Entity::root();
+        let base_rule = Rule::new(1, 0);
+        let checked_rule = Rule::new(2, 0);
+        let animation = Animation::new(1, 0);
+        let duration = Duration::from_millis(100);
+        let transition = AnimationState::new(animation)
+            .with_duration(duration)
+            .with_keyframe(Keyframe {
+                time: 0.0,
+                value: 0.0,
+                timing_function: TimingFunction::linear(),
+            })
+            .with_keyframe(Keyframe {
+                time: 1.0,
+                value: 1.0,
+                timing_function: TimingFunction::linear(),
+            });
+
+        storage.insert_rule(base_rule, 0.0);
+        storage.insert_rule(checked_rule, 1.0);
+        storage.insert_animation(animation, transition);
+        storage.insert_transition(base_rule, animation);
+        storage.insert_transition(checked_rule, animation);
+
+        assert!(storage.link(entity, &[(base_rule, 0)]));
+        assert!(storage.link(entity, &[(checked_rule, 0)]));
+
+        let sample_time = Instant::now();
+        storage.active_animations[0].start_time = sample_time - Duration::from_millis(25);
+        storage.tick(sample_time);
+        let sampled = *storage.get(entity).unwrap();
+        assert!((sampled - 0.25).abs() < 0.01);
+
+        // Reverse twice before another animation tick, as rapid UI events can do.
+        assert!(storage.link(entity, &[(base_rule, 0)]));
+        assert!(storage.link(entity, &[(checked_rule, 0)]));
+        let restart_time = storage.active_animations[0].start_time;
+        storage.tick(restart_time);
+
+        assert!((*storage.get(entity).unwrap() - sampled).abs() < 0.01);
+        storage.tick(restart_time + duration);
+        assert!((*storage.get(entity).unwrap() - 1.0).abs() < 0.01);
     }
 }
