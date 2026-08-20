@@ -7,6 +7,8 @@ pub(crate) use scrolling::*;
 pub(crate) mod text_context;
 pub(crate) use text_context::*;
 
+pub(crate) mod selection;
+
 #[allow(unused_imports)]
 pub mod shaped_text;
 #[allow(unused_imports)]

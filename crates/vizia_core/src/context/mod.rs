@@ -69,7 +69,7 @@ use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::text::TextContext;
 use vizia_input::{ImeState, MouseState};
-use vizia_storage::{ChildIterator, LayoutTreeIterator};
+use vizia_storage::{ChildIterator, LayoutTreeIterator, TreeIterator};
 
 #[cfg(feature = "tokio")]
 pub(crate) type TaskRuntime = Arc<tokio::runtime::Runtime>;
@@ -272,6 +272,9 @@ impl Context {
                     text_bounds: Default::default(),
                     text_shaped: Default::default(),
                     plain_editors: Default::default(),
+                    selectable_labels: Default::default(),
+                    selected_ranges: Default::default(),
+                    selections: Default::default(),
                     typeface_cache: Default::default(),
                 }
             },
@@ -317,6 +320,8 @@ impl Context {
         result.entity_manager.create();
 
         result.style.role.insert(Entity::root(), Role::Window);
+
+        result.add_global_listener(crate::systems::text_selection::handle_global_event);
 
         result
     }
@@ -542,6 +547,37 @@ impl Context {
     pub fn remove(&mut self, entity: Entity) {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
+        let deleted_entities = delete_list.iter().copied().collect::<HashSet<_>>();
+        let affected_selection_windows = self
+            .text_context
+            .selections
+            .iter()
+            .filter_map(|(window, selection)| {
+                selection
+                    .points()
+                    .filter(|(anchor, focus)| {
+                        deleted_entities.contains(&anchor.entity)
+                            || deleted_entities.contains(&focus.entity)
+                    })
+                    .map(|_| *window)
+            })
+            .collect::<Vec<_>>();
+        for window in affected_selection_windows {
+            if let Some(selection) = self.text_context.selections.get_mut(&window) {
+                selection.clear();
+            }
+            let labels = TreeIterator::full(&self.tree)
+                .filter(|candidate| {
+                    self.tree.get_parent_window(*candidate).unwrap_or(Entity::root()) == window
+                        && self.text_context.selectable_labels.contains(*candidate)
+                })
+                .collect::<Vec<_>>();
+            for label in labels {
+                self.text_context.selected_ranges.remove(label);
+                self.needs_redraw(label);
+            }
+        }
+
         if !delete_list.is_empty() {
             self.style.needs_restyle(self.current);
             // An absolutely-positioned node is out of its parent's flow, so removing it cannot
@@ -648,6 +684,9 @@ impl Context {
             self.text_context.text_bounds.remove(*entity);
             self.text_context.text_shaped.remove(*entity);
             self.text_context.plain_editors.remove(*entity);
+            self.text_context.selectable_labels.remove(*entity);
+            self.text_context.selected_ranges.remove(*entity);
+            self.text_context.selections.remove(entity);
             self.entity_manager.destroy(*entity);
         }
     }

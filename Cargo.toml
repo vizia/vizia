@@ -235,6 +235,10 @@ name = "label"
 path = "examples/views/label.rs"
 
 [[example]]
+name = "text_selection"
+path = "examples/text_selection.rs"
+
+[[example]]
 name = "tooltip"
 path = "examples/views/tooltip.rs"
 

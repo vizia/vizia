@@ -626,6 +626,9 @@ mod cjk_repro_tests {
             text_bounds: Default::default(),
             text_shaped: Default::default(),
             plain_editors: Default::default(),
+            selectable_labels: Default::default(),
+            selected_ranges: Default::default(),
+            selections: Default::default(),
             typeface_cache: Default::default(),
         }
     }
@@ -663,8 +666,7 @@ mod cjk_repro_tests {
                     for cluster in run.visual_clusters() {
                         for glyph in cluster.glyphs() {
                             let ch_start = cluster.text_range().start;
-                            let ch =
-                                editor.raw_text()[ch_start..].chars().next().unwrap();
+                            let ch = editor.raw_text()[ch_start..].chars().next().unwrap();
                             let expected_glyph = font.unichar_to_glyph(ch as i32);
                             assert_eq!(
                                 expected_glyph, glyph.id as u16,
@@ -680,4 +682,3 @@ mod cjk_repro_tests {
         assert!(checked_any, "expected at least one glyph run to be checked");
     }
 }
-
