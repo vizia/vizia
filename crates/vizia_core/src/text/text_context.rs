@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Range};
 
 use parley::editing::{PlainEditor, PlainEditorDriver};
 use parley::{FontContext as ParleyFontContext, LayoutContext as ParleyLayoutContext};
@@ -6,6 +6,7 @@ use skia_safe::textlayout::TypefaceFontProvider;
 use skia_safe::{FontMgr, Typeface, textlayout::FontCollection};
 use vizia_storage::SparseSet;
 
+use crate::text::selection::WindowTextSelection;
 use crate::text::shaped_text::ShapedText;
 use crate::{entity::Entity, layout::BoundingBox};
 
@@ -18,6 +19,9 @@ pub struct TextContext {
     pub text_bounds: SparseSet<BoundingBox>,
     pub text_shaped: SparseSet<ShapedText>,
     pub plain_editors: SparseSet<PlainEditor<[u8; 4]>>,
+    pub(crate) selectable_labels: SparseSet<bool>,
+    pub(crate) selected_ranges: SparseSet<Range<usize>>,
+    pub(crate) selections: HashMap<Entity, WindowTextSelection>,
     /// Cache of Skia [`Typeface`]s built directly from the raw font data that Parley's
     /// fontique-based shaper selected for a given run (keyed by the font blob's unique id
     /// and its collection index). This ensures glyph ids produced by shaping are always

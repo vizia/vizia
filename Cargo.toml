@@ -272,6 +272,10 @@ path = "examples/views/label.rs"
 required-features = ["winit"]
 
 [[example]]
+name = "text_selection"
+path = "examples/text_selection.rs"
+
+[[example]]
 name = "tooltip"
 path = "examples/views/tooltip.rs"
 required-features = ["winit"]

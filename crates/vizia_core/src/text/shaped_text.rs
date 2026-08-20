@@ -214,6 +214,107 @@ impl ShapedText {
         result
     }
 
+    pub(crate) fn selectable_text(&self) -> &str {
+        self.pre_shaped.text.strip_suffix('\u{200B}').unwrap_or(&self.pre_shaped.text)
+    }
+
+    pub(crate) fn selectable_len(&self) -> usize {
+        let text_len = self.selectable_text().len();
+        self.line_ranges.last().map(|line| line.end_including_newline.min(text_len)).unwrap_or(0)
+    }
+
+    pub(crate) fn point_at(&self, x: f32, y: f32) -> (usize, Affinity) {
+        let cursor = ParleyCursor::from_point(&self.pre_shaped.parley_layout, x, y);
+        (cursor.index().min(self.selectable_len()), cursor.affinity())
+    }
+
+    pub(crate) fn word_at(&self, x: f32, y: f32) -> Range<usize> {
+        let selection = ParleySelection::word_from_point(&self.pre_shaped.parley_layout, x, y);
+        let range = selection.text_range();
+        range.start.min(self.selectable_len())..range.end.min(self.selectable_len())
+    }
+
+    pub(crate) fn move_visual(
+        &self,
+        byte: usize,
+        affinity: Affinity,
+        forward: bool,
+        by_word: bool,
+    ) -> (usize, Affinity) {
+        let layout = &self.pre_shaped.parley_layout;
+        let cursor =
+            ParleyCursor::from_byte_index(layout, byte.min(self.selectable_len()), affinity);
+        let selection = ParleySelection::from(cursor);
+        let moved = match (forward, by_word) {
+            (true, true) => selection.next_visual_word(layout, false),
+            (true, false) => selection.next_visual(layout, false),
+            (false, true) => selection.previous_visual_word(layout, false),
+            (false, false) => selection.previous_visual(layout, false),
+        };
+        let focus = moved.focus();
+        (focus.index().min(self.selectable_len()), focus.affinity())
+    }
+
+    pub(crate) fn move_line_edge(
+        &self,
+        byte: usize,
+        affinity: Affinity,
+        end: bool,
+    ) -> (usize, Affinity) {
+        let layout = &self.pre_shaped.parley_layout;
+        let cursor =
+            ParleyCursor::from_byte_index(layout, byte.min(self.selectable_len()), affinity);
+        let selection = ParleySelection::from(cursor);
+        let moved = if end {
+            selection.line_end(layout, false)
+        } else {
+            selection.line_start(layout, false)
+        };
+        let focus = moved.focus();
+        (focus.index().min(self.selectable_len()), focus.affinity())
+    }
+
+    pub(crate) fn move_line(
+        &self,
+        byte: usize,
+        affinity: Affinity,
+        down: bool,
+        preferred_x: Option<f32>,
+    ) -> ((usize, Affinity), f32, bool) {
+        let layout = &self.pre_shaped.parley_layout;
+        let cursor =
+            ParleyCursor::from_byte_index(layout, byte.min(self.selectable_len()), affinity);
+        let geometry = cursor.geometry(layout, 0.0);
+        let preferred_x = preferred_x.unwrap_or(geometry.x0 as f32);
+        let current_line = layout
+            .lines()
+            .position(|line| geometry.y0 as f32 <= line.metrics().block_max_coord)
+            .unwrap_or(0)
+            .min(self.line_count().saturating_sub(1));
+        let target_line = if down {
+            current_line.checked_add(1).filter(|index| *index < self.line_count())
+        } else {
+            current_line.checked_sub(1)
+        };
+        let Some(target_line) = target_line else {
+            return (
+                (cursor.index().min(self.selectable_len()), cursor.affinity()),
+                preferred_x,
+                true,
+            );
+        };
+        let Some(line) = layout.get(target_line) else {
+            return (
+                (cursor.index().min(self.selectable_len()), cursor.affinity()),
+                preferred_x,
+                true,
+            );
+        };
+        let y = line.metrics().block_max_coord - line.metrics().ascent * 0.5;
+        let moved = ParleyCursor::from_point(layout, preferred_x, y);
+        ((moved.index().min(self.selectable_len()), moved.affinity()), preferred_x, false)
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 }
 
