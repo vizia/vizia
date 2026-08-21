@@ -8,8 +8,8 @@ use skia_safe::{
 };
 use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
 
-use crate::text::resolved_text_direction;
-use crate::{cache::CachedData, prelude::*};
+use crate::text::{layout_paragraph, resolved_text_direction};
+use crate::{cache::CachedData, prelude::*, tree::minimal_layout_dirty_roots};
 
 pub(crate) fn text_system(cx: &mut Context) {
     if cx.style.text.is_empty() || cx.style.text_construction.is_empty() {
@@ -44,102 +44,105 @@ pub(crate) fn text_layout_system(cx: &mut Context) {
         return;
     }
 
-    let iterator = LayoutTreeIterator::full(&cx.tree);
+    let text_layout = std::mem::take(&mut cx.style.text_layout);
+    let dirty_subtree_roots = minimal_layout_dirty_roots(&cx.tree, &text_layout);
     let mut redraw_entities = Vec::new();
-    for entity in iterator {
-        if !cx.style.text_layout.contains(&entity) {
-            continue;
-        }
-
-        if let Some(paragraph) = cx.text_context.text_paragraphs.get_mut(entity) {
-            let bounds = cx.cache.get_bounds(entity);
-            let mut padding_left = cx
-                .style
-                .padding_left
-                .get(entity)
-                .copied()
-                .unwrap_or_default()
-                .to_px(bounds.width(), 0.0)
-                * cx.style.scale_factor();
-            let mut padding_right = cx
-                .style
-                .padding_right
-                .get(entity)
-                .copied()
-                .unwrap_or_default()
-                .to_px(bounds.width(), 0.0)
-                * cx.style.scale_factor();
-            let padding_top = cx
-                .style
-                .padding_top
-                .get(entity)
-                .copied()
-                .unwrap_or_default()
-                .to_px(bounds.width(), 0.0)
-                * cx.style.scale_factor();
-
-            if resolved_text_direction(&cx.style, entity) == Direction::RightToLeft {
-                std::mem::swap(&mut padding_left, &mut padding_right);
+    for root in dirty_subtree_roots {
+        for entity in LayoutTreeIterator::subtree(&cx.tree, root) {
+            if !text_layout.contains(&entity) {
+                continue;
             }
 
-            let text_bounds = BoundingBox {
-                x: padding_left,
-                y: 0.0,
-                w: bounds.w - padding_left - padding_right,
-                h: bounds.h,
-            };
-
-            if !cx
-                .style
-                .width
-                .get_resolved(entity, &cx.style.custom_units_props)
-                .unwrap_or_default()
-                .is_auto()
-                && !cx
+            if let Some(paragraph) = cx.text_context.text_paragraphs.get_mut(entity) {
+                let bounds = cx.cache.get_bounds(entity);
+                let mut padding_left = cx
                     .style
-                    .height
+                    .padding_left
+                    .get(entity)
+                    .copied()
+                    .unwrap_or_default()
+                    .to_px(bounds.width(), 0.0)
+                    * cx.style.scale_factor();
+                let mut padding_right = cx
+                    .style
+                    .padding_right
+                    .get(entity)
+                    .copied()
+                    .unwrap_or_default()
+                    .to_px(bounds.width(), 0.0)
+                    * cx.style.scale_factor();
+                let padding_top = cx
+                    .style
+                    .padding_top
+                    .get(entity)
+                    .copied()
+                    .unwrap_or_default()
+                    .to_px(bounds.width(), 0.0)
+                    * cx.style.scale_factor();
+
+                if resolved_text_direction(&cx.style, entity) == Direction::RightToLeft {
+                    std::mem::swap(&mut padding_left, &mut padding_right);
+                }
+
+                let text_bounds = BoundingBox {
+                    x: padding_left,
+                    y: 0.0,
+                    w: bounds.w - padding_left - padding_right,
+                    h: bounds.h,
+                };
+
+                if !cx
+                    .style
+                    .width
                     .get_resolved(entity, &cx.style.custom_units_props)
                     .unwrap_or_default()
                     .is_auto()
-            {
-                if cx.style.text_overflow.get(entity).copied().unwrap_or_default()
-                    == TextOverflow::Clip
+                    && !cx
+                        .style
+                        .height
+                        .get_resolved(entity, &cx.style.custom_units_props)
+                        .unwrap_or_default()
+                        .is_auto()
                 {
-                    paragraph.layout(f32::MAX);
-                    paragraph
-                        .layout(text_bounds.width().max(paragraph.min_intrinsic_width() + 1.0));
-                    let mut text_bounds = text_bounds;
-                    text_bounds.w = paragraph.max_intrinsic_width();
-                    cx.text_context.text_bounds.insert(entity, text_bounds);
+                    if cx.style.text_overflow.get(entity).copied().unwrap_or_default()
+                        == TextOverflow::Clip
+                    {
+                        layout_paragraph(
+                            paragraph,
+                            text_bounds.width().max(paragraph.min_intrinsic_width() + 1.0),
+                        );
+                        let mut text_bounds = text_bounds;
+                        text_bounds.w = paragraph.max_intrinsic_width();
+                        cx.text_context.text_bounds.insert(entity, text_bounds);
+                    } else {
+                        layout_paragraph(paragraph, text_bounds.width());
+                        let mut text_bounds = bounds;
+                        text_bounds.w = paragraph.max_intrinsic_width();
+                        cx.text_context.text_bounds.insert(entity, text_bounds);
+                    }
                 } else {
-                    paragraph.layout(text_bounds.width());
-                    let mut text_bounds = bounds;
-                    text_bounds.w = paragraph.max_intrinsic_width();
-                    cx.text_context.text_bounds.insert(entity, text_bounds);
-                }
-            } else {
-                // For auto-sized text views, re-layout at the final constrained width
-                // so constraints like min-width affect line breaking and text bounds.
-                let final_text_width = text_bounds.width();
-                paragraph.layout(final_text_width);
+                    // For auto-sized text views, re-layout at the final constrained width
+                    // so constraints like min-width affect line breaking and text bounds.
+                    let final_text_width = text_bounds.width();
+                    layout_paragraph(paragraph, final_text_width);
 
-                if let Some(stored_text_bounds) = cx.text_context.text_bounds.get_mut(entity) {
-                    stored_text_bounds.x = bounds.x + padding_left;
-                    stored_text_bounds.y = bounds.y + padding_top;
-                    stored_text_bounds.w = final_text_width;
-                    stored_text_bounds.h = paragraph.height();
+                    if let Some(stored_text_bounds) = cx.text_context.text_bounds.get_mut(entity) {
+                        stored_text_bounds.x = bounds.x + padding_left;
+                        stored_text_bounds.y = bounds.y + padding_top;
+                        stored_text_bounds.w = final_text_width;
+                        stored_text_bounds.h = paragraph.height();
+                    }
                 }
+
+                layout_span(&cx.style, &mut cx.cache, &cx.tree, entity, paragraph, bounds);
+
+                redraw_entities.push(entity);
             }
-
-            layout_span(&cx.style, &mut cx.cache, &cx.tree, entity, paragraph, bounds);
-
-            redraw_entities.push(entity);
         }
     }
     for entity in redraw_entities {
         cx.needs_redraw(entity);
     }
-    cx.style.text_layout.clear();
 }
 
 pub fn layout_span(
@@ -257,7 +260,9 @@ pub fn build_paragraph(
     add_block(style, tree, entity, &mut paragraph_builder, &mut 0);
 
     paragraph_builder.add_text("\u{200B}");
-    paragraph_builder.build().into()
+    let mut paragraph = paragraph_builder.build();
+    paragraph.layout(f32::MAX);
+    Some(paragraph)
 }
 
 fn resolve_text_align(style: &Style, entity: Entity) -> TextAlign {

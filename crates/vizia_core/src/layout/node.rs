@@ -4,7 +4,7 @@ use vizia_storage::MorphormChildIter;
 
 use crate::prelude::*;
 use crate::resource::{ImageOrSvg, ResourceManager};
-use crate::text::TextContext;
+use crate::text::{TextContext, layout_paragraph};
 
 pub struct SubLayout<'a> {
     pub text_context: &'a mut TextContext,
@@ -126,8 +126,6 @@ impl Node for Entity {
             //     f32::MAX
             // };
 
-            paragraph.layout(f32::MAX);
-
             let padding_left = store
                 .padding_left
                 .get_resolved(*self, &store.custom_units_props)
@@ -219,7 +217,7 @@ impl Node for Entity {
                 text_width
             };
 
-            paragraph.layout(text_width);
+            layout_paragraph(paragraph, text_width);
 
             let text_height = if let Some(height) = height { height } else { paragraph.height() };
 

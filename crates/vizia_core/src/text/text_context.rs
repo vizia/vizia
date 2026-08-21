@@ -22,3 +22,9 @@ impl TextContext {
         self.text_bounds.insert(entity, bounds);
     }
 }
+
+pub(crate) fn layout_paragraph(paragraph: &mut Paragraph, width: f32) {
+    if paragraph.max_width().to_bits() != width.to_bits() {
+        paragraph.layout(width);
+    }
+}
