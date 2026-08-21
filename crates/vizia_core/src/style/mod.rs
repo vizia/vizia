@@ -218,6 +218,57 @@ mod animation_tests {
             LengthOrPercentage::Length(Length::px(30.0)),
             "two additive effects should compose instead of the later one replacing the first",
         );
+
+        style.translate.stop_css_animation(entity, 10);
+        let value = style.translate.get(entity).expect("remaining translate output");
+        assert_eq!(
+            value.x,
+            LengthOrPercentage::Length(Length::px(20.0)),
+            "removing a lower effect should recompose from the raw remaining effect",
+        );
+
+        style.translate.stop_css_animation(entity, 11);
+        let value = style.translate.get(entity).expect("underlying translate output");
+        assert_eq!(
+            value.x,
+            LengthOrPercentage::Length(Length::px(0.0)),
+            "removing the carrier should expose the underlying value",
+        );
+    }
+
+    #[test]
+    fn css_effect_without_output_exposes_rust_animation() {
+        let mut style = Style::default();
+        let rust_animation = style.add_animation(
+            AnimationBuilder::new()
+                .keyframe(0.0, |key| key.translate((Length::px(5.0), Length::px(0.0))))
+                .keyframe(1.0, |key| key.translate((Length::px(5.0), Length::px(0.0)))),
+        );
+        let css_animation = style.add_animation(
+            AnimationBuilder::new()
+                .keyframe(0.0, |key| key.translate((Length::px(20.0), Length::px(0.0))))
+                .keyframe(1.0, |key| key.translate((Length::px(20.0), Length::px(0.0)))),
+        );
+        let entity = Entity::root();
+        style.translate.insert(entity, Translate::default());
+        let now = Instant::now();
+
+        style.play_animation(entity, rust_animation, now, Duration::from_secs(2), Duration::ZERO);
+        style.translate.play_css_animation(
+            entity,
+            css_animation,
+            10,
+            0,
+            now,
+            CssAnimationTiming { duration: 1.0, delay: 1.0, ..Default::default() },
+            TimingFunction::linear(),
+            AnimationComposition::Replace,
+            &[],
+        );
+        style.translate.tick(now + Duration::from_millis(500));
+
+        let value = style.translate.get(entity).expect("Rust animation output");
+        assert_eq!(value.x, LengthOrPercentage::Length(Length::px(5.0)));
     }
 
     #[test]

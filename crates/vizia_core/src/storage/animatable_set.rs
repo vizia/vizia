@@ -2,7 +2,7 @@ use crate::animation::{
     AnimationState, Compositor, CssAnimationTiming, Interpolator, Keyframe, TimingFunction,
 };
 use crate::prelude::*;
-use hashbrown::HashMap;
+use hashbrown::HashSet;
 use vizia_storage::{SparseSet, SparseSetGeneric, SparseSetIndex};
 use vizia_style::AnimationComposition;
 
@@ -145,8 +145,6 @@ pub(crate) struct AnimatableSet<T: Interpolator> {
     animations: SparseSet<AnimationState<T>>,
     /// Animations which are currently playing
     active_animations: Vec<AnimationState<T>>,
-    /// Final Level 2 CSS effect-stack result per entity.
-    css_composed_outputs: HashMap<Entity, T>,
 }
 
 impl<T> AnimatableSet<T>
@@ -160,7 +158,6 @@ where
 
     /// Remove an entity and any inline data.
     pub fn remove(&mut self, entity: Entity) -> Option<T> {
-        self.css_composed_outputs.remove(&entity);
         let entity_index = entity.index();
 
         if entity_index < self.inline_data.sparse.len() {
@@ -549,40 +546,47 @@ where
     }
 
     fn refresh_css_composed_outputs(&mut self) {
-        let mut effects: HashMap<Entity, Vec<(usize, u64, AnimationComposition, T)>> =
-            HashMap::new();
-
-        for state in &self.active_animations {
-            let Some(instance_id) = state.css_instance_id else {
-                continue;
-            };
-            let Some(output) = state.get_output() else {
-                continue;
-            };
-            for entity in state.entities.iter().copied() {
-                effects.entry(entity).or_default().push((
-                    state.css_order,
-                    instance_id,
-                    state.css_composition,
-                    output.clone(),
-                ));
-            }
+        for state in &mut self.active_animations {
+            state.composed_output = None;
         }
 
-        let bases = effects
-            .keys()
-            .copied()
-            .map(|entity| (entity, self.get_base(entity).cloned().unwrap_or_default()))
-            .collect::<HashMap<_, _>>();
+        let entities = self
+            .active_animations
+            .iter()
+            .flat_map(|state| state.entities.iter().copied())
+            .collect::<HashSet<_>>();
 
-        self.css_composed_outputs.clear();
-        for (entity, mut stack) in effects {
-            stack.sort_by_key(|(order, instance_id, _, _)| (*order, *instance_id));
-            let mut value = bases.get(&entity).cloned().unwrap_or_default();
-            for (_, _, composition, effect) in stack {
-                value = T::compose(&value, &effect, composition);
+        for entity in entities.iter().copied() {
+            self.refresh_animation_index(entity);
+        }
+
+        for entity in entities {
+            let mut stack = self
+                .active_animations
+                .iter()
+                .enumerate()
+                .filter_map(|(index, state)| {
+                    Some((index, state.css_order, state.css_instance_id?, state.css_composition))
+                        .filter(|_| state.output.is_some() && state.entities.contains(&entity))
+                })
+                .collect::<Vec<_>>();
+            stack.sort_by_key(|(_, order, instance_id, _)| (*order, *instance_id));
+
+            let mut value = self.get_base(entity).cloned().unwrap_or_default();
+            for (index, _, _, composition) in &stack {
+                let effect = self.active_animations[*index]
+                    .output
+                    .as_ref()
+                    .expect("CSS effect output was filtered above");
+                value = T::compose(&value, effect, *composition);
             }
-            self.css_composed_outputs.insert(entity, value);
+
+            if let Some((carrier, _, _, _)) = stack.last().copied() {
+                self.active_animations[carrier].composed_output = Some(value);
+                if entity.index() < self.inline_data.sparse.len() {
+                    self.inline_data.sparse[entity.index()].anim_index = carrier as u32;
+                }
+            }
         }
     }
 
@@ -824,15 +828,11 @@ where
     pub fn get(&self, entity: Entity) -> Option<&T> {
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
-            // CSS Animations Level 2 effect stack, already sampled in stable composite order.
-            if let Some(output) = self.css_composed_outputs.get(&entity) {
-                return Some(output);
-            }
-
-            // Preserve the legacy/transition animation path when no CSS animation applies.
             let animation_index = self.inline_data.sparse[entity_index].anim_index as usize;
             if animation_index < self.active_animations.len() {
-                if let Some(output) = self.active_animations[animation_index].get_output() {
+                let state = &self.active_animations[animation_index];
+                if let Some(output) = state.composed_output.as_ref().or_else(|| state.get_output())
+                {
                     return Some(output);
                 }
             }
