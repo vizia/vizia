@@ -1,10 +1,8 @@
 use skia_safe::canvas::SaveLayerRec;
-use skia_safe::path_builder::ArcSize;
-use skia_safe::rrect::Corner;
 use skia_safe::wrapper::PointerWrapper;
 use skia_safe::{
-    BlurStyle, ClipOp, MaskFilter, Matrix, Paint, PaintStyle, Path, PathBuilder, PathDirection,
-    PathEffect, Point, RRect, Rect, SamplingOptions, TileMode,
+    BlurStyle, ClipOp, MaskFilter, Matrix, Paint, PaintStyle, Path, PathBuilder, PathEffect, Point,
+    RRect, Rect, SamplingOptions, TileMode,
 };
 use std::any::{Any, TypeId};
 use std::f32::consts::SQRT_2;
@@ -397,46 +395,6 @@ impl DrawContext<'_> {
             .unwrap_or(0.0)
     }
 
-    /// Returns the corner shape for the top-left corner of the current view.
-    pub fn corner_top_left_shape(&self) -> CornerShape {
-        self.style.corner_top_left_shape.get(self.current).copied().unwrap_or_default()
-    }
-
-    /// Returns the corner shape for the top-left corner of the current view.
-    pub fn corner_top_right_shape(&self) -> CornerShape {
-        self.style.corner_top_right_shape.get(self.current).copied().unwrap_or_default()
-    }
-
-    /// Returns the corner shape for the top-left corner of the current view.
-    pub fn corner_bottom_left_shape(&self) -> CornerShape {
-        self.style.corner_bottom_left_shape.get(self.current).copied().unwrap_or_default()
-    }
-
-    /// Returns the corner shape for the top-left corner of the current view.
-    pub fn corner_bottom_right_shape(&self) -> CornerShape {
-        self.style.corner_bottom_right_shape.get(self.current).copied().unwrap_or_default()
-    }
-
-    /// Returns the corner smoothing for the top-left corner of the current view.
-    pub fn corner_top_left_smoothing(&self) -> f32 {
-        self.style.corner_top_left_smoothing.get(self.current).copied().unwrap_or_default()
-    }
-
-    /// Returns the corner shape for the top-left corner of the current view.
-    pub fn corner_top_right_smoothing(&self) -> f32 {
-        self.style.corner_top_right_smoothing.get(self.current).copied().unwrap_or_default()
-    }
-
-    /// Returns the corner shape for the top-left corner of the current view.
-    pub fn corner_bottom_left_smoothing(&self) -> f32 {
-        self.style.corner_bottom_left_smoothing.get(self.current).copied().unwrap_or_default()
-    }
-
-    /// Returns the corner shape for the top-left corner of the current view.
-    pub fn corner_bottom_right_smoothing(&self) -> f32 {
-        self.style.corner_bottom_right_smoothing.get(self.current).copied().unwrap_or_default()
-    }
-
     get_units_property!(
         /// Returns the padding-left space of the current view.
         padding_left
@@ -589,7 +547,7 @@ impl DrawContext<'_> {
 
     /// Get the vector path of the current view.
     pub fn build_path(&self, bounds: BoundingBox, outset: (f32, f32)) -> Path {
-        self.build_path_with_corners(
+        self.build_path_with_radii(
             bounds,
             outset,
             (
@@ -598,198 +556,51 @@ impl DrawContext<'_> {
                 self.corner_bottom_right_radius(),
                 self.corner_bottom_left_radius(),
             ),
-            (
-                self.corner_top_left_shape(),
-                self.corner_top_right_shape(),
-                self.corner_bottom_right_shape(),
-                self.corner_bottom_left_shape(),
-            ),
-            (
-                self.corner_top_left_smoothing(),
-                self.corner_top_right_smoothing(),
-                self.corner_bottom_right_smoothing(),
-                self.corner_bottom_left_smoothing(),
-            ),
         )
     }
 
-    fn build_path_with_corners(
+    fn build_rrect_with_radii(
         &self,
         bounds: BoundingBox,
         outset: (f32, f32),
         corner_radii: (f32, f32, f32, f32),
-        corner_shapes: (CornerShape, CornerShape, CornerShape, CornerShape),
-        corner_smoothing: (f32, f32, f32, f32),
-    ) -> Path {
-        let (
-            corner_top_left_radius,
-            corner_top_right_radius,
-            corner_bottom_right_radius,
-            corner_bottom_left_radius,
-        ) = corner_radii;
-        let (
-            corner_top_left_shape,
-            corner_top_right_shape,
-            corner_bottom_right_shape,
-            corner_bottom_left_shape,
-        ) = corner_shapes;
-        let (
-            corner_top_left_smoothing,
-            corner_top_right_smoothing,
-            corner_bottom_right_smoothing,
-            corner_bottom_left_smoothing,
-        ) = corner_smoothing;
-
-        let bounds = BoundingBox::from_min_max(0.0, 0.0, bounds.w, bounds.h);
-
-        let rect: Rect = bounds.into();
-
-        let mut rr = RRect::new_rect_radii(
-            rect,
+    ) -> RRect {
+        let (top_left, top_right, bottom_right, bottom_left) = corner_radii;
+        RRect::new_rect_radii(
+            Rect::from_xywh(0.0, 0.0, bounds.w, bounds.h),
             &[
-                Point::new(corner_top_left_radius, corner_top_left_radius),
-                Point::new(corner_top_right_radius, corner_top_right_radius),
-                Point::new(corner_bottom_right_radius, corner_bottom_right_radius),
-                Point::new(corner_bottom_left_radius, corner_bottom_left_radius),
+                Point::new(top_left, top_left),
+                Point::new(top_right, top_right),
+                Point::new(bottom_right, bottom_right),
+                Point::new(bottom_left, bottom_left),
             ],
-        );
+        )
+        .with_outset(outset)
+    }
 
-        rr = rr.with_outset(outset);
-
-        let x = rr.bounds().x();
-        let y = rr.bounds().y();
-        let width = rr.width();
-        let height = rr.height();
-        let mut should_offset = true;
-
+    fn build_path_with_radii(
+        &self,
+        bounds: BoundingBox,
+        outset: (f32, f32),
+        corner_radii: (f32, f32, f32, f32),
+    ) -> Path {
         let mut path = PathBuilder::new();
+        path.add_rrect(self.build_rrect_with_radii(bounds, outset, corner_radii), None, None);
+        path.detach()
+    }
 
-        if width == height
-            && corner_bottom_left_radius == width / 2.0
-            && corner_bottom_right_radius == width / 2.0
-            && corner_top_left_radius == height / 2.0
-            && corner_top_right_radius == height / 2.0
-        {
-            path.add_circle((width / 2.0, height / 2.0), width / 2.0, Some(PathDirection::CW));
-        } else if corner_top_left_radius == corner_top_right_radius
-            && corner_top_right_radius == corner_bottom_right_radius
-            && corner_bottom_right_radius == corner_bottom_left_radius
-            && corner_top_left_smoothing == 0.0
-            && corner_top_left_smoothing == corner_top_right_smoothing
-            && corner_top_right_smoothing == corner_bottom_right_smoothing
-            && corner_bottom_right_smoothing == corner_bottom_left_smoothing
-            && corner_top_left_shape == CornerShape::Round
-            && corner_top_left_shape == corner_top_right_shape
-            && corner_top_right_shape == corner_bottom_right_shape
-            && corner_bottom_right_shape == corner_bottom_left_shape
-        {
-            path.add_rrect(rr, None, None);
-            should_offset = false;
-        } else {
-            let top_right = rr.radii(Corner::UpperRight).x;
-
-            if top_right > 0.0 {
-                let (a, b, c, d, l, p, radius) =
-                    compute_smooth_corner(top_right, corner_top_right_smoothing, width, height);
-
-                path.move_to((f32::max(width / 2.0, width - p), 0.0));
-                if corner_top_right_shape == CornerShape::Round {
-                    path.cubic_to(
-                        (width - (p - a), 0.0),
-                        (width - (p - a - b), 0.0),
-                        (width - (p - a - b - c), d),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, l))
-                    .cubic_to(
-                        (width, p - a - b),
-                        (width, p - a),
-                        (width, f32::min(height / 2.0, p)),
-                    );
-                } else {
-                    path.line_to((width, f32::min(height / 2.0, p)));
-                }
-            } else {
-                path.move_to((width / 2.0, 0.0))
-                    .line_to((width, 0.0))
-                    .line_to((width, height / 2.0));
-            }
-
-            let bottom_right = rr.radii(Corner::LowerRight).x;
-            if bottom_right > 0.0 {
-                let (a, b, c, d, l, p, radius) = compute_smooth_corner(
-                    bottom_right,
-                    corner_bottom_right_smoothing,
-                    width,
-                    height,
-                );
-
-                path.line_to((width, f32::max(height / 2.0, height - p)));
-                if corner_bottom_right_shape == CornerShape::Round {
-                    path.cubic_to(
-                        (width, height - (p - a)),
-                        (width, height - (p - a - b)),
-                        (width - d, height - (p - a - b - c)),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, l))
-                    .cubic_to(
-                        (width - (p - a - b), height),
-                        (width - (p - a), height),
-                        (f32::max(width / 2.0, width - p), height),
-                    );
-                } else {
-                    path.line_to((f32::max(width / 2.0, width - p), height));
-                }
-            } else {
-                path.line_to((width, height)).line_to((width / 2.0, height));
-            }
-
-            let bottom_left = rr.radii(Corner::LowerLeft).x;
-            if bottom_left > 0.0 {
-                let (a, b, c, d, l, p, radius) =
-                    compute_smooth_corner(bottom_left, corner_bottom_left_smoothing, width, height);
-
-                path.line_to((f32::min(width / 2.0, p), height));
-                if corner_bottom_left_shape == CornerShape::Round {
-                    path.cubic_to(
-                        (p - a, height),
-                        (p - a - b, height),
-                        (p - a - b - c, height - d),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, -l))
-                    .cubic_to(
-                        (0.0, height - (p - a - b)),
-                        (0.0, height - (p - a)),
-                        (0.0, f32::max(height / 2.0, height - p)),
-                    );
-                } else {
-                    path.line_to((0.0, f32::max(height / 2.0, height - p)));
-                }
-            } else {
-                path.line_to((0.0, height)).line_to((0.0, height / 2.0));
-            }
-
-            let top_left = rr.radii(Corner::UpperLeft).x;
-            if top_left > 0.0 {
-                let (a, b, c, d, l, p, radius) =
-                    compute_smooth_corner(top_left, corner_top_left_smoothing, width, height);
-
-                path.line_to((0.0, f32::min(height / 2.0, p)));
-                if corner_top_left_shape == CornerShape::Round {
-                    path.cubic_to((0.0, p - a), (0.0, p - a - b), (d, p - a - b - c))
-                        .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, -l))
-                        .cubic_to((p - a - b, 0.0), (p - a, 0.0), (f32::min(width / 2.0, p), 0.0));
-                } else {
-                    path.line_to((f32::min(width / 2.0, p), 0.0));
-                }
-            } else {
-                path.line_to((0.0, 0.0));
-            }
-
-            path.close();
-        }
-
-        let path = path.detach();
-        if should_offset { path.make_offset((x, y)) } else { path }
+    fn rrect(&self, bounds: BoundingBox, outset: (f32, f32)) -> RRect {
+        self.build_rrect_with_radii(
+            bounds,
+            outset,
+            (
+                self.corner_top_left_radius(),
+                self.corner_top_right_radius(),
+                self.corner_bottom_right_radius(),
+                self.corner_bottom_left_radius(),
+            ),
+        )
+        .with_offset(bounds.top_left())
     }
 
     fn corner_oval(center_x: f32, center_y: f32, radius: f32) -> Rect {
@@ -1030,111 +841,6 @@ impl DrawContext<'_> {
         Some(path.detach())
     }
 
-    fn bevel_corner_side_path(
-        side_ix: usize,
-        bounds: BoundingBox,
-        outer_radii: (f32, f32, f32, f32),
-        inner_radii: (f32, f32, f32, f32),
-        widths: (f32, f32, f32, f32),
-    ) -> Option<Path> {
-        let bx = bounds.x;
-        let by = bounds.y;
-        let bw = bounds.w;
-        let bh = bounds.h;
-
-        let (r_tl, r_tr, r_br, r_bl) = outer_radii;
-        let (ir_tl, ir_tr, ir_br, ir_bl) = inner_radii;
-        let (top_width, right_width, bottom_width, left_width) = widths;
-
-        let otl = r_tl.min(bw * 0.5).min(bh * 0.5);
-        let otr = r_tr.min(bw * 0.5).min(bh * 0.5);
-        let obr = r_br.min(bw * 0.5).min(bh * 0.5);
-        let obl = r_bl.min(bw * 0.5).min(bh * 0.5);
-
-        let itl = ir_tl
-            .max(0.0)
-            .min((bw - left_width - right_width).max(0.0) * 0.5)
-            .min((bh - top_width - bottom_width).max(0.0) * 0.5);
-        let itr = ir_tr
-            .max(0.0)
-            .min((bw - left_width - right_width).max(0.0) * 0.5)
-            .min((bh - top_width - bottom_width).max(0.0) * 0.5);
-        let ibr = ir_br
-            .max(0.0)
-            .min((bw - left_width - right_width).max(0.0) * 0.5)
-            .min((bh - top_width - bottom_width).max(0.0) * 0.5);
-        let ibl = ir_bl
-            .max(0.0)
-            .min((bw - left_width - right_width).max(0.0) * 0.5)
-            .min((bh - top_width - bottom_width).max(0.0) * 0.5);
-
-        let outer_tl_top = Point::new(bx + otl, by);
-        let outer_tl_left = Point::new(bx, by + otl);
-        let outer_tr_top = Point::new(bx + bw - otr, by);
-        let outer_tr_right = Point::new(bx + bw, by + otr);
-        let outer_br_right = Point::new(bx + bw, by + bh - obr);
-        let outer_br_bottom = Point::new(bx + bw - obr, by + bh);
-        let outer_bl_bottom = Point::new(bx + obl, by + bh);
-        let outer_bl_left = Point::new(bx, by + bh - obl);
-
-        let inner_tl_top = Point::new(bx + left_width + itl, by + top_width);
-        let inner_tl_left = Point::new(bx + left_width, by + top_width + itl);
-        let inner_tr_top = Point::new(bx + bw - right_width - itr, by + top_width);
-        let inner_tr_right = Point::new(bx + bw - right_width, by + top_width + itr);
-        let inner_br_right = Point::new(bx + bw - right_width, by + bh - bottom_width - ibr);
-        let inner_br_bottom = Point::new(bx + bw - right_width - ibr, by + bh - bottom_width);
-        let inner_bl_bottom = Point::new(bx + left_width + ibl, by + bh - bottom_width);
-        let inner_bl_left = Point::new(bx + left_width, by + bh - bottom_width - ibl);
-
-        let mut path = PathBuilder::new();
-        match side_ix {
-            0 => {
-                path.move_to(outer_tl_left);
-                path.line_to(outer_tl_top);
-                path.line_to(outer_tr_top);
-                path.line_to(outer_tr_right);
-                path.line_to(inner_tr_right);
-                path.line_to(inner_tr_top);
-                path.line_to(inner_tl_top);
-                path.line_to(inner_tl_left);
-            }
-            1 => {
-                path.move_to(outer_tr_top);
-                path.line_to(outer_tr_right);
-                path.line_to(outer_br_right);
-                path.line_to(outer_br_bottom);
-                path.line_to(inner_br_bottom);
-                path.line_to(inner_br_right);
-                path.line_to(inner_tr_right);
-                path.line_to(inner_tr_top);
-            }
-            2 => {
-                path.move_to(outer_br_right);
-                path.line_to(outer_br_bottom);
-                path.line_to(outer_bl_bottom);
-                path.line_to(outer_bl_left);
-                path.line_to(inner_bl_left);
-                path.line_to(inner_bl_bottom);
-                path.line_to(inner_br_bottom);
-                path.line_to(inner_br_right);
-            }
-            3 => {
-                path.move_to(outer_bl_bottom);
-                path.line_to(outer_bl_left);
-                path.line_to(outer_tl_left);
-                path.line_to(outer_tl_top);
-                path.line_to(inner_tl_top);
-                path.line_to(inner_tl_left);
-                path.line_to(inner_bl_left);
-                path.line_to(inner_bl_bottom);
-            }
-            _ => return None,
-        }
-
-        path.close();
-        Some(path.detach())
-    }
-
     fn round_corner_side_stroke_path(
         side_ix: usize,
         bounds: BoundingBox,
@@ -1262,622 +968,10 @@ impl DrawContext<'_> {
         Some(path.detach())
     }
 
-    fn bevel_corner_side_stroke_path(
-        side_ix: usize,
-        bounds: BoundingBox,
-        outer_radii: (f32, f32, f32, f32),
-    ) -> Option<Path> {
-        let bx = bounds.x;
-        let by = bounds.y;
-        let bw = bounds.w;
-        let bh = bounds.h;
-
-        let (r_tl, r_tr, r_br, r_bl) = outer_radii;
-
-        let otl = r_tl.min(bw * 0.5).min(bh * 0.5);
-        let otr = r_tr.min(bw * 0.5).min(bh * 0.5);
-        let obr = r_br.min(bw * 0.5).min(bh * 0.5);
-        let obl = r_bl.min(bw * 0.5).min(bh * 0.5);
-
-        let outer_tl_top = Point::new(bx + otl, by);
-        let outer_tl_left = Point::new(bx, by + otl);
-        let outer_tr_top = Point::new(bx + bw - otr, by);
-        let outer_tr_right = Point::new(bx + bw, by + otr);
-        let outer_br_right = Point::new(bx + bw, by + bh - obr);
-        let outer_br_bottom = Point::new(bx + bw - obr, by + bh);
-        let outer_bl_bottom = Point::new(bx + obl, by + bh);
-        let outer_bl_left = Point::new(bx, by + bh - obl);
-
-        let mut path = PathBuilder::new();
-        match side_ix {
-            0 => {
-                path.move_to(outer_tl_left);
-                path.line_to(outer_tl_top);
-                path.line_to(outer_tr_top);
-                path.line_to(outer_tr_right);
-            }
-            1 => {
-                path.move_to(outer_tr_top);
-                path.line_to(outer_tr_right);
-                path.line_to(outer_br_right);
-                path.line_to(outer_br_bottom);
-            }
-            2 => {
-                path.move_to(outer_br_right);
-                path.line_to(outer_br_bottom);
-                path.line_to(outer_bl_bottom);
-                path.line_to(outer_bl_left);
-            }
-            3 => {
-                path.move_to(outer_bl_bottom);
-                path.line_to(outer_bl_left);
-                path.line_to(outer_tl_left);
-                path.line_to(outer_tl_top);
-            }
-            _ => return None,
-        }
-
-        Some(path.detach())
-    }
-
-    fn smooth_corner_side_path(
-        side_ix: usize,
-        bounds: BoundingBox,
-        outer_radii: (f32, f32, f32, f32),
-        inner_radii: (f32, f32, f32, f32),
-        corner_shapes: (CornerShape, CornerShape, CornerShape, CornerShape),
-        corner_smoothing: (f32, f32, f32, f32),
-        widths: (f32, f32, f32, f32),
-    ) -> Option<Path> {
-        let bx = bounds.x;
-        let by = bounds.y;
-        let bw = bounds.w;
-        let bh = bounds.h;
-
-        let (r_tl, r_tr, r_br, r_bl) = outer_radii;
-        let (ir_tl, ir_tr, ir_br, ir_bl) = inner_radii;
-        let (corner_tl_shape, corner_tr_shape, corner_br_shape, corner_bl_shape) = corner_shapes;
-        let (corner_tl_smoothing, corner_tr_smoothing, corner_br_smoothing, corner_bl_smoothing) =
-            corner_smoothing;
-        let (top_width, right_width, bottom_width, left_width) = widths;
-
-        let mut path = PathBuilder::new();
-
-        match side_ix {
-            0 => {
-                // Top side: top-left to top-right
-                let otl = r_tl.min(bw * 0.5).min(bh * 0.5);
-                let otr = r_tr.min(bw * 0.5).min(bh * 0.5);
-                let itl = ir_tl
-                    .max(0.0)
-                    .min((bw - left_width - right_width).max(0.0) * 0.5)
-                    .min((bh - top_width - bottom_width).max(0.0) * 0.5);
-                let itr = ir_tr
-                    .max(0.0)
-                    .min((bw - left_width - right_width).max(0.0) * 0.5)
-                    .min((bh - top_width - bottom_width).max(0.0) * 0.5);
-
-                path.move_to((bx + left_width, by + top_width + itl));
-
-                // Outer top-left corner
-                if otl > 0.0 && corner_tl_shape == CornerShape::Round {
-                    let (a, b, c, d, l, p, radius) =
-                        compute_smooth_corner(otl, corner_tl_smoothing, bw, bh);
-                    let start_x = bx + f32::max(left_width * 0.5, left_width + p - left_width);
-                    let start_y = by + top_width;
-                    path.line_to((start_x, start_y));
-                    path.cubic_to(
-                        (bx + left_width + (p - a), by),
-                        (bx + left_width + (p - a - b), by),
-                        (bx + left_width + (p - a - b - c), d + by),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, l))
-                    .cubic_to(
-                        (bx + left_width + (p - a - b), by + top_width),
-                        (bx + left_width + (p - a), by + top_width),
-                        (bx + left_width + p.min(bw * 0.5), by + top_width),
-                    );
-                } else if otl > 0.0 {
-                    let p = otl.min((bw * 0.5).min(bh * 0.5));
-                    path.line_to((bx + left_width + p, by + top_width));
-                } else {
-                    path.line_to((bx + left_width, by + top_width));
-                }
-
-                // Outer top-right corner
-                if otr > 0.0 {
-                    let p = otr.min((bw * 0.5).min(bh * 0.5));
-                    path.line_to((bx + bw - right_width - p, by + top_width));
-                    if corner_tr_shape == CornerShape::Round {
-                        let (a, b, c, d, l, radius_val, _) =
-                            compute_smooth_corner(otr, corner_tr_smoothing, bw, bh);
-                        path.cubic_to(
-                            (bx + bw - right_width - (p - a), by),
-                            (bx + bw - right_width - (p - a - b), by),
-                            (bx + bw - right_width - (p - a - b - c) + d, by),
-                        )
-                        .r_arc_to(
-                            (radius_val, radius_val),
-                            0.0,
-                            ArcSize::Small,
-                            PathDirection::CW,
-                            (l, l),
-                        )
-                        .cubic_to(
-                            (bx + bw - right_width - (p - a - b), by + top_width),
-                            (bx + bw - right_width - (p - a), by + top_width),
-                            (bx + bw - right_width - p.min(bw * 0.5), by + top_width),
-                        );
-                    }
-                } else {
-                    path.line_to((bx + bw - right_width, by + top_width));
-                }
-
-                path.line_to((bx + bw - right_width, by + top_width + itr));
-
-                // Inner top-right corner
-                if itr > 0.0 && corner_tr_shape == CornerShape::Round {
-                    let (a, b, c, d, l, p, radius) = compute_smooth_corner(
-                        itr,
-                        corner_tr_smoothing,
-                        bw - left_width - right_width,
-                        bh - top_width - bottom_width,
-                    );
-                    path.cubic_to(
-                        (bx + bw - right_width - (p - a), by + top_width),
-                        (bx + bw - right_width - (p - a - b), by + top_width),
-                        (bx + bw - right_width - (p - a - b - c), by + top_width + d),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, l))
-                    .cubic_to(
-                        (bx + bw - right_width, by + top_width + (p - a - b)),
-                        (bx + bw - right_width, by + top_width + (p - a)),
-                        (
-                            bx + bw - right_width,
-                            by + top_width + p.min((bh - top_width - bottom_width) * 0.5),
-                        ),
-                    );
-                } else if itr > 0.0 {
-                    let p = itr.min(
-                        ((bh - top_width - bottom_width) * 0.5)
-                            .min((bw - left_width - right_width) * 0.5),
-                    );
-                    path.line_to((bx + bw - right_width, by + top_width + p));
-                }
-
-                // Inner top-left corner
-                if itl > 0.0 && corner_tl_shape == CornerShape::Round {
-                    let (a, b, c, d, l, p, radius) = compute_smooth_corner(
-                        itl,
-                        corner_tl_smoothing,
-                        bw - left_width - right_width,
-                        bh - top_width - bottom_width,
-                    );
-                    path.line_to((bx + left_width + p, by + top_width));
-                    path.cubic_to(
-                        (bx + left_width + (p - a), by + top_width),
-                        (bx + left_width + (p - a - b), by + top_width),
-                        (bx + left_width + (p - a - b - c), by + top_width + d),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, -l))
-                    .cubic_to(
-                        (bx + left_width, by + top_width + (p - a - b)),
-                        (bx + left_width, by + top_width + (p - a)),
-                        (
-                            bx + left_width,
-                            by + top_width + p.min((bh - top_width - bottom_width) * 0.5),
-                        ),
-                    );
-                } else if itl > 0.0 {
-                    let p = itl.min(
-                        ((bh - top_width - bottom_width) * 0.5)
-                            .min((bw - left_width - right_width) * 0.5),
-                    );
-                    path.line_to((bx + left_width, by + top_width + p));
-                }
-            }
-            1 => {
-                // Right side: top-right to bottom-right
-                let otr = r_tr.min(bw * 0.5).min(bh * 0.5);
-                let obr = r_br.min(bw * 0.5).min(bh * 0.5);
-                let itr = ir_tr
-                    .max(0.0)
-                    .min((bw - left_width - right_width).max(0.0) * 0.5)
-                    .min((bh - top_width - bottom_width).max(0.0) * 0.5);
-                let ibr = ir_br
-                    .max(0.0)
-                    .min((bw - left_width - right_width).max(0.0) * 0.5)
-                    .min((bh - top_width - bottom_width).max(0.0) * 0.5);
-
-                path.move_to((bx + bw - right_width - itr, by + top_width));
-
-                // Outer top-right corner
-                if otr > 0.0 && corner_tr_shape == CornerShape::Round {
-                    let (a, b, c, d, l, p, radius) =
-                        compute_smooth_corner(otr, corner_tr_smoothing, bw, bh);
-                    let start_x = bx + bw - right_width;
-                    path.line_to((start_x, by + top_width + p));
-                    path.cubic_to(
-                        (start_x, by + (p - a)),
-                        (start_x, by + (p - a - b)),
-                        (start_x - d, by + (p - a - b - c)),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, l))
-                    .cubic_to(
-                        (start_x - (p - a - b), by),
-                        (start_x - (p - a), by),
-                        (start_x - p.min(bw * 0.5), by),
-                    );
-                } else if otr > 0.0 {
-                    let p = otr.min((bw * 0.5).min(bh * 0.5));
-                    path.line_to((bx + bw - right_width, by + top_width + p));
-                } else {
-                    path.line_to((bx + bw - right_width, by + top_width));
-                }
-
-                // Outer bottom-right corner
-                if obr > 0.0 {
-                    let p = obr.min((bw * 0.5).min(bh * 0.5));
-                    path.line_to((bx + bw - right_width, by + bh - bottom_width - p));
-                    if corner_br_shape == CornerShape::Round {
-                        let (a, b, c, d, l, radius_val, _) =
-                            compute_smooth_corner(obr, corner_br_smoothing, bw, bh);
-                        path.cubic_to(
-                            (bx + bw, by + bh - bottom_width - (p - a)),
-                            (bx + bw, by + bh - bottom_width - (p - a - b)),
-                            (bx + bw, by + bh - bottom_width - (p - a - b - c) + d),
-                        )
-                        .r_arc_to(
-                            (radius_val, radius_val),
-                            0.0,
-                            ArcSize::Small,
-                            PathDirection::CW,
-                            (l, l),
-                        )
-                        .cubic_to(
-                            (bx + bw - (p - a - b), by + bh),
-                            (bx + bw - (p - a), by + bh),
-                            (bx + bw - p.min(bw * 0.5), by + bh),
-                        );
-                    }
-                } else {
-                    path.line_to((bx + bw - right_width, by + bh - bottom_width));
-                }
-
-                path.line_to((bx + bw - right_width - ibr, by + bh - bottom_width));
-
-                // Inner bottom-right corner
-                if ibr > 0.0 && corner_br_shape == CornerShape::Round {
-                    let (a, b, c, d, l, p, radius) = compute_smooth_corner(
-                        ibr,
-                        corner_br_smoothing,
-                        bw - left_width - right_width,
-                        bh - top_width - bottom_width,
-                    );
-                    path.cubic_to(
-                        (bx + bw - right_width - (p - a), by + bh - bottom_width),
-                        (bx + bw - right_width - (p - a - b), by + bh - bottom_width),
-                        (bx + bw - right_width - (p - a - b - c), by + bh - bottom_width + d),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, -l))
-                    .cubic_to(
-                        (bx + bw - right_width, by + bh - bottom_width - (p - a - b)),
-                        (bx + bw - right_width, by + bh - bottom_width - (p - a)),
-                        (
-                            bx + bw - right_width,
-                            by + bh - bottom_width - p.min((bh - top_width - bottom_width) * 0.5),
-                        ),
-                    );
-                } else if ibr > 0.0 {
-                    let p = ibr.min(
-                        ((bh - top_width - bottom_width) * 0.5)
-                            .min((bw - left_width - right_width) * 0.5),
-                    );
-                    path.line_to((bx + bw - right_width, by + bh - bottom_width - p));
-                }
-
-                // Inner top-right corner
-                if itr > 0.0 && corner_tr_shape == CornerShape::Round {
-                    let (a, b, c, d, l, p, radius) = compute_smooth_corner(
-                        itr,
-                        corner_tr_smoothing,
-                        bw - left_width - right_width,
-                        bh - top_width - bottom_width,
-                    );
-                    path.line_to((bx + bw - right_width, by + top_width + p));
-                    path.cubic_to(
-                        (bx + bw - right_width, by + top_width + (p - a)),
-                        (bx + bw - right_width, by + top_width + (p - a - b)),
-                        (bx + bw - right_width + d, by + top_width + (p - a - b - c)),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, -l))
-                    .cubic_to(
-                        (bx + bw - right_width - (p - a - b), by + top_width),
-                        (bx + bw - right_width - (p - a), by + top_width),
-                        (
-                            bx + bw - right_width - p.min((bw - left_width - right_width) * 0.5),
-                            by + top_width,
-                        ),
-                    );
-                } else if itr > 0.0 {
-                    let p = itr.min(
-                        ((bh - top_width - bottom_width) * 0.5)
-                            .min((bw - left_width - right_width) * 0.5),
-                    );
-                    path.line_to((bx + bw - right_width, by + top_width + p));
-                }
-            }
-            2 => {
-                // Bottom side: bottom-right to bottom-left
-                let obr = r_br.min(bw * 0.5).min(bh * 0.5);
-                let obl = r_bl.min(bw * 0.5).min(bh * 0.5);
-                let ibr = ir_br
-                    .max(0.0)
-                    .min((bw - left_width - right_width).max(0.0) * 0.5)
-                    .min((bh - top_width - bottom_width).max(0.0) * 0.5);
-                let ibl = ir_bl
-                    .max(0.0)
-                    .min((bw - left_width - right_width).max(0.0) * 0.5)
-                    .min((bh - top_width - bottom_width).max(0.0) * 0.5);
-
-                path.move_to((bx + bw - right_width - ibr, by + bh - bottom_width));
-
-                // Outer bottom-right corner
-                if obr > 0.0 && corner_br_shape == CornerShape::Round {
-                    let (a, b, c, d, l, p, radius) =
-                        compute_smooth_corner(obr, corner_br_smoothing, bw, bh);
-                    let end_x = bx + bw - right_width;
-                    path.line_to((end_x - p, by + bh - bottom_width));
-                    path.cubic_to(
-                        (end_x - (p - a), by + bh),
-                        (end_x - (p - a - b), by + bh),
-                        (end_x - (p - a - b - c) + d, by + bh),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, l))
-                    .cubic_to(
-                        (end_x - (p - a - b), by + bh - bottom_width),
-                        (end_x - (p - a), by + bh - bottom_width),
-                        (end_x - p.min(bw * 0.5), by + bh - bottom_width),
-                    );
-                } else if obr > 0.0 {
-                    let p = obr.min((bw * 0.5).min(bh * 0.5));
-                    path.line_to((bx + bw - right_width - p, by + bh - bottom_width));
-                } else {
-                    path.line_to((bx + bw - right_width, by + bh - bottom_width));
-                }
-
-                // Outer bottom-left corner
-                if obl > 0.0 {
-                    let p = obl.min((bw * 0.5).min(bh * 0.5));
-                    path.line_to((bx + left_width + p, by + bh - bottom_width));
-                    if corner_bl_shape == CornerShape::Round {
-                        let (a, b, c, d, l, radius_val, _) =
-                            compute_smooth_corner(obl, corner_bl_smoothing, bw, bh);
-                        path.cubic_to(
-                            (bx + left_width + (p - a), by + bh),
-                            (bx + left_width + (p - a - b), by + bh),
-                            (bx + left_width + (p - a - b - c) - d, by + bh),
-                        )
-                        .r_arc_to(
-                            (radius_val, radius_val),
-                            0.0,
-                            ArcSize::Small,
-                            PathDirection::CW,
-                            (-l, -l),
-                        )
-                        .cubic_to(
-                            (bx + left_width + (p - a - b), by + bh - bottom_width),
-                            (bx + left_width + (p - a), by + bh - bottom_width),
-                            (bx + left_width + p.min(bw * 0.5), by + bh - bottom_width),
-                        );
-                    }
-                } else {
-                    path.line_to((bx + left_width, by + bh - bottom_width));
-                }
-
-                path.line_to((bx + left_width + ibl, by + bh - bottom_width));
-
-                // Inner bottom-left corner
-                if ibl > 0.0 && corner_bl_shape == CornerShape::Round {
-                    let (a, b, c, d, l, p, radius) = compute_smooth_corner(
-                        ibl,
-                        corner_bl_smoothing,
-                        bw - left_width - right_width,
-                        bh - top_width - bottom_width,
-                    );
-                    path.cubic_to(
-                        (bx + left_width + (p - a), by + bh - bottom_width),
-                        (bx + left_width + (p - a - b), by + bh - bottom_width),
-                        (bx + left_width + (p - a - b - c), by + bh - bottom_width + d),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, -l))
-                    .cubic_to(
-                        (bx + left_width, by + bh - bottom_width - (p - a - b)),
-                        (bx + left_width, by + bh - bottom_width - (p - a)),
-                        (
-                            bx + left_width,
-                            by + bh - bottom_width - p.min((bh - top_width - bottom_width) * 0.5),
-                        ),
-                    );
-                } else if ibl > 0.0 {
-                    let p = ibl.min(
-                        ((bh - top_width - bottom_width) * 0.5)
-                            .min((bw - left_width - right_width) * 0.5),
-                    );
-                    path.line_to((bx + left_width, by + bh - bottom_width - p));
-                }
-
-                // Inner bottom-right corner
-                if ibr > 0.0 && corner_br_shape == CornerShape::Round {
-                    let (a, b, c, d, l, p, radius) = compute_smooth_corner(
-                        ibr,
-                        corner_br_smoothing,
-                        bw - left_width - right_width,
-                        bh - top_width - bottom_width,
-                    );
-                    path.line_to((bx + bw - right_width - p, by + bh - bottom_width));
-                    path.cubic_to(
-                        (bx + bw - right_width - (p - a), by + bh - bottom_width),
-                        (bx + bw - right_width - (p - a - b), by + bh - bottom_width),
-                        (bx + bw - right_width - (p - a - b - c), by + bh - bottom_width + d),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, l))
-                    .cubic_to(
-                        (bx + bw - right_width, by + bh - bottom_width - (p - a - b)),
-                        (bx + bw - right_width, by + bh - bottom_width - (p - a)),
-                        (
-                            bx + bw - right_width,
-                            by + bh - bottom_width - p.min((bh - top_width - bottom_width) * 0.5),
-                        ),
-                    );
-                } else if ibr > 0.0 {
-                    let p = ibr.min(
-                        ((bh - top_width - bottom_width) * 0.5)
-                            .min((bw - left_width - right_width) * 0.5),
-                    );
-                    path.line_to((bx + bw - right_width, by + bh - bottom_width - p));
-                }
-            }
-            3 => {
-                // Left side: bottom-left to top-left
-                let obl = r_bl.min(bw * 0.5).min(bh * 0.5);
-                let otl = r_tl.min(bw * 0.5).min(bh * 0.5);
-                let ibl = ir_bl
-                    .max(0.0)
-                    .min((bw - left_width - right_width).max(0.0) * 0.5)
-                    .min((bh - top_width - bottom_width).max(0.0) * 0.5);
-                let itl = ir_tl
-                    .max(0.0)
-                    .min((bw - left_width - right_width).max(0.0) * 0.5)
-                    .min((bh - top_width - bottom_width).max(0.0) * 0.5);
-
-                path.move_to((bx + left_width + ibl, by + bh - bottom_width));
-
-                // Outer bottom-left corner
-                if obl > 0.0 && corner_bl_shape == CornerShape::Round {
-                    let (a, b, c, d, l, p, radius) =
-                        compute_smooth_corner(obl, corner_bl_smoothing, bw, bh);
-                    path.line_to((bx + left_width, by + bh - bottom_width - p));
-                    path.cubic_to(
-                        (bx, by + bh - bottom_width - (p - a)),
-                        (bx, by + bh - bottom_width - (p - a - b)),
-                        (bx, by + bh - bottom_width - (p - a - b - c) - d),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, -l))
-                    .cubic_to(
-                        (bx + (p - a - b), by),
-                        (bx + (p - a), by),
-                        (bx + p.min(bw * 0.5), by),
-                    );
-                } else if obl > 0.0 {
-                    let p = obl.min((bw * 0.5).min(bh * 0.5));
-                    path.line_to((bx + left_width, by + bh - bottom_width - p));
-                } else {
-                    path.line_to((bx + left_width, by + bh - bottom_width));
-                }
-
-                // Outer top-left corner
-                if otl > 0.0 {
-                    let p = otl.min((bw * 0.5).min(bh * 0.5));
-                    path.line_to((bx + left_width, by + top_width + p));
-                    if corner_tl_shape == CornerShape::Round {
-                        let (a, b, c, d, l, radius_val, _) =
-                            compute_smooth_corner(otl, corner_tl_smoothing, bw, bh);
-                        path.cubic_to(
-                            (bx, by + top_width + (p - a)),
-                            (bx, by + top_width + (p - a - b)),
-                            (bx, by + top_width + (p - a - b - c) - d),
-                        )
-                        .r_arc_to(
-                            (radius_val, radius_val),
-                            0.0,
-                            ArcSize::Small,
-                            PathDirection::CW,
-                            (l, l),
-                        )
-                        .cubic_to(
-                            (bx + (p - a - b), by),
-                            (bx + (p - a), by),
-                            (bx + p.min(bw * 0.5), by),
-                        );
-                    }
-                } else {
-                    path.line_to((bx + left_width, by + top_width));
-                }
-
-                path.line_to((bx + left_width + itl, by + top_width));
-
-                // Inner top-left corner
-                if itl > 0.0 && corner_tl_shape == CornerShape::Round {
-                    let (a, b, c, d, l, p, radius) = compute_smooth_corner(
-                        itl,
-                        corner_tl_smoothing,
-                        bw - left_width - right_width,
-                        bh - top_width - bottom_width,
-                    );
-                    path.cubic_to(
-                        (bx + left_width + (p - a), by + top_width),
-                        (bx + left_width + (p - a - b), by + top_width),
-                        (bx + left_width + (p - a - b - c), by + top_width + d),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, l))
-                    .cubic_to(
-                        (bx + left_width, by + top_width + (p - a - b)),
-                        (bx + left_width, by + top_width + (p - a)),
-                        (
-                            bx + left_width,
-                            by + top_width + p.min((bh - top_width - bottom_width) * 0.5),
-                        ),
-                    );
-                } else if itl > 0.0 {
-                    let p = itl.min(
-                        ((bh - top_width - bottom_width) * 0.5)
-                            .min((bw - left_width - right_width) * 0.5),
-                    );
-                    path.line_to((bx + left_width, by + top_width + p));
-                }
-
-                // Inner bottom-left corner
-                if ibl > 0.0 && corner_bl_shape == CornerShape::Round {
-                    let (a, b, c, d, l, p, radius) = compute_smooth_corner(
-                        ibl,
-                        corner_bl_smoothing,
-                        bw - left_width - right_width,
-                        bh - top_width - bottom_width,
-                    );
-                    path.line_to((bx + left_width, by + bh - bottom_width - p));
-                    path.cubic_to(
-                        (bx + left_width, by + bh - bottom_width - (p - a)),
-                        (bx + left_width, by + bh - bottom_width - (p - a - b)),
-                        (bx + left_width - d, by + bh - bottom_width - (p - a - b - c)),
-                    )
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, -l))
-                    .cubic_to(
-                        (bx + left_width + (p - a - b), by + bh),
-                        (bx + left_width + (p - a), by + bh),
-                        (bx + left_width + p.min((bw - left_width - right_width) * 0.5), by + bh),
-                    );
-                } else if ibl > 0.0 {
-                    let p = ibl.min(
-                        ((bh - top_width - bottom_width) * 0.5)
-                            .min((bw - left_width - right_width) * 0.5),
-                    );
-                    path.line_to((bx + left_width, by + bh - bottom_width - p));
-                }
-            }
-            _ => return None,
-        }
-
-        path.close();
-        Some(path.detach())
-    }
-
     /// Draw background color or background image (including gradients) for the current view.
     pub fn draw_background(&mut self, canvas: &Canvas) {
         let background_color = self.background_color();
         if background_color.a() > 0 {
-            let path = self.path();
-
             let mut paint = Paint::default();
             paint.set_color(skia_safe::Color::from_argb(
                 background_color.a(),
@@ -1886,7 +980,7 @@ impl DrawContext<'_> {
                 background_color.b(),
             ));
             paint.set_anti_alias(true);
-            canvas.draw_path(&path, &paint);
+            canvas.draw_rrect(self.rrect(self.bounds(), (0.0, 0.0)), &paint);
         }
 
         self.draw_background_images(canvas);
@@ -1949,18 +1043,6 @@ impl DrawContext<'_> {
         let inner_h = (bh - top_width - bottom_width).max(0.0);
         let inner_is_empty = inner_w <= 0.0 || inner_h <= 0.0;
 
-        let corner_shapes = (
-            self.corner_top_left_shape(),
-            self.corner_top_right_shape(),
-            self.corner_bottom_right_shape(),
-            self.corner_bottom_left_shape(),
-        );
-        let corner_smoothing = (
-            self.corner_top_left_smoothing(),
-            self.corner_top_right_smoothing(),
-            self.corner_bottom_right_smoothing(),
-            self.corner_bottom_left_smoothing(),
-        );
         let uniform_borders = top_width == right_width
             && right_width == bottom_width
             && bottom_width == left_width
@@ -1970,52 +1052,53 @@ impl DrawContext<'_> {
             && top_style == right_style
             && right_style == bottom_style
             && bottom_style == left_style;
-        let uniform_corners = r_tl == r_tr
-            && r_tr == r_br
-            && r_br == r_bl
-            && corner_shapes.0 == corner_shapes.1
-            && corner_shapes.1 == corner_shapes.2
-            && corner_shapes.2 == corner_shapes.3
-            && corner_smoothing.0 == corner_smoothing.1
-            && corner_smoothing.1 == corner_smoothing.2
-            && corner_smoothing.2 == corner_smoothing.3;
-        let exact_round_solid = !inner_is_empty
-            && corner_shapes.0 == CornerShape::Round
-            && corner_shapes.1 == CornerShape::Round
-            && corner_shapes.2 == CornerShape::Round
-            && corner_shapes.3 == CornerShape::Round
-            && corner_smoothing.0 == 0.0
-            && corner_smoothing.1 == 0.0
-            && corner_smoothing.2 == 0.0
-            && corner_smoothing.3 == 0.0;
-        let exact_bevel_solid = !inner_is_empty
-            && corner_shapes.0 == CornerShape::Bevel
-            && corner_shapes.1 == CornerShape::Bevel
-            && corner_shapes.2 == CornerShape::Bevel
-            && corner_shapes.3 == CornerShape::Bevel
-            && corner_smoothing.0 == 0.0
-            && corner_smoothing.1 == 0.0
-            && corner_smoothing.2 == 0.0
-            && corner_smoothing.3 == 0.0;
-        let exact_smooth_solid = !inner_is_empty
-            && corner_shapes.0 == CornerShape::Round
-            && corner_shapes.1 == CornerShape::Round
-            && corner_shapes.2 == CornerShape::Round
-            && corner_shapes.3 == CornerShape::Round
-            && (corner_smoothing.0 > 0.0
-                || corner_smoothing.1 > 0.0
-                || corner_smoothing.2 > 0.0
-                || corner_smoothing.3 > 0.0);
+        let corner_radii = (r_tl, r_tr, r_br, r_bl);
+        let outer_rrect = self
+            .build_rrect_with_radii(bounds, (0.0, 0.0), corner_radii)
+            .with_offset(bounds.top_left());
+        let inner_rrect = (!inner_is_empty).then(|| {
+            self.build_rrect_with_radii(
+                BoundingBox::from_min_max(0.0, 0.0, inner_w, inner_h),
+                (0.0, 0.0),
+                (ir_tl, ir_tr, ir_br, ir_bl),
+            )
+            .with_offset((bx + left_width, by + top_width))
+        });
+
+        if uniform_borders {
+            let mut paint = Paint::default();
+            paint.set_color(top_color);
+            paint.set_anti_alias(true);
+
+            match top_style {
+                BorderStyleKeyword::Dashed | BorderStyleKeyword::Dotted => {
+                    paint.set_style(PaintStyle::Stroke);
+                    paint.set_stroke_width(top_width);
+                    if top_style == BorderStyleKeyword::Dashed {
+                        paint.set_path_effect(PathEffect::dash(&[top_width * 2.0, top_width], 0.0));
+                    } else {
+                        paint.set_path_effect(PathEffect::dash(&[0.0, top_width * 2.0], 0.0));
+                        paint.set_stroke_cap(skia_safe::PaintCap::Round);
+                    }
+                    canvas.draw_rrect(
+                        outer_rrect.with_inset((top_width * 0.5, top_width * 0.5)),
+                        &paint,
+                    );
+                }
+                _ => {
+                    if let Some(inner_rrect) = inner_rrect {
+                        canvas.draw_drrect(outer_rrect, inner_rrect, &paint);
+                    } else {
+                        canvas.draw_rrect(outer_rrect, &paint);
+                    }
+                }
+            }
+            return;
+        }
 
         // Outer path in world coordinates.
         let outer_path = self
-            .build_path_with_corners(
-                bounds,
-                (0.0, 0.0),
-                (r_tl, r_tr, r_br, r_bl),
-                corner_shapes,
-                corner_smoothing,
-            )
+            .build_path_with_radii(bounds, (0.0, 0.0), corner_radii)
             .make_offset(bounds.top_left());
 
         // Inner path in world coordinates uses the same corner shape/smoothing pipeline as outer.
@@ -2024,67 +1107,19 @@ impl DrawContext<'_> {
         } else {
             let inner_bounds = BoundingBox::from_min_max(0.0, 0.0, inner_w, inner_h);
             Some(
-                self.build_path_with_corners(
-                    inner_bounds,
-                    (0.0, 0.0),
-                    (ir_tl, ir_tr, ir_br, ir_bl),
-                    corner_shapes,
-                    corner_smoothing,
-                )
-                .make_offset((bx + left_width, by + top_width)),
+                self.build_path_with_radii(inner_bounds, (0.0, 0.0), (ir_tl, ir_tr, ir_br, ir_bl))
+                    .make_offset((bx + left_width, by + top_width)),
             )
         };
 
-        let ring_path = if let Some(inner) = inner_path.as_ref() {
+        let ring_path = (if let Some(inner) = inner_path.as_ref() {
             outer_path
                 .op(inner, skia_safe::PathOp::Difference)
                 .unwrap_or_else(|| outer_path.clone())
         } else {
             outer_path.clone()
-        };
-
-        if uniform_borders && uniform_corners {
-            match top_style {
-                BorderStyleKeyword::Dashed | BorderStyleKeyword::Dotted => {
-                    canvas.save();
-                    canvas.clip_path(&ring_path, ClipOp::Intersect, true);
-
-                    let half = top_width * 0.5;
-                    let stroke_path = self
-                        .build_path_with_corners(
-                            bounds,
-                            (-half, -half),
-                            (r_tl, r_tr, r_br, r_bl),
-                            corner_shapes,
-                            corner_smoothing,
-                        )
-                        .make_offset(bounds.top_left());
-
-                    let mut paint = Paint::default();
-                    paint.set_style(PaintStyle::Stroke);
-                    paint.set_color(top_color);
-                    paint.set_stroke_width(top_width);
-                    if top_style == BorderStyleKeyword::Dashed {
-                        paint.set_path_effect(PathEffect::dash(&[top_width * 2.0, top_width], 0.0));
-                    } else {
-                        paint.set_path_effect(PathEffect::dash(&[0.0, top_width * 2.0], 0.0));
-                        paint.set_stroke_cap(skia_safe::PaintCap::Round);
-                    }
-                    paint.set_anti_alias(true);
-                    canvas.draw_path(&stroke_path, &paint);
-                    canvas.restore();
-                    return;
-                }
-
-                _ => {
-                    let mut paint = Paint::default();
-                    paint.set_color(top_color);
-                    paint.set_anti_alias(true);
-                    canvas.draw_path(&ring_path, &paint);
-                    return;
-                }
-            }
-        }
+        })
+        .with_is_volatile(true);
 
         // Side ownership masks split corner ownership at the outer->inner corner join line.
         let mask_top: [Point; 4] = [
@@ -2134,13 +1169,14 @@ impl DrawContext<'_> {
             let Some(side_region) = ring_path.op(&side_mask, skia_safe::PathOp::Intersect) else {
                 continue;
             };
+            let side_region = side_region.with_is_volatile(true);
 
             match style {
                 BorderStyleKeyword::Dashed | BorderStyleKeyword::Dotted => {
                     canvas.save();
                     canvas.clip_path(&side_region, ClipOp::Intersect, true);
 
-                    let stroke_path = if exact_round_solid {
+                    let stroke_path = (if !inner_is_empty {
                         Self::round_corner_side_stroke_path(
                             side_ix,
                             bounds,
@@ -2178,53 +1214,6 @@ impl DrawContext<'_> {
                             side_path.line_to((ex, ey));
                             side_path.detach()
                         })
-                    } else if exact_bevel_solid {
-                        Self::bevel_corner_side_stroke_path(
-                            side_ix,
-                            bounds,
-                            (r_tl, r_tr, r_br, r_bl),
-                        )
-                        .unwrap_or_else(|| {
-                            let mut side_path = PathBuilder::new();
-                            let (sx, sy, ex, ey) = match side_ix {
-                                0 => (
-                                    bx + left_width * 0.5,
-                                    by + top_width * 0.5,
-                                    bx + bw - right_width * 0.5,
-                                    by + top_width * 0.5,
-                                ),
-                                1 => (
-                                    bx + bw - right_width * 0.5,
-                                    by + top_width * 0.5,
-                                    bx + bw - right_width * 0.5,
-                                    by + bh - bottom_width * 0.5,
-                                ),
-                                2 => (
-                                    bx + left_width * 0.5,
-                                    by + bh - bottom_width * 0.5,
-                                    bx + bw - right_width * 0.5,
-                                    by + bh - bottom_width * 0.5,
-                                ),
-                                _ => (
-                                    bx + left_width * 0.5,
-                                    by + top_width * 0.5,
-                                    bx + left_width * 0.5,
-                                    by + bh - bottom_width * 0.5,
-                                ),
-                            };
-                            side_path.move_to((sx, sy));
-                            side_path.line_to((ex, ey));
-                            side_path.detach()
-                        })
-                    } else if exact_smooth_solid {
-                        self.build_path_with_corners(
-                            bounds,
-                            (-side_width * 0.5, -side_width * 0.5),
-                            (r_tl, r_tr, r_br, r_bl),
-                            corner_shapes,
-                            corner_smoothing,
-                        )
-                        .make_offset(bounds.top_left())
                     } else {
                         let mut side_path = PathBuilder::new();
                         let (sx, sy, ex, ey) = match side_ix {
@@ -2256,7 +1245,8 @@ impl DrawContext<'_> {
                         side_path.move_to((sx, sy));
                         side_path.line_to((ex, ey));
                         side_path.detach()
-                    };
+                    })
+                    .with_is_volatile(true);
                     let mut paint = Paint::default();
                     paint.set_style(PaintStyle::Stroke);
                     paint.set_color(color);
@@ -2275,30 +1265,12 @@ impl DrawContext<'_> {
                     canvas.restore();
                 }
                 _ => {
-                    let exact_side_path = if exact_round_solid {
+                    let exact_side_path = if !inner_is_empty {
                         Self::round_corner_side_path(
                             side_ix,
                             bounds,
                             (r_tl, r_tr, r_br, r_bl),
                             (ir_tl, ir_tr, ir_br, ir_bl),
-                            (top_width, right_width, bottom_width, left_width),
-                        )
-                    } else if exact_bevel_solid {
-                        Self::bevel_corner_side_path(
-                            side_ix,
-                            bounds,
-                            (r_tl, r_tr, r_br, r_bl),
-                            (ir_tl, ir_tr, ir_br, ir_bl),
-                            (top_width, right_width, bottom_width, left_width),
-                        )
-                    } else if exact_smooth_solid {
-                        Self::smooth_corner_side_path(
-                            side_ix,
-                            bounds,
-                            (r_tl, r_tr, r_br, r_bl),
-                            (ir_tl, ir_tr, ir_br, ir_bl),
-                            corner_shapes,
-                            corner_smoothing,
                             (top_width, right_width, bottom_width, left_width),
                         )
                     } else {
@@ -2314,6 +1286,7 @@ impl DrawContext<'_> {
                         else {
                             continue;
                         };
+                        let constrained_path = constrained_path.with_is_volatile(true);
                         canvas.draw_path(&constrained_path, &paint);
                     } else {
                         canvas.draw_path(&side_region, &paint);
@@ -2334,19 +1307,17 @@ impl DrawContext<'_> {
             let bounds = self.bounds();
 
             let half_outline_width = outline_width / 2.0;
-            let mut outline_path = self.build_path(
+            let outline_rrect = self.rrect(
                 bounds,
                 (half_outline_width + outline_offset, half_outline_width + outline_offset),
             );
-
-            outline_path = outline_path.make_offset(self.bounds().top_left());
 
             let mut outline_paint = Paint::default();
             outline_paint.set_color(outline_color);
             outline_paint.set_stroke_width(outline_width);
             outline_paint.set_style(PaintStyle::Stroke);
             outline_paint.set_anti_alias(true);
-            canvas.draw_path(&outline_path, &outline_paint);
+            canvas.draw_rrect(outline_rrect, &outline_paint);
         }
     }
 
@@ -2359,7 +1330,7 @@ impl DrawContext<'_> {
 
             let bounds = self.bounds();
 
-            let path = self.build_path(bounds, (0.0, 0.0)).make_offset(bounds.top_left());
+            let rrect = self.rrect(bounds, (0.0, 0.0));
 
             for shadow in shadows.iter().rev() {
                 let shadow_color = shadow.color.unwrap_or_default();
@@ -2388,9 +1359,6 @@ impl DrawContext<'_> {
 
                 shadow_paint.set_style(PaintStyle::Fill);
 
-                let mut shadow_path = self.build_path(bounds, (outset, outset));
-                shadow_path = shadow_path.make_offset(bounds.top_left());
-
                 shadow_paint.set_color(shadow_color);
 
                 if blur_radius > 0.0 {
@@ -2401,19 +1369,26 @@ impl DrawContext<'_> {
                     ));
                 }
 
-                shadow_path = shadow_path.make_offset((shadow_x_offset, shadow_y_offset));
-
-                if shadow.inset {
-                    shadow_path = path.op(&shadow_path, skia_safe::PathOp::Difference).unwrap();
-                }
-
                 canvas.save();
-                canvas.clip_path(
-                    &path,
-                    if shadow.inset { ClipOp::Intersect } else { ClipOp::Difference },
-                    true,
-                );
-                canvas.draw_path(&shadow_path, &shadow_paint);
+                if shadow.inset {
+                    let path = self.build_path(bounds, (0.0, 0.0)).make_offset(bounds.top_left());
+                    let shadow_path = self
+                        .build_path(bounds, (outset, outset))
+                        .make_offset(bounds.top_left())
+                        .make_offset((shadow_x_offset, shadow_y_offset));
+                    let shadow_path = path
+                        .op(&shadow_path, skia_safe::PathOp::Difference)
+                        .unwrap()
+                        .with_is_volatile(true);
+                    canvas.clip_rrect(rrect, ClipOp::Intersect, true);
+                    canvas.draw_path(&shadow_path, &shadow_paint);
+                } else {
+                    let shadow_rrect = self
+                        .rrect(bounds, (outset, outset))
+                        .with_offset((shadow_x_offset, shadow_y_offset));
+                    canvas.clip_rrect(rrect, ClipOp::Difference, true);
+                    canvas.draw_rrect(shadow_rrect, &shadow_paint);
+                }
                 canvas.restore();
             }
         }
@@ -2424,7 +1399,7 @@ impl DrawContext<'_> {
         let bounds = self.bounds();
 
         if self.background_images().is_some() {
-            let path = self.path();
+            let rrect = self.rrect(bounds, (0.0, 0.0));
             if let Some(images) = self.background_images() {
                 let image_sizes = self.background_size();
                 let image_positions = self.background_position();
@@ -2568,7 +1543,7 @@ impl DrawContext<'_> {
                                 paint.set_shader(shader);
                                 paint.set_anti_alias(true);
 
-                                canvas.draw_path(&path, &paint);
+                                canvas.draw_rrect(rrect, &paint);
                             }
 
                             Gradient::Radial(radial_gradient) => {
@@ -2630,7 +1605,7 @@ impl DrawContext<'_> {
                                 paint.set_shader(shader);
                                 paint.set_anti_alias(true);
 
-                                canvas.draw_path(&path, &paint);
+                                canvas.draw_rrect(rrect, &paint);
                             }
 
                             _ => {}
@@ -2766,7 +1741,7 @@ impl DrawContext<'_> {
                                             }
 
                                             canvas.save();
-                                            canvas.clip_path(&path, ClipOp::Intersect, true);
+                                            canvas.clip_rrect(rrect, ClipOp::Intersect, true);
 
                                             match repeat {
                                                 BackgroundRepeat::NoRepeat => {
@@ -2988,41 +1963,4 @@ impl DataContext for DrawContext<'_> {
 
         None
     }
-}
-
-// Helper function for computing a rounded corner with variable smoothing
-fn compute_smooth_corner(
-    corner_radius: f32,
-    smoothing: f32,
-    width: f32,
-    height: f32,
-) -> (f32, f32, f32, f32, f32, f32, f32) {
-    let max_p = f32::min(width, height) / 2.0;
-    let corner_radius = f32::min(corner_radius, max_p);
-
-    let p = f32::min((1.0 + smoothing) * corner_radius, max_p);
-
-    let angle_alpha: f32;
-    let angle_beta: f32;
-
-    if corner_radius <= max_p / 2.0 {
-        angle_alpha = 45.0 * smoothing;
-        angle_beta = 90.0 * (1.0 - smoothing);
-    } else {
-        let diff_ratio = (corner_radius - max_p / 2.0) / (max_p / 2.0);
-
-        angle_alpha = 45.0 * smoothing * (1.0 - diff_ratio);
-        angle_beta = 90.0 * (1.0 - smoothing * (1.0 - diff_ratio));
-    }
-
-    let angle_theta = (90.0 - angle_beta) / 2.0;
-    let dist_p3_p4 = corner_radius * (angle_theta / 2.0).to_radians().tan();
-
-    let l = (angle_beta / 2.0).to_radians().sin() * corner_radius * SQRT_2;
-    let c = dist_p3_p4 * angle_alpha.to_radians().cos();
-    let d = c * angle_alpha.to_radians().tan();
-    let b = (p - l - c - d) / 3.0;
-    let a = 2.0 * b;
-
-    (a, b, c, d, l, p, corner_radius)
 }

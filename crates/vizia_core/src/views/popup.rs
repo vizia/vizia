@@ -631,7 +631,7 @@ impl View for Arrow {
         let bg = cx.background_color();
         let mut paint = vg::Paint::default();
         paint.set_color(bg);
-        let path = path.detach();
+        let path = path.detach().with_is_volatile(true);
         canvas.draw_path(&path, &paint);
     }
 }

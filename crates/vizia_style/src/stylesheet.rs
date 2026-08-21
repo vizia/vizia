@@ -99,7 +99,6 @@ button label {
     cursor: default;
     cursor: move;
     cursor: crosshair;
-    corner-top-right-shape: bevel;
     outer-shadow: 10px 8px 10px #123456;
     z-index: 9999900;
     transition: test 1s, test2 2s, test3 3s 4s;
@@ -107,8 +106,6 @@ button label {
     backgrond-color: hsla(120, 100%, 50%, 0.1);
     outline-color: red;
     outline-bottom-color: #00FF00;
-    outline-corner-shape: round;
-    outline-top-right-shape: bevel;
     outline-radius: 2px;
     outline-bottom-left-radius: 10px;
     transform: rotate(10deg);
@@ -118,9 +115,6 @@ button label {
     translate: 10px, 20px;
     rotate: 20deg;
     scale: 20%, 10;
-    border-corner-shape: bevel round round bevel;
-    corner-top-left-shape: round;
-    corner-top-right-shape: bevel;
 }
 
 test {

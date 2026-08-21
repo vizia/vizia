@@ -1,9 +1,6 @@
 use std::collections::HashSet;
-use std::f32::consts::SQRT_2;
 
-use skia_safe::{
-    PathBuilder, PathDirection, Point, RRect, Rect, path_builder::ArcSize, rrect::Corner,
-};
+use skia_safe::{PathBuilder, Point, RRect, Rect};
 use vizia_storage::LayoutTreeIterator;
 
 use crate::{prelude::*, tree::minimal_layout_dirty_roots};
@@ -188,235 +185,27 @@ fn has_invalidated_layout_ancestor(
 }
 
 fn build_clip_path(cx: &Context, entity: Entity, clip_bounds: BoundingBox) -> skia_safe::Path {
-    let outset = (0.0, 0.0);
     let bounds = cx.cache.bounds.get(entity).copied().unwrap_or_default();
     let scale = cx.style.scale_factor();
-    let corner_top_left_radius = cx
-        .style
-        .corner_top_left_radius
-        .get(entity)
-        .map(|l| l.to_pixels(bounds.w.min(bounds.h), scale))
-        .unwrap_or_default();
-    let corner_top_right_radius = cx
-        .style
-        .corner_top_right_radius
-        .get(entity)
-        .map(|l| l.to_pixels(bounds.w.min(bounds.h), scale))
-        .unwrap_or_default();
-    let corner_bottom_right_radius = cx
-        .style
-        .corner_bottom_right_radius
-        .get(entity)
-        .map(|l| l.to_pixels(bounds.w.min(bounds.h), scale))
-        .unwrap_or_default();
-    let corner_bottom_left_radius = cx
-        .style
-        .corner_bottom_left_radius
-        .get(entity)
-        .map(|l| l.to_pixels(bounds.w.min(bounds.h), scale))
-        .unwrap_or_default();
-
-    let corner_top_left_shape =
-        cx.style.corner_top_left_shape.get(entity).copied().unwrap_or_default();
-    let corner_top_right_shape =
-        cx.style.corner_top_right_shape.get(entity).copied().unwrap_or_default();
-    let corner_bottom_right_shape =
-        cx.style.corner_bottom_right_shape.get(entity).copied().unwrap_or_default();
-    let corner_bottom_left_shape =
-        cx.style.corner_bottom_left_shape.get(entity).copied().unwrap_or_default();
-
-    let corner_top_left_smoothing =
-        cx.style.corner_top_left_smoothing.get(entity).copied().unwrap_or(0.0);
-    let corner_top_right_smoothing =
-        cx.style.corner_top_right_smoothing.get(entity).copied().unwrap_or(0.0);
-    let corner_bottom_right_smoothing =
-        cx.style.corner_bottom_right_smoothing.get(entity).copied().unwrap_or(0.0);
-    let corner_bottom_left_smoothing =
-        cx.style.corner_bottom_left_smoothing.get(entity).copied().unwrap_or(0.0);
-
-    let bounds = clip_bounds;
-
-    let bounds = BoundingBox::from_min_max(0.0, 0.0, bounds.w, bounds.h);
-
-    let rect: Rect = bounds.into();
-
-    let mut rr = RRect::new_rect_radii(
-        rect,
+    let radius = |value: Option<&LengthOrPercentage>| {
+        value.map(|length| length.to_pixels(bounds.w.min(bounds.h), scale)).unwrap_or_default()
+    };
+    let radii = [
+        radius(cx.style.corner_top_left_radius.get(entity)),
+        radius(cx.style.corner_top_right_radius.get(entity)),
+        radius(cx.style.corner_bottom_right_radius.get(entity)),
+        radius(cx.style.corner_bottom_left_radius.get(entity)),
+    ];
+    let rrect = RRect::new_rect_radii(
+        Rect::from(clip_bounds),
         &[
-            Point::new(corner_top_left_radius, corner_top_left_radius),
-            Point::new(corner_top_right_radius, corner_top_right_radius),
-            Point::new(corner_bottom_right_radius, corner_bottom_right_radius),
-            Point::new(corner_bottom_left_radius, corner_bottom_left_radius),
+            Point::new(radii[0], radii[0]),
+            Point::new(radii[1], radii[1]),
+            Point::new(radii[2], radii[2]),
+            Point::new(radii[3], radii[3]),
         ],
     );
-
-    rr = rr.with_outset(outset);
-
-    let x = rr.bounds().x();
-    let y = rr.bounds().y();
-    let width = rr.width();
-    let height = rr.height();
-
-    //TODO: Cache the path and regenerate if the bounds change
     let mut path = PathBuilder::new();
-
-    if width == height
-        && corner_bottom_left_radius == width / 2.0
-        && corner_bottom_right_radius == width / 2.0
-        && corner_top_left_radius == height / 2.0
-        && corner_top_right_radius == height / 2.0
-    {
-        path.add_circle((width / 2.0, bounds.h / 2.0), width / 2.0, PathDirection::CW);
-    } else if corner_top_left_radius == corner_top_right_radius
-        && corner_top_right_radius == corner_bottom_right_radius
-        && corner_bottom_right_radius == corner_bottom_left_radius
-        && corner_top_left_smoothing == 0.0
-        && corner_top_left_smoothing == corner_top_right_smoothing
-        && corner_top_right_smoothing == corner_bottom_right_smoothing
-        && corner_bottom_right_smoothing == corner_bottom_left_smoothing
-        && corner_top_left_shape == CornerShape::Round
-        && corner_top_left_shape == corner_top_right_shape
-        && corner_top_right_shape == corner_bottom_right_shape
-        && corner_bottom_right_shape == corner_bottom_left_shape
-    {
-        path.add_rrect(rr, None, None);
-    } else {
-        let top_right = rr.radii(Corner::UpperRight).x;
-
-        if top_right > 0.0 {
-            let (a, b, c, d, l, p, radius) = compute_smooth_corner(
-                top_right,
-                corner_top_right_smoothing,
-                bounds.width(),
-                bounds.height(),
-            );
-
-            path.move_to((f32::max(width / 2.0, width - p), 0.0));
-            if corner_top_right_shape == CornerShape::Round {
-                path.cubic_to(
-                    (width - (p - a), 0.0),
-                    (width - (p - a - b), 0.0),
-                    (width - (p - a - b - c), d),
-                )
-                .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, l))
-                .cubic_to(
-                    (width, p - a - b),
-                    (width, p - a),
-                    (width, f32::min(height / 2.0, p)),
-                );
-            } else {
-                path.line_to((width, f32::min(height / 2.0, p)));
-            }
-        } else {
-            path.move_to((width / 2.0, 0.0)).line_to((width, 0.0)).line_to((width, height / 2.0));
-        }
-
-        let bottom_right = rr.radii(Corner::LowerRight).x;
-        if bottom_right > 0.0 {
-            let (a, b, c, d, l, p, radius) =
-                compute_smooth_corner(bottom_right, corner_bottom_right_smoothing, width, height);
-
-            path.line_to((width, f32::max(height / 2.0, height - p)));
-            if corner_bottom_right_shape == CornerShape::Round {
-                path.cubic_to(
-                    (width, height - (p - a)),
-                    (width, height - (p - a - b)),
-                    (width - d, height - (p - a - b - c)),
-                )
-                .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, l))
-                .cubic_to(
-                    (width - (p - a - b), height),
-                    (width - (p - a), height),
-                    (f32::max(width / 2.0, width - p), height),
-                );
-            } else {
-                path.line_to((f32::max(width / 2.0, width - p), height));
-            }
-        } else {
-            path.line_to((width, height)).line_to((width / 2.0, height));
-        }
-
-        let bottom_left = rr.radii(Corner::LowerLeft).x;
-        if bottom_left > 0.0 {
-            let (a, b, c, d, l, p, radius) =
-                compute_smooth_corner(bottom_left, corner_bottom_left_smoothing, width, height);
-
-            path.line_to((f32::min(width / 2.0, p), height));
-            if corner_bottom_left_shape == CornerShape::Round {
-                path.cubic_to((p - a, height), (p - a - b, height), (p - a - b - c, height - d))
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (-l, -l))
-                    .cubic_to(
-                        (0.0, height - (p - a - b)),
-                        (0.0, height - (p - a)),
-                        (0.0, f32::max(height / 2.0, height - p)),
-                    );
-            } else {
-                path.line_to((0.0, f32::max(height / 2.0, height - p)));
-            }
-        } else {
-            path.line_to((0.0, height)).line_to((0.0, height / 2.0));
-        }
-
-        let top_left = rr.radii(Corner::UpperLeft).x;
-        if top_left > 0.0 {
-            let (a, b, c, d, l, p, radius) =
-                compute_smooth_corner(top_left, corner_top_left_smoothing, width, height);
-
-            path.line_to((0.0, f32::min(height / 2.0, p)));
-            if corner_top_left_shape == CornerShape::Round {
-                path.cubic_to((0.0, p - a), (0.0, p - a - b), (d, p - a - b - c))
-                    .r_arc_to((radius, radius), 0.0, ArcSize::Small, PathDirection::CW, (l, -l))
-                    .cubic_to((p - a - b, 0.0), (p - a, 0.0), (f32::min(width / 2.0, p), 0.0));
-            } else {
-                path.line_to((f32::min(width / 2.0, p), 0.0));
-            }
-        } else {
-            path.line_to((0.0, 0.0));
-        }
-
-        path.close();
-
-        path.offset((x, y));
-    }
-
-    path.offset(clip_bounds.top_left());
-
+    path.add_rrect(rrect, None, None);
     path.detach()
-}
-
-// Helper function for computing a rounded corner with variable smoothing
-fn compute_smooth_corner(
-    corner_radius: f32,
-    smoothing: f32,
-    width: f32,
-    height: f32,
-) -> (f32, f32, f32, f32, f32, f32, f32) {
-    let max_p = f32::min(width, height) / 2.0;
-    let corner_radius = f32::min(corner_radius, max_p);
-
-    let p = f32::min((1.0 + smoothing) * corner_radius, max_p);
-
-    let angle_alpha: f32;
-    let angle_beta: f32;
-
-    if corner_radius <= max_p / 2.0 {
-        angle_alpha = 45.0 * smoothing;
-        angle_beta = 90.0 * (1.0 - smoothing);
-    } else {
-        let diff_ratio = (corner_radius - max_p / 2.0) / (max_p / 2.0);
-
-        angle_alpha = 45.0 * smoothing * (1.0 - diff_ratio);
-        angle_beta = 90.0 * (1.0 - smoothing * (1.0 - diff_ratio));
-    }
-
-    let angle_theta = (90.0 - angle_beta) / 2.0;
-    let dist_p3_p4 = corner_radius * (angle_theta / 2.0).to_radians().tan();
-
-    let l = (angle_beta / 2.0).to_radians().sin() * corner_radius * SQRT_2;
-    let c = dist_p3_p4 * angle_alpha.to_radians().cos();
-    let d = c * angle_alpha.to_radians().tan();
-    let b = (p - l - c - d) / 3.0;
-    let a = 2.0 * b;
-
-    (a, b, c, d, l, p, corner_radius)
 }
