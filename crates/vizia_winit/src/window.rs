@@ -335,7 +335,7 @@ pub fn create_surface(
 
     let surface_props = SurfaceProps::new_with_text_properties(
         SurfacePropsFlags::default(),
-        PixelGeometry::default(),
+        PixelGeometry::RGBH,
         0.5,
         0.0,
     );

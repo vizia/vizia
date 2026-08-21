@@ -42,6 +42,7 @@ chrono.workspace = true
 hashbrown.workspace = true
 log.workspace = true
 indexmap.workspace = true
+parley.workspace = true
 comrak = { workspace = true, optional = true }
 open = { workspace = true, optional = true }
 fxhash.workspace = true

@@ -20,6 +20,9 @@ use crate::text::{TextContext, resolved_text_direction};
 use vizia_input::MouseState;
 
 use super::ModelData;
+use super::text_draw_helpers::{
+    build_line_runs, build_run_cluster_advances, compute_line_x_offset,
+};
 
 /// A context used when drawing a view.
 ///
@@ -2912,13 +2915,17 @@ impl DrawContext<'_> {
 
     /// Draw any text for the current view.
     pub fn draw_text(&mut self, canvas: &Canvas) {
-        if let Some(paragraph) = self.text_context.text_paragraphs.get(self.current) {
-            let bounds = self.bounds();
+        // ── New shaped-text path ──────────────────────────────────────────────
+        if let Some(shaped) = self.text_context.text_shaped.get(self.current) {
+            if shaped.line_count() == 0 {
+                return;
+            }
 
+            let bounds = self.bounds();
             let alignment = self.alignment();
 
             let (mut top, _) = match alignment {
-                Alignment::TopLeft => (0.0, 0.0),
+                Alignment::TopLeft => (0.0_f32, 0.0),
                 Alignment::TopCenter => (0.0, 0.5),
                 Alignment::TopRight => (0.0, 1.0),
                 Alignment::Left => (0.5, 0.0),
@@ -2933,32 +2940,94 @@ impl DrawContext<'_> {
                 Units::Pixels(val) => val,
                 _ => 0.0,
             };
-
             let padding_bottom = match self.padding_bottom() {
                 Units::Pixels(val) => val,
                 _ => 0.0,
             };
-
-            top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
+            top *= bounds.height() - padding_top - padding_bottom - shaped.height();
 
             let mut padding_left = match self.padding_left() {
                 Units::Pixels(val) => val,
                 _ => 0.0,
             };
-
             let mut padding_right = match self.padding_right() {
                 Units::Pixels(val) => val,
                 _ => 0.0,
             };
-
             if resolved_text_direction(self.style, self.current) == Direction::RightToLeft {
                 std::mem::swap(&mut padding_left, &mut padding_right);
             }
 
-            paragraph.paint(
-                canvas,
-                ((bounds.x + padding_left).round(), (bounds.y + padding_top + top).round()),
-            );
+            let base_x = (bounds.x + padding_left).round();
+            let base_y = (bounds.y + padding_top + top).round();
+            let text_constraint_width = (bounds.width() - padding_left - padding_right).max(0.0);
+
+            let layout = &shaped.pre_shaped.parley_layout;
+            let text_len = shaped.pre_shaped.text.len();
+            let visible_line_count = shaped.line_count();
+            let run_cluster_advances =
+                shaped.pre_shaped.runs.iter().map(build_run_cluster_advances).collect::<Vec<_>>();
+
+            for line_index in 0..visible_line_count {
+                let Some(line) = layout.get(line_index) else { continue };
+                let mut line_range = line.text_range();
+                line_range.start = line_range.start.min(text_len);
+                line_range.end = line_range.end.min(text_len);
+                if line_range.start >= line_range.end {
+                    continue;
+                }
+
+                let line_x_offset = compute_line_x_offset(
+                    shaped.pre_shaped.text_align,
+                    line.metrics().advance,
+                    text_constraint_width,
+                );
+                let line_runs = build_line_runs(
+                    &shaped.pre_shaped,
+                    &run_cluster_advances,
+                    line_range.start,
+                    line_range.end,
+                    line.metrics().baseline,
+                    line_x_offset,
+                );
+
+                for run in &line_runs {
+                    canvas.draw_text_blob(
+                        &run.blob,
+                        skia_safe::Point::new(base_x + run.x_offset, base_y),
+                        &run.paint,
+                    );
+
+                    // Underline.
+                    if run.underline {
+                        let y = base_y + run.baseline_y + line.metrics().descent * 0.3;
+                        let x_start = base_x + run.x_offset;
+                        let x_end = x_start + run.run_advance;
+                        let mut paint = run.decoration_paint.clone();
+                        paint.set_stroke_width(1.0);
+                        canvas.draw_line(
+                            skia_safe::Point::new(x_start, y),
+                            skia_safe::Point::new(x_end, y),
+                            &paint,
+                        );
+                    }
+
+                    // Strikethrough.
+                    if run.strikethrough {
+                        let y = base_y + run.baseline_y - line.metrics().ascent * 0.4;
+                        let x_start = base_x + run.x_offset;
+                        let x_end = x_start + run.run_advance;
+                        let mut paint = run.decoration_paint.clone();
+                        paint.set_stroke_width(1.0);
+                        canvas.draw_line(
+                            skia_safe::Point::new(x_start, y),
+                            skia_safe::Point::new(x_end, y),
+                            &paint,
+                        );
+                    }
+                }
+            }
+            return;
         }
     }
 }

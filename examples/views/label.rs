@@ -47,6 +47,22 @@ fn main() -> Result<(), ApplicationError> {
                 .text_wrap(false)
                 .font_slant(FontSlant::Italic);
 
+            VStack::new(cx, |cx| {
+                Label::new(cx, "Selectable text can begin in this label.")
+                    .text_selectable(true);
+                Label::new(
+                    cx,
+                    "Continue dragging through this wrapped label, then use Shift+Arrow keys to adjust the selection.",
+                )
+                .text_selectable(true)
+                .width(Pixels(320.0));
+                Label::new(cx, "Unicode remains selectable: 你好، مرحبا، café.")
+                    .text_selectable(true);
+            })
+            .width(Auto)
+            .height(Auto)
+            .vertical_gap(Pixels(4.0));
+
             HStack::new(cx, |cx| {
                 Checkbox::new(cx, checked)
                     .on_toggle(|cx| cx.emit(AppEvent::Toggle))
