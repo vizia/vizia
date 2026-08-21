@@ -3122,8 +3122,14 @@ impl Style {
 
     // Remove style data for the given entity.
     pub(crate) fn remove(&mut self, entity: Entity) {
+        self.restyle.remove(&entity);
         self.relayout.remove(&entity);
         self.laid_out.remove(&entity);
+        self.text_construction.remove(&entity);
+        self.text_layout.remove(&entity);
+        self.reaccess.remove(&entity);
+        self.retransform.remove(&entity);
+        self.reclip.remove(&entity);
         self.ids.remove(entity);
         self.classes.remove(entity);
         self.pseudo_classes.remove(entity);

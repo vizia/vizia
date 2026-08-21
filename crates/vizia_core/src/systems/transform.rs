@@ -109,3 +109,31 @@ pub(crate) fn transform_system(cx: &mut Context) {
 
     cx.style.retransform.clear();
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn removed_entity_is_cleared_from_pending_system_work() {
+        let mut cx = Context::new();
+        let entity = cx.entity_manager.create();
+        cx.tree.add(entity, Entity::root()).unwrap();
+        cx.cache.add(entity);
+        cx.style.add(entity);
+
+        cx.tree.remove(entity).unwrap();
+        cx.cache.remove(entity);
+        cx.style.remove(entity);
+
+        assert!(!cx.style.restyle.contains(&entity));
+        assert!(!cx.style.relayout.contains(&entity));
+        assert!(!cx.style.text_construction.contains(&entity));
+        assert!(!cx.style.text_layout.contains(&entity));
+        assert!(!cx.style.reaccess.contains(&entity));
+        assert!(!cx.style.retransform.contains(&entity));
+        assert!(!cx.style.reclip.contains(&entity));
+
+        transform_system(&mut cx);
+    }
+}
