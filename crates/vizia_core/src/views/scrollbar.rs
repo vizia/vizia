@@ -174,6 +174,7 @@ impl View for Scrollbar {
                         cx.with_current(Entity::root(), |cx| {
                             cx.set_pointer_events(false);
                         });
+                        cx.suppress_hover();
                     } else if self.scroll_to_cursor {
                         cx.capture();
                         cx.set_active(true);
@@ -181,6 +182,7 @@ impl View for Scrollbar {
                         cx.with_current(Entity::root(), |cx| {
                             cx.set_pointer_events(false);
                         });
+                        cx.suppress_hover();
                         let thumb_bounds = self.thumb_bounds(cx);
                         let bounds = cx.bounds();
                         let sx = bounds.w - thumb_bounds.w;
@@ -248,6 +250,7 @@ impl View for Scrollbar {
                     cx.with_current(Entity::root(), |cx| {
                         cx.set_pointer_events(true);
                     });
+                    cx.resume_hover();
                 }
 
                 WindowEvent::MouseMove(_, _) => {

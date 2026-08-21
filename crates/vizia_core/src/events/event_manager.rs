@@ -294,7 +294,13 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 cx.mouse.cursor_x = *x;
                 cx.mouse.cursor_y = *y;
 
-                hover_system(cx, meta.origin);
+                if !cx.hover_suppressed
+                    || cx.drop_data.is_some()
+                    || cx.drag_hovered != Entity::null()
+                    || cx.active_drag_view.is_some()
+                {
+                    hover_system(cx, meta.origin);
+                }
                 if cx.drop_data.is_some() || cx.drag_hovered != Entity::null() {
                     dispatch_drag_events(cx, *x, *y);
                 }

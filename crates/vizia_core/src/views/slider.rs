@@ -281,6 +281,7 @@ where
                     cx.with_current(Entity::root(), |cx| {
                         cx.set_pointer_events(false);
                     });
+                    cx.suppress_hover();
 
                     let thumb = cx.get_entities_by_class("thumb").first().copied().unwrap();
                     let current = cx.current();
@@ -339,6 +340,7 @@ where
                 cx.with_current(Entity::root(), |cx| {
                     cx.set_pointer_events(true);
                 });
+                cx.resume_hover();
             }
 
             WindowEvent::MouseMove(x, y) => {
@@ -401,6 +403,7 @@ where
                     cx.with_current(Entity::root(), |cx| {
                         cx.set_pointer_events(true);
                     });
+                    cx.resume_hover();
                     self.is_dragging = false;
                     cx.emit(SliderEvent::ResetDefault);
                 }

@@ -63,7 +63,8 @@ pub struct EventContext<'a> {
     pub(crate) current: Entity,
     pub(crate) captured: &'a mut Entity,
     pub(crate) focused: &'a mut Entity,
-    pub(crate) hovered: &'a Entity,
+    pub(crate) hovered: &'a mut Entity,
+    pub(crate) hover_suppressed: &'a mut bool,
     pub(crate) triggered: &'a mut Entity,
     pub(crate) style: &'a mut Style,
     pub(crate) entity_identifiers: &'a HashMap<String, Entity>,
@@ -95,6 +96,52 @@ pub struct EventContext<'a> {
     pub windows: &'a mut HashMap<Entity, WindowState>,
 }
 
+#[cfg(test)]
+mod hover_suppression_tests {
+    use super::*;
+
+    #[test]
+    fn suppression_clears_hover_once_and_resume_queues_one_refresh() {
+        let mut cx = Context::new();
+        let hovered = cx.entity_manager.create();
+        cx.tree.add(hovered, Entity::root()).unwrap();
+        cx.hovered = hovered;
+        cx.style.pseudo_classes.insert(hovered, PseudoClassFlags::HOVER | PseudoClassFlags::OVER);
+        cx.event_queue.clear();
+
+        {
+            let mut event_cx = EventContext::new(&mut cx);
+            event_cx.suppress_hover();
+            event_cx.suppress_hover();
+        }
+
+        assert!(cx.hover_suppressed);
+        assert_eq!(cx.hovered, Entity::root());
+        assert_eq!(cx.event_queue.len(), 4);
+        assert!(
+            !cx.style
+                .pseudo_classes
+                .get(hovered)
+                .unwrap()
+                .intersects(PseudoClassFlags::HOVER | PseudoClassFlags::OVER)
+        );
+
+        {
+            let mut event_cx = EventContext::new(&mut cx);
+            event_cx.resume_hover();
+            event_cx.resume_hover();
+        }
+
+        assert!(!cx.hover_suppressed);
+        assert_eq!(cx.event_queue.len(), 5);
+        assert!(cx.event_queue.back().unwrap().message.as_ref().is_some_and(|message| {
+            message
+                .downcast_ref::<WindowEvent>()
+                .is_some_and(|event| matches!(event, WindowEvent::MouseMove(_, _)))
+        }));
+    }
+}
+
 impl<'a> EventContext<'a> {
     /// Creates a new [EventContext].
     pub fn new(cx: &'a mut Context) -> Self {
@@ -102,7 +149,8 @@ impl<'a> EventContext<'a> {
             current: cx.current,
             captured: &mut cx.captured,
             focused: &mut cx.focused,
-            hovered: &cx.hovered,
+            hovered: &mut cx.hovered,
+            hover_suppressed: &mut cx.hover_suppressed,
             triggered: &mut cx.triggered,
             entity_identifiers: &cx.entity_identifiers,
             style: &mut cx.style,
@@ -140,7 +188,8 @@ impl<'a> EventContext<'a> {
             current,
             captured: &mut cx.captured,
             focused: &mut cx.focused,
-            hovered: &cx.hovered,
+            hovered: &mut cx.hovered,
+            hover_suppressed: &mut cx.hover_suppressed,
             triggered: &mut cx.triggered,
             entity_identifiers: &cx.entity_identifiers,
             style: &mut cx.style,
@@ -504,6 +553,52 @@ impl<'a> EventContext<'a> {
         if self.current == *self.captured {
             *self.captured = Entity::null();
         }
+    }
+
+    pub(crate) fn suppress_hover(&mut self) {
+        if *self.hover_suppressed {
+            return;
+        }
+
+        *self.hover_suppressed = true;
+        let previous = *self.hovered;
+
+        for entity in previous.parent_iter(self.tree) {
+            if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
+                let had_hover = pseudo_classes.contains(PseudoClassFlags::HOVER);
+                let had_over = pseudo_classes.contains(PseudoClassFlags::OVER);
+                if had_hover || had_over {
+                    pseudo_classes.set(PseudoClassFlags::HOVER, false);
+                    pseudo_classes.set(PseudoClassFlags::OVER, false);
+                    self.style.needs_restyle(entity);
+                }
+            }
+        }
+
+        if previous != Entity::root() {
+            self.event_queue.push_back(Event::new(WindowEvent::MouseEnter).direct(Entity::root()));
+            self.event_queue.push_back(Event::new(WindowEvent::MouseLeave).direct(previous));
+            self.event_queue.push_back(Event::new(WindowEvent::MouseOver).target(Entity::root()));
+            self.event_queue.push_back(Event::new(WindowEvent::MouseOut).target(previous));
+            self.style.needs_restyle(previous);
+            self.style.needs_restyle(Entity::root());
+        }
+
+        *self.hovered = Entity::root();
+    }
+
+    pub(crate) fn resume_hover(&mut self) {
+        if !*self.hover_suppressed {
+            return;
+        }
+
+        *self.hover_suppressed = false;
+        self.event_queue.push_back(
+            Event::new(WindowEvent::MouseMove(self.mouse.cursor_x, self.mouse.cursor_y))
+                .target(Entity::root())
+                .origin(Entity::root())
+                .propagate(Propagation::Up),
+        );
     }
 
     /// Enables or disables PseudoClassFlags for the focus of an entity

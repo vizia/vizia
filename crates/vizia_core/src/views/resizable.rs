@@ -153,6 +153,7 @@ impl View for Resizable {
                 cx.with_current(Entity::root(), |cx| {
                     cx.set_pointer_events(false);
                 });
+                cx.suppress_hover();
 
                 // Prevent propagation in case the resizable stack is within another resizable stack
                 event.consume();
@@ -174,6 +175,7 @@ impl View for Resizable {
                 cx.with_current(Entity::root(), |cx| {
                     cx.set_pointer_events(true);
                 });
+                cx.resume_hover();
 
                 event.consume()
             }
@@ -188,6 +190,7 @@ impl View for Resizable {
                 cx.with_current(Entity::root(), |cx| {
                     cx.set_pointer_events(true);
                 });
+                cx.resume_hover();
 
                 if let Some(on_reset) = &self.on_reset {
                     on_reset(cx);
