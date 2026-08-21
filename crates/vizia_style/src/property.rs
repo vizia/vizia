@@ -3,13 +3,13 @@ use crate::{
     AnimationDurations, AnimationFillModes, AnimationIterationCounts, AnimationNames,
     AnimationPlayStates, AnimationShorthand, AnimationTimelines, AnimationTimingFunctions,
     AspectRatio, BackgroundImage, BackgroundRepeat, BackgroundSize, BlendMode, Border, BorderStyle,
-    BorderStyleKeyword, BorderWidth, BorderWidthValue, ClipPath, Color, CornerRadius, CornerShape,
-    CursorIcon, CustomParseError, CustomProperty, Direction, Display, Filter, FontFamily, FontSize,
-    FontSlant, FontVariation, FontWeight, FontWidth, LayoutType, LayoutWrap, Length,
-    LengthOrPercentage, LetterSpacing, LineClamp, LineHeight, Opacity, Outline, Overflow, Parse,
-    PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
-    TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
-    Transition, Translate, Units, UnparsedProperty, Visibility, define_property,
+    BorderStyleKeyword, BorderWidth, BorderWidthValue, ClipPath, Color, CornerRadius, CursorIcon,
+    CustomParseError, CustomProperty, Direction, Display, Filter, FontFamily, FontSize, FontSlant,
+    FontVariation, FontWeight, FontWidth, LayoutType, LayoutWrap, Length, LengthOrPercentage,
+    LetterSpacing, LineClamp, LineHeight, Opacity, Outline, Overflow, Parse, PointerEvents,
+    Position, PositionType, Scale, Shadow, TextAlign, TextDecoration, TextDecorationLine,
+    TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition,
+    Translate, Units, UnparsedProperty, Visibility, define_property,
 };
 use cssparser::Parser;
 
