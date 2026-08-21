@@ -866,7 +866,7 @@ impl Context {
                 Vec::new()
             }
         } else {
-            self.resource_manager.styles.drain(..).collect::<Vec<_>>()
+            std::mem::take(&mut self.resource_manager.styles)
         };
 
         self.resource_manager.styles.clear();

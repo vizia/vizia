@@ -968,7 +968,7 @@ impl Style {
     pub(crate) fn play_pending_animations(&mut self) {
         let start_time = Instant::now();
 
-        let pending_animations = self.pending_animations.drain(..).collect::<Vec<_>>();
+        let pending_animations = std::mem::take(&mut self.pending_animations);
 
         for (entity, animation, duration, delay) in pending_animations {
             self.play_animation(entity, animation, start_time + delay, duration, delay)

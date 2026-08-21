@@ -490,10 +490,9 @@ where
                 columns
                     .deref()
                     .iter()
-                    .map(
+                    .filter_map(
                         |column| if !column.hidden.get() { Some(column.key.clone()) } else { None },
                     )
-                    .flatten()
                     .collect::<Vec<_>>()
             })
         });
@@ -883,9 +882,9 @@ where
 
     // Get the focused visible row id
     fn focused_visible_row(&self) -> Option<TreeTableRow<T, Id>> {
-        let focused_id = self.focused.get().and_then(|focused| match focused {
-            TableFocus::Row(id) => Some(id.clone()),
-            TableFocus::Cell(id, _) => Some(id.clone()),
+        let focused_id = self.focused.get().map(|focused| match focused {
+            TableFocus::Row(id) => id.clone(),
+            TableFocus::Cell(id, _) => id.clone(),
         })?;
 
         self.visible_rows.with(|rows| rows.clone()).into_iter().find(|row| row.id == focused_id)
