@@ -41,8 +41,6 @@ use winit::event_loop::ActiveEventLoop;
 use winit::window::{CursorGrabMode, CursorIcon, CustomCursor, WindowAttributes, WindowLevel};
 use winit::{dpi::*, window::WindowId};
 
-const SKIA_RESOURCE_CACHE_LIMIT: usize = 64 * 1024 * 1024;
-
 pub struct WinState {
     pub entity: Entity,
     pub id: WindowId,
@@ -69,6 +67,7 @@ impl WinState {
         event_loop: &ActiveEventLoop,
         entity: Entity,
         #[allow(unused_mut)] mut window_attributes: WindowAttributes,
+        skia_resource_cache_limit: usize,
         #[allow(unused_variables)] owner: Option<Arc<winit::window::Window>>,
     ) -> Result<Self, Box<dyn Error>> {
         #[cfg(target_os = "windows")]
@@ -165,7 +164,7 @@ impl WinState {
 
         let mut gr_context = skia_safe::gpu::direct_contexts::make_gl(interface, &context_options)
             .expect("Could not create direct context");
-        gr_context.set_resource_cache_limit(SKIA_RESOURCE_CACHE_LIMIT);
+        gr_context.set_resource_cache_limit(skia_resource_cache_limit);
 
         let fb_info = {
             let mut fboid: GLint = 0;
@@ -768,6 +767,15 @@ impl WindowModifiers for Handle<'_, Window> {
         let entity = self.entity();
         if let Some(win_state) = self.context().windows.get_mut(&entity) {
             win_state.window_description.vsync = flag
+        }
+
+        self
+    }
+
+    fn skia_resource_cache_limit(mut self, limit: usize) -> Self {
+        let entity = self.entity();
+        if let Some(win_state) = self.context().windows.get_mut(&entity) {
+            win_state.window_description.skia_resource_cache_limit = limit;
         }
 
         self
