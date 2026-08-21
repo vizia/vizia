@@ -18,6 +18,8 @@ use crate::proxy::BaseviewProxy;
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
 
+const SKIA_RESOURCE_CACHE_LIMIT: usize = 64 * 1024 * 1024;
+
 /// Handles a vizia_baseview application
 pub(crate) struct ViziaWindow {
     application: RefCell<ApplicationRunner>,
@@ -73,6 +75,7 @@ impl ViziaWindow {
 
         let mut gr_context = skia_safe::gpu::direct_contexts::make_gl(interface, &context_options)
             .expect("Could not create direct context");
+        gr_context.set_resource_cache_limit(SKIA_RESOURCE_CACHE_LIMIT);
 
         let fb_info = {
             let mut fboid: GLint = 0;
