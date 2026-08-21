@@ -2,6 +2,7 @@
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
 use crate::prelude::*;
+use morphorm::CachedLayout;
 use skia_safe::{Matrix, Path};
 use vizia_storage::SparseSet;
 
@@ -14,6 +15,7 @@ pub struct CachedData {
     pub(crate) bounds: SparseSet<BoundingBox>,
     pub(crate) draw_bounds: SparseSet<BoundingBox>,
     pub(crate) relative_bounds: SparseSet<BoundingBox>,
+    pub(crate) cached_layout: SparseSet<CachedLayout>,
     pub(crate) geo_changed: SparseSet<GeoChanged>,
     pub(crate) transform: SparseSet<Matrix>,
     pub(crate) clip_path: SparseSet<Option<Path>>,
@@ -31,6 +33,7 @@ impl CachedData {
     pub(crate) fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
         self.relative_bounds.remove(entity);
+        self.cached_layout.remove(entity);
         self.draw_bounds.remove(entity);
         self.geo_changed.remove(entity);
         self.transform.remove(entity);

@@ -80,7 +80,8 @@ hashbrown = "0.17"
 indexmap = "2.13"
 keyboard-types = { version = "0.8", default-features = false }
 log = "0.4"
-morphorm = "0.9"
+# morphorm = "0.9"
+morphorm = { path = "../morphorm" }
 open = "5.4"
 parking_lot = "0.12"
 raw-window-handle = "0.6"

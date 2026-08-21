@@ -1,5 +1,5 @@
 use crate::cache::CachedData;
-use morphorm::Cache;
+use morphorm::{Cache, CachedLayout};
 
 use crate::prelude::*;
 use bitflags::bitflags;
@@ -23,11 +23,9 @@ impl Cache for CachedData {
     type Node = Entity;
 
     fn set_bounds(&mut self, node: &Self::Node, posx: f32, posy: f32, width: f32, height: f32) {
+        let new_bounds = BoundingBox { x: posx.round(), y: posy.round(), w: width, h: height };
         if let Some(bounds) = self.relative_bounds.get_mut(*node) {
-            bounds.x = posx.round();
-            bounds.y = posy.round();
-            bounds.w = width;
-            bounds.h = height;
+            *bounds = new_bounds;
         }
     }
 
@@ -50,5 +48,17 @@ impl Cache for CachedData {
 
     fn height(&self, node: &Self::Node) -> f32 {
         self.relative_bounds.get(*node).map_or(0.0, |b| b.h)
+    }
+
+    fn cached_layout(&self, node: &Self::Node) -> Option<CachedLayout> {
+        self.cached_layout.get(*node).copied()
+    }
+
+    fn set_cached_layout(&mut self, node: &Self::Node, layout: CachedLayout) {
+        self.cached_layout.insert(*node, layout);
+    }
+
+    fn invalidate_cached_layout(&mut self, node: &Self::Node) {
+        self.cached_layout.remove(*node);
     }
 }
