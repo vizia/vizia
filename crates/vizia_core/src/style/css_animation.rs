@@ -151,10 +151,6 @@ impl Style {
         play!(self.corner_top_right_radius);
         play!(self.corner_bottom_left_radius);
         play!(self.corner_bottom_right_radius);
-        play!(self.corner_top_left_smoothing);
-        play!(self.corner_top_right_smoothing);
-        play!(self.corner_bottom_left_smoothing);
-        play!(self.corner_bottom_right_smoothing);
         play!(self.outline_width);
         play!(self.outline_color);
         play!(self.outline_offset);
@@ -261,10 +257,6 @@ impl Style {
         update!(self.corner_top_right_radius);
         update!(self.corner_bottom_left_radius);
         update!(self.corner_bottom_right_radius);
-        update!(self.corner_top_left_smoothing);
-        update!(self.corner_top_right_smoothing);
-        update!(self.corner_bottom_left_smoothing);
-        update!(self.corner_bottom_right_smoothing);
         update!(self.outline_width);
         update!(self.outline_color);
         update!(self.outline_offset);
@@ -379,10 +371,6 @@ impl Style {
         set_progress!(self.corner_top_right_radius);
         set_progress!(self.corner_bottom_left_radius);
         set_progress!(self.corner_bottom_right_radius);
-        set_progress!(self.corner_top_left_smoothing);
-        set_progress!(self.corner_top_right_smoothing);
-        set_progress!(self.corner_bottom_left_smoothing);
-        set_progress!(self.corner_bottom_right_smoothing);
         set_progress!(self.outline_width);
         set_progress!(self.outline_color);
         set_progress!(self.outline_offset);
@@ -480,10 +468,6 @@ impl Style {
         control!(self.corner_top_right_radius);
         control!(self.corner_bottom_left_radius);
         control!(self.corner_bottom_right_radius);
-        control!(self.corner_top_left_smoothing);
-        control!(self.corner_top_right_smoothing);
-        control!(self.corner_bottom_left_smoothing);
-        control!(self.corner_bottom_right_smoothing);
         control!(self.outline_width);
         control!(self.outline_color);
         control!(self.outline_offset);
@@ -672,10 +656,6 @@ impl Style {
         stop!(self.corner_top_right_radius);
         stop!(self.corner_bottom_left_radius);
         stop!(self.corner_bottom_right_radius);
-        stop!(self.corner_top_left_smoothing);
-        stop!(self.corner_top_right_smoothing);
-        stop!(self.corner_bottom_left_smoothing);
-        stop!(self.corner_bottom_right_smoothing);
         stop!(self.outline_width);
         stop!(self.outline_color);
         stop!(self.outline_offset);

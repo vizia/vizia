@@ -227,7 +227,7 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     redraw_entities.extend(cx.style.border_right_color.tick(time));
     redraw_entities.extend(cx.style.border_bottom_color.tick(time));
     redraw_entities.extend(cx.style.border_left_color.tick(time));
-    // Corner Radius and smoothing. Radius changes also affect rounded clipping.
+    // Corner radius changes also affect rounded clipping.
     let corner_top_left = cx.style.corner_top_left_radius.tick(time);
     let corner_top_right = cx.style.corner_top_right_radius.tick(time);
     let corner_bottom_left = cx.style.corner_bottom_left_radius.tick(time);
@@ -244,20 +244,6 @@ pub(crate) fn animation_system(cx: &mut Context) -> bool {
     reclip_entities.extend(corner_top_right);
     reclip_entities.extend(corner_bottom_left);
     reclip_entities.extend(corner_bottom_right);
-    let corner_top_left_smoothing = cx.style.corner_top_left_smoothing.tick(time);
-    let corner_top_right_smoothing = cx.style.corner_top_right_smoothing.tick(time);
-    let corner_bottom_left_smoothing = cx.style.corner_bottom_left_smoothing.tick(time);
-    let corner_bottom_right_smoothing = cx.style.corner_bottom_right_smoothing.tick(time);
-    for entities in [
-        &corner_top_left_smoothing,
-        &corner_top_right_smoothing,
-        &corner_bottom_left_smoothing,
-        &corner_bottom_right_smoothing,
-    ] {
-        redraw_entities.extend(entities.iter().copied());
-        reclip_entities.extend(entities.iter().copied());
-        repath_entities.extend(entities.iter().copied());
-    }
     // Background
     redraw_entities.extend(cx.style.background_color.tick(time));
     redraw_entities.extend(cx.style.background_image.tick(time));
