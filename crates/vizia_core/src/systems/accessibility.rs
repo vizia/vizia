@@ -1,6 +1,6 @@
 use crate::{accessibility::IntoNode, events::ViewHandler, prelude::*};
 use accesskit::{Node, NodeId, Orientation as AccessOrientation, Rect, Toggled, Tree, TreeUpdate};
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
 use vizia_storage::LayoutTreeIterator;
 
 /// Updates node properties from view properties
@@ -50,6 +50,66 @@ pub fn accessibility_system(cx: &mut Context) {
         }
 
         cx.style.reaccess.clear();
+    }
+
+    let live_node_ids =
+        LayoutTreeIterator::full(&cx.tree).map(|entity| entity.accesskit_id()).collect();
+    coalesce_tree_updates(&mut cx.tree_updates, &live_node_ids);
+}
+
+fn coalesce_tree_updates(updates: &mut Vec<Option<TreeUpdate>>, live_node_ids: &HashSet<NodeId>) {
+    if updates.len() < 2 {
+        return;
+    }
+
+    let mut nodes = Vec::new();
+    let mut node_indices = HashMap::new();
+    let mut tree = None;
+    let mut tree_id = accesskit::TreeId::ROOT;
+    let mut focus = NodeId(0);
+    let mut has_update = false;
+
+    for mut update in updates.drain(..).flatten() {
+        if has_update {
+            debug_assert_eq!(tree_id, update.tree_id);
+        }
+
+        has_update = true;
+        tree_id = update.tree_id;
+        focus = update.focus;
+        if update.tree.is_some() {
+            tree = update.tree.take();
+        }
+
+        for (node_id, node) in update.nodes {
+            if let Some(index) = node_indices.get(&node_id).copied() {
+                nodes[index] = (node_id, node);
+            } else {
+                node_indices.insert(node_id, nodes.len());
+                nodes.push((node_id, node));
+            }
+        }
+    }
+
+    if has_update {
+        let queued_node_ids = nodes.iter().map(|(node_id, _)| *node_id).collect::<HashSet<_>>();
+        let mut retained_node_ids = live_node_ids.clone();
+        let mut changed = true;
+        while changed {
+            changed = false;
+            for (node_id, node) in &nodes {
+                if retained_node_ids.contains(node_id) {
+                    for child_id in node.children() {
+                        if queued_node_ids.contains(child_id) && retained_node_ids.insert(*child_id)
+                        {
+                            changed = true;
+                        }
+                    }
+                }
+            }
+        }
+        nodes.retain(|(node_id, _)| retained_node_ids.contains(node_id));
+        updates.push(Some(TreeUpdate { nodes, tree, tree_id, focus }));
     }
 }
 
@@ -102,6 +162,53 @@ pub fn initial_accessibility_system(cx: &mut Context) -> TreeUpdate {
         tree: Some(Tree::new(Entity::root().accesskit_id())),
         tree_id: accesskit::TreeId::ROOT,
         focus: Entity::root().accesskit_id(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tree_updates_keep_latest_live_and_virtual_node_states() {
+        let controller_id = NodeId(1);
+        let controlled_id = NodeId(2);
+        let virtual_child_id = NodeId(3);
+        let mut controller = Node::default();
+        controller.set_controls(vec![controlled_id]);
+        let mut updated_controller = Node::default();
+        updated_controller.set_children(vec![virtual_child_id]);
+
+        let mut updates = vec![
+            Some(TreeUpdate {
+                nodes: vec![(controller_id, controller), (controlled_id, Node::default())],
+                tree: None,
+                tree_id: accesskit::TreeId::ROOT,
+                focus: controller_id,
+            }),
+            Some(TreeUpdate {
+                nodes: vec![
+                    (controller_id, updated_controller),
+                    (virtual_child_id, Node::default()),
+                ],
+                tree: None,
+                tree_id: accesskit::TreeId::ROOT,
+                focus: controller_id,
+            }),
+        ];
+
+        coalesce_tree_updates(&mut updates, &HashSet::from([controller_id]));
+
+        assert_eq!(updates.len(), 1);
+        let update = updates.pop().unwrap().unwrap();
+        assert_eq!(update.focus, controller_id);
+        assert_eq!(update.nodes.len(), 2);
+        let controller =
+            &update.nodes.iter().find(|(node_id, _)| *node_id == controller_id).unwrap().1;
+        assert!(controller.controls().is_empty());
+        assert_eq!(controller.children(), &[virtual_child_id]);
+        assert!(update.nodes.iter().any(|(node_id, _)| *node_id == virtual_child_id));
+        assert!(!update.nodes.iter().any(|(node_id, _)| *node_id == controlled_id));
     }
 }
 
