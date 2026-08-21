@@ -149,7 +149,7 @@ impl VirtualList {
 
     fn evaluate_index(index: usize, start: usize, end: usize) -> usize {
         let len = end.saturating_sub(start);
-        if len == 0 { 0 } else { start + (index % len) }
+        if len == 0 { 0 } else { start + ((index + len - (start % len)) % len) }
     }
 
     /// Builds a memo that resolves the item at `index` from the backing list,
