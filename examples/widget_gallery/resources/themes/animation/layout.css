@@ -1,0 +1,532 @@
+/* CSS Animations interactive reference.
+ *
+ * Keep Widget Gallery controls native. Only the selected documentation example
+ * and selected variant are mounted, so inactive examples do not keep clocks alive.
+ */
+
+.animation-doc-page {
+    width: 1s;
+    height: auto;
+    max-width: 1480px;
+    padding: 20px;
+    gap: 20px;
+}
+
+.animation-doc-intro {
+    width: 1s;
+    height: auto;
+    gap: 5px;
+}
+
+.animation-doc-layout {
+    width: 1s;
+    height: auto;
+    min-height: 960px;
+    gap: 20px;
+    align-items: flex-start;
+    overflow: hidden;
+}
+
+.animation-doc-nav-scroll {
+    width: 220px;
+    min-width: 220px;
+    border-right-width: 1px;
+    border-right-color: var(--border);
+}
+
+.animation-doc-nav {
+    width: 202px;
+    min-width: 202px;
+    height: auto;
+    padding-right: 10px;
+    padding-bottom: 24px;
+    gap: 2px;
+}
+
+.animation-doc-nav-title {
+    width: 1s;
+    height: auto;
+    padding: 4px 8px 10px 8px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.animation-doc-nav-category {
+    width: 1s;
+    height: auto;
+    padding: 16px 8px 5px 8px;
+    color: var(--muted-foreground);
+    font-size: 11px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+button.animation-doc-nav-item {
+    width: 1s;
+    min-width: 0px;
+    height: 32px;
+    min-height: 32px;
+    padding: 4px 8px;
+    alignment: center-left;
+    corner-radius: 4px;
+    justify-content: flex-start;
+    background-color: transparent;
+    color: var(--foreground);
+}
+
+button.animation-doc-nav-item > label.animation-doc-nav-item-label {
+    width: 180px;
+    min-width: 180px;
+    max-width: 180px;
+    height: auto;
+    text-wrap: false;
+    text-overflow: ellipsis;
+    line-clamp: 1;
+    text-align: left;
+    color: var(--foreground);
+}
+
+button.animation-doc-nav-item:hover {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+}
+
+button.animation-doc-nav-item:hover > label.animation-doc-nav-item-label {
+    color: var(--accent-foreground);
+}
+
+button.animation-doc-nav-item.animation-doc-nav-item-active {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    font-weight: bold;
+}
+
+button.animation-doc-nav-item.animation-doc-nav-item-active > label.animation-doc-nav-item-label {
+    color: var(--primary-foreground);
+}
+
+.animation-doc-content {
+    width: 1s;
+    min-width: 360px;
+    height: auto;
+    min-height: 960px;
+    gap: 14px;
+    overflow: hidden;
+}
+
+.animation-doc-title {
+    width: 1s;
+    height: auto;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+.animation-doc-description {
+    width: 1s;
+    height: auto;
+    color: var(--muted-foreground);
+    font-size: 14px;
+    text-wrap: true;
+}
+
+.animation-doc-example {
+    width: 1s;
+    height: 760px;
+    min-height: 760px;
+    border-width: 1px;
+    border-color: var(--border);
+    corner-radius: 8px;
+    overflow: hidden;
+    gap: 0px;
+    align-items: stretch;
+}
+
+.animation-doc-code-pane,
+.animation-doc-result-pane {
+    width: 1s;
+    min-width: 0px;
+    height: 380px;
+    min-height: 380px;
+}
+
+.animation-doc-code-pane {
+    background-color: var(--background-alt);
+    border-bottom-width: 1px;
+    border-bottom-color: var(--border);
+}
+
+.animation-doc-code-header,
+.animation-doc-result-header {
+    width: 1s;
+    height: 50px;
+    min-height: 50px;
+    padding: 0px 14px;
+    alignment: center-left;
+    border-bottom-width: 1px;
+    border-bottom-color: var(--border);
+}
+
+.animation-doc-pane-title {
+    width: auto;
+    height: auto;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.animation-doc-variant-tabs {
+    width: auto;
+    height: auto;
+}
+
+.animation-doc-variant-tabs > toggle-button {
+    min-width: 58px;
+    height: 34px;
+    padding: 0px 10px;
+    color: var(--foreground);
+    font-size: 13px;
+}
+
+.animation-doc-variant-tabs > toggle-button:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: var(--primary-foreground);
+}
+
+.animation-doc-variant-tabs > toggle-button:checked > label {
+    color: var(--primary-foreground);
+}
+
+.animation-doc-code-body {
+    width: 1s;
+    height: 330px;
+    min-height: 330px;
+    padding: 0px;
+    alignment: top-left;
+    overflow: hidden;
+}
+
+.animation-doc-code-scroll {
+    width: 1s;
+    height: 272px;
+    min-height: 272px;
+    max-height: 272px;
+}
+
+.animation-doc-code-scroll > scroll-content {
+    width: 1s;
+    height: auto;
+    padding: 22px;
+}
+
+.animation-doc-code {
+    width: 1s;
+    height: auto;
+    color: var(--foreground);
+    font-family: monospace;
+    font-size: 15px;
+    line-height: 1.45;
+    text-wrap: true;
+}
+
+.animation-doc-copy-row {
+    width: 1s;
+    height: 58px;
+    min-height: 58px;
+    max-height: 58px;
+    padding: 10px 18px 14px 18px;
+    alignment: center-right;
+    border-top-width: 1px;
+    border-top-color: var(--border);
+}
+
+.animation-doc-copy-button {
+    min-width: 88px;
+}
+
+.animation-doc-result-pane {
+    background-color: var(--background);
+    padding: 0px;
+    gap: 0px;
+}
+
+.animation-doc-result-body {
+    width: 1s;
+    height: 330px;
+    min-height: 330px;
+    alignment: center;
+    overflow: hidden;
+}
+
+.animation-doc-note {
+    width: 1s;
+    height: auto;
+    padding: 12px 0px;
+    gap: 4px;
+}
+
+.animation-doc-note-title {
+    width: 1s;
+    height: auto;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.animation-doc-note-copy {
+    width: 1s;
+    height: auto;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    text-wrap: true;
+}
+
+.animation-doc-stage,
+.animation-doc-track,
+.animation-doc-backdrop-stage {
+    width: 1s;
+    height: 330px;
+    min-height: 330px;
+    alignment: center;
+    overflow: hidden;
+}
+
+.animation-doc-stage {
+    padding: 34px;
+}
+
+.animation-doc-target {
+    width: auto;
+    height: auto;
+    min-width: 190px;
+    min-height: 92px;
+    padding: 22px 30px;
+    alignment: center;
+    corner-radius: 10px;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    font-weight: bold;
+    text-align: center;
+    text-wrap: true;
+}
+
+.animation-doc-surface-target {
+    width: 300px;
+    min-width: 300px;
+    height: 170px;
+    min-height: 170px;
+    padding: 0px;
+    alignment: center;
+    text-align: center;
+    text-wrap: true;
+    font-size: 18px;
+}
+
+.animation-doc-surface-content {
+    width: 1s;
+    height: 1s;
+    padding: 28px;
+    alignment: center;
+}
+
+.animation-doc-surface-label {
+    width: 1s;
+    height: auto;
+    color: inherit;
+    font-size: inherit;
+    font-weight: semi-bold;
+    text-align: center;
+    text-wrap: true;
+}
+
+.animation-doc-shape-target {
+    width: 300px;
+    min-width: 300px;
+    height: 170px;
+    min-height: 170px;
+}
+
+.animation-doc-shape-label {
+    width: auto;
+    height: auto;
+    padding: 7px 12px;
+    corner-radius: 999px;
+    background-color: var(--background);
+    color: var(--foreground);
+    shadow: 0px 2px 8px #44000000;
+    font-size: 16px;
+    font-weight: semi-bold;
+}
+
+.animation-doc-radius-label {
+    width: auto;
+    height: auto;
+    color: white;
+    font-size: 18px;
+    font-weight: semi-bold;
+}
+
+.animation-doc-text-target {
+    width: 320px;
+    min-width: 320px;
+    height: 170px;
+    min-height: 170px;
+    padding: 24px;
+    alignment: center;
+    corner-radius: 10px;
+    border-width: 1px;
+    border-color: var(--border);
+    background-color: var(--background-alt);
+    color: var(--foreground);
+    font-size: 24px;
+    font-weight: semi-bold;
+    text-align: center;
+    text-wrap: true;
+}
+
+.animation-doc-padding-shell {
+    width: 320px;
+    min-width: 320px;
+    height: 210px;
+    min-height: 210px;
+    padding: 0px;
+    alignment: center;
+}
+
+.animation-doc-padding-surface {
+    width: 320px;
+    height: 210px;
+    alignment: top-left;
+    border-width: 2px;
+    border-color: var(--primary);
+    corner-radius: 10px;
+    background-color: var(--background-alt);
+}
+
+.animation-doc-padding-child {
+    width: 92px;
+    min-width: 92px;
+    height: 42px;
+    min-height: 42px;
+    alignment: center;
+    corner-radius: 6px;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.animation-doc-size-target {
+    width: 120px;
+    height: 90px;
+    alignment: center;
+    corner-radius: 10px;
+    background-color: var(--primary);
+}
+
+.animation-doc-size-label {
+    width: auto;
+    height: auto;
+    color: var(--primary-foreground);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.animation-doc-constraints-track {
+    width: 360px;
+    height: 180px;
+    padding: 20px;
+    alignment: center;
+    corner-radius: 10px;
+    border-width: 1px;
+    border-color: var(--border);
+    background-color: var(--background-alt);
+}
+
+.animation-doc-constraints-target {
+    width: 1s;
+    height: 90px;
+    alignment: center;
+    corner-radius: 8px;
+    background-color: #2563eb;
+}
+
+.animation-doc-constraints-label {
+    width: auto;
+    height: auto;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.animation-doc-display-stage {
+    gap: 18px;
+}
+
+.animation-doc-display-hint {
+    width: 320px;
+    height: auto;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    text-align: center;
+    text-wrap: true;
+}
+
+.animation-doc-custom-target {
+    --doc-custom-color: #3b82f6;
+    --doc-custom-width: 150px;
+    --doc-custom-opacity: 0.45;
+    width: var(--doc-custom-width);
+    max-width: 300px;
+    height: 130px;
+    corner-radius: 18px;
+    background-color: var(--doc-custom-color);
+    opacity: var(--doc-custom-opacity);
+    animation: doc-custom-properties 1800ms ease-in-out infinite alternate;
+}
+
+.animation-doc-custom-label {
+    width: auto;
+    height: auto;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.animation-doc-text-paint-stage {
+    gap: 14px;
+}
+
+.animation-doc-text-paint-label {
+    width: auto;
+    height: auto;
+    color: var(--foreground);
+    font-size: 24px;
+    font-weight: semi-bold;
+}
+
+.animation-doc-text-paint-field {
+    width: 280px;
+}
+
+.animation-doc-text-paint-hint {
+    width: 320px;
+    height: auto;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    text-align: center;
+    text-wrap: true;
+}
+
+.animation-doc-track-line {
+    position-type: absolute;
+    width: 72%;
+    height: 1px;
+    background-color: var(--border);
+}
+
+.animation-doc-dot {
+    width: 42px;
+    height: 42px;
+    corner-radius: 50%;
+    background-color: var(--primary);
+}

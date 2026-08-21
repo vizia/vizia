@@ -360,6 +360,9 @@ struct PreviewTableRow {
 
 fn render_view_preview(cx: &mut Context, view_name: &'static str) {
     VStack::new(cx, |cx| match view_name {
+        "Animation" => {
+            TextThrobber::new(cx, "Vizia UI", TextThrobberVariant::Progressive);
+        }
         "Accordion" => {
             let items = Signal::new(vec![
                 ("Section 1".to_string(), "Accordion content 1".to_string()),
@@ -793,6 +796,11 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
                 .on_select(move |_cx, index| selected.set(Some(index)))
                 .width(Pixels(130.0));
         }
+        "Skeleton" => {
+            Skeleton::new(cx, SkeletonVariant::Profile)
+                .width(Pixels(180.0))
+                .class("all-view-loading-preview");
+        }
         "Slider" => {
             let value = Signal::new(0.5f32);
 
@@ -811,6 +819,9 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
         "Switch" => {
             let enabled = Signal::new(true);
             Switch::new(cx, enabled).on_toggle(move |_cx| enabled.update(|v| *v ^= true));
+        }
+        "Throbber" => {
+            GalleryThrobber::new(cx, ThrobberVariant::Equalizer);
         }
         "Table" => {
             let rows = Signal::new(vec![PreviewTableRow {
@@ -1263,9 +1274,14 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
     .width(Stretch(1.0));
 }
 
-fn render_view_page(cx: &mut Context, view_name: &'static str) {
+fn render_view_page(
+    cx: &mut Context,
+    view_name: &'static str,
+    animation_navigation_height: Signal<Units>,
+) {
     match view_name {
         ALL_VIEW_ID => all_views_page(cx),
+        "Animation" => animation(cx, animation_navigation_height),
         "Accordion" => accordion(cx),
         "Avatar" => avatar(cx),
         "Avatar Group" => avatar_group(cx),
@@ -1298,6 +1314,7 @@ fn render_view_page(cx: &mut Context, view_name: &'static str) {
         "Resizable" => resizable(cx),
         "Scrollview" => scrollview(cx),
         "Select" => select(cx),
+        "Skeleton" => skeleton(cx),
         "Slider" => slider(cx),
         "Spinbox" => spinbox(cx),
         "Svg" => svg(cx),
@@ -1307,6 +1324,7 @@ fn render_view_page(cx: &mut Context, view_name: &'static str) {
         "TreeTable" => tree_table(cx),
         "Tabview" => tabview(cx),
         "Textbox" => textbox(cx),
+        "Throbber" => throbber(cx),
         "ToggleButton" => toggle_button(cx),
         "Tooltip" => tooltip(cx),
         "VirtualList" => virtual_list(cx),
@@ -1321,11 +1339,12 @@ fn render_view_page(cx: &mut Context, view_name: &'static str) {
 }
 
 fn content_area(cx: &mut Context, selected_view: Signal<&'static str>) {
+    let animation_navigation_height = Signal::new(Pixels(520.0));
     ScrollView::new(cx, move |cx| {
         Binding::new(cx, selected_view, move |cx| {
             let current_view = selected_view.get();
             VStack::new(cx, |cx| {
-                render_view_page(cx, current_view);
+                render_view_page(cx, current_view, animation_navigation_height);
             })
             .class("content-area")
             .alignment(Alignment::TopCenter)
@@ -1334,7 +1353,13 @@ fn content_area(cx: &mut Context, selected_view: Signal<&'static str>) {
         });
     })
     .class("widgets")
-    .width(Stretch(1.0));
+    .width(Stretch(1.0))
+    .on_geo_changed(move |cx, changed| {
+        if changed.intersects(GeoChanged::HEIGHT_CHANGED) {
+            let available = (cx.bounds().height() - 145.0).max(280.0);
+            animation_navigation_height.set(Pixels(available));
+        }
+    });
 }
 
 fn main() -> Result<(), ApplicationError> {
@@ -1367,6 +1392,16 @@ fn main() -> Result<(), ApplicationError> {
 
         cx.add_stylesheet(include_style!("resources/themes/accents.css"))
             .expect("Failed to add stylesheet");
+
+        for stylesheet in [
+            include_style!("resources/themes/animation/layout.css"),
+            include_style!("resources/themes/animation/animation_properties.css"),
+            include_style!("resources/themes/animation/keyframes_timelines.css"),
+            include_style!("resources/themes/animation/animated_values.css"),
+            include_style!("resources/themes/animation/runtime_ui_patterns.css"),
+        ] {
+            cx.add_stylesheet(stylesheet).expect("Failed to add animation gallery stylesheet");
+        }
 
         VStack::new(cx, |cx| {
             HStack::new(cx, |cx| {

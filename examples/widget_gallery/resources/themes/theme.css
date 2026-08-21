@@ -4,6 +4,156 @@
     width: 1s;
 }
 
+@keyframes gallery-entrance {
+    0% {
+        opacity: 0;
+        translate: 0px 18px;
+        scale: 0.94;
+    }
+
+    100% {
+        opacity: 1;
+        translate: 0px 0px;
+        scale: 1;
+    }
+}
+
+@keyframes gallery-style {
+    0% {
+        background-color: #2563eb;
+        corner-radius: 4px;
+    }
+
+    50% {
+        background-color: #8b5cf6;
+        corner-radius: 28px;
+    }
+
+    100% {
+        background-color: #16a34a;
+        corner-radius: 12px;
+    }
+}
+
+@keyframes gallery-motion {
+    0% {
+        translate: -100px 0px;
+        scale: 0.75;
+    }
+
+    50% {
+        translate: 0px -24px;
+        scale: 1.25;
+    }
+
+    100% {
+        translate: 100px 0px;
+        scale: 0.75;
+    }
+}
+
+@keyframes gallery-filter-reveal {
+    0% {
+        opacity: 0;
+        filter: blur(18px);
+        scale: 0.96;
+    }
+
+    100% {
+        opacity: 1;
+        filter: blur(0px);
+        scale: 1;
+    }
+}
+
+@keyframes gallery-backdrop-reveal {
+    0% {
+        backdrop-filter: blur(0px);
+    }
+
+    100% {
+        backdrop-filter: blur(18px);
+    }
+}
+
+vstack.animation-demo {
+    gap: 12px;
+}
+
+hstack.animation-stage {
+    height: 180px;
+    width: 1s;
+    padding: 20px;
+    corner-radius: 12px;
+    background-color: var(--background-alt);
+    overflow: hidden;
+}
+
+.animation-card {
+    width: auto;
+    height: auto;
+    padding: 18px 24px;
+    corner-radius: 12px;
+    background-color: #16a34a;
+    color: white;
+    font-weight: bold;
+}
+
+.animation-style-target {
+    min-width: 180px;
+    alignment: center;
+}
+
+.animation-filter-target {
+    font-size: 22px;
+}
+
+element.animation-orb {
+    size: 48px;
+    corner-radius: 50%;
+    background-color: #22c55e;
+    shadow: 0px 10px 24px #66000000;
+}
+
+zstack.animation-backdrop-scene {
+    width: 320px;
+    height: 130px;
+    corner-radius: 18px;
+    overflow: hidden;
+}
+
+element.animation-backdrop-swatch {
+    height: 1s;
+    width: 1s;
+}
+
+element.swatch-one {
+    background-color: #16a34a;
+}
+
+element.swatch-two {
+    background-color: #f8fafc;
+}
+
+element.swatch-three {
+    background-color: #7c3aed;
+}
+
+.animation-backdrop-target {
+    position-type: absolute;
+    width: 220px;
+    height: 84px;
+    space: 1s;
+    alignment: center;
+    corner-radius: 16px;
+    background-color: #66111827;
+    border-width: 1px;
+    border-color: #66ffffff;
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+}
+
 .panel-description {
     font-size: 14px;
     color: var(--muted-foreground);

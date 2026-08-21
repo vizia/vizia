@@ -193,11 +193,20 @@ impl<'i> AtRuleParser<'i> for NestedRuleParser<'_, 'i> {
             AtRulePrelude::Keyframes(name) => {
                 let mut parser = KeyframeListParser;
                 let iter = RuleBodyParser::new(input, &mut parser);
-                self.rules.0.push(CssRule::Keyframes(KeyframesRule {
-                    name,
-                    keyframes: iter.filter_map(Result::ok).collect(),
-                    loc,
-                }));
+                let mut keyframes = Vec::new();
+                for result in iter {
+                    match result {
+                        Ok(keyframe) => keyframes.push(keyframe),
+                        Err((error, _)) => {
+                            if self.options.error_recovery {
+                                self.options.warn(error);
+                                continue;
+                            }
+                            return Err(error);
+                        }
+                    }
+                }
+                self.rules.0.push(CssRule::Keyframes(KeyframesRule { name, keyframes, loc }));
                 Ok(())
             }
         }
@@ -223,7 +232,7 @@ impl<'i> QualifiedRuleParser<'i> for NestedRuleParser<'_, 'i> {
         selectors: Self::Prelude,
         start: &ParserState,
         input: &mut Parser<'i, 't>,
-    ) -> Result<(), ParseError<'i, Self::Error>> {
+    ) -> Result<Self::QualifiedRule, ParseError<'i, Self::Error>> {
         let loc = self.loc(start);
         let (declarations, rules) = self.parse_nested(input, true)?;
         self.rules.0.push(CssRule::Style(StyleRule { selectors, declarations, rules, loc }));

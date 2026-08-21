@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use crate::prelude::*;
+use crate::{animation::ScrollTimelineSource, prelude::*};
 
 pub(crate) const SCROLL_SENSITIVITY: f32 = 20.0;
 
@@ -42,6 +42,8 @@ pub struct ScrollView {
     pub show_horizontal_scrollbar: Signal<bool>,
     /// Whether the vertical scrollbar should be visible.
     pub show_vertical_scrollbar: Signal<bool>,
+    /// Optional Vizia-native name used by CSS `animation-timeline: --name`.
+    pub timeline_name: Option<String>,
 }
 
 impl ScrollView {
@@ -117,6 +119,7 @@ impl ScrollView {
             container_height,
             show_horizontal_scrollbar,
             show_vertical_scrollbar,
+            timeline_name: None,
         }
         .build(cx, move |cx| {
             // Apply scroll offset as a translation transform on scroll_content.
@@ -444,6 +447,22 @@ impl View for ScrollView {
 
             _ => {}
         });
+
+        let source_entity = cx.current();
+        cx.style.scroll_timeline_sources.insert(
+            source_entity,
+            ScrollTimelineSource {
+                x: self.scroll_x.get(),
+                y: self.scroll_y.get(),
+                inner_width: self.inner_width.get(),
+                inner_height: self.inner_height.get(),
+                container_width: self.container_width.get(),
+                container_height: self.container_height.get(),
+            },
+        );
+        if let Some(name) = &self.timeline_name {
+            cx.style.named_scroll_timelines.insert(name.clone(), source_entity);
+        }
     }
 }
 
@@ -478,6 +497,13 @@ impl Handle<'_, ScrollView> {
         self.bind(scrolly, move |handle| {
             handle.modify(|scrollview| scrollview.scroll_y.set(scrolly.get()));
         })
+    }
+
+    /// Give this scroll container a named animation timeline source.
+    /// Names conventionally use the CSS dashed-ident form (`--gallery-scroll`).
+    pub fn timeline_name(self, name: impl Into<String>) -> Self {
+        let name = name.into();
+        self.modify(move |scrollview| scrollview.timeline_name = Some(name))
     }
 
     /// Sets whether the horizontal scrollbar should be visible.

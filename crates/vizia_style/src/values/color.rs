@@ -710,7 +710,7 @@ impl From<Color> for RGBA {
 
 impl From<cssparser_color::RgbaLegacy> for RGBA {
     fn from(rgba: cssparser_color::RgbaLegacy) -> Self {
-        Self::rgba(rgba.red, rgba.green, rgba.blue, (rgba.alpha * 255.0) as u8)
+        Self::rgba(rgba.red, rgba.green, rgba.blue, srgb_to_u8(rgba.alpha))
     }
 }
 

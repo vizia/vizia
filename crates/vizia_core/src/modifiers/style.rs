@@ -353,6 +353,7 @@ pub trait StyleModifiers: internal::Modifiable {
             value.set_or_bind(cx, move |cx, v| {
                 let value = v.get_value(cx).into();
                 cx.style.filter.insert(entity, value);
+                cx.style.filter_entities.insert(entity);
 
                 cx.needs_redraw(entity);
             });
@@ -369,6 +370,7 @@ pub trait StyleModifiers: internal::Modifiable {
             value.set_or_bind(cx, move |cx, v| {
                 let value = v.get_value(cx).into();
                 cx.style.backdrop_filter.insert(entity, value);
+                cx.style.filter_entities.insert(entity);
 
                 cx.needs_redraw(entity);
             });

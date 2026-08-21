@@ -1,9 +1,10 @@
 use crate::animation::Interpolator;
 use hashbrown::HashSet;
+use vizia_style::AnimationComposition;
 
 use crate::prelude::*;
 
-use super::TimingFunction;
+use super::{CssAnimationClock, CssAnimationTiming, TimingFunction};
 
 /// A keyframe in an animation state.
 #[derive(Debug, Clone)]
@@ -16,49 +17,42 @@ pub(crate) struct Keyframe<T: Interpolator> {
 /// Represents an animation of a property with type `T`.
 #[derive(Clone, Debug)]
 pub(crate) struct AnimationState<T: Interpolator> {
-    /// ID of the animation description.
     pub id: Animation,
-    /// The start time of the animation.
     pub start_time: Instant,
-    /// The duration of the animation.
     pub duration: Duration,
-    /// The delay before the animation starts.
     pub delay: Duration,
-    /// List of animation keyframes as (normalized time, value).
     pub keyframes: Vec<Keyframe<T>>,
-    /// The output of value of the animation.
     pub output: Option<T>,
-    /// Whether the animation should persist after finishing.
+    pub composed_output: Option<T>,
     pub persistent: bool,
-    /// How far through the animation between 0.0 and 1.0.
     pub t: f32,
-
     pub dt: f32,
-
     pub active: bool,
-
-    /// For transitions. The starting rule for this transition.
     pub from_rule: usize,
-    /// For tansitions. The ending rule for this transition.
     pub to_rule: usize,
-
-    /// List of entities connected to this animation (used when animation is removed from active list)
     pub entities: HashSet<Entity>,
+    pub css_clock: Option<CssAnimationClock>,
+    pub css_default_timing: TimingFunction,
+    pub css_instance_id: Option<u64>,
+    pub css_order: usize,
+    pub css_composition: AnimationComposition,
+    pub css_timeline_driven: bool,
+    pub css_timeline_progress: Option<f32>,
 }
 
 impl<T> AnimationState<T>
 where
     T: Interpolator,
 {
-    /// Create a new animation state with the given [Animation] id.
     pub(crate) fn new(id: Animation) -> Self {
         AnimationState {
             id,
             start_time: Instant::now(),
-            duration: Duration::new(0, 0),
-            delay: Duration::new(0, 0),
+            duration: Duration::ZERO,
+            delay: Duration::ZERO,
             keyframes: Vec::new(),
             output: None,
+            composed_output: None,
             persistent: false,
             t: 0.0,
             dt: 0.0,
@@ -66,18 +60,23 @@ where
             entities: HashSet::new(),
             from_rule: usize::MAX,
             to_rule: usize::MAX,
+            css_clock: None,
+            css_default_timing: TimingFunction::ease(),
+            css_instance_id: None,
+            css_order: 0,
+            css_composition: AnimationComposition::Replace,
+            css_timeline_driven: false,
+            css_timeline_progress: None,
         }
     }
 
     pub(crate) fn with_duration(mut self, duration: Duration) -> Self {
         self.duration = duration;
-
         self
     }
 
     pub(crate) fn with_delay(mut self, delay: Duration) -> Self {
         self.delay = delay;
-
         self
     }
 
@@ -91,11 +90,40 @@ where
         self.output.as_ref()
     }
 
-    pub(crate) fn play(&mut self, entity: Entity) {
+    pub(crate) fn configure_css(
+        &mut self,
+        timing: CssAnimationTiming,
+        default_timing: TimingFunction,
+        start_time: Instant,
+    ) {
+        self.start_time = start_time;
+        self.duration = Duration::from_secs_f32(timing.duration.max(0.0));
+        self.delay = Duration::ZERO;
+        self.dt = 0.0;
+        self.css_clock = Some(CssAnimationClock::new(timing, start_time));
+        self.css_default_timing = default_timing;
+        self.persistent = matches!(
+            timing.fill_mode,
+            vizia_style::AnimationFillMode::Forwards | vizia_style::AnimationFillMode::Both
+        );
         self.active = true;
         self.t = 0.0;
-        self.start_time = Instant::now();
-        self.entities.insert(entity);
+    }
+
+    pub(crate) fn update_css_timing(
+        &mut self,
+        timing: CssAnimationTiming,
+        default_timing: TimingFunction,
+        now: Instant,
+    ) {
+        if let Some(clock) = &mut self.css_clock {
+            clock.update_timing(timing, now);
+        }
+        self.css_default_timing = default_timing;
+        self.persistent = matches!(
+            timing.fill_mode,
+            vizia_style::AnimationFillMode::Forwards | vizia_style::AnimationFillMode::Both
+        );
     }
 
     pub(crate) fn is_transition(&self) -> bool {
@@ -108,13 +136,14 @@ where
     Prop: Interpolator,
 {
     fn default() -> Self {
-        AnimationState {
+        Self {
             id: Animation::null(),
             start_time: Instant::now(),
-            duration: Duration::new(0, 0),
-            delay: Duration::new(0, 0),
+            duration: Duration::ZERO,
+            delay: Duration::ZERO,
             keyframes: Vec::new(),
             output: None,
+            composed_output: None,
             persistent: true,
             t: 0.0,
             dt: 0.0,
@@ -122,6 +151,13 @@ where
             entities: HashSet::new(),
             from_rule: usize::MAX,
             to_rule: usize::MAX,
+            css_clock: None,
+            css_default_timing: TimingFunction::ease(),
+            css_instance_id: None,
+            css_order: 0,
+            css_composition: AnimationComposition::Replace,
+            css_timeline_driven: false,
+            css_timeline_progress: None,
         }
     }
 }

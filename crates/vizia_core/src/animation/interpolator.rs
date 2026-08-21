@@ -1,9 +1,9 @@
 use morphorm::Units;
 use vizia_style::{
-    Angle, BackgroundRepeat, BackgroundSize, ClipPath, Color, ColorStop, Display, Filter, FontSize,
-    Gradient, Length, LengthOrPercentage, LengthPercentageOrAuto, LengthValue, LetterSpacing,
-    LineDirection, LineHeight, LinearGradient, Opacity, PercentageOrNumber, Position, RGBA, Rect,
-    Scale, Shadow, Transform, Translate,
+    Angle, AnimationComposition, BackgroundRepeat, BackgroundSize, ClipPath, Color, ColorStop,
+    Display, Filter, FontSize, Gradient, Length, LengthOrPercentage, LengthPercentageOrAuto,
+    LengthValue, LetterSpacing, LineDirection, LineHeight, LinearGradient, Matrix as CssMatrix,
+    Opacity, PercentageOrNumber, Position, RGBA, Rect, Scale, Shadow, Transform, Translate,
 };
 
 use skia_safe::Matrix;
@@ -14,6 +14,322 @@ use crate::style::ImageOrGradient;
 pub(crate) trait Interpolator {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self;
 }
+
+/// Property-specific Level 2 effect composition.
+///
+/// Types without a meaningful additive/accumulative operation intentionally use replacement.
+pub(crate) trait Compositor: Clone {
+    fn compose(underlying: &Self, effect: &Self, composition: AnimationComposition) -> Self;
+}
+
+macro_rules! replace_compositor {
+    ($($ty:ty),+ $(,)?) => {
+        $(
+            impl Compositor for $ty {
+                fn compose(
+                    _underlying: &Self,
+                    effect: &Self,
+                    _composition: AnimationComposition,
+                ) -> Self {
+                    effect.clone()
+                }
+            }
+        )+
+    };
+}
+
+fn add_length_or_percentage(
+    underlying: &LengthOrPercentage,
+    effect: &LengthOrPercentage,
+) -> Option<LengthOrPercentage> {
+    match (underlying, effect) {
+        (LengthOrPercentage::Length(a), LengthOrPercentage::Length(b)) => match (a, b) {
+            (Length::Value(LengthValue::Px(a)), Length::Value(LengthValue::Px(b))) => {
+                Some(LengthOrPercentage::Length(Length::px(a + b)))
+            }
+            _ => None,
+        },
+        (LengthOrPercentage::Percentage(a), LengthOrPercentage::Percentage(b)) => {
+            Some(LengthOrPercentage::Percentage(a + b))
+        }
+        _ => None,
+    }
+}
+
+fn add_units(underlying: &Units, effect: &Units) -> Option<Units> {
+    match (underlying, effect) {
+        (Units::Pixels(a), Units::Pixels(b)) => Some(Units::Pixels(a + b)),
+        (Units::Percentage(a), Units::Percentage(b)) => Some(Units::Percentage(a + b)),
+        (Units::Stretch(a), Units::Stretch(b)) => Some(Units::Stretch(a + b)),
+        _ => None,
+    }
+}
+
+fn multiply_scale_component(
+    underlying: PercentageOrNumber,
+    effect: PercentageOrNumber,
+) -> PercentageOrNumber {
+    PercentageOrNumber::Number(underlying.to_factor() * effect.to_factor())
+}
+
+fn accumulate_transform(underlying: &Transform, effect: &Transform) -> Option<Transform> {
+    match (underlying, effect) {
+        (Transform::Translate((ax, ay)), Transform::Translate((bx, by))) => {
+            Some(Transform::Translate((
+                add_length_or_percentage(ax, bx)?,
+                add_length_or_percentage(ay, by)?,
+            )))
+        }
+        (Transform::TranslateX(a), Transform::TranslateX(b)) => {
+            Some(Transform::TranslateX(add_length_or_percentage(a, b)?))
+        }
+        (Transform::TranslateY(a), Transform::TranslateY(b)) => {
+            Some(Transform::TranslateY(add_length_or_percentage(a, b)?))
+        }
+        (Transform::Rotate(a), Transform::Rotate(b)) => {
+            Some(Transform::Rotate(Angle::Rad(a.to_radians() + b.to_radians())))
+        }
+        (Transform::Scale((ax, ay)), Transform::Scale((bx, by))) => Some(Transform::Scale((
+            multiply_scale_component(*ax, *bx),
+            multiply_scale_component(*ay, *by),
+        ))),
+        (Transform::ScaleX(a), Transform::ScaleX(b)) => {
+            Some(Transform::ScaleX(multiply_scale_component(*a, *b)))
+        }
+        (Transform::ScaleY(a), Transform::ScaleY(b)) => {
+            Some(Transform::ScaleY(multiply_scale_component(*a, *b)))
+        }
+        (Transform::Skew(ax, ay), Transform::Skew(bx, by)) => Some(Transform::Skew(
+            Angle::Rad(ax.to_radians() + bx.to_radians()),
+            Angle::Rad(ay.to_radians() + by.to_radians()),
+        )),
+        (Transform::SkewX(a), Transform::SkewX(b)) => {
+            Some(Transform::SkewX(Angle::Rad(a.to_radians() + b.to_radians())))
+        }
+        (Transform::SkewY(a), Transform::SkewY(b)) => {
+            Some(Transform::SkewY(Angle::Rad(a.to_radians() + b.to_radians())))
+        }
+        _ => None,
+    }
+}
+
+impl Compositor for f32 {
+    fn compose(underlying: &Self, effect: &Self, composition: AnimationComposition) -> Self {
+        match composition {
+            AnimationComposition::Replace => *effect,
+            AnimationComposition::Add | AnimationComposition::Accumulate => underlying + effect,
+        }
+    }
+}
+
+impl Compositor for i32 {
+    fn compose(underlying: &Self, effect: &Self, composition: AnimationComposition) -> Self {
+        match composition {
+            AnimationComposition::Replace => *effect,
+            AnimationComposition::Add | AnimationComposition::Accumulate => underlying + effect,
+        }
+    }
+}
+
+impl Compositor for Opacity {
+    fn compose(underlying: &Self, effect: &Self, composition: AnimationComposition) -> Self {
+        match composition {
+            AnimationComposition::Replace => *effect,
+            AnimationComposition::Add | AnimationComposition::Accumulate => {
+                Opacity((underlying.0 + effect.0).clamp(0.0, 1.0))
+            }
+        }
+    }
+}
+
+impl Compositor for Color {
+    fn compose(underlying: &Self, effect: &Self, composition: AnimationComposition) -> Self {
+        match composition {
+            AnimationComposition::Replace => *effect,
+            AnimationComposition::Add | AnimationComposition::Accumulate => Color::rgba(
+                underlying.r().saturating_add(effect.r()),
+                underlying.g().saturating_add(effect.g()),
+                underlying.b().saturating_add(effect.b()),
+                underlying.a().saturating_add(effect.a()),
+            ),
+        }
+    }
+}
+
+impl Compositor for RGBA {
+    fn compose(underlying: &Self, effect: &Self, composition: AnimationComposition) -> Self {
+        match composition {
+            AnimationComposition::Replace => *effect,
+            AnimationComposition::Add | AnimationComposition::Accumulate => RGBA::rgba(
+                underlying.r().saturating_add(effect.r()),
+                underlying.g().saturating_add(effect.g()),
+                underlying.b().saturating_add(effect.b()),
+                underlying.a().saturating_add(effect.a()),
+            ),
+        }
+    }
+}
+
+impl Compositor for Units {
+    fn compose(underlying: &Self, effect: &Self, composition: AnimationComposition) -> Self {
+        match composition {
+            AnimationComposition::Replace => *effect,
+            AnimationComposition::Add | AnimationComposition::Accumulate => {
+                add_units(underlying, effect).unwrap_or(*effect)
+            }
+        }
+    }
+}
+
+impl Compositor for LengthOrPercentage {
+    fn compose(underlying: &Self, effect: &Self, composition: AnimationComposition) -> Self {
+        match composition {
+            AnimationComposition::Replace => effect.clone(),
+            AnimationComposition::Add | AnimationComposition::Accumulate => {
+                add_length_or_percentage(underlying, effect).unwrap_or_else(|| effect.clone())
+            }
+        }
+    }
+}
+
+impl Compositor for Translate {
+    fn compose(underlying: &Self, effect: &Self, composition: AnimationComposition) -> Self {
+        match composition {
+            AnimationComposition::Replace => effect.clone(),
+            AnimationComposition::Add | AnimationComposition::Accumulate => Translate {
+                x: add_length_or_percentage(&underlying.x, &effect.x)
+                    .unwrap_or_else(|| effect.x.clone()),
+                y: add_length_or_percentage(&underlying.y, &effect.y)
+                    .unwrap_or_else(|| effect.y.clone()),
+            },
+        }
+    }
+}
+
+impl Compositor for Scale {
+    fn compose(underlying: &Self, effect: &Self, composition: AnimationComposition) -> Self {
+        match composition {
+            AnimationComposition::Replace => *effect,
+            AnimationComposition::Add | AnimationComposition::Accumulate => Scale {
+                x: multiply_scale_component(underlying.x, effect.x),
+                y: multiply_scale_component(underlying.y, effect.y),
+            },
+        }
+    }
+}
+
+impl Compositor for Angle {
+    fn compose(underlying: &Self, effect: &Self, composition: AnimationComposition) -> Self {
+        match composition {
+            AnimationComposition::Replace => *effect,
+            AnimationComposition::Add | AnimationComposition::Accumulate => {
+                Angle::Rad(underlying.to_radians() + effect.to_radians())
+            }
+        }
+    }
+}
+
+impl Compositor for Vec<Transform> {
+    fn compose(underlying: &Self, effect: &Self, composition: AnimationComposition) -> Self {
+        match composition {
+            AnimationComposition::Replace => effect.clone(),
+            AnimationComposition::Add => {
+                let mut result = underlying.clone();
+                result.extend(effect.iter().cloned());
+                result
+            }
+            AnimationComposition::Accumulate => {
+                if underlying.len() == effect.len() {
+                    let mut result = Vec::with_capacity(effect.len());
+                    for (a, b) in underlying.iter().zip(effect) {
+                        let Some(value) = accumulate_transform(a, b) else {
+                            let mut fallback = underlying.clone();
+                            fallback.extend(effect.iter().cloned());
+                            return fallback;
+                        };
+                        result.push(value);
+                    }
+                    result
+                } else {
+                    let mut result = underlying.clone();
+                    result.extend(effect.iter().cloned());
+                    result
+                }
+            }
+        }
+    }
+}
+
+impl Compositor for Filter {
+    fn compose(underlying: &Self, effect: &Self, composition: AnimationComposition) -> Self {
+        match composition {
+            AnimationComposition::Replace => effect.clone(),
+            AnimationComposition::Add => {
+                fn append(filter: &Filter, out: &mut Vec<Filter>) {
+                    match filter {
+                        Filter::None => {}
+                        Filter::List(values) => out.extend(values.iter().cloned()),
+                        value => out.push(value.clone()),
+                    }
+                }
+                let mut values = Vec::new();
+                append(underlying, &mut values);
+                append(effect, &mut values);
+                match values.len() {
+                    0 => Filter::None,
+                    1 => values.remove(0),
+                    _ => Filter::List(values),
+                }
+            }
+            AnimationComposition::Accumulate => match (underlying, effect) {
+                (Filter::Blur(a), Filter::Blur(b)) => {
+                    let a = LengthOrPercentage::Length(a.clone());
+                    let b = LengthOrPercentage::Length(b.clone());
+                    match add_length_or_percentage(&a, &b) {
+                        Some(LengthOrPercentage::Length(value)) => Filter::Blur(value),
+                        _ => effect.clone(),
+                    }
+                }
+                (Filter::List(a), Filter::List(b)) if a.len() == b.len() => Filter::List(
+                    a.iter()
+                        .zip(b)
+                        .map(|(a, b)| Filter::compose(a, b, AnimationComposition::Accumulate))
+                        .collect(),
+                ),
+                _ => Filter::compose(underlying, effect, AnimationComposition::Add),
+            },
+        }
+    }
+}
+
+replace_compositor!(
+    (f32, f32),
+    Display,
+    ClipPath,
+    LengthValue,
+    Length,
+    LengthPercentageOrAuto,
+    PercentageOrNumber,
+    ImageOrGradient,
+    BackgroundSize,
+    BackgroundRepeat,
+    Position,
+    FontSize,
+    LetterSpacing,
+    LineHeight,
+    Shadow,
+    Gradient,
+    LinearGradient,
+    Matrix,
+);
+
+replace_compositor!(
+    Vec<ImageOrGradient>,
+    Vec<Position>,
+    Vec<BackgroundRepeat>,
+    Vec<BackgroundSize>,
+    Vec<Shadow>,
+);
 
 // Implementations of `Interpolator` for various properties.
 impl Interpolator for f32 {
@@ -87,9 +403,29 @@ impl Interpolator for RGBA {
 impl Interpolator for Filter {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
         match (start, end) {
+            (Filter::None, Filter::None) => Filter::None,
             (Filter::Blur(start), Filter::Blur(end)) => {
                 Filter::Blur(Length::interpolate(start, end, t))
             }
+            (Filter::List(start), Filter::List(end)) if start.len() == end.len() => {
+                let compatible = start.iter().zip(end).all(|(a, b)| {
+                    matches!(
+                        (a, b),
+                        (Filter::Blur(_), Filter::Blur(_)) | (Filter::None, Filter::None)
+                    )
+                });
+                if compatible {
+                    Filter::List(
+                        start.iter().zip(end).map(|(a, b)| Filter::interpolate(a, b, t)).collect(),
+                    )
+                } else if t < 0.5 {
+                    Filter::List(start.clone())
+                } else {
+                    Filter::List(end.clone())
+                }
+            }
+            _ if t < 0.5 => start.clone(),
+            _ => end.clone(),
         }
     }
 }
@@ -191,8 +527,55 @@ impl Interpolator for Angle {
 }
 
 impl Interpolator for Transform {
-    fn interpolate(_start: &Self, end: &Self, _t: f32) -> Self {
-        end.clone()
+    fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        match (start, end) {
+            (Transform::Translate((sx, sy)), Transform::Translate((ex, ey))) => {
+                Transform::Translate((
+                    LengthOrPercentage::interpolate(sx, ex, t),
+                    LengthOrPercentage::interpolate(sy, ey, t),
+                ))
+            }
+            (Transform::TranslateX(start), Transform::TranslateX(end)) => {
+                Transform::TranslateX(LengthOrPercentage::interpolate(start, end, t))
+            }
+            (Transform::TranslateY(start), Transform::TranslateY(end)) => {
+                Transform::TranslateY(LengthOrPercentage::interpolate(start, end, t))
+            }
+            (Transform::Scale((sx, sy)), Transform::Scale((ex, ey))) => Transform::Scale((
+                PercentageOrNumber::interpolate(sx, ex, t),
+                PercentageOrNumber::interpolate(sy, ey, t),
+            )),
+            (Transform::ScaleX(start), Transform::ScaleX(end)) => {
+                Transform::ScaleX(PercentageOrNumber::interpolate(start, end, t))
+            }
+            (Transform::ScaleY(start), Transform::ScaleY(end)) => {
+                Transform::ScaleY(PercentageOrNumber::interpolate(start, end, t))
+            }
+            (Transform::Rotate(start), Transform::Rotate(end)) => {
+                Transform::Rotate(Angle::interpolate(start, end, t))
+            }
+            (Transform::Skew(sx, sy), Transform::Skew(ex, ey)) => {
+                Transform::Skew(Angle::interpolate(sx, ex, t), Angle::interpolate(sy, ey, t))
+            }
+            (Transform::SkewX(start), Transform::SkewX(end)) => {
+                Transform::SkewX(Angle::interpolate(start, end, t))
+            }
+            (Transform::SkewY(start), Transform::SkewY(end)) => {
+                Transform::SkewY(Angle::interpolate(start, end, t))
+            }
+            (Transform::Matrix(start), Transform::Matrix(end)) => {
+                Transform::Matrix(CssMatrix::new(
+                    f32::interpolate(&start.a, &end.a, t),
+                    f32::interpolate(&start.b, &end.b, t),
+                    f32::interpolate(&start.c, &end.c, t),
+                    f32::interpolate(&start.d, &end.d, t),
+                    f32::interpolate(&start.e, &end.e, t),
+                    f32::interpolate(&start.f, &end.f, t),
+                ))
+            }
+            _ if t < 0.5 => start.clone(),
+            _ => end.clone(),
+        }
     }
 }
 
@@ -231,6 +614,60 @@ impl Interpolator for ImageOrGradient {
             ) => ImageOrGradient::Gradient(Gradient::interpolate(gradient_start, gradient_end, t)),
             _ => end.clone(),
         }
+    }
+}
+
+#[cfg(test)]
+mod composition_tests {
+    use super::*;
+
+    #[test]
+    fn translate_add_composes_with_underlying_value() {
+        let base = Translate {
+            x: LengthOrPercentage::Length(Length::px(10.0)),
+            y: LengthOrPercentage::Length(Length::px(5.0)),
+        };
+        let effect = Translate {
+            x: LengthOrPercentage::Length(Length::px(20.0)),
+            y: LengthOrPercentage::Length(Length::px(7.0)),
+        };
+        let result = Translate::compose(&base, &effect, AnimationComposition::Add);
+        assert_eq!(result.x, LengthOrPercentage::Length(Length::px(30.0)));
+        assert_eq!(result.y, LengthOrPercentage::Length(Length::px(12.0)));
+    }
+
+    #[test]
+    fn transform_interpolates_compatible_translate_functions() {
+        let start = Transform::TranslateX(LengthOrPercentage::Length(Length::px(-100.0)));
+        let end = Transform::TranslateX(LengthOrPercentage::Length(Length::px(100.0)));
+        let mid = Transform::interpolate(&start, &end, 0.5);
+
+        let Transform::TranslateX(LengthOrPercentage::Length(Length::Value(LengthValue::Px(
+            value,
+        )))) = mid
+        else {
+            panic!("expected interpolated translateX");
+        };
+        assert!(value.abs() < 0.001);
+    }
+
+    #[test]
+    fn transform_add_concatenates_effect_lists_in_order() {
+        let base = vec![Transform::TranslateX(LengthOrPercentage::Length(Length::px(10.0)))];
+        let effect = vec![Transform::Rotate(Angle::Deg(45.0))];
+        let result = Vec::<Transform>::compose(&base, &effect, AnimationComposition::Add);
+        assert_eq!(result.len(), 2);
+        assert!(matches!(result[0], Transform::TranslateX(_)));
+        assert!(matches!(result[1], Transform::Rotate(_)));
+    }
+
+    #[test]
+    fn scale_accumulate_uses_property_specific_multiplication() {
+        let base = Scale::new(2.0, 3.0);
+        let effect = Scale::new(1.5, 0.5);
+        let result = Scale::compose(&base, &effect, AnimationComposition::Accumulate);
+        assert!((result.x.to_factor() - 3.0).abs() < 0.001);
+        assert!((result.y.to_factor() - 1.5).abs() < 0.001);
     }
 }
 

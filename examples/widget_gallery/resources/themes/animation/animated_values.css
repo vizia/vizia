@@ -1,0 +1,411 @@
+@keyframes doc-opacity { from { opacity: 0.15; } to { opacity: 1; } }
+.animation-doc-opacity { animation: doc-opacity 1400ms ease-in-out infinite alternate; }
+
+@keyframes doc-transform {
+    from { transform: translate(-90px, 0px) rotate(-25deg) scale(0.78, 0.78); }
+    to { transform: translate(90px, 0px) rotate(335deg) scale(1.08, 1.08); }
+}
+.animation-doc-transform { animation: doc-transform 1800ms ease-in-out infinite alternate; }
+
+@keyframes doc-transform-translate-only {
+    from { transform: translateX(-120px); }
+    to { transform: translateX(120px); }
+}
+@keyframes doc-transform-rotate-only {
+    from { transform: rotate(-35deg); }
+    to { transform: rotate(325deg); }
+}
+@keyframes doc-transform-combined {
+    from { transform: translate(-100px, 0px) rotate(-25deg) scale(0.78, 0.78); }
+    to { transform: translate(100px, 0px) rotate(335deg) scale(1.12, 1.12); }
+}
+.animation-doc-transform-translate-only {
+    background-color: #2563eb;
+    color: white;
+    animation: doc-transform-translate-only 1500ms ease-in-out infinite alternate;
+}
+.animation-doc-transform-rotate-only {
+    background-color: #7c3aed;
+    color: white;
+    animation: doc-transform-rotate-only 1800ms linear infinite;
+}
+.animation-doc-transform-combined {
+    background-color: #0f9d58;
+    color: white;
+    animation: doc-transform-combined 1800ms ease-in-out infinite alternate;
+}
+
+@keyframes doc-transform-origin {
+    from { transform-origin: 0% 50%; rotate: -35deg; }
+    to { transform-origin: 100% 50%; rotate: 35deg; }
+}
+.animation-doc-transform-origin { animation: doc-transform-origin 1600ms ease-in-out infinite alternate; }
+
+@keyframes doc-translate { from { translate: -110px 0px; } to { translate: 110px 0px; } }
+.animation-doc-translate { animation: doc-translate 1500ms ease-in-out infinite alternate; }
+
+@keyframes doc-rotate { from { rotate: -30deg; } to { rotate: 330deg; } }
+.animation-doc-rotate { animation: doc-rotate 1800ms linear infinite; }
+
+@keyframes doc-scale { from { scale: 0.65; } to { scale: 1.25; } }
+.animation-doc-scale { animation: doc-scale 1200ms ease-in-out infinite alternate; }
+
+@keyframes doc-clip { from { clip-path: inset(18px); } to { clip-path: inset(0px); } }
+.animation-doc-clip { animation: doc-clip 1400ms ease-in-out infinite alternate; }
+
+@keyframes doc-filter { 0%, 100% { filter: blur(0px); } 50% { filter: blur(10px); } }
+.animation-doc-filter { animation: doc-filter 1600ms ease-in-out infinite; }
+
+.animation-doc-backdrop-blob {
+    width: 150px;
+    height: 150px;
+    corner-radius: 50%;
+}
+
+@keyframes doc-backdrop-a-motion {
+    from { translate: -135px -55px; scale: 0.78; }
+    to { translate: 125px 48px; scale: 1.18; }
+}
+@keyframes doc-backdrop-b-motion {
+    from { translate: 125px -38px; scale: 1.12; }
+    to { translate: -120px 58px; scale: 0.74; }
+}
+@keyframes doc-backdrop-c-motion {
+    from { translate: -30px 80px; scale: 0.82; }
+    to { translate: 48px -84px; scale: 1.08; }
+}
+
+.animation-doc-backdrop-a {
+    background-color: #3b82f6;
+    animation: doc-backdrop-a-motion 1700ms ease-in-out infinite alternate;
+}
+.animation-doc-backdrop-b {
+    background-color: #f97316;
+    animation: doc-backdrop-b-motion 2100ms ease-in-out infinite alternate;
+}
+.animation-doc-backdrop-c {
+    background-color: #22c55e;
+    animation: doc-backdrop-c-motion 1900ms ease-in-out infinite alternate;
+}
+
+.animation-doc-backdrop-behind-text {
+    width: auto;
+    height: auto;
+    font-size: 30px;
+    font-weight: bold;
+    letter-spacing: 5px;
+    color: var(--foreground);
+}
+
+@keyframes doc-backdrop {
+    0%, 100% { backdrop-filter: blur(0px); }
+    50% { backdrop-filter: blur(16px); }
+}
+
+.animation-doc-backdrop-glass {
+    width: 300px;
+    height: 150px;
+    padding: 20px 24px;
+    gap: 8px;
+    alignment: center;
+    corner-radius: 16px;
+    background-color: #ffffff33;
+    border-width: 1px;
+    border-color: #88ffffff;
+    animation: doc-backdrop 1800ms ease-in-out infinite;
+}
+
+.animation-doc-backdrop-title {
+    width: 1s;
+    height: auto;
+    text-align: center;
+    font-weight: bold;
+    color: #111827;
+}
+.animation-doc-backdrop-copy {
+    width: 1s;
+    height: auto;
+    text-align: center;
+    font-size: 12px;
+    color: #374151;
+}
+
+@keyframes doc-background-color { from { background-color: #3b82f6; } to { background-color: #8b5cf6; } }
+.animation-doc-background-color { animation: doc-background-color 1500ms ease-in-out infinite alternate; }
+
+@keyframes doc-bg-position {
+    from { background-position: 0% 50%; }
+    to { background-position: 100% 50%; }
+}
+@keyframes doc-bg-size {
+    from { background-size: 30% 55%; }
+    to { background-size: 100% 100%; }
+}
+@keyframes doc-bg-repeat {
+    0%, 45% { background-repeat: no-repeat; }
+    55%, 100% { background-repeat: repeat; }
+}
+@keyframes doc-bg-all {
+    from {
+        background-position: 0% 50%;
+        background-size: 30% 55%;
+        background-repeat: no-repeat;
+    }
+    to {
+        background-position: 100% 50%;
+        background-size: 100% 100%;
+        background-repeat: repeat;
+    }
+}
+
+.animation-doc-bg-all,
+.animation-doc-bg-position,
+.animation-doc-bg-size,
+.animation-doc-bg-repeat {
+    background-image: url("vizia.png");
+    background-color: var(--background-alt);
+}
+.animation-doc-bg-all {
+    animation: doc-bg-all 1800ms ease-in-out infinite alternate;
+}
+.animation-doc-bg-position {
+    background-size: 48% 82%;
+    background-repeat: no-repeat;
+    animation: doc-bg-position 1600ms ease-in-out infinite alternate;
+}
+.animation-doc-bg-size {
+    background-position: 50% 50%;
+    background-repeat: no-repeat;
+    animation: doc-bg-size 1600ms ease-in-out infinite alternate;
+}
+.animation-doc-bg-repeat {
+    background-position: 50% 50%;
+    background-size: 56px 56px;
+    animation: doc-bg-repeat 1800ms steps(1, end) infinite alternate;
+}
+
+@keyframes doc-border-width-top { from { border-top-width: 2px; } to { border-top-width: 24px; } }
+@keyframes doc-border-width-right { from { border-right-width: 2px; } to { border-right-width: 24px; } }
+@keyframes doc-border-width-bottom { from { border-bottom-width: 2px; } to { border-bottom-width: 24px; } }
+@keyframes doc-border-width-left { from { border-left-width: 2px; } to { border-left-width: 24px; } }
+@keyframes doc-border-width-all {
+    from {
+        border-top-width: 2px; border-right-width: 2px;
+        border-bottom-width: 2px; border-left-width: 2px;
+    }
+    to {
+        border-top-width: 18px; border-right-width: 18px;
+        border-bottom-width: 18px; border-left-width: 18px;
+    }
+}
+
+.animation-doc-border-width-top,
+.animation-doc-border-width-right,
+.animation-doc-border-width-bottom,
+.animation-doc-border-width-left,
+.animation-doc-border-width-all {
+    border-style: solid;
+    border-width: 2px;
+    border-color: #3b82f6;
+    background-color: var(--background-alt);
+    color: var(--foreground);
+}
+.animation-doc-border-width-top { animation: doc-border-width-top 1400ms ease-in-out infinite alternate; }
+.animation-doc-border-width-right { animation: doc-border-width-right 1400ms ease-in-out infinite alternate; }
+.animation-doc-border-width-bottom { animation: doc-border-width-bottom 1400ms ease-in-out infinite alternate; }
+.animation-doc-border-width-left { animation: doc-border-width-left 1400ms ease-in-out infinite alternate; }
+.animation-doc-border-width-all { animation: doc-border-width-all 1400ms ease-in-out infinite alternate; }
+
+@keyframes doc-border-color-top { from { border-top-color: #3b82f6; } to { border-top-color: #f97316; } }
+@keyframes doc-border-color-right { from { border-right-color: #3b82f6; } to { border-right-color: #f43f5e; } }
+@keyframes doc-border-color-bottom { from { border-bottom-color: #22c55e; } to { border-bottom-color: #a855f7; } }
+@keyframes doc-border-color-left { from { border-left-color: #06b6d4; } to { border-left-color: #eab308; } }
+@keyframes doc-border-color-all {
+    from {
+        border-top-color: #3b82f6; border-right-color: #3b82f6;
+        border-bottom-color: #3b82f6; border-left-color: #3b82f6;
+    }
+    to {
+        border-top-color: #f43f5e; border-right-color: #f43f5e;
+        border-bottom-color: #f43f5e; border-left-color: #f43f5e;
+    }
+}
+
+.animation-doc-border-color-top,
+.animation-doc-border-color-right,
+.animation-doc-border-color-bottom,
+.animation-doc-border-color-left,
+.animation-doc-border-color-all {
+    border-style: solid;
+    border-width: 12px;
+    border-color: #475569;
+    background-color: var(--background-alt);
+    color: var(--foreground);
+}
+.animation-doc-border-color-top { animation: doc-border-color-top 1300ms ease-in-out infinite alternate; }
+.animation-doc-border-color-right { animation: doc-border-color-right 1300ms ease-in-out infinite alternate; }
+.animation-doc-border-color-bottom { animation: doc-border-color-bottom 1300ms ease-in-out infinite alternate; }
+.animation-doc-border-color-left { animation: doc-border-color-left 1300ms ease-in-out infinite alternate; }
+.animation-doc-border-color-all { animation: doc-border-color-all 1300ms ease-in-out infinite alternate; }
+
+@keyframes doc-radius-tl { from { corner-top-left-radius: 4px; } to { corner-top-left-radius: 90px; } }
+@keyframes doc-radius-tr { from { corner-top-right-radius: 4px; } to { corner-top-right-radius: 90px; } }
+@keyframes doc-radius-bl { from { corner-bottom-left-radius: 4px; } to { corner-bottom-left-radius: 90px; } }
+@keyframes doc-radius-br { from { corner-bottom-right-radius: 4px; } to { corner-bottom-right-radius: 90px; } }
+@keyframes doc-radius-all {
+    from {
+        corner-top-left-radius: 6px; corner-top-right-radius: 6px;
+        corner-bottom-left-radius: 6px; corner-bottom-right-radius: 6px;
+    }
+    to {
+        corner-top-left-radius: 72px; corner-top-right-radius: 72px;
+        corner-bottom-left-radius: 72px; corner-bottom-right-radius: 72px;
+    }
+}
+
+.animation-doc-radius-tl,
+.animation-doc-radius-tr,
+.animation-doc-radius-bl,
+.animation-doc-radius-br,
+.animation-doc-radius-all {
+    background-color: #2563eb;
+    border-width: 0px;
+    color: white;
+}
+.animation-doc-radius-tl { animation: doc-radius-tl 1400ms ease-in-out infinite alternate; }
+.animation-doc-radius-tr { animation: doc-radius-tr 1400ms ease-in-out infinite alternate; }
+.animation-doc-radius-bl { animation: doc-radius-bl 1400ms ease-in-out infinite alternate; }
+.animation-doc-radius-br { animation: doc-radius-br 1400ms ease-in-out infinite alternate; }
+.animation-doc-radius-all { animation: doc-radius-all 1400ms ease-in-out infinite alternate; }
+
+@keyframes doc-outline {
+    from { outline-width: 1px; outline-color: #3b82f6; outline-offset: 1px; }
+    to { outline-width: 6px; outline-color: #a855f7; outline-offset: 8px; }
+}
+.animation-doc-outline { animation: doc-outline 1600ms ease-in-out infinite alternate; }
+
+@keyframes doc-shadow {
+    from { shadow: 0px 4px 10px #553b82f6; }
+    to { shadow: 0px 22px 46px #998b5cf6; }
+}
+.animation-doc-shadow {
+    background-color: var(--card);
+    border-color: #663b82f6;
+    animation: doc-shadow 1500ms ease-in-out infinite alternate;
+}
+
+@keyframes doc-text-color { from { color: #3b82f6; } to { color: #f43f5e; } }
+.animation-doc-text-color {
+    background-color: var(--background-alt);
+    color: var(--foreground);
+    animation: doc-text-color 1200ms ease-in-out infinite alternate;
+}
+
+@keyframes doc-font-size { from { font-size: 20px; } to { font-size: 42px; } }
+.animation-doc-font-size {
+    background-color: var(--background-alt);
+    color: var(--foreground);
+    alignment: top-center;
+    animation: doc-font-size 1600ms ease-in-out infinite alternate;
+}
+
+@keyframes doc-letter-spacing { from { letter-spacing: 0px; } to { letter-spacing: 8px; } }
+.animation-doc-letter-spacing {
+    background-color: var(--background-alt);
+    color: var(--foreground);
+    animation: doc-letter-spacing 1500ms ease-in-out infinite alternate;
+}
+
+@keyframes doc-line-height { from { line-height: 1; } to { line-height: 1.8; } }
+.animation-doc-line-height {
+    width: 300px;
+    min-width: 300px;
+    height: 180px;
+    min-height: 180px;
+    padding: 32px 40px;
+    alignment: top-center;
+    corner-radius: 10px;
+    background-color: var(--background-alt);
+    color: var(--foreground);
+    font-size: 24px;
+    text-align: center;
+    animation: doc-line-height 1500ms ease-in-out infinite alternate;
+}
+
+@keyframes doc-text-paint {
+    from { caret-color: #3b82f6; selection-color: #3b82f666; text-decoration-color: #3b82f6; }
+    to { caret-color: #f43f5e; selection-color: #f43f5e66; text-decoration-color: #f43f5e; }
+}
+.animation-doc-text-paint {
+    text-decoration-line: underline;
+    animation: doc-text-paint 1400ms ease-in-out infinite alternate;
+}
+
+@keyframes doc-fill { from { fill: #3b82f6; } to { fill: #22c55e; } }
+.animation-doc-fill-icon {
+    width: 120px;
+    height: 120px;
+    fill: #3b82f6;
+    animation: doc-fill 1400ms ease-in-out infinite alternate;
+}
+
+@keyframes doc-position { from { left: 20px; top: 24px; } to { left: 220px; top: 150px; } }
+.animation-doc-position {
+    position-type: absolute;
+    width: 52px;
+    height: 52px;
+    corner-radius: 8px;
+    background-color: var(--primary);
+    animation: doc-position 1800ms ease-in-out infinite alternate;
+}
+
+@keyframes doc-padding {
+    from { padding-left: 8px; padding-right: 8px; padding-top: 8px; padding-bottom: 8px; }
+    to { padding-left: 56px; padding-right: 56px; padding-top: 56px; padding-bottom: 56px; }
+}
+.animation-doc-padding { animation: doc-padding 1500ms ease-in-out infinite alternate; }
+
+@keyframes doc-gap { from { horizontal-gap: 6px; } to { horizontal-gap: 44px; } }
+.animation-doc-gap-stage { animation: doc-gap 1500ms ease-in-out infinite alternate; }
+.animation-doc-gap-item {
+    width: 44px;
+    height: 44px;
+    corner-radius: 6px;
+    background-color: var(--primary);
+}
+
+@keyframes doc-size { from { width: 120px; height: 90px; } to { width: 280px; height: 170px; } }
+.animation-doc-size { animation: doc-size 1600ms steps(8, end) infinite alternate; }
+
+@keyframes doc-constraints { from { min-width: 120px; max-width: 170px; } to { min-width: 220px; max-width: 320px; } }
+.animation-doc-constraints { width: 1s; animation: doc-constraints 1600ms steps(8, end) infinite alternate; }
+
+@keyframes doc-display { 0%, 64% { display: flex; } 65%, 100% { display: none; } }
+.animation-doc-display {
+    width: auto;
+    height: auto;
+    min-width: 190px;
+    min-height: 92px;
+    padding: 22px 30px;
+    alignment: center;
+    corner-radius: 10px;
+    background-color: #2563eb;
+    color: white;
+    animation: doc-display 2400ms linear infinite;
+}
+
+@keyframes doc-custom-properties {
+    from {
+        --doc-custom-color: #3b82f6;
+        --doc-custom-width: 150px;
+        --doc-custom-opacity: 0.45;
+    }
+    to {
+        --doc-custom-color: #a855f7;
+        --doc-custom-width: 300px;
+        --doc-custom-opacity: 1;
+    }
+}
+
+.animation-doc-static-title { width: auto; height: auto; font-weight: bold; }
+.animation-doc-static-copy { width: 70%; height: auto; color: var(--muted-foreground); text-align: center; text-wrap: true; }

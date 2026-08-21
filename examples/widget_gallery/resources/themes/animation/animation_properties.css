@@ -1,0 +1,54 @@
+@keyframes doc-motion {
+    from { translate: -118px 0px; opacity: 0.42; scale: 0.82; }
+    to { translate: 118px 0px; opacity: 1; scale: 1.08; }
+}
+
+@keyframes doc-x {
+    from { translate: -105px 0px; }
+    to { translate: 105px 0px; }
+}
+
+@keyframes doc-y {
+    from { translate: 0px -54px; }
+    to { translate: 0px 54px; }
+}
+
+@keyframes doc-color {
+    from { background-color: #3b82f6; corner-radius: 6px; }
+    to { background-color: #8b5cf6; corner-radius: 26px; }
+}
+
+@keyframes doc-settle {
+    from { translate: -90px 0px; opacity: 0.35; }
+    to { translate: 90px 0px; opacity: 1; }
+}
+
+@keyframes doc-percentage {
+    0% { translate: -120px 0px; }
+    35% { translate: -20px -35px; }
+    70% { translate: 80px 24px; }
+    100% { translate: 120px 0px; }
+}
+
+.animation-doc-motion { animation: doc-motion 1600ms ease-in-out -300ms infinite alternate both running; }
+.animation-doc-duration { animation: doc-motion 3500ms ease-in-out 0s infinite alternate both running; }
+.animation-doc-delay { animation: doc-motion 1600ms ease-in-out -800ms infinite alternate both running; }
+.animation-doc-steps { animation: doc-motion 1800ms steps(6, end) 0s infinite alternate both running; }
+.animation-doc-iterations { animation: doc-motion 900ms ease-in-out 0s 3 normal forwards running; }
+.animation-doc-direction { animation: doc-motion 1400ms ease-in-out 0s infinite alternate-reverse both running; }
+.animation-doc-percentage { animation: doc-percentage 1800ms ease-in-out 0s infinite alternate both running; }
+.animation-doc-fill-mode { animation: doc-settle 900ms ease-out 0s 1 normal forwards running; }
+.animation-doc-paused { animation: doc-motion 1600ms ease-in-out -800ms infinite alternate both paused; }
+.animation-doc-composition {
+    animation: doc-x 1800ms ease-in-out 0s infinite alternate both running,
+               doc-y 1100ms ease-in-out 0s infinite alternate both running;
+    animation-composition: add, add;
+}
+.animation-doc-document {
+    animation: doc-motion 2000ms linear 0s infinite alternate both running;
+    animation-timeline: auto;
+}
+.animation-doc-multiple {
+    animation: doc-motion 1600ms ease-in-out 0s infinite alternate both running,
+               doc-color 2400ms linear 0s infinite alternate both running;
+}

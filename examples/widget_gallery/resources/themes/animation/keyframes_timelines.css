@@ -1,0 +1,53 @@
+.animation-doc-scrollview {
+    width: 1s;
+    height: 330px;
+    min-height: 330px;
+    background-color: var(--background);
+}
+
+.animation-doc-scroll-content {
+    width: 1s;
+    height: auto;
+    min-height: 920px;
+    alignment: top-center;
+    gap: 12px;
+    padding: 18px;
+}
+
+.animation-doc-hint {
+    width: 1s;
+    height: auto;
+    color: var(--muted-foreground);
+    font-size: 12px;
+    text-align: center;
+}
+
+.animation-doc-scroll-spacer { width: 1s; height: 270px; }
+.animation-doc-view-spacer { width: 1s; height: 230px; }
+
+.animation-doc-scroll-subject,
+.animation-doc-view-subject {
+    width: auto;
+    height: auto;
+    padding: 16px 20px;
+    alignment: center;
+    corner-radius: 7px;
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    font-weight: bold;
+}
+
+@keyframes doc-scroll-reveal {
+    from { translate: -180px 0px; opacity: 0.2; scale: 0.78; rotate: -12deg; }
+    to { translate: 180px 0px; opacity: 1; scale: 1.08; rotate: 12deg; }
+}
+
+.animation-doc-scroll-subject {
+    animation: doc-scroll-reveal 1s linear both;
+    animation-timeline: --docs-scroll;
+}
+
+.animation-doc-view-subject {
+    animation: doc-scroll-reveal 1s linear both;
+    animation-timeline: view(block);
+}
