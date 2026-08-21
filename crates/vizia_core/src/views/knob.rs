@@ -460,7 +460,7 @@ impl View for Ticks {
 
         match self.mode {
             // can't really make ticks for a continuous knob
-            KnobMode::Continuous => return,
+            KnobMode::Continuous => (),
             KnobMode::Discrete(steps) => {
                 for n in 0..steps {
                     let a = n as f32 / (steps - 1) as f32;
