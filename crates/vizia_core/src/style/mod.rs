@@ -74,14 +74,14 @@ use crate::storage::animatable_var_set::AnimatableVarSet;
 
 pub use vizia_style::{
     Alignment, Angle, AspectRatio, BackgroundImage, BackgroundRepeat, BackgroundSize,
-    BorderStyleKeyword, ClipPath, Color, CornerShape, CssRule, CursorIcon, Direction, Display,
-    Filter, FontFamily, FontSize, FontSizeKeyword, FontSlant, FontVariation, FontWeight,
-    FontWeightKeyword, FontWidth, GenericFontFamily, Gradient, HorizontalPosition,
-    HorizontalPositionKeyword, LayoutWrap, Length, LengthOrPercentage, LengthValue, LetterSpacing,
-    LineClamp, LineDirection, LineHeight, LinearGradient, Matrix, Opacity, Overflow, PointerEvents,
-    Position, PositionType, RGBA, Scale, Shadow, TextAlign, TextDecorationLine,
-    TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform, Transition,
-    Translate, VerticalPosition, VerticalPositionKeyword, Visibility,
+    BorderStyleKeyword, ClipPath, Color, CssRule, CursorIcon, Direction, Display, Filter,
+    FontFamily, FontSize, FontSizeKeyword, FontSlant, FontVariation, FontWeight, FontWeightKeyword,
+    FontWidth, GenericFontFamily, Gradient, HorizontalPosition, HorizontalPositionKeyword,
+    LayoutWrap, Length, LengthOrPercentage, LengthValue, LetterSpacing, LineClamp, LineDirection,
+    LineHeight, LinearGradient, Matrix, Opacity, Overflow, PointerEvents, Position, PositionType,
+    RGBA, Scale, Shadow, TextAlign, TextDecorationLine, TextDecorationStyle, TextOverflow,
+    TextStroke, TextStrokeStyle, Transform, Transition, Translate, VerticalPosition,
+    VerticalPositionKeyword, Visibility,
 };
 
 use cssparser::Token as CssToken;
@@ -287,23 +287,11 @@ pub struct Style {
     pub(crate) border_bottom_style: StyleSet<BorderStyleKeyword>,
     pub(crate) border_left_style: StyleSet<BorderStyleKeyword>,
 
-    // Corner Shape
-    pub(crate) corner_top_left_shape: StyleSet<CornerShape>,
-    pub(crate) corner_top_right_shape: StyleSet<CornerShape>,
-    pub(crate) corner_bottom_left_shape: StyleSet<CornerShape>,
-    pub(crate) corner_bottom_right_shape: StyleSet<CornerShape>,
-
     // Corner Radius
     pub(crate) corner_top_left_radius: AnimatableVarSet<LengthOrPercentage>,
     pub(crate) corner_top_right_radius: AnimatableVarSet<LengthOrPercentage>,
     pub(crate) corner_bottom_left_radius: AnimatableVarSet<LengthOrPercentage>,
     pub(crate) corner_bottom_right_radius: AnimatableVarSet<LengthOrPercentage>,
-
-    // Corner Smoothing
-    pub(crate) corner_top_left_smoothing: AnimatableSet<f32>,
-    pub(crate) corner_top_right_smoothing: AnimatableSet<f32>,
-    pub(crate) corner_bottom_left_smoothing: AnimatableSet<f32>,
-    pub(crate) corner_bottom_right_smoothing: AnimatableSet<f32>,
 
     // Outline
     pub(crate) outline_width: AnimatableVarSet<LengthOrPercentage>,
@@ -2320,30 +2308,6 @@ impl Style {
                 self.corner_top_right_radius.insert_rule(rule_id, corner_radius);
             }
 
-            // Corner Shape
-            Property::CornerShape(corner_shape) => {
-                self.corner_top_left_shape.insert_rule(rule_id, corner_shape.0);
-                self.corner_top_right_shape.insert_rule(rule_id, corner_shape.1);
-                self.corner_bottom_right_shape.insert_rule(rule_id, corner_shape.2);
-                self.corner_bottom_left_shape.insert_rule(rule_id, corner_shape.3);
-            }
-
-            Property::CornerTopLeftShape(corner_shape) => {
-                self.corner_top_left_shape.insert_rule(rule_id, corner_shape);
-            }
-
-            Property::CornerTopRightShape(corner_shape) => {
-                self.corner_top_right_shape.insert_rule(rule_id, corner_shape);
-            }
-
-            Property::CornerBottomLeftShape(corner_shape) => {
-                self.corner_bottom_left_shape.insert_rule(rule_id, corner_shape);
-            }
-
-            Property::CornerBottomRightShape(corner_shape) => {
-                self.corner_bottom_right_shape.insert_rule(rule_id, corner_shape);
-            }
-
             // Font Family
             Property::FontFamily(font_family) => {
                 self.font_family.insert_rule(
@@ -3231,23 +3195,11 @@ impl Style {
         self.border_bottom_style.remove(entity);
         self.border_left_style.remove(entity);
 
-        // Corner Shape
-        self.corner_bottom_left_shape.remove(entity);
-        self.corner_bottom_right_shape.remove(entity);
-        self.corner_top_left_shape.remove(entity);
-        self.corner_top_right_shape.remove(entity);
-
         // Corner Radius
         self.corner_bottom_left_radius.remove(entity);
         self.corner_bottom_right_radius.remove(entity);
         self.corner_top_left_radius.remove(entity);
         self.corner_top_right_radius.remove(entity);
-
-        // Corner Smoothing
-        self.corner_bottom_left_smoothing.remove(entity);
-        self.corner_bottom_right_smoothing.remove(entity);
-        self.corner_top_left_smoothing.remove(entity);
-        self.corner_top_right_smoothing.remove(entity);
 
         // Outline
         self.outline_width.remove(entity);
@@ -3455,23 +3407,11 @@ impl Style {
         self.border_bottom_style.clear_rules();
         self.border_left_style.clear_rules();
 
-        // Corner Shape
-        self.corner_bottom_left_shape.clear_rules();
-        self.corner_bottom_right_shape.clear_rules();
-        self.corner_top_left_shape.clear_rules();
-        self.corner_top_right_shape.clear_rules();
-
         // Corner Radius
         self.corner_bottom_left_radius.clear_rules();
         self.corner_bottom_right_radius.clear_rules();
         self.corner_top_left_radius.clear_rules();
         self.corner_top_right_radius.clear_rules();
-
-        // Corner Smoothing
-        self.corner_bottom_left_smoothing.clear_rules();
-        self.corner_bottom_right_smoothing.clear_rules();
-        self.corner_top_left_smoothing.clear_rules();
-        self.corner_top_right_smoothing.clear_rules();
 
         // Outline
         self.outline_width.clear_rules();

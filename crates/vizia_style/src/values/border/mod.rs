@@ -1,5 +1,4 @@
 pub mod border_color;
-pub mod border_corner_shape;
 pub mod border_radius;
 pub mod border_shorthand;
 pub mod border_style;
@@ -9,7 +8,6 @@ pub mod border_width_keyword;
 pub mod border_width_value;
 
 pub use border_color::*;
-pub use border_corner_shape::*;
 pub use border_radius::*;
 pub use border_shorthand::*;
 pub use border_style::*;

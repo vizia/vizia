@@ -1,13 +1,12 @@
 use crate::{
     Alignment, Angle, AspectRatio, BackgroundImage, BackgroundRepeat, BackgroundSize, BlendMode,
     Border, BorderStyle, BorderStyleKeyword, BorderWidth, BorderWidthValue, ClipPath, Color,
-    CornerRadius, CornerShape, CursorIcon, CustomParseError, CustomProperty, Direction, Display,
-    Filter, FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWidth, LayoutType,
-    LayoutWrap, Length, LengthOrPercentage, LetterSpacing, LineClamp, LineHeight, Opacity, Outline,
-    Overflow, Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign,
-    TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
-    TextStrokeStyle, Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
-    define_property,
+    CornerRadius, CursorIcon, CustomParseError, CustomProperty, Direction, Display, Filter,
+    FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWidth, LayoutType, LayoutWrap,
+    Length, LengthOrPercentage, LetterSpacing, LineClamp, LineHeight, Opacity, Outline, Overflow,
+    Parse, PointerEvents, Position, PositionType, Scale, Shadow, TextAlign, TextDecoration,
+    TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
+    Transition, Translate, Units, UnparsedProperty, Visibility, define_property,
 };
 use cssparser::Parser;
 
@@ -94,13 +93,6 @@ define_property! {
         "border-right-color": BorderRightColor(Color),
         "border-bottom-color": BorderBottomColor(Color),
         "border-left-color": BorderLeftColor(Color),
-
-        // Corner Shape
-        "corner-shape": CornerShape(Rect<CornerShape>),
-        "corner-top-left-shape": CornerTopLeftShape(CornerShape),
-        "corner-top-right-shape": CornerTopRightShape(CornerShape),
-        "corner-bottom-left-shape": CornerBottomLeftShape(CornerShape),
-        "corner-bottom-right-shape": CornerBottomRightShape(CornerShape),
 
         // Corner Radius
         "corner-radius": CornerRadius(CornerRadius),

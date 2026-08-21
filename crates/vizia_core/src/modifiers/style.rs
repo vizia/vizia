@@ -1,4 +1,4 @@
-use vizia_style::{ColorStop, CornerRadius, Rect};
+use vizia_style::{ColorStop, CornerRadius};
 
 use super::internal;
 use crate::prelude::*;
@@ -684,106 +684,6 @@ pub trait StyleModifiers: internal::Modifiable {
                 cx.style.corner_top_right_radius.insert(entity, value.top_right);
                 cx.style.corner_bottom_left_radius.insert(entity, value.bottom_left);
                 cx.style.corner_bottom_right_radius.insert(entity, value.bottom_right);
-
-                cx.needs_redraw(entity);
-            });
-        });
-
-        self
-    }
-
-    modifier!(
-        /// Sets the corner corner shape for the top-left corner of the view.
-        corner_top_left_shape,
-        CornerShape,
-        SystemFlags::REDRAW
-    );
-
-    modifier!(
-        /// Sets the corner corner shape for the top-right corner of the view.
-        corner_top_right_shape,
-        CornerShape,
-        SystemFlags::REDRAW
-    );
-
-    modifier!(
-        /// Sets the corner corner shape for the bottom-left corner of the view.
-        corner_bottom_left_shape,
-        CornerShape,
-        SystemFlags::REDRAW
-    );
-
-    modifier!(
-        /// Sets the corner corner shape for the bottom-right corner of the view.
-        corner_bottom_right_shape,
-        CornerShape,
-        SystemFlags::REDRAW
-    );
-
-    /// Sets the corner shape for all four corners of the view.
-    fn corner_shape<U: std::fmt::Debug + Into<Rect<CornerShape>>>(
-        mut self,
-        value: impl Res<U>,
-    ) -> Self {
-        let entity = self.entity();
-        let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, move |cx, v| {
-                let value = v.get_value(cx).into();
-                cx.style.corner_top_left_shape.insert(entity, value.0);
-                cx.style.corner_top_right_shape.insert(entity, value.1);
-                cx.style.corner_bottom_right_shape.insert(entity, value.2);
-                cx.style.corner_bottom_left_shape.insert(entity, value.3);
-
-                cx.needs_redraw(entity);
-            });
-        });
-
-        self
-    }
-
-    modifier!(
-        /// Sets the corner smoothing for the top-left corner of the view.
-        corner_top_left_smoothing,
-        f32,
-        SystemFlags::REDRAW
-    );
-
-    modifier!(
-        /// Sets the corner smoothing for the top-right corner of the view.
-        corner_top_right_smoothing,
-        f32,
-        SystemFlags::REDRAW
-    );
-
-    modifier!(
-        /// Sets the corner smoothing for the bottom-left corner of the view.
-        corner_bottom_left_smoothing,
-        f32,
-        SystemFlags::REDRAW
-    );
-
-    modifier!(
-        /// Sets the corner smoothing for the bottom-right corner of the view.
-        corner_bottom_right_smoothing,
-        f32,
-        SystemFlags::REDRAW
-    );
-
-    /// Sets the corner smoothing for all four corners of the view.
-    fn corner_smoothing<U: std::fmt::Debug + Into<Rect<f32>>>(
-        mut self,
-        value: impl Res<U>,
-    ) -> Self {
-        let entity = self.entity();
-        let current = self.current();
-        self.context().with_current(current, |cx| {
-            value.set_or_bind(cx, move |cx, v| {
-                let value = v.get_value(cx).into();
-                cx.style.corner_top_left_smoothing.insert(entity, value.0);
-                cx.style.corner_top_right_smoothing.insert(entity, value.1);
-                cx.style.corner_bottom_left_smoothing.insert(entity, value.2);
-                cx.style.corner_bottom_right_smoothing.insert(entity, value.3);
 
                 cx.needs_redraw(entity);
             });
