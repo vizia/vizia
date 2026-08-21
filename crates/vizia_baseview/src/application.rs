@@ -90,6 +90,13 @@ where
         self
     }
 
+    /// Sets the maximum number of bytes Skia may use for cached GPU resources.
+    pub fn skia_resource_cache_limit(mut self, limit: usize) -> Self {
+        self.window_description.skia_resource_cache_limit = limit;
+
+        self
+    }
+
     /// Open a new window that blocks the current thread until the window is destroyed.
     ///
     /// Do **not** use this in the context of audio plugins, unless it is compiled as a

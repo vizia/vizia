@@ -73,6 +73,7 @@ impl ViziaWindow {
 
         let mut gr_context = skia_safe::gpu::direct_contexts::make_gl(interface, &context_options)
             .expect("Could not create direct context");
+        gr_context.set_resource_cache_limit(win_desc.skia_resource_cache_limit);
 
         let fb_info = {
             let mut fboid: GLint = 0;

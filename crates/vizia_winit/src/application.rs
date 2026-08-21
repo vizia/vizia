@@ -201,7 +201,13 @@ impl Application {
         #[allow(unused_mut)]
         let mut window_attributes = apply_window_description(window_description);
 
-        let window_state = WinState::new(event_loop, window_entity, window_attributes, owner)?;
+        let window_state = WinState::new(
+            event_loop,
+            window_entity,
+            window_attributes,
+            window_description.skia_resource_cache_limit,
+            owner,
+        )?;
         let window = window_state.window.clone();
 
         if let Some(position) = window_description.position {
@@ -1098,6 +1104,12 @@ impl WindowModifiers for Application {
 
     fn vsync(mut self, flag: bool) -> Self {
         self.window_description.vsync = flag;
+
+        self
+    }
+
+    fn skia_resource_cache_limit(mut self, limit: usize) -> Self {
+        self.window_description.skia_resource_cache_limit = limit;
 
         self
     }

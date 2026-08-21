@@ -108,6 +108,8 @@ pub struct WindowDescription {
     pub inner_size: WindowSize,
     pub min_inner_size: Option<WindowSize>,
     pub max_inner_size: Option<WindowSize>,
+    /// The maximum number of bytes Skia may use for cached GPU resources.
+    pub skia_resource_cache_limit: usize,
     /// A scale factor applied on top of any DPI scaling, defaults to 1.0.
     pub user_scale_factor: f64,
     pub position: Option<WindowPosition>,
@@ -138,6 +140,7 @@ impl Default for WindowDescription {
             inner_size: WindowSize::new(800, 600),
             min_inner_size: Some(WindowSize::new(100, 100)),
             max_inner_size: None,
+            skia_resource_cache_limit: 128 * 1024 * 1024,
             user_scale_factor: 1.0,
             position: None,
             offset: None,
@@ -174,6 +177,13 @@ impl WindowDescription {
 
     pub fn with_vsync(mut self, vsync: bool) -> Self {
         self.vsync = vsync;
+
+        self
+    }
+
+    /// Sets the maximum number of bytes Skia may use for cached GPU resources.
+    pub fn with_skia_resource_cache_limit(mut self, limit: usize) -> Self {
+        self.skia_resource_cache_limit = limit;
 
         self
     }

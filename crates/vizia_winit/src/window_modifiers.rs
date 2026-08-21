@@ -190,6 +190,8 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn vsync(self, flag: bool) -> Self;
+    /// Sets the maximum number of bytes Skia may use for cached GPU resources.
+    fn skia_resource_cache_limit(self, limit: usize) -> Self;
     /// Sets the icon used for the window.
     ///
     /// # Example
