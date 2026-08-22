@@ -1,4 +1,5 @@
 use std::ops::Range;
+use std::time::Duration;
 
 use crate::prelude::*;
 use accesskit::ActionData;
@@ -10,6 +11,9 @@ pub(crate) enum SliderEvent {
     SetMin,
     SetMax,
     ResetDefault,
+    StartTrackHold,
+    EndTrackHold,
+    TrackHoldRepeat,
 }
 
 /// The slider control can be used to select from a continuous set of values.
@@ -60,6 +64,14 @@ pub(crate) enum SliderEvent {
 pub struct Slider<S> {
     value: S,
     is_dragging: bool,
+    /// Whether the track hold step feature is enabled.
+    track_hold_enabled: bool,
+    /// The target value while the track hold feature is active.
+    track_hold_target_value: Option<f32>,
+    /// The timer used to wait for the initial hold threshold.
+    track_hold_delay_timer: Timer,
+    /// The timer used to step the value every 100ms after hold activation.
+    track_hold_repeat_timer: Timer,
     /// The orientation of the slider.
     orientation: Signal<Orientation>,
     /// The range of the slider.
@@ -98,117 +110,209 @@ where
         let step = Signal::new(0.01);
         let default_value = Signal::new(value.get());
 
-        Self { value, is_dragging: false, orientation, range, step, default_value, on_change: None }
-            .build(cx, move |cx| {
-                Keymap::from(vec![
-                    (
-                        KeyChord::new(Modifiers::empty(), Code::ArrowUp),
-                        KeymapEntry::new("Increment", |cx| cx.emit(SliderEvent::Increment)),
-                    ),
-                    (
-                        KeyChord::new(Modifiers::empty(), Code::ArrowRight),
-                        KeymapEntry::new("Increment", |cx| cx.emit(SliderEvent::Increment)),
-                    ),
-                    (
-                        KeyChord::new(Modifiers::empty(), Code::ArrowDown),
-                        KeymapEntry::new("Decrement", |cx| cx.emit(SliderEvent::Decrement)),
-                    ),
-                    (
-                        KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
-                        KeymapEntry::new("Decrement", |cx| cx.emit(SliderEvent::Decrement)),
-                    ),
-                    (
-                        KeyChord::new(Modifiers::empty(), Code::Home),
-                        KeymapEntry::new("Set Min", |cx| cx.emit(SliderEvent::SetMin)),
-                    ),
-                    (
-                        KeyChord::new(Modifiers::empty(), Code::End),
-                        KeymapEntry::new("Set Max", |cx| cx.emit(SliderEvent::SetMax)),
-                    ),
-                ])
-                .build(cx);
+        let track_hold_delay_timer = cx.add_timer(
+            Duration::from_millis(500),
+            Some(Duration::from_millis(500)),
+            |cx, action| match action {
+                TimerAction::Start => {
+                    cx.emit(SliderEvent::StartTrackHold);
+                }
+                TimerAction::Stop => {
+                    cx.emit(SliderEvent::EndTrackHold);
+                }
+                _ => {}
+            },
+        );
+        let track_hold_repeat_timer =
+            cx.add_timer(Duration::from_millis(100), None, |cx, action| {
+                if matches!(action, TimerAction::Tick(_)) {
+                    cx.emit(SliderEvent::TrackHoldRepeat);
+                }
+            });
 
-                // Track
-                HStack::new(cx, move |cx| {
-                    let active_normalized = Memo::new(move |_| {
-                        let active_range = range.get();
-                        let val = value.get().clamp(active_range.start, active_range.end);
-                        (val - active_range.start) / (active_range.end - active_range.start)
-                    });
+        Self {
+            value,
+            is_dragging: false,
+            track_hold_enabled: false,
+            track_hold_target_value: None,
+            track_hold_delay_timer,
+            track_hold_repeat_timer,
+            orientation,
+            range,
+            step,
+            default_value,
+            on_change: None,
+        }
+        .build(cx, move |cx| {
+            Keymap::from(vec![
+                (
+                    KeyChord::new(Modifiers::empty(), Code::ArrowUp),
+                    KeymapEntry::new("Increment", |cx| cx.emit(SliderEvent::Increment)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::ArrowRight),
+                    KeymapEntry::new("Increment", |cx| cx.emit(SliderEvent::Increment)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::ArrowDown),
+                    KeymapEntry::new("Decrement", |cx| cx.emit(SliderEvent::Decrement)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::ArrowLeft),
+                    KeymapEntry::new("Decrement", |cx| cx.emit(SliderEvent::Decrement)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::Home),
+                    KeymapEntry::new("Set Min", |cx| cx.emit(SliderEvent::SetMin)),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::End),
+                    KeymapEntry::new("Set Max", |cx| cx.emit(SliderEvent::SetMax)),
+                ),
+            ])
+            .build(cx);
 
-                    let active_width = Memo::new(move |_| {
-                        let normal_val = active_normalized.get();
+            // Track
+            HStack::new(cx, move |cx| {
+                let active_normalized = Memo::new(move |_| {
+                    let active_range = range.get();
+                    let val = value.get().clamp(active_range.start, active_range.end);
+                    (val - active_range.start) / (active_range.end - active_range.start)
+                });
+
+                let active_width = Memo::new(move |_| {
+                    let normal_val = active_normalized.get();
+                    if orientation.get() == Orientation::Horizontal {
+                        Percentage(normal_val * 100.0)
+                    } else {
+                        Stretch(1.0)
+                    }
+                });
+
+                let active_height = Memo::new(move |_| {
+                    let normal_val = active_normalized.get();
+                    if orientation.get() == Orientation::Horizontal {
+                        Stretch(1.0)
+                    } else {
+                        Percentage(normal_val * 100.0)
+                    }
+                });
+
+                // Range track
+                VStack::new(cx, move |cx| {
+                    let dir = cx.environment().direction;
+
+                    let thumb_translate: Memo<Translate> = Memo::new(move |_| {
+                        let thumb_range = range.get();
+                        let val = value.get().clamp(thumb_range.start, thumb_range.end);
+                        let normal_val =
+                            (val - thumb_range.start) / (thumb_range.end - thumb_range.start);
+                        // Todo: Find a way to react to local direction rather than global direction.
+                        // Currently not possible because local direction is a style property
+                        // that gets resolved after bindings.
+                        // Ideally we need a way to do the translation in css which means changing
+                        // a css variable in rust code that gets used in the stylesheet to do the translation
+                        // rather than doing it here in code.
+                        let is_rtl = dir.get() == Direction::RightToLeft;
                         if orientation.get() == Orientation::Horizontal {
-                            Percentage(normal_val * 100.0)
-                        } else {
-                            Stretch(1.0)
-                        }
-                    });
-
-                    let active_height = Memo::new(move |_| {
-                        let normal_val = active_normalized.get();
-                        if orientation.get() == Orientation::Horizontal {
-                            Stretch(1.0)
-                        } else {
-                            Percentage(normal_val * 100.0)
-                        }
-                    });
-
-                    // Range track
-                    VStack::new(cx, move |cx| {
-                        let dir = cx.environment().direction;
-
-                        let thumb_translate: Memo<Translate> = Memo::new(move |_| {
-                            let thumb_range = range.get();
-                            let val = value.get().clamp(thumb_range.start, thumb_range.end);
-                            let normal_val =
-                                (val - thumb_range.start) / (thumb_range.end - thumb_range.start);
-                            // Todo: Find a way to react to local direction rather than global direction.
-                            // Currently not possible because local direction is a style property
-                            // that gets resolved after bindings.
-                            // Ideally we need a way to do the translation in css which means changing
-                            // a css variable in rust code that gets used in the stylesheet to do the translation
-                            // rather than doing it here in code.
-                            let is_rtl = dir.get() == Direction::RightToLeft;
-                            if orientation.get() == Orientation::Horizontal {
-                                if is_rtl {
-                                    (Percentage(-100.0 * (1.0 - normal_val)), Pixels(0.0)).into()
-                                } else {
-                                    (Percentage(100.0 * (1.0 - normal_val)), Pixels(0.0)).into()
-                                }
+                            if is_rtl {
+                                (Percentage(-100.0 * (1.0 - normal_val)), Pixels(0.0)).into()
                             } else {
-                                (Pixels(0.0), Percentage(-100.0 * (1.0 - normal_val))).into()
+                                (Percentage(100.0 * (1.0 - normal_val)), Pixels(0.0)).into()
                             }
-                        });
+                        } else {
+                            (Pixels(0.0), Percentage(-100.0 * (1.0 - normal_val))).into()
+                        }
+                    });
 
-                        // Thumb
-                        Element::new(cx).class("thumb").translate(thumb_translate);
-                    })
-                    .class("range")
-                    .width(active_width)
-                    .height(active_height)
-                    .layout_type(orientation.map(|o| {
-                        if *o == Orientation::Horizontal {
-                            LayoutType::Row
-                        } else {
-                            LayoutType::Column
-                        }
-                    }))
-                    .alignment(orientation.map(|o| {
-                        if *o == Orientation::Horizontal {
-                            Alignment::Right
-                        } else {
-                            Alignment::TopCenter
-                        }
-                    }));
+                    // Thumb
+                    Element::new(cx).class("thumb").translate(thumb_translate);
                 })
-                .class("track");
+                .class("range")
+                .width(active_width)
+                .height(active_height)
+                .layout_type(orientation.map(|o| {
+                    if *o == Orientation::Horizontal { LayoutType::Row } else { LayoutType::Column }
+                }))
+                .alignment(orientation.map(|o| {
+                    if *o == Orientation::Horizontal {
+                        Alignment::Right
+                    } else {
+                        Alignment::TopCenter
+                    }
+                }));
             })
-            .orientation(orientation)
-            .role(Role::Slider)
-            .numeric_value(value.map(|v| (*v as f64 * 100.0).round() / 100.0))
-            .text_value(value.map(|v| format!("{}", (*v as f64 * 100.0).round() / 100.0)))
-            .navigable(true)
+            .class("track");
+        })
+        .orientation(orientation)
+        .role(Role::Slider)
+        .numeric_value(value.map(|v| (*v as f64 * 100.0).round() / 100.0))
+        .text_value(value.map(|v| format!("{}", (*v as f64 * 100.0).round() / 100.0)))
+        .navigable(true)
+    }
+}
+
+impl<S> Slider<S>
+where
+    S: SignalGet<f32> + 'static,
+{
+    fn apply_value(&self, cx: &mut EventContext, value: f32) {
+        if let Some(callback) = &self.on_change {
+            (callback)(cx, value);
+        }
+    }
+
+    fn value_from_pointer(&self, cx: &EventContext, x: f32, y: f32) -> f32 {
+        let thumb = cx.get_entities_by_class("thumb").first().copied().unwrap();
+        let current = cx.current();
+        let bounds = cx.transformed_bounds(current);
+        let thumb_bounds = cx.transformed_bounds(thumb);
+        let thumb_size = match self.orientation.get() {
+            Orientation::Horizontal => thumb_bounds.width(),
+            Orientation::Vertical => thumb_bounds.height(),
+        };
+
+        let min = self.range.get().start;
+        let max = self.range.get().end;
+        let step = self.step.get();
+
+        let is_rtl =
+            matches!(cx.style.direction.get(current).copied(), Some(Direction::RightToLeft));
+
+        let mut dx = match self.orientation.get() {
+            Orientation::Horizontal => {
+                let span = (bounds.width() - thumb_size).max(f32::EPSILON);
+                let raw_dx = (x - bounds.left() - thumb_size / 2.0) / span;
+                if is_rtl { 1.0 - raw_dx } else { raw_dx }
+            }
+
+            Orientation::Vertical => {
+                let span = (bounds.height() - thumb_size).max(f32::EPSILON);
+                (bounds.height() - (y - bounds.top()) - thumb_size / 2.0) / span
+            }
+        };
+
+        dx = dx.clamp(0.0, 1.0);
+
+        let mut val = min + dx * (max - min);
+        val = step * (val / step).ceil();
+        val.clamp(min, max)
+    }
+
+    fn begin_interaction(&self, cx: &mut EventContext) {
+        cx.capture();
+        cx.focus_with_visibility(false);
+        cx.with_current(Entity::root(), |cx| {
+            cx.set_pointer_events(false);
+        });
+    }
+
+    fn end_interaction(&self, cx: &mut EventContext) {
+        cx.focus_with_visibility(false);
+        cx.release();
+        cx.with_current(Entity::root(), |cx| {
+            cx.set_pointer_events(true);
+        });
     }
 }
 
@@ -270,120 +374,102 @@ where
                     (callback)(cx, val);
                 }
             }
+
+            SliderEvent::StartTrackHold => {
+                if self.track_hold_enabled {
+                    cx.emit(SliderEvent::TrackHoldRepeat);
+                }
+            }
+            SliderEvent::EndTrackHold => {
+                if self.track_hold_enabled {
+                    cx.start_timer(self.track_hold_repeat_timer);
+                }
+            }
+
+            SliderEvent::TrackHoldRepeat => {
+                if self.track_hold_enabled {
+                    if let Some(target) = self.track_hold_target_value {
+                        let min = self.range.get().start;
+                        let max = self.range.get().end;
+                        let step = self.step.get();
+                        let current = self.value.get();
+
+                        let next = if current < target {
+                            (current + step).min(target)
+                        } else {
+                            (current - step).max(target)
+                        };
+
+                        let next = step * (next / step).ceil();
+                        let next = next.clamp(min, max);
+
+                        if let Some(callback) = &self.on_change {
+                            (callback)(cx, next);
+                        }
+
+                        if (next - target).abs() < f32::EPSILON || next == target {
+                            cx.stop_timer(self.track_hold_repeat_timer);
+                        }
+                    }
+                }
+            }
         });
 
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseDown(button) if *button == MouseButton::Left => {
                 if !cx.is_disabled() {
-                    self.is_dragging = true;
-                    cx.capture();
-                    cx.focus_with_visibility(false);
-                    cx.with_current(Entity::root(), |cx| {
-                        cx.set_pointer_events(false);
-                    });
-
                     let thumb = cx.get_entities_by_class("thumb").first().copied().unwrap();
-                    let current = cx.current();
-                    let bounds = cx.transformed_bounds(current);
-                    let thumb_bounds = cx.transformed_bounds(thumb);
-                    let thumb_size = match self.orientation.get() {
-                        Orientation::Horizontal => thumb_bounds.width(),
-                        Orientation::Vertical => thumb_bounds.height(),
-                    };
-                    let min = self.range.get().start;
-                    let max = self.range.get().end;
-                    let step = self.step.get();
-
-                    let is_rtl = matches!(
-                        cx.style.direction.get(current).copied(),
-                        Some(Direction::RightToLeft)
+                    let val = self.value_from_pointer(
+                        cx,
+                        cx.mouse.left.pos_down.0,
+                        cx.mouse.left.pos_down.1,
                     );
 
-                    let mut dx = match self.orientation.get() {
-                        Orientation::Horizontal => {
-                            let span = (bounds.width() - thumb_size).max(f32::EPSILON);
-                            let raw_dx =
-                                (cx.mouse.left.pos_down.0 - bounds.left() - thumb_size / 2.0)
-                                    / span;
-                            if is_rtl { 1.0 - raw_dx } else { raw_dx }
+                    let is_thumb_target = meta.target == thumb;
+
+                    if is_thumb_target {
+                        self.is_dragging = true;
+                        self.begin_interaction(cx);
+
+                        self.track_hold_target_value = None;
+                        cx.stop_timer(self.track_hold_delay_timer);
+                        cx.stop_timer(self.track_hold_repeat_timer);
+
+                        if let Some(callback) = self.on_change.take() {
+                            (callback)(cx, val);
+                            self.on_change = Some(callback);
                         }
+                    } else if self.track_hold_enabled {
+                        self.track_hold_target_value = Some(val);
+                        self.begin_interaction(cx);
+                        cx.stop_timer(self.track_hold_repeat_timer);
+                        cx.start_timer(self.track_hold_delay_timer);
+                    } else {
+                        self.is_dragging = true;
+                        self.begin_interaction(cx);
 
-                        Orientation::Vertical => {
-                            let span = (bounds.height() - thumb_size).max(f32::EPSILON);
-                            (bounds.height()
-                                - (cx.mouse.left.pos_down.1 - bounds.top())
-                                - thumb_size / 2.0)
-                                / span
+                        if let Some(callback) = self.on_change.take() {
+                            (callback)(cx, val);
+                            self.on_change = Some(callback);
                         }
-                    };
-
-                    dx = dx.clamp(0.0, 1.0);
-
-                    let mut val = min + dx * (max - min);
-
-                    val = step * (val / step).ceil();
-                    val = val.clamp(min, max);
-
-                    if let Some(callback) = self.on_change.take() {
-                        (callback)(cx, val);
-
-                        self.on_change = Some(callback);
                     }
                 }
             }
 
             WindowEvent::MouseUp(button) if *button == MouseButton::Left => {
                 self.is_dragging = false;
-                cx.focus_with_visibility(false);
-                cx.release();
-                cx.with_current(Entity::root(), |cx| {
-                    cx.set_pointer_events(true);
-                });
+                self.track_hold_target_value = None;
+                self.end_interaction(cx);
+                cx.stop_timer(self.track_hold_delay_timer);
+                cx.stop_timer(self.track_hold_repeat_timer);
             }
 
             WindowEvent::MouseMove(x, y) => {
                 if self.is_dragging {
-                    let thumb = cx.get_entities_by_class("thumb").first().copied().unwrap();
-                    let current = cx.current();
-                    let bounds = cx.transformed_bounds(current);
-                    let thumb_bounds = cx.transformed_bounds(thumb);
-                    let thumb_size = match self.orientation.get() {
-                        Orientation::Horizontal => thumb_bounds.width(),
-                        Orientation::Vertical => thumb_bounds.height(),
-                    };
-
-                    let min = self.range.get().start;
-                    let max = self.range.get().end;
-                    let step = self.step.get();
-
-                    let is_rtl = matches!(
-                        cx.style.direction.get(current).copied(),
-                        Some(Direction::RightToLeft)
-                    );
-
-                    let mut dx = match self.orientation.get() {
-                        Orientation::Horizontal => {
-                            let span = (bounds.width() - thumb_size).max(f32::EPSILON);
-                            let raw_dx = (*x - bounds.left() - thumb_size / 2.0) / span;
-                            if is_rtl { 1.0 - raw_dx } else { raw_dx }
-                        }
-
-                        Orientation::Vertical => {
-                            let span = (bounds.height() - thumb_size).max(f32::EPSILON);
-                            (bounds.height() - (*y - bounds.top()) - thumb_size / 2.0) / span
-                        }
-                    };
-
-                    dx = dx.clamp(0.0, 1.0);
-
-                    let mut val = min + dx * (max - min);
-
-                    val = step * (val / step).ceil();
-                    val = val.clamp(min, max);
-
-                    if let Some(callback) = &self.on_change {
-                        (callback)(cx, val);
-                    }
+                    let val = self.value_from_pointer(cx, *x, *y);
+                    self.apply_value(cx, val);
+                } else if self.track_hold_enabled && self.track_hold_target_value.is_some() {
+                    self.track_hold_target_value = Some(self.value_from_pointer(cx, *x, *y));
                 }
             }
 
@@ -396,11 +482,7 @@ where
                     .unwrap_or(false);
 
                 if is_thumb_target {
-                    cx.focus_with_visibility(false);
-                    cx.release();
-                    cx.with_current(Entity::root(), |cx| {
-                        cx.set_pointer_events(true);
-                    });
+                    self.end_interaction(cx);
                     self.is_dragging = false;
                     cx.emit(SliderEvent::ResetDefault);
                 }
@@ -498,6 +580,13 @@ pub trait SliderModifiers: Sized {
     /// ```
     fn range<U: Into<Range<f32>> + Clone + 'static>(self, range: impl Res<U> + 'static) -> Self;
 
+    /// Enables a delayed track hold mode where clicking the track does not move the thumb immediately.
+    /// After holding the track for 500 milliseconds, the slider will step toward the pointer location every 100ms.
+    fn track_hold_steps<U: Into<bool> + Clone + 'static>(
+        self,
+        enabled: impl Res<U> + 'static,
+    ) -> Self;
+
     /// Sets the orientation of the slider to vertical.
     ///
     /// ```
@@ -576,6 +665,18 @@ where
                 if vertical { Orientation::Vertical } else { Orientation::Horizontal };
             handle.modify(|slider| {
                 slider.orientation.set(orientation);
+            });
+        })
+    }
+
+    fn track_hold_steps<U: Into<bool> + Clone + 'static>(
+        self,
+        enabled: impl Res<U> + 'static,
+    ) -> Self {
+        let enabled = enabled.to_signal(self.cx);
+        self.bind(enabled, move |handle| {
+            handle.modify(|slider| {
+                slider.track_hold_enabled = enabled.get().into();
             });
         })
     }
