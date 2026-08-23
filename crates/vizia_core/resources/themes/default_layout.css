@@ -954,6 +954,11 @@ tabview.vertical > tablist.vertical > list > scrollview > scroll-content {
 
 /* TEXTBOX */
 
+label.text-selectable {
+    cursor: text;
+    selection-color: #6464c888;
+}
+
 textbox {
     width: auto;
     height: 32px;

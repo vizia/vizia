@@ -254,6 +254,13 @@ impl<'a> ResourceContext<'a> {
     pub fn load_font(&mut self, path: String, data: &[u8]) -> bool {
         if let Some(typeface) = self.text_context.default_font_manager.new_from_data(data, None) {
             self.text_context.asset_provider.register_typeface(typeface, None);
+            // Also register with Parley's fontique collection so the shaper (which drives
+            // font/fallback selection) can actually find and select this font by family
+            // name, rather than only Skia knowing about it for drawing.
+            self.text_context
+                .parley_font_context
+                .collection
+                .register_fonts(parley::fontique::Blob::from(data.to_vec()), None);
 
             // Rebuild text for all entities so newly available fonts can be selected immediately.
             let entities: Vec<Entity> = self.tree.into_iter().collect();

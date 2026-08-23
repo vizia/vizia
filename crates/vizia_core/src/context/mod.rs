@@ -9,6 +9,7 @@ mod proxy;
 mod resource;
 #[cfg(feature = "tokio")]
 mod task;
+mod text_draw_helpers;
 
 use log::debug;
 use skia_safe::{
@@ -68,7 +69,7 @@ use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::text::TextContext;
 use vizia_input::{ImeState, MouseState};
-use vizia_storage::{ChildIterator, LayoutTreeIterator};
+use vizia_storage::{ChildIterator, LayoutTreeIterator, TreeIterator};
 
 #[cfg(feature = "tokio")]
 pub(crate) type TaskRuntime = Arc<tokio::runtime::Runtime>;
@@ -263,11 +264,18 @@ impl Context {
                 font_collection.set_asset_font_manager(asset_font_manager);
 
                 TextContext {
+                    parley_font_context: parley::FontContext::new(),
+                    parley_layout_context: parley::LayoutContext::new(),
                     font_collection,
                     default_font_manager,
                     asset_provider,
                     text_bounds: Default::default(),
-                    text_paragraphs: Default::default(),
+                    text_shaped: Default::default(),
+                    plain_editors: Default::default(),
+                    selectable_labels: Default::default(),
+                    selected_ranges: Default::default(),
+                    selections: Default::default(),
+                    typeface_cache: Default::default(),
                 }
             },
             #[cfg(feature = "tokio")]
@@ -312,6 +320,8 @@ impl Context {
         result.entity_manager.create();
 
         result.style.role.insert(Entity::root(), Role::Window);
+
+        result.add_global_listener(crate::systems::text_selection::handle_global_event);
 
         result
     }
@@ -537,6 +547,37 @@ impl Context {
     pub fn remove(&mut self, entity: Entity) {
         let delete_list = entity.branch_iter(&self.tree).collect::<Vec<_>>();
 
+        let deleted_entities = delete_list.iter().copied().collect::<HashSet<_>>();
+        let affected_selection_windows = self
+            .text_context
+            .selections
+            .iter()
+            .filter_map(|(window, selection)| {
+                selection
+                    .points()
+                    .filter(|(anchor, focus)| {
+                        deleted_entities.contains(&anchor.entity)
+                            || deleted_entities.contains(&focus.entity)
+                    })
+                    .map(|_| *window)
+            })
+            .collect::<Vec<_>>();
+        for window in affected_selection_windows {
+            if let Some(selection) = self.text_context.selections.get_mut(&window) {
+                selection.clear();
+            }
+            let labels = TreeIterator::full(&self.tree)
+                .filter(|candidate| {
+                    self.tree.get_parent_window(*candidate).unwrap_or(Entity::root()) == window
+                        && self.text_context.selectable_labels.contains(*candidate)
+                })
+                .collect::<Vec<_>>();
+            for label in labels {
+                self.text_context.selected_ranges.remove(label);
+                self.needs_redraw(label);
+            }
+        }
+
         if !delete_list.is_empty() {
             self.style.needs_restyle(self.current);
             // An absolutely-positioned node is out of its parent's flow, so removing it cannot
@@ -641,7 +682,11 @@ impl Context {
             self.models.remove(entity);
             self.views.remove(entity);
             self.text_context.text_bounds.remove(*entity);
-            self.text_context.text_paragraphs.remove(*entity);
+            self.text_context.text_shaped.remove(*entity);
+            self.text_context.plain_editors.remove(*entity);
+            self.text_context.selectable_labels.remove(*entity);
+            self.text_context.selected_ranges.remove(*entity);
+            self.text_context.selections.remove(entity);
             self.entity_manager.destroy(*entity);
         }
     }
@@ -701,10 +746,18 @@ impl Context {
 
     /// Loads a font into the application from in-memory bytes.
     pub fn load_font_mem(&mut self, data: impl AsRef<[u8]>) {
+        let bytes = data.as_ref();
         self.text_context.asset_provider.register_typeface(
-            self.text_context.default_font_manager.new_from_data(data.as_ref(), None).unwrap(),
+            self.text_context.default_font_manager.new_from_data(bytes, None).unwrap(),
             None,
         );
+        // Also register with Parley's fontique collection so the shaper (which drives
+        // font/fallback selection) can actually find and select this font by family
+        // name, rather than only Skia knowing about it for drawing.
+        self.text_context
+            .parley_font_context
+            .collection
+            .register_fonts(parley::fontique::Blob::from(bytes.to_vec()), None);
     }
 
     fn request_resource_if_not_loaded(

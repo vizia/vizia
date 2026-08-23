@@ -22,6 +22,8 @@ jobs:
         sudo apt update
         # baseview dependencies
         sudo apt install libx11-xcb-dev libxcb-dri2-0-dev libgl1-mesa-dev libxcb-icccm4-dev libxcursor-dev libxcb-{render,shape,xfixes}0-dev
+        # fontconfig (needed by yeslogic-fontconfig-sys)
+        sudo apt install pkg-config libfontconfig1-dev
     - name: Install rust stable
       uses: actions-rs/toolchain@v1
       with:

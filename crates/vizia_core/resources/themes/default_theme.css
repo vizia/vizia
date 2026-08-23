@@ -8,6 +8,7 @@
     font-variation-settings: "wght" 400;
     font-size: 14px;
     direction: ltr;
+    line-height: 1.5;
 
     --background: oklch(1 0 0);
     --background-transparent: oklch(1 0 0 / 0%);
@@ -1221,6 +1222,10 @@ textbox:placeholder-shown {
 textbox:read-only {
     background-color: transparent;
     border-width: 0px;
+}
+
+textbox:read-only:focus-visible {
+    outline-width: 0px;
 }
 
 textbox:disabled {

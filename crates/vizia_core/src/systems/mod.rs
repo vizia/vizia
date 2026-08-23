@@ -9,6 +9,7 @@ pub(crate) mod layout;
 pub(crate) mod resource;
 pub(crate) mod style;
 pub(crate) mod text;
+pub(crate) mod text_selection;
 pub(crate) mod transform;
 pub(crate) use self::image::*;
 pub(crate) use self::resource::*;

@@ -1,4 +1,9 @@
 use crate::prelude::*;
+use crate::systems::text_selection::{
+    begin_selection, end_selection, extend_selection, select_label, select_word,
+};
+use crate::text::resolved_text_direction;
+use skia_safe::{Paint, PaintStyle, Rect};
 
 /// A label used to display text.
 ///
@@ -115,6 +120,44 @@ impl Label {
 }
 
 impl Handle<'_, Label> {
+    /// Sets whether this label's text can be selected.
+    pub fn text_selectable(self, selectable: impl Res<bool>) -> Self {
+        let entity = self.entity;
+        selectable.set_or_bind(self.cx, move |cx, selectable| {
+            let selectable = selectable.get_value(cx);
+            if selectable {
+                cx.text_context.selectable_labels.insert(entity, true);
+            } else {
+                let window = cx.tree.get_parent_window(entity).unwrap_or(Entity::root());
+                let selection_uses_entity = cx
+                    .text_context
+                    .selections
+                    .get(&window)
+                    .and_then(|selection| selection.points())
+                    .map(|(anchor, focus)| anchor.entity == entity || focus.entity == entity)
+                    .unwrap_or(false);
+                cx.text_context.selectable_labels.remove(entity);
+                cx.text_context.selected_ranges.remove(entity);
+                if selection_uses_entity {
+                    if let Some(selection) = cx.text_context.selections.get_mut(&window) {
+                        selection.clear();
+                    }
+                    let labels = window
+                        .branch_iter(&cx.tree)
+                        .filter(|candidate| cx.text_context.selectable_labels.contains(*candidate))
+                        .collect::<Vec<_>>();
+                    for label in labels {
+                        cx.text_context.selected_ranges.remove(label);
+                        cx.needs_redraw(label);
+                    }
+                }
+            }
+            cx.with_current(entity, |cx| cx.toggle_class("text-selectable", selectable));
+            cx.needs_redraw(entity);
+        });
+        self
+    }
+
     /// Which form element does this label describe.
     ///
     /// # Examples
@@ -158,6 +201,45 @@ impl View for Label {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseDown(MouseButton::Left)
+                if cx.text_context.selectable_labels.contains(cx.current()) =>
+            {
+                begin_selection(cx, cx.modifiers.shift());
+                cx.capture();
+                meta.consume();
+            }
+            WindowEvent::MouseMove(_, _)
+                if cx.text_context.selectable_labels.contains(cx.current())
+                    && *cx.captured == cx.current() =>
+            {
+                extend_selection(cx);
+                meta.consume();
+            }
+            WindowEvent::MouseUp(MouseButton::Left)
+                if cx.text_context.selectable_labels.contains(cx.current())
+                    && *cx.captured == cx.current() =>
+            {
+                end_selection(cx);
+                cx.release();
+                meta.consume();
+            }
+            WindowEvent::MouseDoubleClick(MouseButton::Left)
+                if cx.text_context.selectable_labels.contains(cx.current()) =>
+            {
+                select_word(cx);
+                meta.consume();
+            }
+            WindowEvent::MouseTripleClick(MouseButton::Left)
+                if cx.text_context.selectable_labels.contains(cx.current()) =>
+            {
+                select_label(cx);
+                meta.consume();
+            }
+            WindowEvent::Press { .. } | WindowEvent::PressDown { .. }
+                if cx.text_context.selectable_labels.contains(cx.current()) =>
+            {
+                meta.consume();
+            }
             WindowEvent::Press { .. } | WindowEvent::PressDown { .. } => {
                 if cx.current() == cx.mouse.left.pressed && meta.target == cx.current() {
                     if let Some(describing) = self
@@ -180,6 +262,67 @@ impl View for Label {
             }
             _ => {}
         });
+    }
+
+    fn draw(&self, cx: &mut DrawContext, canvas: &Canvas) {
+        let bounds = cx.bounds();
+        if bounds.w == 0.0 || bounds.h == 0.0 {
+            return;
+        }
+
+        cx.draw_background(canvas);
+        cx.draw_shadows(canvas);
+        cx.draw_border(canvas);
+
+        if let Some(range) = cx.text_context.selected_ranges.get(cx.current).cloned()
+            && let Some(shaped) = cx.text_context.text_shaped.get(cx.current)
+        {
+            let alignment = cx.alignment();
+            let mut top = match alignment {
+                Alignment::TopLeft | Alignment::TopCenter | Alignment::TopRight => 0.0,
+                Alignment::Left | Alignment::Center | Alignment::Right => 0.5,
+                Alignment::BottomLeft | Alignment::BottomCenter | Alignment::BottomRight => 1.0,
+            };
+            let padding_top = match cx.padding_top() {
+                Units::Pixels(value) => value,
+                _ => 0.0,
+            };
+            let padding_bottom = match cx.padding_bottom() {
+                Units::Pixels(value) => value,
+                _ => 0.0,
+            };
+            top *= bounds.height() - padding_top - padding_bottom - shaped.height();
+
+            let mut padding_left = match cx.padding_left() {
+                Units::Pixels(value) => value,
+                _ => 0.0,
+            };
+            let mut padding_right = match cx.padding_right() {
+                Units::Pixels(value) => value,
+                _ => 0.0,
+            };
+            if resolved_text_direction(cx.style, cx.current) == Direction::RightToLeft {
+                std::mem::swap(&mut padding_left, &mut padding_right);
+            }
+
+            let mut paint = Paint::default();
+            paint.set_anti_alias(true);
+            paint.set_style(PaintStyle::Fill);
+            paint.set_color(cx.selection_color());
+            for text_box in shaped.get_rects_for_range(range) {
+                canvas.draw_rect(
+                    Rect::new(
+                        bounds.x + padding_left + text_box.rect.x(),
+                        bounds.y + padding_top + top + text_box.rect.y(),
+                        bounds.x + padding_left + text_box.rect.right(),
+                        bounds.y + padding_top + top + text_box.rect.bottom(),
+                    ),
+                    &paint,
+                );
+            }
+        }
+
+        cx.draw_text(canvas);
     }
 }
 

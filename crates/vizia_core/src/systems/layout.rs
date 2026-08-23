@@ -156,7 +156,14 @@ pub(crate) fn layout_system(cx: &mut Context) {
             }
 
             if let Some(geo) = cx.cache.geo_changed.get(entity).copied() {
-                if !geo.is_empty() && cx.style.text.contains(entity) {
+                // `Textbox` mirrors its content into `cx.style.text` purely for RTL
+                // auto-detection (see `resolved_text_direction`); its actual glyph layout is
+                // driven by `PlainEditor` via `sync_editor_layout`, so exclude it here to avoid
+                // the generic label text-layout pass fighting over `text_shaped`.
+                if !geo.is_empty()
+                    && cx.style.text.contains(entity)
+                    && !cx.text_context.plain_editors.contains(entity)
+                {
                     cx.style.needs_text_layout(entity);
                 }
 
