@@ -326,7 +326,10 @@ where
     }
 
     /// Link an entity to some shared data.
-    pub(crate) fn link(&mut self, entity: Entity, rules: &[(Rule, u32)]) -> bool {
+    pub(crate) fn link(&mut self, entity: Entity, rules: &[(Rule, u32)]) -> bool
+    where
+        T: PartialEq,
+    {
         let entity_index = entity.index();
 
         // Check if the entity already has some data
@@ -352,10 +355,13 @@ where
                     return false;
                 }
 
+                let new_value = &self.shared_data.dense[shared_data_index.index()].value;
+                let value_changed = self.get(entity) != Some(new_value);
+
                 self.inline_data.sparse[entity_index].data_index =
                     DataIndex::shared(shared_data_index.index());
 
-                return true;
+                return value_changed;
             }
         }
 
