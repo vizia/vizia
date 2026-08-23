@@ -58,6 +58,7 @@ vizia_storage = { version = "0.4.0", path = "crates/vizia_storage" }
 vizia_style = { version = "0.4.0", path = "crates/vizia_style" }
 vizia_window = { version = "0.4.0", path = "crates/vizia_window" }
 vizia_reactive = { version = "0.4.0", path = "crates/vizia_reactive" }
+vizia_vulkan = { version = "0.4.0", path = "crates/vizia_vulkan" }
 accesskit = "0.24"
 accesskit_winit = "0.33"
 baseview = { version = "0.2.2", features = ["opengl"] }
@@ -88,7 +89,8 @@ rayon = "1.12"
 reqwest = { version = "0.13" }
 selectors = "0.39"
 serde = { version = "1.0", features = ["derive"] }
-skia-safe = { version = "0.99", features = ["gl", "textlayout", "svg"] }
+ash = "0.38.0"
+skia-safe = { version = "0.99", features = ["gl", "textlayout", "svg", "vulkan"] }
 sys-locale = "0.3"
 tokio = { version = "1.53", features = ["rt-multi-thread", "time", "fs", "io-util"] }
 unic-langid = { version = "0.9.6", features = ["macros"] }
@@ -103,7 +105,7 @@ features = ["textlayout", "svg", "metal", "gl"]
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
 version = "0.99"
-features = ["textlayout", "svg", "x11", "wayland", "gl"]
+features = ["textlayout", "svg", "x11", "wayland", "gl", "vulkan"]
 
 [target."cfg(target_os = \"windows\")".dependencies.skia-safe]
 version = "0.99"
