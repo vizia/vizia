@@ -10,7 +10,7 @@ use crate::text::{
 };
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
 use skia_safe::textlayout::{RectHeightStyle, RectWidthStyle};
-use skia_safe::{ClipOp, Paint, PaintStyle, Rect};
+use skia_safe::{ClipOp, Paint, PaintStyle, Point, Rect};
 use unicode_segmentation::UnicodeSegmentation;
 
 /// Events for modifying a textbox.
@@ -680,8 +680,17 @@ where
     fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32, selection: bool) {
         if let Some(text) = cx.style.text.get(cx.current) {
             if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-                let x = x - self.transform.borrow().0;
-                let y = y - self.transform.borrow().1;
+                let (mut x, mut y) = (x, y);
+
+                if let Some(inv_transform) = cx.transform().invert() {
+                    let point = inv_transform.map_point(Point::new(x, y));
+                    x = point.x;
+                    y = point.y;
+                }
+
+                x -= self.transform.borrow().0;
+                y -= self.transform.borrow().1;
+
                 let gp = paragraph
                     .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
                 let num_graphemes = text.graphemes(true).count();
@@ -710,8 +719,17 @@ where
     fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         if let Some(text) = cx.style.text.get(cx.current) {
             if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-                let x = x - self.transform.borrow().0;
-                let y = y - self.transform.borrow().1;
+                let (mut x, mut y) = (x, y);
+
+                if let Some(inv_transform) = cx.transform().invert() {
+                    let point = inv_transform.map_point(Point::new(x, y));
+                    x = point.x;
+                    y = point.y;
+                }
+
+                x -= self.transform.borrow().0;
+                y -= self.transform.borrow().1;
+
                 let gp = paragraph
                     .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
                 let num_graphemes = text.graphemes(true).count();
