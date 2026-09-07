@@ -854,16 +854,16 @@ impl Context {
 
     /// Modifies the state of an existing timer with the provided `Timer` id.
     pub fn modify_timer(&mut self, timer: Timer, timer_function: impl Fn(&mut TimerState)) {
-        while let Some(next_timer_state) = self.running_timers.peek() {
-            if next_timer_state.id == timer {
-                let mut timer_state = self.running_timers.pop().unwrap();
-
-                (timer_function)(&mut timer_state);
-
-                self.running_timers.push(timer_state);
-
-                return;
-            }
+        // Rebuild the heap so that a timer which isn't the current head can be modified.
+        let mut running_timers: Vec<TimerState> = self.running_timers.drain().collect();
+        let mut found = false;
+        for timer_state in running_timers.iter_mut().filter(|state| state.id == timer) {
+            (timer_function)(timer_state);
+            found = true;
+        }
+        self.running_timers = BinaryHeap::from(running_timers);
+        if found {
+            return;
         }
 
         for pending_timer in self.timers.iter_mut() {
@@ -1348,5 +1348,26 @@ impl EmitContext for Context {
     fn cancel_scheduled(&mut self, handle: TimedEventHandle) {
         self.event_schedule =
             self.event_schedule.drain().filter(|item| item.ident != handle).collect();
+    }
+}
+
+#[cfg(test)]
+mod timer_tests {
+    use super::*;
+
+    #[test]
+    fn modify_timer_of_non_head_timer_does_not_hang() {
+        let mut cx = Context::new();
+        let first = cx.add_timer(Duration::from_millis(10), None, |_, _| {});
+        let second = cx.add_timer(Duration::from_millis(1000), None, |_, _| {});
+        cx.start_timer(first);
+        cx.start_timer(second);
+
+        // `second` is not the head of the heap, this used to loop forever.
+        cx.modify_timer(second, |state| state.interval = Duration::from_millis(5));
+
+        assert_eq!(cx.running_timers.len(), 2);
+        let modified = cx.running_timers.iter().find(|state| state.id == second).unwrap();
+        assert_eq!(modified.interval, Duration::from_millis(5));
     }
 }
