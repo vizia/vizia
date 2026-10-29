@@ -878,6 +878,12 @@ menubutton {
     corner-radius: var(--control-radius);
 }
 
+menubutton,
+menubutton svg {
+    color: var(--foreground);
+    fill: var(--foreground);
+}
+
 menubutton:focus-visible {
     background-color: var(--accent);
 }
