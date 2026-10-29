@@ -3448,6 +3448,7 @@ impl Style {
         // Size
         self.width.clear_rules();
         self.height.clear_rules();
+        self.aspect_ratio.clear_rules();
 
         // Size Constraints
         self.min_width.clear_rules();
