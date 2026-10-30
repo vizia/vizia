@@ -302,6 +302,12 @@ impl WindowHandler for ViziaWindow {
         let captured =
             matches!(event, Event::Keyboard(_)) && application.focused_element() == Some("textbox");
 
+        // macOS and Windows only perform the drop if
+        // the drag-enter/move callbacks report an acceptable operation.
+        // The events can still be ignored inside `handle_event`.
+        // (X11 ignores the return status.)
+        let is_drag = is_drag_event(&event);
+
         application.handle_event(event);
 
         application.handle_idle(&self.on_idle);
@@ -309,7 +315,13 @@ impl WindowHandler for ViziaWindow {
         // Wake the loop so the event is rendered on the next frame.
         application.request_redraw();
 
-        if captured { EventStatus::Captured } else { EventStatus::Ignored }
+        if is_drag {
+            EventStatus::AcceptDrop(baseview::DropEffect::Copy)
+        } else if captured {
+            EventStatus::Captured
+        } else {
+            EventStatus::Ignored
+        }
     }
 }
 
@@ -347,4 +359,15 @@ pub fn create_surface(
         // None,
     )
     .expect("Could not create skia surface")
+}
+
+fn is_drag_event(event: &Event) -> bool {
+    matches!(
+        event,
+        Event::Mouse(
+            baseview::MouseEvent::DragEntered { .. }
+                | baseview::MouseEvent::DragMoved { .. }
+                | baseview::MouseEvent::DragDropped { .. }
+        )
+    )
 }
