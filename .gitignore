@@ -19,3 +19,4 @@ Cargo.lock
 
 /target
 #Cargo.lock
+/.dev
