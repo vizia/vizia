@@ -331,6 +331,9 @@ impl ApplicationRunner {
                 WindowEvent::SetUserScale(factor) => {
                     pending_user_scale = Some(*factor);
                 }
+                WindowEvent::SetCursor(icon) => {
+                    _ = self.window_context.set_mouse_cursor(translate_mouse_cursor(*icon))
+                }
                 _ => {}
             }
         });
@@ -717,5 +720,45 @@ fn translate_mouse_button(button: baseview::MouseButton) -> MouseButton {
         baseview::MouseButton::Back => MouseButton::Other(4),
         baseview::MouseButton::Forward => MouseButton::Other(5),
         _ => MouseButton::Other(0),
+    }
+}
+
+fn translate_mouse_cursor(icon: CursorIcon) -> baseview::MouseCursor {
+    match icon {
+        CursorIcon::Default | CursorIcon::Arrow => baseview::MouseCursor::Default,
+        CursorIcon::None => baseview::MouseCursor::Hidden,
+        CursorIcon::Cell => baseview::MouseCursor::Cell,
+        CursorIcon::Crosshair => baseview::MouseCursor::Crosshair,
+        CursorIcon::Text => baseview::MouseCursor::Text,
+        CursorIcon::VerticalText => baseview::MouseCursor::VerticalText,
+        CursorIcon::ContextMenu => baseview::MouseCursor::Default,
+        CursorIcon::Help => baseview::MouseCursor::Help,
+        CursorIcon::Hand => baseview::MouseCursor::Hand,
+        CursorIcon::Progress => baseview::MouseCursor::PtrWorking,
+        CursorIcon::Wait => baseview::MouseCursor::Working,
+        CursorIcon::Alias => baseview::MouseCursor::Alias,
+        CursorIcon::Copy => baseview::MouseCursor::Copy,
+        CursorIcon::Move => baseview::MouseCursor::Move,
+        CursorIcon::NoDrop => baseview::MouseCursor::NotAllowed,
+        CursorIcon::NotAllowed => baseview::MouseCursor::NotAllowed,
+        CursorIcon::Grab => baseview::MouseCursor::Hand,
+        CursorIcon::Grabbing => baseview::MouseCursor::HandGrabbing,
+        CursorIcon::ZoomIn => baseview::MouseCursor::ZoomIn,
+        CursorIcon::ZoomOut => baseview::MouseCursor::ZoomOut,
+        CursorIcon::NResize => baseview::MouseCursor::NResize,
+        CursorIcon::EResize => baseview::MouseCursor::EResize,
+        CursorIcon::SResize => baseview::MouseCursor::SResize,
+        CursorIcon::WResize => baseview::MouseCursor::WResize,
+        CursorIcon::NeResize => baseview::MouseCursor::NeResize,
+        CursorIcon::NwResize => baseview::MouseCursor::NwResize,
+        CursorIcon::SeResize => baseview::MouseCursor::SeResize,
+        CursorIcon::SwResize => baseview::MouseCursor::SwResize,
+        CursorIcon::EwResize => baseview::MouseCursor::EwResize,
+        CursorIcon::NsResize => baseview::MouseCursor::NsResize,
+        CursorIcon::NeswResize => baseview::MouseCursor::NeswResize,
+        CursorIcon::NwseResize => baseview::MouseCursor::NwseResize,
+        CursorIcon::AllScroll => baseview::MouseCursor::AllScroll,
+        CursorIcon::ColResize => baseview::MouseCursor::ColResize,
+        CursorIcon::RowResize => baseview::MouseCursor::RowResize,
     }
 }
