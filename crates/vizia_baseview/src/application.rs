@@ -494,7 +494,7 @@ impl ApplicationRunner {
                 baseview::MouseEvent::CursorMoved { position, modifiers } => {
                     update_modifiers(modifiers);
 
-                    // baseview v0.2 delivers cursor coordinates in physical pixels, so no
+                    // baseview v0.4 delivers cursor coordinates in physical pixels, so no
                     // additional DPI scaling should be applied here.
                     let cursor_x = position.x as f32;
                     let cursor_y = position.y as f32;
@@ -545,6 +545,26 @@ impl ApplicationRunner {
                 baseview::MouseEvent::CursorLeft => {
                     self.cx.emit_origin(WindowEvent::MouseLeave);
                 }
+
+                baseview::MouseEvent::DragDropped { modifiers, data, .. } => {
+                    update_modifiers(modifiers);
+
+                    if let baseview::DropData::Files(files) = data {
+                        for file in files {
+                            // Try mimic vizia winit drop handling
+                            self.cx.emit_window_event(
+                                Entity::root(),
+                                WindowEvent::Drop(DropData::File(file)),
+                            );
+                        }
+                    }
+                }
+
+                // Vizia winit discard HoveredFile | HoveredFileCancelled
+                // so we mirror the behavior on baseview.
+                baseview::MouseEvent::DragEntered { .. }
+                | baseview::MouseEvent::DragLeft
+                | baseview::MouseEvent::DragMoved { .. } => {}
 
                 _ => {}
             },
