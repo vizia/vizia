@@ -468,7 +468,9 @@ impl ApplicationRunner {
         }
     }
 
-    pub fn handle_event(&mut self, event: baseview::Event) {
+    pub fn handle_event(&mut self, event: baseview::Event) -> baseview::EventStatus {
+        let status = self.event_status(&event);
+
         if requests_exit(&event, self.is_parented) {
             self.cx.send_event(Event::new(WindowEvent::WindowClose));
             self.window_context.request_close();
@@ -615,6 +617,8 @@ impl ApplicationRunner {
             },
             _ => {}
         }
+
+        status
     }
 
     pub fn handle_resized(&mut self, new_size: baseview::WindowSize) {
@@ -689,6 +693,32 @@ impl ApplicationRunner {
     /// Element name of the view that currently has keyboard focus.
     pub fn focused_element(&self) -> Option<&'static str> {
         self.cx.focused_element()
+    }
+
+    /// Returns the [`EventStatus`](`baseview::EventStatus`) for this `event`
+    fn event_status(&self, event: &baseview::Event) -> baseview::EventStatus {
+        match event {
+            // macOS and Windows only perform the drop if
+            // the drag-enter/move callbacks report an acceptable operation.
+            // The events can still be ignored inside `handle_event`.
+            // (X11 ignores the return status.)
+            baseview::Event::Mouse(
+                baseview::MouseEvent::DragEntered { .. }
+                | baseview::MouseEvent::DragMoved { .. }
+                | baseview::MouseEvent::DragDropped { .. },
+            ) => baseview::EventStatus::AcceptDrop(baseview::DropEffect::Copy),
+
+            // If a text input currently holds focus, a native keyboard event is
+            // intended for the plugin. Report it as `Captured` so the backend
+            // does not forward the platform event further — otherwise the host
+            // (e.g. a DAW) also processes the same keystroke, producing double
+            // handling and a system beep on macOS.
+            baseview::Event::Keyboard(_) if self.focused_element() == Some("textbox") => {
+                baseview::EventStatus::Captured
+            }
+
+            _ => baseview::EventStatus::Ignored,
+        }
     }
 }
 
