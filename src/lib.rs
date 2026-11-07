@@ -9,7 +9,7 @@ pub use vizia_winit::application::{Application, ApplicationError};
 
 #[cfg(all(not(feature = "winit"), feature = "baseview"))]
 pub use vizia_baseview::{
-    Application, ApplicationError, ParentWindow, FramePolicy, Window, WindowScalePolicy,
+    Application, ApplicationError, FramePolicy, ParentWindow, Window, WindowScalePolicy,
 };
 
 pub use vizia_core::*;
