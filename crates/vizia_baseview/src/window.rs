@@ -49,9 +49,16 @@ impl ViziaWindow {
         let proxy = BaseviewProxy::new(window.waker());
         cx.set_event_proxy(Box::new(proxy.clone()));
 
-        // Register a sync waker so off-thread `SyncSignal` writes wake this window's event loop.
-        let waker = window.waker();
-        Runtime::set_sync_effect_waker(move || waker.request_redraw());
+        // Register a no-op sync waker. baseview doesn't expose a proxy-event primitive we
+        // can use to wake the event loop from another thread, but it drives `on_frame` at
+        // the host compositor's vsync rate anyway — signal changes from off-UI writes will
+        // be observed on the next frame (at most one frame of latency).
+        //
+        // Registering the waker here — even as a no-op — has two benefits: (1) it matches
+        // the pattern in `vizia_winit`, so embedders don't have to know about sync-runtime
+        // internals; (2) if a future baseview release gains a window-wake mechanism, only
+        // this one line needs to change.
+        Runtime::set_sync_effect_waker(|| {});
         let context = window.gl_context().expect("Window was created without OpenGL support");
 
         unsafe { context.make_current() }.expect("Failed to make GL context current");
