@@ -449,6 +449,7 @@ impl ApplicationRunner {
         }
 
         self.cx.process_timers();
+        self.cx.emit_scheduled_events();
 
         animations_playing || self.cx.has_queued_events() || has_redraw
     }

@@ -255,8 +255,6 @@ impl WindowHandler for ViziaWindow {
             return Ok(());
         };
 
-        let needs_redraw = application.on_frame_update();
-
         // Run the embedder's idle callback on every frame tick, not only after
         // an AppKit event. Mirrors what `vizia_winit` does in its
         // `about_to_wait` handler: the idle callback is the documented hook
@@ -267,6 +265,10 @@ impl WindowHandler for ViziaWindow {
         // keystrokes queued from `IPlugView::onKeyDown` only drained when
         // the next mouse move or key event happened to arrive.
         application.handle_idle(&self.on_idle);
+
+        // Compute needs redraw after the idle callback so
+        // event queued during on idle now trigger the cb.
+        let needs_redraw = application.on_frame_update();
 
         application.render();
 
