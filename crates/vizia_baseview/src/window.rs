@@ -247,6 +247,15 @@ impl ViziaWindow {
 }
 
 impl WindowHandler for ViziaWindow {
+    fn damage(&self, _area: baseview::DamageArea) {
+        // Some hosts dispatch baseview callbacks from a different UI thread than
+        // window construction; ensure this callback thread is registered.
+        Runtime::init_on_ui_thread();
+        if let Ok(mut application) = self.application.try_borrow_mut() {
+            application.mark_damaged();
+        }
+    }
+
     fn draw(&self) -> Result<(), HandlerError> {
         // Some hosts dispatch baseview callbacks from a different UI thread than
         // window construction; ensure this callback thread is registered.

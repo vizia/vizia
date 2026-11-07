@@ -682,6 +682,12 @@ impl ApplicationRunner {
         self.window_context.request_redraw();
     }
 
+    /// Force the next [`WindowHandler::draw`] to re-render the window even when
+    /// no vizia-level redraw was requested. This doesn't request a redraw.
+    pub(crate) fn mark_damaged(&mut self) {
+        self.should_redraw = true;
+    }
+
     /// Schedule the next frame according to the configured [`FramePolicy`].
     pub(crate) fn schedule_next_frame(&self, needs_redraw: bool) {
         if self.frame_policy == FramePolicy::Continuous || needs_redraw {
