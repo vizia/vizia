@@ -309,6 +309,11 @@ impl ApplicationRunner {
             self.cx.send_event(event.into_event());
         }
 
+        // Fire due timers and scheduled events before flushing so they're handled this
+        // frame, mirroring `vizia_winit`'s `new_events`.
+        self.cx.process_timers();
+        self.cx.emit_scheduled_events();
+
         // Events. The flush callback can't borrow `&mut self`, so size /
         // scale change requests get latched into locals here and applied
         // after the drain.
@@ -442,9 +447,6 @@ impl ApplicationRunner {
         if has_redraw {
             self.should_redraw = true;
         }
-
-        self.cx.process_timers();
-        self.cx.emit_scheduled_events();
 
         animations_playing || self.cx.has_queued_events() || has_redraw
     }
