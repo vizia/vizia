@@ -44,6 +44,12 @@ impl ViziaWindow {
         // apply those effects on this thread.
         Runtime::init_on_ui_thread();
 
+        // Register the event proxy so views can spawn threads and emit events back
+        // to this window. The proxy owns this window's queue and is also stored on
+        // the runner so `on_frame_update` can drain it.
+        let proxy = BaseviewProxy::new(window.waker());
+        cx.set_event_proxy(Box::new(proxy.clone()));
+
         // Register a sync waker so off-thread `SyncSignal` writes wake this window's event loop.
         let waker = window.waker();
         Runtime::set_sync_effect_waker(move || waker.request_redraw());
@@ -116,6 +122,7 @@ impl ViziaWindow {
             use_system_scaling,
             window_scale_factor,
             frame_policy,
+            proxy,
             surface,
             dirty_surface,
             win_desc,
@@ -169,9 +176,8 @@ impl ViziaWindow {
                 cx.ignore_default_theme = ignore_default_theme;
                 cx.add_built_in_styles();
 
-                let mut cx = BackendContext::new(cx);
+                let cx = BackendContext::new(cx);
 
-                cx.set_event_proxy(Box::new(BaseviewProxy::new(window.waker())));
                 Ok(ViziaWindow::new(
                     cx,
                     win_desc,
@@ -225,9 +231,8 @@ impl ViziaWindow {
                 cx.ignore_default_theme = ignore_default_theme;
                 cx.add_built_in_styles();
 
-                let mut cx = BackendContext::new(cx);
+                let cx = BackendContext::new(cx);
 
-                cx.set_event_proxy(Box::new(BaseviewProxy::new(window.waker())));
                 Ok(ViziaWindow::new(
                     cx,
                     win_desc,

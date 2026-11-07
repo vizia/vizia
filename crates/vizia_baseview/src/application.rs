@@ -8,7 +8,7 @@ use raw_window_handle::HasWindowHandle;
 use skia_safe::gpu::gl::FramebufferInfo;
 use vizia_core::events::EventManager;
 
-use crate::proxy::queue_get;
+use crate::proxy::BaseviewProxy;
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
 
@@ -173,6 +173,7 @@ pub(crate) struct ApplicationRunner {
     cx: BackendContext,
     event_manager: EventManager,
     window_context: WindowContext,
+    proxy: BaseviewProxy,
     pub gr_context: skia_safe::gpu::DirectContext,
     should_redraw: bool,
     frame_policy: FramePolicy,
@@ -217,6 +218,7 @@ impl ApplicationRunner {
         use_system_scaling: bool,
         window_scale_factor: f64,
         frame_policy: FramePolicy,
+        proxy: BaseviewProxy,
         surface: skia_safe::Surface,
         dirty_surface: skia_safe::Surface,
         window_description: WindowDescription,
@@ -229,6 +231,7 @@ impl ApplicationRunner {
             gr_context,
             event_manager: EventManager::new(),
             window_context,
+            proxy,
             use_system_scaling,
             window_scale_factor,
             cx,
@@ -310,7 +313,7 @@ impl ApplicationRunner {
         // is the analogue of the `drain_pending_work` call in `vizia_winit`'s frame loop.
         Runtime::drain_pending_work();
 
-        while let Some(event) = queue_get() {
+        for event in self.proxy.take_events() {
             self.cx.send_event(event.into_event());
         }
 
