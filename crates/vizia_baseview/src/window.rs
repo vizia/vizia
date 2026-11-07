@@ -14,7 +14,7 @@ use skia_safe::gpu::{
 use skia_safe::{ColorSpace, ColorType, PixelGeometry, Surface, SurfaceProps, SurfacePropsFlags};
 use std::cell::RefCell;
 
-use crate::proxy::BaseviewProxy;
+use crate::proxy::ProxyQueue;
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
 
@@ -43,11 +43,10 @@ impl ViziaWindow {
         // apply those effects on this thread.
         Runtime::init_on_ui_thread();
 
-        // Register the event proxy so views can spawn threads and emit events back
-        // to this window. The proxy owns this window's queue and is also stored on
-        // the runner so `on_frame_update` can drain it.
-        let proxy = BaseviewProxy::new(window.waker());
-        cx.set_event_proxy(Box::new(proxy.clone()));
+        // The runner owns the queue and drains it in `on_frame_update`.
+        // proxies only hold a weak reference, so sending fails once the window is closed.
+        let proxy_queue = ProxyQueue::default();
+        cx.set_event_proxy(Box::new(proxy_queue.proxy(window.waker())));
 
         // Register a no-op sync waker. baseview doesn't expose a proxy-event primitive we
         // can use to wake the event loop from another thread, but it drives `on_frame` at
@@ -128,7 +127,7 @@ impl ViziaWindow {
             gr_context,
             window_scale_factor,
             frame_policy,
-            proxy,
+            proxy_queue,
             surface,
             dirty_surface,
             win_desc,
