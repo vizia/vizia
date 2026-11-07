@@ -1,3 +1,4 @@
+use baseview::WindowWaker;
 use std::collections::VecDeque;
 use std::sync::{LazyLock, Mutex};
 use vizia_core::context::EventProxy;
@@ -15,11 +16,20 @@ pub(crate) fn queue_get() -> Option<ProxyEvent> {
 }
 
 #[derive(Clone)]
-pub(crate) struct BaseviewProxy;
+pub(crate) struct BaseviewProxy {
+    waker: WindowWaker,
+}
+
+impl BaseviewProxy {
+    pub(crate) fn new(waker: WindowWaker) -> Self {
+        Self { waker }
+    }
+}
 
 impl EventProxy for BaseviewProxy {
     fn send(&self, event: ProxyEvent) -> Result<(), ()> {
         queue_put(event);
+        self.waker.request_redraw();
         Ok(())
     }
 
