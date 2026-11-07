@@ -13,12 +13,12 @@ pub enum WindowScalePolicy {
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FramePolicy {
     /// Drive a frame only when there is work to do (events, wakers, animations, timers).
-    #[default]
     OnDemand,
     /// Drive a frame every vsync interval.
     ///
     /// This doesn't force a redraw of the window every frame. This just ensure
     /// on_idle will be called at every sync frame. Its the vizia app that decide
     /// if rect has to be redrawn or not based on its reactive system.
+    #[default]
     Continuous,
 }
