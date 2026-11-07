@@ -178,16 +178,10 @@ pub(crate) struct ApplicationRunner {
     should_redraw: bool,
     frame_policy: FramePolicy,
 
-    /// If this is set to `true`, then `window_scale_factor` will be updated during
-    /// [`baseview::WindowEvent::Resized`] events in accordance to the system's reported DPI. This
-    /// can change at runtime when the window is dragged between displays. Otherwise
-    /// `window_scale_factor` will not change.
-    use_system_scaling: bool,
-    /// The scale factor for the window itself. This is either determined by either the operating
-    /// system or explicitly overridden by the creator of the window. In some cases window resize
-    /// events may change this scaling policy. This value is only used when translating logical
-    /// mouse coordinates to physical window coordinates. For any other use within VIZIA itself this
-    /// always needs to be multiplied by `user_scale_factor`.
+    /// The window's DPI scale factor, as reported by the platform. Updated on
+    /// resize (e.g. when the window is dragged between displays). Only used when
+    /// translating logical mouse coordinates to physical window coordinates; for
+    /// any other use within VIZIA it must be multiplied by `user_scale_factor`.
     window_scale_factor: f64,
     // /// The scale factor applied on top of the `window_scale` to convert the window's logical size
     // /// to a physical size. If this is different from `*cx.user_scale_factor` after handling the
@@ -215,7 +209,6 @@ impl ApplicationRunner {
     pub fn new(
         cx: BackendContext,
         gr_context: skia_safe::gpu::DirectContext,
-        use_system_scaling: bool,
         window_scale_factor: f64,
         frame_policy: FramePolicy,
         proxy: BaseviewProxy,
@@ -232,7 +225,6 @@ impl ApplicationRunner {
             event_manager: EventManager::new(),
             window_context,
             proxy,
-            use_system_scaling,
             window_scale_factor,
             cx,
             surface,
@@ -650,10 +642,7 @@ impl ApplicationRunner {
 
         unsafe { context.make_not_current() }.expect("Failed to make GL context not current");
 
-        // Only use new DPI settings when `WindowScalePolicy::SystemScaleFactor` was used.
-        if self.use_system_scaling {
-            self.window_scale_factor = new_size.scale_factor;
-        }
+        self.window_scale_factor = new_size.scale_factor;
 
         self.cx
             .set_scale_factor(self.window_scale_factor * self.window_description.user_scale_factor);

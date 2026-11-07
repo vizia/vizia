@@ -29,7 +29,6 @@ impl ViziaWindow {
     fn new(
         mut cx: BackendContext,
         win_desc: WindowDescription,
-        window_scale_policy: WindowScalePolicy,
         frame_policy: FramePolicy,
         window: WindowContext,
         builder: Option<Box<dyn FnOnce(&mut Context) + Send>>,
@@ -95,12 +94,13 @@ impl ViziaWindow {
         let dirty_surface =
             surface.new_surface_with_dimensions((initial_width, initial_height)).unwrap();
 
-        // Scaling is a combination of the window's current scale factor (system-provided unless
-        // explicitly overridden by the hosting application) and a custom user scale factor.
-        let (use_system_scaling, window_scale_factor) = match window_scale_policy {
-            WindowScalePolicy::ScaleFactor(scale) => (false, scale),
-            WindowScalePolicy::SystemScaleFactor => (true, window.scale_factor()),
-        };
+        // baseview determines the scale factor from the platform. The
+        // `WindowScalePolicy::ScaleFactor(scale)`
+        // value is only used as a fallback (via
+        // `with_fallback_scale_factor` in `open_parented`/`open_blocking`) when the platform
+        // cannot report one, so always read the actual scale factor here to keep vizia's layout consistent with the
+        // real window.
+        let window_scale_factor = window.scale_factor();
         let dpi_factor = window_scale_factor * win_desc.user_scale_factor;
 
         cx.add_main_window(Entity::root(), &win_desc, dpi_factor as f32);
@@ -119,7 +119,6 @@ impl ViziaWindow {
         let application = ApplicationRunner::new(
             cx,
             gr_context,
-            use_system_scaling,
             window_scale_factor,
             frame_policy,
             proxy,
@@ -181,7 +180,6 @@ impl ViziaWindow {
                 Ok(ViziaWindow::new(
                     cx,
                     win_desc,
-                    scale_policy,
                     frame_policy,
                     window,
                     Some(Box::new(app)),
@@ -236,7 +234,6 @@ impl ViziaWindow {
                 Ok(ViziaWindow::new(
                     cx,
                     win_desc,
-                    scale_policy,
                     frame_policy,
                     window,
                     Some(Box::new(app)),

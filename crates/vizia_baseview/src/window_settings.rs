@@ -4,7 +4,8 @@ pub enum WindowScalePolicy {
     /// Use the system's DPI scale factor.
     #[default]
     SystemScaleFactor,
-    /// Use the given DPI scale factor (e.g. `1.0` = 96 dpi).
+    /// Use the system's DPI scale factor, but fall back to the given factor when
+    /// the platform cannot report one (e.g. `1.0` = 96 dpi).
     ScaleFactor(f64),
 }
 
