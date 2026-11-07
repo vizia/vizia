@@ -10,15 +10,19 @@ pub enum WindowScalePolicy {
 }
 
 /// Controls how often the window's frame loop is driven.
+///
+/// Only [`FramePolicy::Continuous`] is currently offered. `OnDemand` requires a
+/// working sync-effect waker so that off-thread `SyncSignal` writes and disposals
+/// can wake the event loop; without one those updates would stall indefinitely.
 #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FramePolicy {
-    /// Drive a frame only when there is work to do (events, wakers, animations, timers).
-    OnDemand,
     /// Drive a frame every vsync interval.
     ///
-    /// This doesn't force a redraw of the window every frame. This just ensure
-    /// on_idle will be called at every sync frame. Its the vizia app that decide
-    /// if rect has to be redrawn or not based on its reactive system.
+    /// This doesn't force a redraw of the window every frame. It only ensures
+    /// `on_idle` is called on every sync frame; the vizia app decides whether
+    /// anything has to be redrawn based on its reactive system.
     #[default]
     Continuous,
+    // /// Drive a frame only when there is work to do (events, wakers, animations, timers).
+    // OnDemand,
 }
