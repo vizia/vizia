@@ -32,6 +32,10 @@ impl EventProxy for BaseviewProxy {
     fn send(&self, event: ProxyEvent) -> Result<(), ()> {
         let queue = self.queue.upgrade().ok_or(())?;
         queue.lock().unwrap().push_back(event);
+        // Note: when called from main thread during `draw`, baseview will only
+        // request a redraw if the frame does. With `FramePolicy::OnDemand` the event
+        // then waits for the next wake-up. Checking for pending events in
+        // `schedule_next_frame` would cover it.
         self.waker.request_redraw();
         Ok(())
     }
