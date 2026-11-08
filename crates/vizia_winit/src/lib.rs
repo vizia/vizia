@@ -6,6 +6,11 @@ mod convert;
 pub mod window;
 pub mod window_modifiers;
 
+/// Re-export of the [`tray-icon`](https://docs.rs/tray-icon) crate, used with
+/// [`Application::with_tray_icon`](crate::application::Application::with_tray_icon).
+#[cfg(feature = "tray")]
+pub use tray_icon;
+
 pub trait ModifyWindow {
     /// Takes a closure which mutates the parent window of the current view.
     fn modify_window<T>(&mut self, f: impl FnOnce(&winit::window::Window) -> T) -> Option<T>;

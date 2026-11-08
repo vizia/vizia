@@ -74,6 +74,10 @@ pub enum UserEvent {
     Event(ProxyEvent),
     #[cfg(feature = "accesskit")]
     AccessKitEvent(accesskit_winit::Event),
+    #[cfg(feature = "tray")]
+    TrayIconEvent(tray_icon::TrayIconEvent),
+    #[cfg(feature = "tray")]
+    TrayMenuEvent(tray_icon::menu::MenuEvent),
 }
 
 #[cfg(feature = "accesskit")]
@@ -84,6 +88,9 @@ impl From<accesskit_winit::Event> for UserEvent {
 }
 
 type IdleCallback = Option<Box<dyn Fn(&mut Context)>>;
+
+#[cfg(feature = "tray")]
+type TrayIconBuilderCallback = Box<dyn FnOnce() -> tray_icon::TrayIconBuilder + Send>;
 
 #[derive(Debug)]
 pub enum ApplicationError {
@@ -129,6 +136,19 @@ pub struct Application {
     custom_cursors: Arc<HashMap<CursorIcon, CustomCursor>>,
     exit_when_no_windows: bool,
     had_windows: bool,
+    #[cfg(feature = "tray")]
+    tray_icon_builder: Option<TrayIconBuilderCallback>,
+    #[cfg(all(
+        feature = "tray",
+        not(any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ))
+    ))]
+    tray_icon: Option<tray_icon::TrayIcon>,
     #[cfg(feature = "accesskit")]
     accesskit_adapter: Option<accesskit_winit::Adapter>,
     #[cfg(feature = "accesskit")]
@@ -190,6 +210,19 @@ impl Application {
             custom_cursors: Arc::new(HashMap::new()),
             exit_when_no_windows: true,
             had_windows: false,
+            #[cfg(feature = "tray")]
+            tray_icon_builder: None,
+            #[cfg(all(
+                feature = "tray",
+                not(any(
+                    target_os = "linux",
+                    target_os = "dragonfly",
+                    target_os = "freebsd",
+                    target_os = "netbsd",
+                    target_os = "openbsd"
+                ))
+            ))]
+            tray_icon: None,
             #[cfg(feature = "accesskit")]
             accesskit_adapter: None,
             #[cfg(feature = "accesskit")]
@@ -415,12 +448,117 @@ impl Application {
         self
     }
 
+    /// Adds a system tray icon to the application, built with the [`tray-icon`](https://docs.rs/tray-icon) crate.
+    ///
+    /// The provided closure is called once the event loop is running and should return a
+    /// [`tray_icon::TrayIconBuilder`] describing the tray icon. The returned builder is built by
+    /// vizia at the appropriate time for each platform:
+    ///
+    /// - On Windows the tray icon is created once the event loop has started.
+    /// - On macOS the tray icon is created once the event loop has started, as required by the OS.
+    /// - On Linux and the BSDs the closure is invoked on a dedicated thread which initializes
+    ///   `gtk`, since the tray icon requires gtk while winit does not use it. This is why the
+    ///   closure must be `Send`.
+    ///
+    /// [`tray_icon::TrayIconEvent`]s and [`tray_icon::menu::MenuEvent`]s are forwarded to the
+    /// application and propagated through the entire tree, so they can be handled from any view
+    /// or model with [`Event::map`](vizia_core::events::Event::map).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
+    /// # use vizia_winit::tray_icon;
+    /// # let icon_rgba: Vec<u8> = vec![255; 32 * 32 * 4];
+    /// Application::new(|cx| {
+    ///     // Build application here
+    /// })
+    /// .with_tray_icon(move || {
+    ///     let icon = tray_icon::Icon::from_rgba(icon_rgba, 32, 32).unwrap();
+    ///     tray_icon::TrayIconBuilder::new().with_tooltip("My app").with_icon(icon)
+    /// })
+    /// .run();
+    /// ```
+    #[cfg(feature = "tray")]
+    pub fn with_tray_icon<F>(mut self, build_tray: F) -> Self
+    where
+        F: FnOnce() -> tray_icon::TrayIconBuilder + Send + 'static,
+    {
+        // Forward tray icon and tray menu events to the event loop, waking it up in the process.
+        let proxy = self.event_loop_proxy.clone();
+        tray_icon::TrayIconEvent::set_event_handler(Some(move |event| {
+            let _ = proxy.send_event(UserEvent::TrayIconEvent(event));
+        }));
+
+        let proxy = self.event_loop_proxy.clone();
+        tray_icon::menu::MenuEvent::set_event_handler(Some(move |event| {
+            let _ = proxy.send_event(UserEvent::TrayMenuEvent(event));
+        }));
+
+        self.tray_icon_builder = Some(Box::new(build_tray));
+        self
+    }
+
+    #[cfg(all(
+        feature = "tray",
+        not(any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ))
+    ))]
+    fn create_tray_icon(&mut self) {
+        let Some(build_tray) = self.tray_icon_builder.take() else {
+            return;
+        };
+
+        match (build_tray)().build() {
+            Ok(tray_icon) => self.tray_icon = Some(tray_icon),
+            Err(err) => warn!("Failed to create tray icon: {}", err),
+        }
+
+        // On macOS the main run loop must be woken up for the tray icon to show up immediately.
+        #[cfg(target_os = "macos")]
+        if let Some(run_loop) = objc2_core_foundation::CFRunLoop::main() {
+            run_loop.wake_up();
+        }
+    }
+
     /// Returns a `ContextProxy` which can be used to send events from another thread.
     pub fn get_proxy(&self) -> ContextProxy {
         self.cx.0.get_proxy()
     }
 
     pub fn run(mut self) -> Result<(), ApplicationError> {
+        // Winit doesn't use gtk on Linux but the tray icon requires it, so initialize gtk and
+        // create the tray icon on a dedicated thread.
+        #[cfg(all(
+            feature = "tray",
+            any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd"
+            )
+        ))]
+        if let Some(build_tray) = self.tray_icon_builder.take() {
+            std::thread::spawn(move || {
+                if let Err(err) = gtk::init() {
+                    warn!("Failed to initialize gtk for the tray icon: {}", err);
+                    return;
+                }
+
+                match (build_tray)().build() {
+                    Ok(_tray_icon) => gtk::main(),
+                    Err(err) => warn!("Failed to create tray icon: {}", err),
+                }
+            });
+        }
+
         self.event_loop.take().unwrap().run_app(&mut self).map_err(ApplicationError::EventLoopError)
     }
 }
@@ -430,6 +568,26 @@ impl ApplicationHandler<UserEvent> for Application {
         match user_event {
             UserEvent::Event(event) => {
                 self.cx.send_event(event.into_event());
+            }
+
+            #[cfg(feature = "tray")]
+            UserEvent::TrayIconEvent(event) => {
+                self.cx.send_event(
+                    Event::new(event)
+                        .target(Entity::root())
+                        .origin(Entity::root())
+                        .propagate(Propagation::Subtree),
+                );
+            }
+
+            #[cfg(feature = "tray")]
+            UserEvent::TrayMenuEvent(event) => {
+                self.cx.send_event(
+                    Event::new(event)
+                        .target(Entity::root())
+                        .origin(Entity::root())
+                        .propagate(Propagation::Subtree),
+                );
             }
 
             #[cfg(feature = "accesskit")]
@@ -960,6 +1118,22 @@ impl ApplicationHandler<UserEvent> for Application {
     }
 
     fn new_events(&mut self, _event_loop: &ActiveEventLoop, _cause: winit::event::StartCause) {
+        // Create the tray icon once the event loop is actually running to prevent issues
+        // such as https://github.com/tauri-apps/tray-icon/issues/90.
+        #[cfg(all(
+            feature = "tray",
+            not(any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd"
+            ))
+        ))]
+        if matches!(_cause, winit::event::StartCause::Init) {
+            self.create_tray_icon();
+        }
+
         self.cx.process_timers();
         self.cx.emit_scheduled_events();
     }

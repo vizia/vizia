@@ -18,6 +18,7 @@ baseview = ["vizia_baseview"]
 x11 = ["vizia_winit?/x11", "vizia_core/x11"]
 wayland = ["vizia_winit?/wayland", "vizia_core/wayland"]
 accesskit = ["vizia_winit?/accesskit"]
+tray = ["vizia_winit?/tray"]
 markdown = ["vizia_core/markdown"]
 rayon = ["vizia_core/rayon"]
 serde = ["vizia_core/serde"]
@@ -92,6 +93,9 @@ serde = { version = "1.0", features = ["derive"] }
 skia-safe = { version = "0.99", features = ["gl", "textlayout", "svg"] }
 sys-locale = "0.3"
 tokio = { version = "1.53", features = ["rt-multi-thread", "time", "fs", "io-util"] }
+tray-icon = "0.26"
+gtk = "0.18"
+objc2-core-foundation = { version = "0.3.2", default-features = false, features = ["std", "CFRunLoop"] }
 unic-langid = { version = "0.9.6", features = ["macros"] }
 unicode-segmentation = "1.13"
 unicode-bidi = "0.3"
@@ -343,6 +347,11 @@ path = "examples/multiwindow.rs"
 [[example]]
 name = "multiwindow_headless"
 path = "examples/multiwindow_headless.rs"
+
+[[example]]
+name = "tray_icon"
+path = "examples/tray_icon.rs"
+required-features = ["tray"]
 
 [[example]]
 name = "popup_window"

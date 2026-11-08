@@ -14,6 +14,7 @@ x11 = ["winit/x11", "glutin/x11", "glutin-winit/x11"]
 wayland = ["winit/wayland", "winit/wayland-dlopen", "winit/wayland-csd-adwaita", "glutin-winit/wayland", "copypasta?/wayland"]
 clipboard = ["copypasta"]
 accesskit = ["dep:accesskit_winit", "dep:accesskit"]
+tray = ["dep:tray-icon", "dep:gtk", "dep:objc2-core-foundation"]
 
 [dependencies]
 vizia_input.workspace = true
@@ -32,10 +33,17 @@ glutin-winit.workspace = true
 gl-rs.workspace = true
 hashbrown.workspace = true
 log.workspace = true
+tray-icon = { workspace = true, optional = true }
 
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows-sys.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2-core-foundation = { workspace = true, optional = true }
+
+[target.'cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))'.dependencies]
+gtk = { workspace = true, optional = true }
 
 [lints]
 workspace = true
