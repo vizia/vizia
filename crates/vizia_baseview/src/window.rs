@@ -331,7 +331,11 @@ impl Drop for ViziaWindow {
 
 pub struct WindowView {}
 
-impl View for WindowView {}
+impl View for WindowView {
+    fn element(&self) -> Option<&'static str> {
+        Some("window")
+    }
+}
 
 pub fn create_surface(
     size: (i32, i32),

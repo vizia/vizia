@@ -1,7 +1,7 @@
 use vizia::prelude::*;
 
 const STYLE: &str = r#"
-    :root {
+    window {
         padding: 10px;
     }
 

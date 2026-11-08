@@ -3,7 +3,7 @@
 use vizia::prelude::*;
 
 const STYLE: &str = r#"
-    :root {
+    window {
         alignment: center;
     }
     textbox:invalid {
