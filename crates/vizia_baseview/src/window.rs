@@ -15,6 +15,7 @@ use skia_safe::{ColorSpace, ColorType, PixelGeometry, Surface, SurfaceProps, Sur
 use std::cell::RefCell;
 
 use crate::proxy::ProxyQueue;
+use crate::sync_waker::{SyncWakerGuard, register_window, wake};
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
 
@@ -23,6 +24,8 @@ pub(crate) struct ViziaWindow {
     application: RefCell<ApplicationRunner>,
     #[allow(clippy::type_complexity)]
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+    // Droping this deregister the waker on drop.
+    _sync_waker: Option<SyncWakerGuard>,
 }
 
 impl ViziaWindow {
@@ -48,16 +51,10 @@ impl ViziaWindow {
         let proxy_queue = ProxyQueue::default();
         cx.set_event_proxy(Box::new(proxy_queue.proxy(window.waker())));
 
-        // Register a no-op sync waker. baseview doesn't expose a proxy-event primitive we
-        // can use to wake the event loop from another thread, but it drives `on_frame` at
-        // the host compositor's vsync rate anyway — signal changes from off-UI writes will
-        // be observed on the next frame (at most one frame of latency).
-        //
-        // Registering the waker here — even as a no-op — has two benefits: (1) it matches
-        // the pattern in `vizia_winit`, so embedders don't have to know about sync-runtime
-        // internals; (2) if a future baseview release gains a window-wake mechanism, only
-        // this one line needs to change.
-        Runtime::set_sync_effect_waker(|| {});
+        let guard =
+            (frame_policy == FramePolicy::OnDemand).then(|| register_window(window.waker()));
+
+        Runtime::set_sync_effect_waker(wake);
         let context = window.gl_context().expect("Window was created without OpenGL support");
 
         unsafe { context.make_current() }.expect("Failed to make GL context current");
@@ -136,7 +133,7 @@ impl ViziaWindow {
         );
         unsafe { context.make_not_current() }.expect("Failed to make GL context not current");
 
-        ViziaWindow { application: RefCell::new(application), on_idle }
+        ViziaWindow { application: RefCell::new(application), on_idle, _sync_waker: guard }
     }
 
     /// Open a new child window.

@@ -2,6 +2,7 @@
 mod application;
 mod parent_window;
 pub(crate) mod proxy;
+mod sync_waker;
 mod window;
 mod window_settings;
 

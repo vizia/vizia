@@ -23,6 +23,6 @@ pub enum FramePolicy {
     /// anything has to be redrawn based on its reactive system.
     #[default]
     Continuous,
-    // /// Drive a frame only when there is work to do (events, wakers, animations, timers).
-    // OnDemand,
+    /// Drive a frame only when there is work to do (events, wakers, animations, timers).
+    OnDemand,
 }
