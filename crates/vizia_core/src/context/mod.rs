@@ -626,6 +626,14 @@ impl Context {
                     let fallback = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
                     self.with_current(fallback, |cx| cx.focus());
                 }
+
+                // `focus()` silently refuses to move focus to a non-focusable target (such as
+                // a plain window), which would leave `focused` dangling on the deleted entity
+                // and later crash consumers of the focus id (e.g. the accesskit tree update).
+                // Force focus to the nearest surviving ancestor window (or root) in that case.
+                if self.focused == *entity {
+                    self.focused = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
+                }
             }
 
             if self.captured == *entity {

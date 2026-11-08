@@ -3,6 +3,10 @@
 /// The application starts with no OS windows at all. After a startup timer completes
 /// it sets a signal that causes a `Binding` to create the main window. A button
 /// inside that window then opens a second window the same way.
+///
+/// The application is configured with `exit_when_no_windows(false)` so it keeps
+/// running even when every window is closed. Closing the main window restarts the
+/// timer, which reopens it 5 seconds later.
 pub use vizia::prelude::*;
 
 #[cfg(feature = "baseview")]
@@ -15,6 +19,8 @@ fn main() {
 enum AppEvent {
     /// Fired by the startup timer – triggers window creation via signal.
     OpenMain,
+    /// Fired when the main window is closed – restarts the timer so it reopens later.
+    CloseMain,
     ShowSecondary,
     HideSecondary,
 }
@@ -23,16 +29,23 @@ enum AppEvent {
 struct AppData {
     show_main: Signal<bool>,
     show_secondary: Signal<bool>,
+    timer: Timer,
 }
 
 #[cfg(all(feature = "winit", not(feature = "baseview")))]
 impl Model for AppData {
-    fn event(&mut self, _cx: &mut EventContext, event: &mut Event) {
+    fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|e, _| match e {
             AppEvent::OpenMain => {
                 if !self.show_main.get() {
                     self.show_main.set(true)
                 }
+            }
+            AppEvent::CloseMain => {
+                // Only the main window closes - the secondary window stays open.
+                self.show_main.set(false);
+                // The app keeps running headless - restart the timer to reopen the window.
+                cx.start_timer(self.timer);
             }
             AppEvent::ShowSecondary => self.show_secondary.set(true),
             AppEvent::HideSecondary => self.show_secondary.set(false),
@@ -46,7 +59,20 @@ fn main() -> Result<(), ApplicationError> {
         // No windows created here – zero OS windows at startup.
         let show_main = Signal::new(false);
         let show_secondary = Signal::new(false);
-        AppData { show_main, show_secondary }.build(cx);
+
+        // Bounded timer which creates the main window when it stops.
+        let timer = cx.add_timer(
+            std::time::Duration::from_millis(100),
+            Some(std::time::Duration::from_millis(5000)),
+            |cx, action| {
+                if let TimerAction::Stop = action {
+                    cx.emit(AppEvent::OpenMain);
+                }
+            },
+        );
+        cx.start_timer(timer);
+
+        AppData { show_main, show_secondary, timer }.build(cx);
 
         // When show_main becomes true, create the main window.
         Binding::new(cx, show_main, move |cx| {
@@ -60,6 +86,7 @@ fn main() -> Result<(), ApplicationError> {
                     .padding(Pixels(20.0))
                     .vertical_gap(Pixels(8.0));
                 })
+                .on_close(|cx| cx.emit(AppEvent::CloseMain))
                 .title("Main (spawned by timer)")
                 .inner_size((340, 180));
             }
@@ -81,18 +108,8 @@ fn main() -> Result<(), ApplicationError> {
                 .inner_size((280, 120));
             }
         });
-
-        // Start a bounded timer and create the main window when it stops.
-        let timer = cx.add_timer(
-            std::time::Duration::from_millis(100),
-            Some(std::time::Duration::from_millis(5000)),
-            |cx, action| {
-                if let TimerAction::Stop = action {
-                    cx.emit(AppEvent::OpenMain);
-                }
-            },
-        );
-        cx.start_timer(timer);
     })
+    // Keep the event loop running as a daemon even when all windows are closed.
+    .exit_when_no_windows(false)
     .run()
 }
