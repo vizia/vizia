@@ -38,7 +38,7 @@ pub(crate) fn register_window(waker: WindowWaker) -> SyncWakerGuard {
     SyncWakerGuard { id }
 }
 
-/// Wake all the registered window when there is a SyncSignal set off the UI thread.
+/// Wake all the registered windows when there is a SyncSignal set off the UI thread.
 pub(crate) fn wake() {
     let windows = REGISTERED_WINDOWS.read().clone();
     for RegisteredWindow { waker, .. } in windows.iter() {

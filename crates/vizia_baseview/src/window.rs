@@ -51,10 +51,12 @@ impl ViziaWindow {
         let proxy_queue = ProxyQueue::default();
         cx.set_event_proxy(Box::new(proxy_queue.proxy(window.waker())));
 
+        // Register the window as needing wake only if the policy is `OnDemand`.
+        // `Continuous` draw runs every vsync frame anyway.
         let guard =
             (frame_policy == FramePolicy::OnDemand).then(|| register_window(window.waker()));
-
         Runtime::set_sync_effect_waker(wake);
+
         let context = window.gl_context().expect("Window was created without OpenGL support");
 
         unsafe { context.make_current() }.expect("Failed to make GL context current");
