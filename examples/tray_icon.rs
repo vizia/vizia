@@ -26,16 +26,14 @@ struct AppData {
 impl Model for AppData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         // Tray menu events, identified by the ids given to the menu items.
-        event.map(|menu_event: &tray_icon::menu::MenuEvent, _| {
-            match menu_event.id().0.as_str() {
-                "show" => cx.emit(WindowEvent::SetVisible(true)),
-                "hide" => cx.emit(WindowEvent::SetVisible(false)),
-                "quit" => {
-                    self.quitting = true;
-                    cx.emit(WindowEvent::WindowClose);
-                }
-                _ => {}
+        event.map(|menu_event: &tray_icon::menu::MenuEvent, _| match menu_event.id().0.as_str() {
+            "show" => cx.emit(WindowEvent::SetVisible(true)),
+            "hide" => cx.emit(WindowEvent::SetVisible(false)),
+            "quit" => {
+                self.quitting = true;
+                cx.emit(WindowEvent::WindowClose);
             }
+            _ => {}
         });
 
         // Intercept the window close and minimize to the tray instead. This model is built on
@@ -71,12 +69,8 @@ fn vizia_logo_rgba() -> (Vec<u8>, u32, u32) {
     let image = vg::Image::from_encoded(data).expect("Failed to decode the vizia logo");
     let (width, height) = (image.width(), image.height());
 
-    let info = vg::ImageInfo::new(
-        (width, height),
-        vg::ColorType::RGBA8888,
-        vg::AlphaType::Unpremul,
-        None,
-    );
+    let info =
+        vg::ImageInfo::new((width, height), vg::ColorType::RGBA8888, vg::AlphaType::Unpremul, None);
     let mut rgba = vec![0u8; (width * height * 4) as usize];
     let row_bytes = (width * 4) as usize;
     assert!(

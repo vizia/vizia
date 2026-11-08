@@ -58,7 +58,6 @@ use crate::{
     model::ModelData,
 };
 
-
 use crate::environment::{apply_direction_class, apply_theme_class};
 use crate::{binding::BindingHandler, resource::StoredImage};
 use crate::{cache::CachedData, resource::ImageOrSvg};

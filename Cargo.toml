@@ -132,296 +132,364 @@ features = ["textlayout", "svg", "d3d", "vulkan", "gl"]
 [[example]]
 name = "counter"
 path = "examples/7GUIs/counter.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "crud"
 path = "examples/7GUIs/crud.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "flight_booker"
 path = "examples/7GUIs/flight_booker.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "temperature_converter"
 path = "examples/7GUIs/temperature_converter.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "virtual_list"
 path = "examples/views/virtual_list.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "l10n"
 path = "examples/l10n.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "animation"
 path = "examples/animation.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "cursor_icon"
 path = "examples/cursor_icon.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "dragdrop"
 path = "examples/dragdrop.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "keymap"
 path = "examples/keymap.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "number_input"
 path = "examples/number_input.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "window_modifiers"
 path = "examples/window_modifiers.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "calendar"
 path = "examples/views/calendar.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "select"
 path = "examples/views/select.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "combobox"
 path = "examples/views/combobox.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "scrollview"
 path = "examples/views/scrollview.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "stylesheet"
 path = "examples/stylesheet.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "switch"
 path = "examples/views/switch.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "chip"
 path = "examples/views/chip.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "rating"
 path = "examples/views/rating.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "button"
 path = "examples/views/button.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "button_group"
 path = "examples/views/button_group.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "checkbox"
 path = "examples/views/checkbox.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "dropdown"
 path = "examples/views/dropdown.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "image"
 path = "examples/views/image.rs"
-required-features = ["url-loader"]
+required-features = ["winit", "url-loader"]
 
 [[example]]
 name = "knob"
 path = "examples/views/knob.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "label"
 path = "examples/views/label.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "tooltip"
 path = "examples/views/tooltip.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "toggle_button"
 path = "examples/views/toggle_button.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "spinbox"
 path = "examples/views/spinbox.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "slider"
 path = "examples/views/slider.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "radiobutton"
 path = "examples/views/radiobutton.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "zstack"
 path = "examples/views/zstack.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "hstack"
 path = "examples/views/hstack.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "vstack"
 path = "examples/views/vstack.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "progressbar"
 path = "examples/views/progressbar.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "textbox"
 path = "examples/views/textbox.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "login"
 path = "examples/views/login.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "list"
 path = "examples/views/list.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "menu"
 path = "examples/views/menu.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "context_menu"
 path = "examples/views/context_menu.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "menubar"
 path = "examples/views/menubar.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "tabview"
 path = "examples/views/tabview.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "tab_list"
 path = "examples/views/tab_list.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "xypad"
 path = "examples/views/xypad.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "circle_drawer"
 path = "examples/7GUIs/circle_drawer.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "timer"
 path = "examples/7GUIs/timer.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "save_dialog"
 path = "examples/save_dialog.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "custom_view"
 path = "examples/custom_view.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "timers"
 path = "examples/timers.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "markdown"
 path = "examples/views/markdown.rs"
-required-features = ["markdown"]
+required-features = ["winit", "markdown"]
 
 [[example]]
 name = "rich_text"
 path = "examples/rich_text.rs"
-required-features = ["markdown"]
+required-features = ["winit", "markdown"]
 
 [[example]]
 name = "multiwindow"
 path = "examples/multiwindow.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "multiwindow_headless"
 path = "examples/multiwindow_headless.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "tray_icon"
 path = "examples/tray_icon.rs"
-required-features = ["tray"]
+required-features = ["winit", "tray"]
 
 [[example]]
 name = "popup_window"
 path = "examples/popup_window.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "svg"
 path = "examples/views/svg.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "grid"
 path = "examples/views/grid.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "collapsible"
 path = "examples/views/collapsible.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "accordion"
 path = "examples/views/accordion.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "card"
 path = "examples/views/card.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "frame"
 path = "examples/views/frame.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "avatar"
 path = "examples/views/avatar.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "divider"
 path = "examples/views/divider.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "resizable"
 path = "examples/views/resizable.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "variables"
 path = "examples/variables.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "virtual_table"
 path = "examples/views/virtual_table.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "virtual_tree_table"
 path = "examples/views/virtual_tree_table.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "virtual_tree_view"
 path = "examples/views/virtual_tree_view.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "table"
 path = "examples/views/table.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "task_download"
 path = "examples/task_download.rs"
-required-features = ["tokio"]
+required-features = ["winit", "tokio"]
 
 [[example]]
 name = "tree_table"
 path = "examples/views/tree_table.rs"
+required-features = ["winit"]
 
 [[example]]
 name = "tree_view"
 path = "examples/views/tree_view.rs"
+required-features = ["winit"]
