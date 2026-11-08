@@ -12,199 +12,201 @@ const STYLE: &str = r#"
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
+        Window::new(cx, |cx| {
+            cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        ExamplePage::vertical(cx, |cx| {
-            HStack::new(cx, |cx| {
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-top-start"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+            ExamplePage::vertical(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-top-start"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::TopStart)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::TopStart)
-                    })
-                    .class("test");
+                        .class("test");
 
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-top"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-top"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::Top)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::Top)
-                    })
-                    .class("test");
+                        .class("test");
 
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-top-end"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-top-end"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::TopEnd)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::TopEnd)
-                    })
-                    .class("test");
-            })
-            .size(Auto)
-            .horizontal_gap(Pixels(8.0));
+                        .class("test");
+                })
+                .size(Auto)
+                .horizontal_gap(Pixels(8.0));
 
-            HStack::new(cx, |cx| {
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-left-start"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                HStack::new(cx, |cx| {
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-left-start"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::LeftStart)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::LeftStart)
-                    })
-                    .class("test");
+                        .class("test");
 
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-left"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-left"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::Left)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::Left)
-                    })
-                    .class("test");
+                        .class("test");
 
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-left-end"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-left-end"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::LeftEnd)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::LeftEnd)
-                    })
-                    .class("test");
-            })
-            .size(Auto)
-            .horizontal_gap(Pixels(8.0));
+                        .class("test");
+                })
+                .size(Auto)
+                .horizontal_gap(Pixels(8.0));
 
-            HStack::new(cx, |cx| {
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-right-start"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                HStack::new(cx, |cx| {
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-right-start"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::RightStart)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::RightStart)
-                    })
-                    .class("test");
+                        .class("test");
 
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-right"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-right"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::Right)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::Right)
-                    })
-                    .class("test");
+                        .class("test");
 
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-right-end"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-right-end"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::RightEnd)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::RightEnd)
-                    })
-                    .class("test");
-            })
-            .size(Auto)
-            .horizontal_gap(Pixels(8.0));
+                        .class("test");
+                })
+                .size(Auto)
+                .horizontal_gap(Pixels(8.0));
 
-            HStack::new(cx, |cx| {
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-bottom-start"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                HStack::new(cx, |cx| {
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-bottom-start"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::BottomStart)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::BottomStart)
-                    })
-                    .class("test");
+                        .class("test");
 
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-bottom"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-bottom"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::Bottom)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::Bottom)
-                    })
-                    .class("test");
+                        .class("test");
 
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-bottom-end"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-bottom-end"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::BottomEnd)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::BottomEnd)
-                    })
-                    .class("test");
-            })
-            .size(Auto)
-            .horizontal_gap(Pixels(8.0));
+                        .class("test");
+                })
+                .size(Auto)
+                .horizontal_gap(Pixels(8.0));
 
-            HStack::new(cx, |cx| {
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-over"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                HStack::new(cx, |cx| {
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-over"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::Over)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::Over)
-                    })
-                    .class("test");
+                        .class("test");
 
-                Element::new(cx)
-                    .text(Localized::new("tooltip-placement-cursor"))
-                    .tooltip(|cx| {
-                        Tooltip::new(cx, |cx| {
-                            Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                    Element::new(cx)
+                        .text(Localized::new("tooltip-placement-cursor"))
+                        .tooltip(|cx| {
+                            Tooltip::new(cx, |cx| {
+                                Label::new(cx, Localized::new("tooltip-text")).padding(Pixels(4.0));
+                            })
+                            .padding(Pixels(4.0))
+                            .size(Auto)
+                            .placement(Placement::Cursor)
                         })
-                        .padding(Pixels(4.0))
-                        .size(Auto)
-                        .placement(Placement::Cursor)
-                    })
-                    .class("test");
-            })
-            .size(Auto)
-            .horizontal_gap(Pixels(8.0));
-        });
+                        .class("test");
+                })
+                .size(Auto)
+                .horizontal_gap(Pixels(8.0));
+            });
+        })
+        .title(Localized::new("view-title-tooltip"))
+        .inner_size((800, 800));
     })
-    .title(Localized::new("view-title-tooltip"))
-    .inner_size((800, 800))
     .run()
 }

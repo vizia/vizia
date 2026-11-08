@@ -26,33 +26,35 @@ enum AppEvent {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let chip = Signal::new("chip-label".to_string());
-        let chips = Signal::new(vec![
-            "chip-color-red".to_string(),
-            "chip-color-green".to_string(),
-            "chip-color-blue".to_string(),
-        ]);
+        Window::new(cx, |cx| {
+            let chip = Signal::new("chip-label".to_string());
+            let chips = Signal::new(vec![
+                "chip-color-red".to_string(),
+                "chip-color-green".to_string(),
+                "chip-color-blue".to_string(),
+            ]);
 
-        AppData { chips }.build(cx);
+            AppData { chips }.build(cx);
 
-        ExamplePage::vertical(cx, |cx| {
-            Chip::new(cx, chip.map(|key| Localized::new(key)));
+            ExamplePage::vertical(cx, |cx| {
+                Chip::new(cx, chip.map(|key| Localized::new(key)));
 
-            Binding::new(cx, chips, move |cx| {
-                let chips = chips.get();
+                Binding::new(cx, chips, move |cx| {
+                    let chips = chips.get();
 
-                HStack::new(cx, move |cx| {
-                    for (index, item) in chips.iter().enumerate() {
-                        let item = item.clone();
-                        Chip::new(cx, Localized::new(&item))
-                            .on_close(move |cx| cx.emit(AppEvent::CloseChip(index)));
-                    }
-                })
-                .horizontal_gap(Pixels(4.0));
+                    HStack::new(cx, move |cx| {
+                        for (index, item) in chips.iter().enumerate() {
+                            let item = item.clone();
+                            Chip::new(cx, Localized::new(&item))
+                                .on_close(move |cx| cx.emit(AppEvent::CloseChip(index)));
+                        }
+                    })
+                    .horizontal_gap(Pixels(4.0));
+                });
             });
-        });
+        })
+        .title(Localized::new("view-title-chip"))
+        .inner_size((400, 200));
     })
-    .title(Localized::new("view-title-chip"))
-    .inner_size((400, 200))
     .run()
 }

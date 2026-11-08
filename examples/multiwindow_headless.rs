@@ -1,5 +1,4 @@
-/// Demonstrates `Application::headless` – no implicit primary window, starting
-/// with zero windows.
+/// Demonstrates starting with zero windows and creating them later.
 ///
 /// The application starts with no OS windows at all. After a startup timer completes
 /// it sets a signal that causes a `Binding` to create the main window. A button
@@ -43,7 +42,7 @@ impl Model for AppData {
 
 #[cfg(all(feature = "winit", not(feature = "baseview")))]
 fn main() -> Result<(), ApplicationError> {
-    Application::headless(|cx| {
+    Application::new(|cx| {
         // No windows created here – zero OS windows at startup.
         let show_main = Signal::new(false);
         let show_secondary = Signal::new(false);

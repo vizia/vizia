@@ -23,14 +23,16 @@ impl Model for AppState {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let date = Signal::new(Utc::now().date_naive());
+        Window::new(cx, |cx| {
+            let date = Signal::new(Utc::now().date_naive());
 
-        AppState { date }.build(cx);
+            AppState { date }.build(cx);
 
-        ExamplePage::new(cx, |cx| {
-            Calendar::new(cx, date).on_select(|cx, date| cx.emit(AppEvent::SetDate(date)));
-        });
+            ExamplePage::new(cx, |cx| {
+                Calendar::new(cx, date).on_select(|cx, date| cx.emit(AppEvent::SetDate(date)));
+            });
+        })
+        .title(Localized::new("view-title-calendar"));
     })
-    .title(Localized::new("view-title-calendar"))
     .run()
 }

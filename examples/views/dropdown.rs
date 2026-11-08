@@ -28,51 +28,56 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let list = Signal::new(vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()]);
-        let selected = Signal::new(0usize);
-        let choice = Signal::new("Red".to_string());
+        Window::new(cx, |cx| {
+            let list =
+                Signal::new(vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()]);
+            let selected = Signal::new(0usize);
+            let choice = Signal::new("Red".to_string());
 
-        AppData { list, selected, choice }.build(cx);
+            AppData { list, selected, choice }.build(cx);
 
-        ExamplePage::new(cx, |cx| {
-            Dropdown::new(
-                cx,
-                move |cx| {
-                    Button::new(cx, |cx| Label::new(cx, choice))
-                        .on_press(|cx| cx.emit(PopupEvent::Switch));
-                },
-                move |cx| {
-                    Binding::new(cx, list, move |cx| {
-                        let options = list.get();
+            ExamplePage::new(cx, |cx| {
+                Dropdown::new(
+                    cx,
+                    move |cx| {
+                        Button::new(cx, |cx| Label::new(cx, choice))
+                            .on_press(|cx| cx.emit(PopupEvent::Switch));
+                    },
+                    move |cx| {
+                        Binding::new(cx, list, move |cx| {
+                            let options = list.get();
 
-                        Binding::new(cx, selected, move |cx| {
-                            let selected_index = selected.get();
-                            let options = options.clone();
+                            Binding::new(cx, selected, move |cx| {
+                                let selected_index = selected.get();
+                                let options = options.clone();
 
-                            VStack::new(cx, move |cx| {
-                                for (index, item) in options.iter().enumerate() {
-                                    let item = item.clone();
+                                VStack::new(cx, move |cx| {
+                                    for (index, item) in options.iter().enumerate() {
+                                        let item = item.clone();
 
-                                    Button::new(cx, move |cx| {
-                                        Label::new(cx, item.clone()).hoverable(false)
-                                    })
-                                    .width(Stretch(1.0))
-                                    .checked(selected_index == index)
-                                    .on_press(move |cx| {
-                                        cx.emit(AppEvent::SetSelected(index));
-                                        cx.emit(PopupEvent::Close);
-                                    });
-                                }
-                            })
-                            .width(Stretch(1.0));
-                        });
-                    })
-                },
-            )
-            .width(Pixels(100.0));
-        });
+                                        Button::new(cx, move |cx| {
+                                            Label::new(cx, item.clone()).hoverable(false)
+                                        })
+                                        .width(Stretch(1.0))
+                                        .checked(selected_index == index)
+                                        .on_press(
+                                            move |cx| {
+                                                cx.emit(AppEvent::SetSelected(index));
+                                                cx.emit(PopupEvent::Close);
+                                            },
+                                        );
+                                    }
+                                })
+                                .width(Stretch(1.0));
+                            });
+                        })
+                    },
+                )
+                .width(Pixels(100.0));
+            });
+        })
+        .title(Localized::new("view-title-dropdown"))
+        .inner_size((350, 300));
     })
-    .title(Localized::new("view-title-dropdown"))
-    .inner_size((350, 300))
     .run()
 }

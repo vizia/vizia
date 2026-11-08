@@ -26,10 +26,12 @@ const STYLE: &str = r#"
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE).expect("Failed");
+        Window::new(cx, |cx| {
+            cx.add_stylesheet(STYLE).expect("Failed");
 
-        HStack::new(cx, |cx| {
-            Label::new(cx, "text");
+            HStack::new(cx, |cx| {
+                Label::new(cx, "text");
+            });
         });
     })
     .run()

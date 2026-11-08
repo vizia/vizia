@@ -14,17 +14,19 @@ enum AppEvent {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let spinbox_value = Signal::new(99f64);
+        Window::new(cx, |cx| {
+            let spinbox_value = Signal::new(99f64);
 
-        AppState { spinbox_value }.build(cx);
+            AppState { spinbox_value }.build(cx);
 
-        ExamplePage::new(cx, |cx| {
-            Spinbox::new(cx, spinbox_value)
-                .icons(SpinboxIcons::PlusMinus)
-                .on_change(|ex, v| ex.emit(AppEvent::SetValue(v)));
-        });
+            ExamplePage::new(cx, |cx| {
+                Spinbox::new(cx, spinbox_value)
+                    .icons(SpinboxIcons::PlusMinus)
+                    .on_change(|ex, v| ex.emit(AppEvent::SetValue(v)));
+            });
+        })
+        .title(Localized::new("view-title-spinbox"));
     })
-    .title(Localized::new("view-title-spinbox"))
     .run()
 }
 

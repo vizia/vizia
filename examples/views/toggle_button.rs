@@ -36,29 +36,31 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let bold = Signal::new(false);
-        let italic = Signal::new(false);
-        let underline = Signal::new(false);
+        Window::new(cx, |cx| {
+            let bold = Signal::new(false);
+            let italic = Signal::new(false);
+            let underline = Signal::new(false);
 
-        AppData { bold, italic, underline }.build(cx);
+            AppData { bold, italic, underline }.build(cx);
 
-        ExamplePage::vertical(cx, |cx| {
-            ToggleButton::new(cx, bold, |cx| Label::new(cx, Localized::new("toggle-bold")))
-                .on_toggle(|cx| cx.emit(AppEvent::ToggleBold));
-
-            ButtonGroup::new(cx, |cx| {
-                ToggleButton::new(cx, bold, |cx| Svg::new(cx, ICON_BOLD))
+            ExamplePage::vertical(cx, |cx| {
+                ToggleButton::new(cx, bold, |cx| Label::new(cx, Localized::new("toggle-bold")))
                     .on_toggle(|cx| cx.emit(AppEvent::ToggleBold));
 
-                ToggleButton::new(cx, italic, |cx| Svg::new(cx, ICON_ITALIC))
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleItalic));
+                ButtonGroup::new(cx, |cx| {
+                    ToggleButton::new(cx, bold, |cx| Svg::new(cx, ICON_BOLD))
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleBold));
 
-                ToggleButton::new(cx, underline, |cx| Svg::new(cx, ICON_UNDERLINE))
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleUnderline));
+                    ToggleButton::new(cx, italic, |cx| Svg::new(cx, ICON_ITALIC))
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleItalic));
+
+                    ToggleButton::new(cx, underline, |cx| Svg::new(cx, ICON_UNDERLINE))
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleUnderline));
+                });
             });
-        });
+        })
+        .title(Localized::new("view-title-toggle-button"))
+        .inner_size((700, 200));
     })
-    .title(Localized::new("view-title-toggle-button"))
-    .inner_size((700, 200))
     .run()
 }

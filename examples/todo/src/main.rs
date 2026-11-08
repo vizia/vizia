@@ -114,86 +114,88 @@ impl Model for TodoApp {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_stylesheet(include_style!("src/style.css")).expect("failed to load style");
+        Window::new(cx, |cx| {
+            cx.add_stylesheet(include_style!("src/style.css")).expect("failed to load style");
 
-        let app @ TodoApp { text, filter, todos } = TodoApp::new();
-        let filtered_todos = Memo::new(move |_| {
-            todos
-                .get()
-                .into_iter()
-                .filter(|todo| todo.match_filter(filter.get()))
-                .collect::<Vec<_>>()
-        });
-        let items_left = Memo::new(move |_| {
-            format!("{} items left!", todos.get().iter().filter(|todo| !todo.completed).count())
-        });
+            let app @ TodoApp { text, filter, todos } = TodoApp::new();
+            let filtered_todos = Memo::new(move |_| {
+                todos
+                    .get()
+                    .into_iter()
+                    .filter(|todo| todo.match_filter(filter.get()))
+                    .collect::<Vec<_>>()
+            });
+            let items_left = Memo::new(move |_| {
+                format!("{} items left!", todos.get().iter().filter(|todo| !todo.completed).count())
+            });
 
-        app.build(cx);
+            app.build(cx);
 
-        Label::new(cx, "todos").class("todo-header_title");
+            Label::new(cx, "todos").class("todo-header_title");
 
-        VStack::new(cx, |cx| {
-            Textbox::new(cx, text)
-                .class("todo-header_text")
-                .placeholder("What needs to be done?")
-                .on_edit(|cx, title| cx.emit(TodoEvent::SetText(title)))
-                .on_submit(|cx, title, blur| {
-                    if blur {
-                        cx.emit(TodoEvent::AddTodo(title));
-                        cx.emit(TextEvent::Clear);
-                    }
-                });
-            Divider::new(cx);
+            VStack::new(cx, |cx| {
+                Textbox::new(cx, text)
+                    .class("todo-header_text")
+                    .placeholder("What needs to be done?")
+                    .on_edit(|cx, title| cx.emit(TodoEvent::SetText(title)))
+                    .on_submit(|cx, title, blur| {
+                        if blur {
+                            cx.emit(TodoEvent::AddTodo(title));
+                            cx.emit(TextEvent::Clear);
+                        }
+                    });
+                Divider::new(cx);
 
-            List::new(cx, filtered_todos, move |cx, idx, todo| {
-                let Todo { title, completed } = todo.get();
+                List::new(cx, filtered_todos, move |cx, idx, todo| {
+                    let Todo { title, completed } = todo.get();
+
+                    HStack::new(cx, |cx| {
+                        Checkbox::new(cx, completed)
+                            .on_toggle(move |cx| cx.emit(TodoEvent::Toggle(idx)));
+                        Label::new(cx, title).class("todo-item_text");
+                        Button::new(cx, |cx| Svg::new(cx, ICON_TRASH))
+                            .class("todo-item_button")
+                            .variant(ButtonVariant::Text)
+                            .on_press(move |cx| cx.emit(TodoEvent::RemoveTodo(idx)));
+                    })
+                    .class("todo-item")
+                    .toggle_class("done", completed);
+                    Divider::new(cx);
+                })
+                .class("todo-list");
 
                 HStack::new(cx, |cx| {
-                    Checkbox::new(cx, completed)
-                        .on_toggle(move |cx| cx.emit(TodoEvent::Toggle(idx)));
-                    Label::new(cx, title).class("todo-item_text");
-                    Button::new(cx, |cx| Svg::new(cx, ICON_TRASH))
-                        .class("todo-item_button")
-                        .variant(ButtonVariant::Text)
-                        .on_press(move |cx| cx.emit(TodoEvent::RemoveTodo(idx)));
+                    Label::new(cx, items_left).class("todo-footer_text");
+
+                    ButtonGroup::new(cx, |cx| {
+                        ToggleButton::new(cx, filter.map(TodoFilter::is_all), |cx| {
+                            Label::new(cx, "All")
+                        })
+                        .on_press(|cx| cx.emit(TodoEvent::SetFilter(TodoFilter::All)))
+                        .class("todo-footer_button");
+
+                        ToggleButton::new(cx, filter.map(TodoFilter::is_active), |cx| {
+                            Label::new(cx, "Active")
+                        })
+                        .on_press(|cx| cx.emit(TodoEvent::SetFilter(TodoFilter::Active)))
+                        .class("todo-footer_button");
+
+                        ToggleButton::new(cx, filter.map(TodoFilter::is_completed), |cx| {
+                            Label::new(cx, "Completed")
+                        })
+                        .on_press(|cx| cx.emit(TodoEvent::SetFilter(TodoFilter::Completed)))
+                        .class("todo-footer_button");
+                    });
+
+                    Button::new(cx, |cx| Label::new(cx, "Clear Completed"))
+                        .on_press(|cx| cx.emit(TodoEvent::ClearCompleted))
+                        .class("todo-footer_button");
                 })
-                .class("todo-item")
-                .toggle_class("done", completed);
-                Divider::new(cx);
+                .class("todo-footer");
             })
-            .class("todo-list");
-
-            HStack::new(cx, |cx| {
-                Label::new(cx, items_left).class("todo-footer_text");
-
-                ButtonGroup::new(cx, |cx| {
-                    ToggleButton::new(cx, filter.map(TodoFilter::is_all), |cx| {
-                        Label::new(cx, "All")
-                    })
-                    .on_press(|cx| cx.emit(TodoEvent::SetFilter(TodoFilter::All)))
-                    .class("todo-footer_button");
-
-                    ToggleButton::new(cx, filter.map(TodoFilter::is_active), |cx| {
-                        Label::new(cx, "Active")
-                    })
-                    .on_press(|cx| cx.emit(TodoEvent::SetFilter(TodoFilter::Active)))
-                    .class("todo-footer_button");
-
-                    ToggleButton::new(cx, filter.map(TodoFilter::is_completed), |cx| {
-                        Label::new(cx, "Completed")
-                    })
-                    .on_press(|cx| cx.emit(TodoEvent::SetFilter(TodoFilter::Completed)))
-                    .class("todo-footer_button");
-                });
-
-                Button::new(cx, |cx| Label::new(cx, "Clear Completed"))
-                    .on_press(|cx| cx.emit(TodoEvent::ClearCompleted))
-                    .class("todo-footer_button");
-            })
-            .class("todo-footer");
+            .class("todo-app");
         })
-        .class("todo-app");
+        .title("TodoMVC");
     })
-    .title("TodoMVC")
     .run()
 }

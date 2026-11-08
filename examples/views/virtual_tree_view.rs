@@ -326,85 +326,88 @@ fn build_fs_tree() -> Tree<FsNode> {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let tree = Signal::new(build_fs_tree());
-        let root_id = tree.with(|tree| tree.root().id());
-        let selected_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
-        let expanded_rows: Signal<Vec<NodeId>> = Signal::new(vec![root_id]);
-        let filter_text = Signal::new(String::new());
+        Window::new(cx, |cx| {
+            let tree = Signal::new(build_fs_tree());
+            let root_id = tree.with(|tree| tree.root().id());
+            let selected_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
+            let expanded_rows: Signal<Vec<NodeId>> = Signal::new(vec![root_id]);
+            let filter_text = Signal::new(String::new());
 
-        AppData { tree, selected_rows, expanded_rows, filter_text }.build(cx);
+            AppData { tree, selected_rows, expanded_rows, filter_text }.build(cx);
 
-        ExamplePage::vertical(cx, move |cx| {
-            Textbox::new(cx, filter_text).width(Pixels(320.0)).placeholder("Filter rows").on_edit(
-                move |cx, text| {
-                    cx.emit(AppEvent::SetFilterText(text));
-                },
-            );
+            ExamplePage::vertical(cx, move |cx| {
+                Textbox::new(cx, filter_text)
+                    .width(Pixels(320.0))
+                    .placeholder("Filter rows")
+                    .on_edit(move |cx, text| {
+                        cx.emit(AppEvent::SetFilterText(text));
+                    });
 
-            VirtualTreeView::from_hierarchy(
-                cx,
-                tree,
-                34.0,
-                move |tree: &Tree<FsNode>| vec![tree.root().id()],
-                move |tree: &Tree<FsNode>, parent_id: &NodeId| {
-                    tree.get(*parent_id)
-                        .map(|node| node.children().map(|child| child.id()).collect::<Vec<_>>())
-                        .unwrap_or_default()
-                },
-                |tree: &Tree<FsNode>, node_id: &NodeId| {
-                    if *node_id == tree.root().id() {
-                        true
-                    } else {
-                        tree.get(*node_id).map(|node| node.value().visible).unwrap_or(false)
-                    }
-                },
-                move |cx, row| {
-                    let row_id = row.get().id;
-                    let text = tree.map({
-                        let node_id = row_id;
-                        move |tree| {
-                            tree.get(node_id)
-                                .map(|node| node.value().name.clone())
-                                .unwrap_or_default()
+                VirtualTreeView::from_hierarchy(
+                    cx,
+                    tree,
+                    34.0,
+                    move |tree: &Tree<FsNode>| vec![tree.root().id()],
+                    move |tree: &Tree<FsNode>, parent_id: &NodeId| {
+                        tree.get(*parent_id)
+                            .map(|node| node.children().map(|child| child.id()).collect::<Vec<_>>())
+                            .unwrap_or_default()
+                    },
+                    |tree: &Tree<FsNode>, node_id: &NodeId| {
+                        if *node_id == tree.root().id() {
+                            true
+                        } else {
+                            tree.get(*node_id).map(|node| node.value().visible).unwrap_or(false)
                         }
-                    });
-                    let checked = tree.map({
-                        let node_id = row_id;
-                        move |tree| node_check_state(tree, node_id) == CheckState::Checked
-                    });
-                    let intermediate = tree.map({
-                        let node_id = row_id;
-                        move |tree| node_check_state(tree, node_id) == CheckState::Intermediate
-                    });
-
-                    HStack::new(cx, move |cx| {
-                        Checkbox::intermediate(cx, checked, intermediate).on_toggle({
+                    },
+                    move |cx, row| {
+                        let row_id = row.get().id;
+                        let text = tree.map({
                             let node_id = row_id;
-                            move |cx| {
-                                cx.emit(AppEvent::ToggleCheckState(node_id));
+                            move |tree| {
+                                tree.get(node_id)
+                                    .map(|node| node.value().name.clone())
+                                    .unwrap_or_default()
                             }
                         });
-                        Label::new(cx, text).text_wrap(false);
-                    })
-                    .height(Auto)
-                    .alignment(Alignment::Left)
-                    .gap(Pixels(8.0));
-                },
-            )
-            .selectable(Selectable::Single)
-            .selected_row_ids(selected_rows)
-            .expanded_row_ids(expanded_rows)
-            .type_ahead_text(move |row| {
-                tree.with(|tree| tree.get(row.id).map(|node| node.value().name.clone()))
-            })
-            .on_row_select(move |cx, id| {
-                cx.emit(AppEvent::SelectRow(id));
-            })
-            .on_row_toggle(move |cx, id, expanded| {
-                cx.emit(AppEvent::ToggleRow(id, expanded));
-            })
-            .width(Stretch(1.0))
-            .height(Stretch(1.0));
+                        let checked = tree.map({
+                            let node_id = row_id;
+                            move |tree| node_check_state(tree, node_id) == CheckState::Checked
+                        });
+                        let intermediate = tree.map({
+                            let node_id = row_id;
+                            move |tree| node_check_state(tree, node_id) == CheckState::Intermediate
+                        });
+
+                        HStack::new(cx, move |cx| {
+                            Checkbox::intermediate(cx, checked, intermediate).on_toggle({
+                                let node_id = row_id;
+                                move |cx| {
+                                    cx.emit(AppEvent::ToggleCheckState(node_id));
+                                }
+                            });
+                            Label::new(cx, text).text_wrap(false);
+                        })
+                        .height(Auto)
+                        .alignment(Alignment::Left)
+                        .gap(Pixels(8.0));
+                    },
+                )
+                .selectable(Selectable::Single)
+                .selected_row_ids(selected_rows)
+                .expanded_row_ids(expanded_rows)
+                .type_ahead_text(move |row| {
+                    tree.with(|tree| tree.get(row.id).map(|node| node.value().name.clone()))
+                })
+                .on_row_select(move |cx, id| {
+                    cx.emit(AppEvent::SelectRow(id));
+                })
+                .on_row_toggle(move |cx, id, expanded| {
+                    cx.emit(AppEvent::ToggleRow(id, expanded));
+                })
+                .width(Stretch(1.0))
+                .height(Stretch(1.0));
+            });
         });
     })
     .run()

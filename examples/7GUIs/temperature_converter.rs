@@ -39,23 +39,25 @@ fn fahrenheit_to_celcius(temp: f32) -> f32 {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let temperature = Signal::new(5.0);
-        let celsius = Memo::new(move |_| format!("{:.0}", temperature.get()));
-        let fahrenheit =
-            Memo::new(move |_| format!("{:.0}", celcius_to_fahrenheit(&temperature.get())));
+        Window::new(cx, |cx| {
+            let temperature = Signal::new(5.0);
+            let celsius = Memo::new(move |_| format!("{:.0}", temperature.get()));
+            let fahrenheit =
+                Memo::new(move |_| format!("{:.0}", celcius_to_fahrenheit(&temperature.get())));
 
-        AppData { temperature }.build(cx);
+            AppData { temperature }.build(cx);
 
-        HStack::new(cx, |cx| {
-            input_box(cx, celsius, |val| val);
-            Label::new(cx, "Celsius");
-            input_box(cx, fahrenheit, fahrenheit_to_celcius);
-            Label::new(cx, "Fahrenheit");
+            HStack::new(cx, |cx| {
+                input_box(cx, celsius, |val| val);
+                Label::new(cx, "Celsius");
+                input_box(cx, fahrenheit, fahrenheit_to_celcius);
+                Label::new(cx, "Fahrenheit");
+            })
+            .alignment(Alignment::Center)
+            .horizontal_gap(Pixels(10.0));
         })
-        .alignment(Alignment::Center)
-        .horizontal_gap(Pixels(10.0));
+        .title("Temperature Converter")
+        .inner_size((450, 100));
     })
-    .title("Temperature Converter")
-    .inner_size((450, 100))
     .run()
 }

@@ -79,14 +79,16 @@ fn main() -> Result<(), ApplicationError> {
             }
         });
 
-        HStack::new(cx, |cx| {
-            Button::new(cx, |cx| Label::new(cx, "Show Window"))
-                .on_press(|cx| cx.emit(AppEvent::ShowWindow));
+        Window::new(cx, move |cx| {
+            HStack::new(cx, |cx| {
+                Button::new(cx, |cx| Label::new(cx, "Show Window"))
+                    .on_press(|cx| cx.emit(AppEvent::ShowWindow));
+            })
+            .size(Auto)
+            .padding(Pixels(20.0))
+            .background_color(color);
         })
-        .size(Auto)
-        .padding(Pixels(20.0))
-        .background_color(color);
+        .title("Main");
     })
-    .title("Main")
     .run()
 }

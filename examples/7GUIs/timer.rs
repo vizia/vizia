@@ -88,37 +88,43 @@ impl Model for TimerData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
-        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
+        Window::new(cx, |cx| {
+            cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        let timer =
-            cx.add_timer(Duration::from_millis(100), None, |cx, _| cx.emit(TimerEvent::Tick));
+            let timer =
+                cx.add_timer(Duration::from_millis(100), None, |cx, _| cx.emit(TimerEvent::Tick));
 
-        let timer_data = TimerData::new(timer);
-        let progress = timer_data.progress;
-        let elapsed_time = timer_data.elapsed_time;
-        let total_time = timer_data.total_time;
+            let timer_data = TimerData::new(timer);
+            let progress = timer_data.progress;
+            let elapsed_time = timer_data.elapsed_time;
+            let total_time = timer_data.total_time;
 
-        timer_data.build(cx);
+            timer_data.build(cx);
 
-        VStack::new(cx, |cx| {
-            HStack::new(cx, |cx| {
-                Label::new(cx, "Elapsed Time:");
-                ProgressBar::new(cx, progress);
+            VStack::new(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    Label::new(cx, "Elapsed Time:");
+                    ProgressBar::new(cx, progress);
+                });
+
+                Label::new(
+                    cx,
+                    Memo::new(move |_| format!("{:.1}s", elapsed_time.get().as_secs_f32())),
+                );
+
+                HStack::new(cx, |cx| {
+                    Label::new(cx, "Duration:");
+                    Slider::new(cx, Memo::new(move |_| total_time.get().as_secs_f32()))
+                        .range(0.0..30.0)
+                        .on_change(|cx, v| cx.emit(TimerEvent::SetDuration(v)));
+                });
+
+                Button::new(cx, |cx| Label::new(cx, "Reset"))
+                    .on_press(|cx| cx.emit(TimerEvent::Reset));
             });
-
-            Label::new(cx, Memo::new(move |_| format!("{:.1}s", elapsed_time.get().as_secs_f32())));
-
-            HStack::new(cx, |cx| {
-                Label::new(cx, "Duration:");
-                Slider::new(cx, Memo::new(move |_| total_time.get().as_secs_f32()))
-                    .range(0.0..30.0)
-                    .on_change(|cx, v| cx.emit(TimerEvent::SetDuration(v)));
-            });
-
-            Button::new(cx, |cx| Label::new(cx, "Reset")).on_press(|cx| cx.emit(TimerEvent::Reset));
-        });
+        })
+        .title("Timer")
+        .inner_size((300, 150));
     })
-    .title("Timer")
-    .inner_size((300, 150))
     .run()
 }

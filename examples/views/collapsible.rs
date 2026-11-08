@@ -25,75 +25,79 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let collapsed = Signal::new(false);
-        AppData { collapsed }.build(cx);
+        Window::new(cx, |cx| {
+            let collapsed = Signal::new(false);
+            AppData { collapsed }.build(cx);
 
-        ExamplePage::vertical(cx, |cx| {
-            // Create a new button that toggles the collapsed state.
-            Button::new(cx, |cx| Label::new(cx, Localized::new("collapsible-toggle")))
-                .on_press(|cx| cx.emit(AppEvent::ToggleCollapse));
+            ExamplePage::vertical(cx, |cx| {
+                // Create a new button that toggles the collapsed state.
+                Button::new(cx, |cx| Label::new(cx, Localized::new("collapsible-toggle")))
+                    .on_press(|cx| cx.emit(AppEvent::ToggleCollapse));
 
-            VStack::new(cx, |cx| {
-                // Create a new collapsible view with a header and content.
-                Collapsible::new(
-                    cx,
-                    |cx| {
-                        Label::new(cx, Localized::new("collapsible-header")).hoverable(false);
-                    },
-                    |cx| {
-                        Label::new(cx, Localized::new("collapsible-content-long"))
-                            .width(Stretch(1.0))
-                            .hoverable(false);
-                    },
-                )
-                .open(collapsed);
+                VStack::new(cx, |cx| {
+                    // Create a new collapsible view with a header and content.
+                    Collapsible::new(
+                        cx,
+                        |cx| {
+                            Label::new(cx, Localized::new("collapsible-header")).hoverable(false);
+                        },
+                        |cx| {
+                            Label::new(cx, Localized::new("collapsible-content-long"))
+                                .width(Stretch(1.0))
+                                .hoverable(false);
+                        },
+                    )
+                    .open(collapsed);
 
-                Divider::new(cx);
+                    Divider::new(cx);
 
-                // Create a new collapsible view with a header and content.
-                Collapsible::new(
-                    cx,
-                    |cx| {
-                        Label::new(cx, Localized::new("collapsible-header")).hoverable(false);
-                    },
-                    |cx| {
-                        Label::new(cx, Localized::new("collapsible-content-short"))
-                            .width(Stretch(1.0))
-                            .hoverable(false);
-                    },
-                )
-                .open(collapsed);
+                    // Create a new collapsible view with a header and content.
+                    Collapsible::new(
+                        cx,
+                        |cx| {
+                            Label::new(cx, Localized::new("collapsible-header")).hoverable(false);
+                        },
+                        |cx| {
+                            Label::new(cx, Localized::new("collapsible-content-short"))
+                                .width(Stretch(1.0))
+                                .hoverable(false);
+                        },
+                    )
+                    .open(collapsed);
 
-                Divider::new(cx);
+                    Divider::new(cx);
 
-                // Create a new collapsible view with a header and content.
-                Collapsible::new(
-                    cx,
-                    |cx| {
-                        Label::new(cx, Localized::new("collapsible-header")).hoverable(false);
-                    },
-                    |cx| {
-                        Label::new(cx, Localized::new("collapsible-content-short"))
-                            .width(Stretch(1.0))
-                            .hoverable(false);
-                        Divider::new(cx);
-                        HStack::new(cx, |cx| {
-                            Button::new(cx, |cx| Label::new(cx, Localized::new("action-cancel")))
+                    // Create a new collapsible view with a header and content.
+                    Collapsible::new(
+                        cx,
+                        |cx| {
+                            Label::new(cx, Localized::new("collapsible-header")).hoverable(false);
+                        },
+                        |cx| {
+                            Label::new(cx, Localized::new("collapsible-content-short"))
+                                .width(Stretch(1.0))
+                                .hoverable(false);
+                            Divider::new(cx);
+                            HStack::new(cx, |cx| {
+                                Button::new(cx, |cx| {
+                                    Label::new(cx, Localized::new("action-cancel"))
+                                })
                                 .variant(ButtonVariant::Secondary);
-                            Button::new(cx, |cx| Label::new(cx, Localized::new("action-save")))
-                                .variant(ButtonVariant::Secondary);
-                        })
-                        .height(Auto)
-                        .gap(Pixels(8.0))
-                        .padding_right(Pixels(8.0))
-                        .alignment(Alignment::Right);
-                    },
-                )
-                .open(collapsed);
-            })
-            .alignment(Alignment::TopCenter);
-        });
+                                Button::new(cx, |cx| Label::new(cx, Localized::new("action-save")))
+                                    .variant(ButtonVariant::Secondary);
+                            })
+                            .height(Auto)
+                            .gap(Pixels(8.0))
+                            .padding_right(Pixels(8.0))
+                            .alignment(Alignment::Right);
+                        },
+                    )
+                    .open(collapsed);
+                })
+                .alignment(Alignment::TopCenter);
+            });
+        })
+        .title(Localized::new("view-title-collapsible"));
     })
-    .title(Localized::new("view-title-collapsible"))
     .run()
 }

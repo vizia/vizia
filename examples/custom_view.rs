@@ -47,16 +47,20 @@ pub enum AppEvent {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let color = Signal::new(Color::red());
+        Window::new(cx, |cx| {
+            let color = Signal::new(Color::red());
 
-        AppData { color }.build(cx);
+            AppData { color }.build(cx);
 
-        CustomView::new(cx, color).size(Pixels(200.0));
+            CustomView::new(cx, color).size(Pixels(200.0));
 
-        Slider::new(cx, color.map(|col| col.r() as f32 / 255.0))
-            .on_change(|cx, val| cx.emit(AppEvent::SetColor(Color::rgb((val * 255.0) as u8, 0, 0))))
-            .width(Pixels(200.0))
-            .space(Pixels(20.0));
+            Slider::new(cx, color.map(|col| col.r() as f32 / 255.0))
+                .on_change(|cx, val| {
+                    cx.emit(AppEvent::SetColor(Color::rgb((val * 255.0) as u8, 0, 0)))
+                })
+                .width(Pixels(200.0))
+                .space(Pixels(20.0));
+        });
     })
     .run()
 }

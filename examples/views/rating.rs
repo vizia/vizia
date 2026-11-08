@@ -23,19 +23,21 @@ enum AppEvent {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let rating1 = Signal::new(3);
-        let rating2 = Signal::new(7);
+        Window::new(cx, |cx| {
+            let rating1 = Signal::new(3);
+            let rating2 = Signal::new(7);
 
-        AppData { rating1, rating2 }.build(cx);
+            AppData { rating1, rating2 }.build(cx);
 
-        ExamplePage::vertical(cx, |cx| {
-            Rating::new(cx, 5, rating1)
-                .on_change(|ex, rating| ex.emit(AppEvent::SetRating1(rating)));
-            Rating::new(cx, 10, rating2)
-                .on_change(|ex, rating| ex.emit(AppEvent::SetRating2(rating)));
-        });
+            ExamplePage::vertical(cx, |cx| {
+                Rating::new(cx, 5, rating1)
+                    .on_change(|ex, rating| ex.emit(AppEvent::SetRating1(rating)));
+                Rating::new(cx, 10, rating2)
+                    .on_change(|ex, rating| ex.emit(AppEvent::SetRating2(rating)));
+            });
+        })
+        .title(Localized::new("view-title-rating"))
+        .inner_size((400, 200));
     })
-    .title(Localized::new("view-title-rating"))
-    .inner_size((400, 200))
     .run()
 }

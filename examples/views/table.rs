@@ -254,98 +254,101 @@ fn filter_rows(rows: Vec<RowData>, filter_text: &str) -> Vec<RowData> {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let rows = Signal::new(make_rows());
-        let columns = Signal::new(build_columns());
-        let sort_state = Signal::new(None);
-        let selected_rows = Signal::new(Vec::<u32>::new());
-        let filter_text = Signal::new(String::new());
-        let show_group = Signal::new(true);
-        let show_notes = Signal::new(true);
-        let emphasize_status = Signal::new(false);
-        let status_text = Signal::new(
+        Window::new(cx, |cx| {
+            let rows = Signal::new(make_rows());
+            let columns = Signal::new(build_columns());
+            let sort_state = Signal::new(None);
+            let selected_rows = Signal::new(Vec::<u32>::new());
+            let filter_text = Signal::new(String::new());
+            let show_group = Signal::new(true);
+            let show_notes = Signal::new(true);
+            let emphasize_status = Signal::new(false);
+            let status_text = Signal::new(
             "Resize columns, then toggle visibility or reorder to verify keyed state preservation."
                 .to_string(),
         );
 
-        DynamicTableDemo {
-            columns,
-            sort_state,
-            selected_rows,
-            filter_text,
-            show_group,
-            show_notes,
-            emphasize_status,
-            status_text,
-        }
-        .build(cx);
+            DynamicTableDemo {
+                columns,
+                sort_state,
+                selected_rows,
+                filter_text,
+                show_group,
+                show_notes,
+                emphasize_status,
+                status_text,
+            }
+            .build(cx);
 
-        let sorted_rows = Memo::new(move |_| {
-            let filtered_rows = filter_rows(rows.get(), &filter_text.get());
-            sort_rows(filtered_rows, sort_state.get())
-        });
+            let sorted_rows = Memo::new(move |_| {
+                let filtered_rows = filter_rows(rows.get(), &filter_text.get());
+                sort_rows(filtered_rows, sort_state.get())
+            });
 
-        ExamplePage::vertical(cx, |cx| {
-            Textbox::new(cx, filter_text).width(Pixels(320.0)).placeholder("Filter rows").on_edit(
-                |cx, text| {
-                    cx.emit(DynamicTableEvent::SetFilterText(text));
-                },
-            );
-
-            HStack::new(cx, |cx| {
-                HStack::new(cx, |cx| {
-                    Switch::new(cx, show_group)
-                        .on_toggle(|cx| cx.emit(DynamicTableEvent::ToggleGroup))
-                        .id("show_group");
-                    Label::new(cx, Localized::new("table-show-group")).describing("show_group");
-                })
-                .size(Auto)
-                .gap(Pixels(6.0))
-                .alignment(Alignment::Center);
+            ExamplePage::vertical(cx, |cx| {
+                Textbox::new(cx, filter_text)
+                    .width(Pixels(320.0))
+                    .placeholder("Filter rows")
+                    .on_edit(|cx, text| {
+                        cx.emit(DynamicTableEvent::SetFilterText(text));
+                    });
 
                 HStack::new(cx, |cx| {
-                    Switch::new(cx, show_notes)
-                        .on_toggle(|cx| cx.emit(DynamicTableEvent::ToggleNotes))
-                        .id("show_notes");
-                    Label::new(cx, Localized::new("table-show-notes")).describing("show_notes");
-                })
-                .size(Auto)
-                .gap(Pixels(6.0))
-                .alignment(Alignment::Center);
+                    HStack::new(cx, |cx| {
+                        Switch::new(cx, show_group)
+                            .on_toggle(|cx| cx.emit(DynamicTableEvent::ToggleGroup))
+                            .id("show_group");
+                        Label::new(cx, Localized::new("table-show-group")).describing("show_group");
+                    })
+                    .size(Auto)
+                    .gap(Pixels(6.0))
+                    .alignment(Alignment::Center);
 
-                HStack::new(cx, |cx| {
-                    Switch::new(cx, emphasize_status)
-                        .on_toggle(|cx| cx.emit(DynamicTableEvent::ToggleOrder))
-                        .id("status_first");
-                    Label::new(cx, Localized::new("table-prioritize-status"))
-                        .describing("status_first");
+                    HStack::new(cx, |cx| {
+                        Switch::new(cx, show_notes)
+                            .on_toggle(|cx| cx.emit(DynamicTableEvent::ToggleNotes))
+                            .id("show_notes");
+                        Label::new(cx, Localized::new("table-show-notes")).describing("show_notes");
+                    })
+                    .size(Auto)
+                    .gap(Pixels(6.0))
+                    .alignment(Alignment::Center);
+
+                    HStack::new(cx, |cx| {
+                        Switch::new(cx, emphasize_status)
+                            .on_toggle(|cx| cx.emit(DynamicTableEvent::ToggleOrder))
+                            .id("status_first");
+                        Label::new(cx, Localized::new("table-prioritize-status"))
+                            .describing("status_first");
+                    })
+                    .size(Auto)
+                    .gap(Pixels(6.0))
+                    .alignment(Alignment::Center);
                 })
-                .size(Auto)
-                .gap(Pixels(6.0))
-                .alignment(Alignment::Center);
+                .height(Auto)
+                .gap(Pixels(14.0));
+
+                Label::new(cx, status_text).class("table-cell-meta").height(Auto);
+
+                Table::new(cx, sorted_rows, columns, |row: &RowData| row.id)
+                    .sort_state(sort_state)
+                    .sort_cycle(TableSortCycle::TriState)
+                    .resizable_columns(true)
+                    .selectable(Selectable::Single)
+                    .selected_row_ids(selected_rows)
+                    .on_sort(|cx, key, direction| {
+                        cx.emit(DynamicTableEvent::SetSortState(key, direction));
+                    })
+                    .on_row_select(|cx, id| cx.emit(DynamicTableEvent::SelectRow(id)))
+                    .width(Stretch(1.0))
+                    .height(Stretch(1.0));
             })
-            .height(Auto)
-            .gap(Pixels(14.0));
-
-            Label::new(cx, status_text).class("table-cell-meta").height(Auto);
-
-            Table::new(cx, sorted_rows, columns, |row: &RowData| row.id)
-                .sort_state(sort_state)
-                .sort_cycle(TableSortCycle::TriState)
-                .resizable_columns(true)
-                .selectable(Selectable::Single)
-                .selected_row_ids(selected_rows)
-                .on_sort(|cx, key, direction| {
-                    cx.emit(DynamicTableEvent::SetSortState(key, direction));
-                })
-                .on_row_select(|cx, id| cx.emit(DynamicTableEvent::SelectRow(id)))
-                .width(Stretch(1.0))
-                .height(Stretch(1.0));
+            .size(Stretch(1.0))
+            .padding(Pixels(12.0))
+            .gap(Pixels(8.0));
         })
-        .size(Stretch(1.0))
-        .padding(Pixels(12.0))
-        .gap(Pixels(8.0));
+        .title(Localized::new("view-title-table"))
+        .inner_size((1100, 720));
     })
-    .title(Localized::new("view-title-table"))
-    .inner_size((1100, 720))
     .run()
 }

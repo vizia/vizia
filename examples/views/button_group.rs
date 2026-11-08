@@ -28,67 +28,71 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let bold = Signal::new(false);
-        let italic = Signal::new(false);
-        let underline = Signal::new(false);
+        Window::new(cx, |cx| {
+            let bold = Signal::new(false);
+            let italic = Signal::new(false);
+            let underline = Signal::new(false);
 
-        AppData { bold, italic, underline }.build(cx);
+            AppData { bold, italic, underline }.build(cx);
 
-        ExamplePage::vertical(cx, |cx| {
-            // Basic horizontal button group
-            ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, Localized::new("one")));
-                Button::new(cx, |cx| Label::new(cx, Localized::new("two")));
-                Button::new(cx, |cx| Label::new(cx, Localized::new("three")));
-            });
-
-            // Button group with variants
-            ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, Localized::new("one")));
-                Button::new(cx, |cx| Label::new(cx, Localized::new("two")));
-                Button::new(cx, |cx| Label::new(cx, Localized::new("three")));
-            })
-            .variant(ButtonVariant::Secondary);
-
-            ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, Localized::new("one")));
-                Button::new(cx, |cx| Label::new(cx, Localized::new("two")));
-                Button::new(cx, |cx| Label::new(cx, Localized::new("three")));
-            })
-            .variant(ButtonVariant::Outline);
-
-            // Button group with icons
-            ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| {
-                    HStack::new(cx, |cx| {
-                        Svg::new(cx, ICON_CHECK).class("icon");
-                        Label::new(cx, Localized::new("button-accept"));
-                    })
+            ExamplePage::vertical(cx, |cx| {
+                // Basic horizontal button group
+                ButtonGroup::new(cx, |cx| {
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("one")));
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("two")));
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("three")));
                 });
-                Button::new(cx, |cx| Label::new(cx, Localized::new("button-maybe")));
-                Button::new(cx, |cx| Label::new(cx, Localized::new("button-decline")));
-            });
 
-            // Vertical button group
-            ButtonGroup::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, Localized::new("button-top")));
-                Button::new(cx, |cx| Label::new(cx, Localized::new("button-middle")));
-                Button::new(cx, |cx| Label::new(cx, Localized::new("button-bottom")));
-            })
-            .vertical(true);
+                // Button group with variants
+                ButtonGroup::new(cx, |cx| {
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("one")));
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("two")));
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("three")));
+                })
+                .variant(ButtonVariant::Secondary);
 
-            // Toggle button group (text formatting toolbar)
-            ButtonGroup::new(cx, |cx| {
-                ToggleButton::new(cx, bold, |cx| Svg::new(cx, ICON_BOLD).class("icon"))
-                    .on_toggle(|cx| cx.emit(AppEvent::Bold));
-                ToggleButton::new(cx, italic, |cx| Svg::new(cx, ICON_ITALIC).class("icon"))
-                    .on_toggle(|cx| cx.emit(AppEvent::Italic));
-                ToggleButton::new(cx, underline, |cx| Svg::new(cx, ICON_UNDERLINE).class("icon"))
+                ButtonGroup::new(cx, |cx| {
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("one")));
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("two")));
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("three")));
+                })
+                .variant(ButtonVariant::Outline);
+
+                // Button group with icons
+                ButtonGroup::new(cx, |cx| {
+                    Button::new(cx, |cx| {
+                        HStack::new(cx, |cx| {
+                            Svg::new(cx, ICON_CHECK).class("icon");
+                            Label::new(cx, Localized::new("button-accept"));
+                        })
+                    });
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("button-maybe")));
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("button-decline")));
+                });
+
+                // Vertical button group
+                ButtonGroup::new(cx, |cx| {
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("button-top")));
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("button-middle")));
+                    Button::new(cx, |cx| Label::new(cx, Localized::new("button-bottom")));
+                })
+                .vertical(true);
+
+                // Toggle button group (text formatting toolbar)
+                ButtonGroup::new(cx, |cx| {
+                    ToggleButton::new(cx, bold, |cx| Svg::new(cx, ICON_BOLD).class("icon"))
+                        .on_toggle(|cx| cx.emit(AppEvent::Bold));
+                    ToggleButton::new(cx, italic, |cx| Svg::new(cx, ICON_ITALIC).class("icon"))
+                        .on_toggle(|cx| cx.emit(AppEvent::Italic));
+                    ToggleButton::new(cx, underline, |cx| {
+                        Svg::new(cx, ICON_UNDERLINE).class("icon")
+                    })
                     .on_toggle(|cx| cx.emit(AppEvent::Underline));
+                });
             });
-        });
+        })
+        .title(Localized::new("view-title-button-group"))
+        .inner_size((700, 500));
     })
-    .title(Localized::new("view-title-button-group"))
-    .inner_size((700, 500))
     .run()
 }

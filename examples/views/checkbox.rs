@@ -26,53 +26,55 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let option1 = Signal::new(true);
-        let option2 = Signal::new(false);
+        Window::new(cx, |cx| {
+            let option1 = Signal::new(true);
+            let option2 = Signal::new(false);
 
-        AppData { option1, option2 }.build(cx);
+            AppData { option1, option2 }.build(cx);
 
-        ExamplePage::vertical(cx, |cx| {
-            Label::new(cx, Localized::new("checkbox-with-label")).class("h2");
+            ExamplePage::vertical(cx, |cx| {
+                Label::new(cx, Localized::new("checkbox-with-label")).class("h2");
 
-            VStack::new(cx, |cx| {
-                // Checkboxes with label
+                VStack::new(cx, |cx| {
+                    // Checkboxes with label
+                    HStack::new(cx, |cx| {
+                        Checkbox::new(cx, option1)
+                            .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
+                            .id("checkbox_1");
+                        Label::new(cx, Localized::new("checkbox")).describing("checkbox_1");
+                    })
+                    .size(Auto)
+                    .gap(Pixels(5.0))
+                    .alignment(Alignment::Center);
+
+                    HStack::new(cx, |cx| {
+                        Checkbox::new(cx, option2)
+                            .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
+                            .id("checkbox_2");
+                        Label::new(cx, Localized::new("checkbox")).describing("checkbox_2");
+                    })
+                    .size(Auto)
+                    .gap(Pixels(5.0))
+                    .alignment(Alignment::Center);
+                })
+                .gap(Pixels(10.0))
+                .size(Auto);
+
+                Label::new(cx, Localized::new("checkbox-with-custom-icon-label")).class("h2");
+
                 HStack::new(cx, |cx| {
-                    Checkbox::new(cx, option1)
+                    Checkbox::with_icons(cx, option1, Some(ICON_EYE_OFF), Some(ICON_EYE))
                         .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
-                        .id("checkbox_1");
-                    Label::new(cx, Localized::new("checkbox")).describing("checkbox_1");
+                        .id("checkbox_3");
+                    Label::new(cx, Localized::new("checkbox")).describing("checkbox_3");
                 })
                 .size(Auto)
                 .gap(Pixels(5.0))
                 .alignment(Alignment::Center);
-
-                HStack::new(cx, |cx| {
-                    Checkbox::new(cx, option2)
-                        .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
-                        .id("checkbox_2");
-                    Label::new(cx, Localized::new("checkbox")).describing("checkbox_2");
-                })
-                .size(Auto)
-                .gap(Pixels(5.0))
-                .alignment(Alignment::Center);
-            })
-            .gap(Pixels(10.0))
-            .size(Auto);
-
-            Label::new(cx, Localized::new("checkbox-with-custom-icon-label")).class("h2");
-
-            HStack::new(cx, |cx| {
-                Checkbox::with_icons(cx, option1, Some(ICON_EYE_OFF), Some(ICON_EYE))
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleOptions))
-                    .id("checkbox_3");
-                Label::new(cx, Localized::new("checkbox")).describing("checkbox_3");
-            })
-            .size(Auto)
-            .gap(Pixels(5.0))
-            .alignment(Alignment::Center);
-        });
+            });
+        })
+        .title(Localized::new("checkbox"))
+        .inner_size((400, 320));
     })
-    .title(Localized::new("checkbox"))
-    .inner_size((400, 320))
     .run()
 }

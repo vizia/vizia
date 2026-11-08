@@ -23,16 +23,18 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let value = Signal::new(0.2);
-        AppData { value }.build(cx);
+        Window::new(cx, |cx| {
+            let value = Signal::new(0.2);
+            AppData { value }.build(cx);
 
-        ExamplePage::new(cx, |cx| {
-            Knob::new(cx, 0.5, value, false).on_change(|cx, val| {
-                cx.emit(AppEvent::SetValue(val));
+            ExamplePage::new(cx, |cx| {
+                Knob::new(cx, 0.5, value, false).on_change(|cx, val| {
+                    cx.emit(AppEvent::SetValue(val));
+                });
             });
-        });
+        })
+        .title(Localized::new("view-title-knob"))
+        .inner_size((300, 300));
     })
-    .title(Localized::new("view-title-knob"))
-    .inner_size((300, 300))
     .run()
 }

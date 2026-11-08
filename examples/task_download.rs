@@ -137,30 +137,32 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let (status, progress) = AppData::new(cx);
+        Window::new(cx, |cx| {
+            let (status, progress) = AppData::new(cx);
 
-        VStack::new(cx, |cx| {
-            Label::new(cx, "Task Download Demo").font_size(24.0).height(Auto);
+            VStack::new(cx, |cx| {
+                Label::new(cx, "Task Download Demo").font_size(24.0).height(Auto);
 
-            Label::new(cx, status).height(Pixels(30.0));
+                Label::new(cx, status).height(Pixels(30.0));
 
-            HStack::new(cx, |cx| {
-                ProgressBar::horizontal(cx, progress);
-                Label::new(cx, progress.map(|value| format!("{:.0}%", value * 100.0)));
+                HStack::new(cx, |cx| {
+                    ProgressBar::horizontal(cx, progress);
+                    Label::new(cx, progress.map(|value| format!("{:.0}%", value * 100.0)));
+                })
+                .height(Auto)
+                .gap(Pixels(8.0))
+                .alignment(Alignment::Center);
+
+                Button::new(cx, |cx| Label::new(cx, "Download File"))
+                    .on_press(|cx| cx.emit(AppEvent::StartDownload));
             })
-            .height(Auto)
+            .size(Stretch(1.0))
+            .padding(Pixels(16.0))
             .gap(Pixels(8.0))
             .alignment(Alignment::Center);
-
-            Button::new(cx, |cx| Label::new(cx, "Download File"))
-                .on_press(|cx| cx.emit(AppEvent::StartDownload));
         })
-        .size(Stretch(1.0))
-        .padding(Pixels(16.0))
-        .gap(Pixels(8.0))
-        .alignment(Alignment::Center);
+        .title("Task Download")
+        .inner_size((560, 220));
     })
-    .title("Task Download")
-    .inner_size((560, 220))
     .run()
 }

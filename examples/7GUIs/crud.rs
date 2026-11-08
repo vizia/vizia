@@ -119,75 +119,77 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
+        Window::new(cx, |cx| {
+            cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        let filter_prefix = Signal::new("".to_string());
-        let list = Signal::new(vec![("John".to_string(), "Smith".to_string())]);
-        let selected = Signal::new(None::<usize>);
-        let name = Signal::new("".to_string());
-        let surname = Signal::new("".to_string());
+            let filter_prefix = Signal::new("".to_string());
+            let list = Signal::new(vec![("John".to_string(), "Smith".to_string())]);
+            let selected = Signal::new(None::<usize>);
+            let name = Signal::new("".to_string());
+            let surname = Signal::new("".to_string());
 
-        AppData { list, selected, name, surname }.build(cx);
+            AppData { list, selected, name, surname }.build(cx);
 
-        VStack::new(cx, |cx| {
-            HStack::new(cx, |cx| {
-                VStack::new(cx, |cx| {
-                    HStack::new(cx, |cx| {
-                        Label::new(cx, "Filter prefix:");
-                        Textbox::new(cx, filter_prefix);
-                    });
-
-                    List::new(cx, list, move |cx, index, item| {
-                        let label_text = Memo::new(move |_| {
-                            let item = item.get();
-                            format!("{}, {}", item.1, item.0)
+            VStack::new(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    VStack::new(cx, |cx| {
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, "Filter prefix:");
+                            Textbox::new(cx, filter_prefix);
                         });
-                        let is_selected = Memo::new(move |_| selected.get() == Some(index));
 
-                        Label::new(cx, label_text)
-                            .on_press(move |cx| {
-                                cx.emit(AppEvent::SetSelected(index));
-                            })
-                            .navigable(true)
-                            .checked(is_selected);
-                    });
-                });
+                        List::new(cx, list, move |cx, index, item| {
+                            let label_text = Memo::new(move |_| {
+                                let item = item.get();
+                                format!("{}, {}", item.1, item.0)
+                            });
+                            let is_selected = Memo::new(move |_| selected.get() == Some(index));
 
-                VStack::new(cx, |cx| {
-                    HStack::new(cx, |cx| {
-                        Label::new(cx, "Name:").width(Pixels(80.0));
-
-                        Textbox::new(cx, name).on_edit(move |cx, text| {
-                            cx.emit(AppEvent::SetName(text.clone()));
+                            Label::new(cx, label_text)
+                                .on_press(move |cx| {
+                                    cx.emit(AppEvent::SetSelected(index));
+                                })
+                                .navigable(true)
+                                .checked(is_selected);
                         });
                     });
 
-                    HStack::new(cx, |cx| {
-                        Label::new(cx, "Surname:").width(Pixels(80.0));
+                    VStack::new(cx, |cx| {
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, "Name:").width(Pixels(80.0));
 
-                        Textbox::new(cx, surname).on_edit(move |cx, text| {
-                            cx.emit(AppEvent::SetSurname(text.clone()));
+                            Textbox::new(cx, name).on_edit(move |cx, text| {
+                                cx.emit(AppEvent::SetName(text.clone()));
+                            });
+                        });
+
+                        HStack::new(cx, |cx| {
+                            Label::new(cx, "Surname:").width(Pixels(80.0));
+
+                            Textbox::new(cx, surname).on_edit(move |cx, text| {
+                                cx.emit(AppEvent::SetSurname(text.clone()));
+                            });
                         });
                     });
-                });
+                })
+                .height(Stretch(1.0))
+                .padding_top(Pixels(0.0))
+                .padding_bottom(Pixels(0.0));
+
+                HStack::new(cx, |cx| {
+                    Button::new(cx, |cx| Label::new(cx, "Create"))
+                        .on_press(|cx| cx.emit(AppEvent::Create));
+                    Button::new(cx, |cx| Label::new(cx, "Update"))
+                        .on_press(|cx| cx.emit(AppEvent::Update));
+                    Button::new(cx, |cx| Label::new(cx, "Delete"))
+                        .on_press(|cx| cx.emit(AppEvent::Delete));
+                })
+                .horizontal_gap(Pixels(10.0));
             })
-            .height(Stretch(1.0))
-            .padding_top(Pixels(0.0))
-            .padding_bottom(Pixels(0.0));
-
-            HStack::new(cx, |cx| {
-                Button::new(cx, |cx| Label::new(cx, "Create"))
-                    .on_press(|cx| cx.emit(AppEvent::Create));
-                Button::new(cx, |cx| Label::new(cx, "Update"))
-                    .on_press(|cx| cx.emit(AppEvent::Update));
-                Button::new(cx, |cx| Label::new(cx, "Delete"))
-                    .on_press(|cx| cx.emit(AppEvent::Delete));
-            })
-            .horizontal_gap(Pixels(10.0));
+            .padding(Pixels(10.0));
         })
-        .padding(Pixels(10.0));
+        .title("CRUD")
+        .inner_size((450, 200));
     })
-    .title("CRUD")
-    .inner_size((450, 200))
     .run()
 }
