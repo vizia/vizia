@@ -254,6 +254,8 @@ fn filter_rows(rows: Vec<RowData>, filter_text: &str) -> Vec<RowData> {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let rows = Signal::new(make_rows());
             let columns = Signal::new(build_columns());

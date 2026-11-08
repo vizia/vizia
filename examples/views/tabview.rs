@@ -72,6 +72,8 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let tabs = Signal::new(vec!["Tab1", "Tab2", "Tab3", "Tab4", "Tab5", "Tab6"]);
             let selected_tab = Signal::new(0usize);

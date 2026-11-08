@@ -30,6 +30,8 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let timer = cx.add_timer(
                 Duration::from_millis(100),

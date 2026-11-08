@@ -34,6 +34,8 @@ pub enum AppEvent {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let editable_text = Signal::new("".to_string());
             let password_text = Signal::new("".to_string());

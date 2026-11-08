@@ -23,6 +23,8 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let list = Signal::new((1..100u32).collect::<Vec<_>>());
             let selected = Signal::new(vec![0usize]);

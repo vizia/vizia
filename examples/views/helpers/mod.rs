@@ -155,6 +155,24 @@ impl Model for ControlsData {
     }
 }
 
+/// Loads the helper translations used by the example pages.
+///
+/// This should be called before declaring the example `Window` so that
+/// localized window titles are correctly translated.
+pub fn load_translations(cx: &mut Context) {
+    cx.load_translation(
+        langid!("en-US"),
+        include_str!("../../resources/translations/en-US/helper.ftl"),
+    )
+    .expect("Failed to add en-US helper translation");
+
+    cx.load_translation(langid!("fr"), include_str!("../../resources/translations/fr/helper.ftl"))
+        .expect("Failed to add fr helper translation");
+
+    cx.load_translation(langid!("ar"), include_str!("../../resources/translations/ar/helper.ftl"))
+        .expect("Failed to add ar helper translation");
+}
+
 pub struct ExamplePage;
 
 impl ExamplePage {
@@ -162,24 +180,6 @@ impl ExamplePage {
         //setup_logging().expect("Failed to init logging");
 
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
-
-        cx.load_translation(
-            langid!("en-US"),
-            include_str!("../../resources/translations/en-US/helper.ftl"),
-        )
-        .expect("Failed to add en-US helper translation");
-
-        cx.load_translation(
-            langid!("fr"),
-            include_str!("../../resources/translations/fr/helper.ftl"),
-        )
-        .expect("Failed to add fr helper translation");
-
-        cx.load_translation(
-            langid!("ar"),
-            include_str!("../../resources/translations/ar/helper.ftl"),
-        )
-        .expect("Failed to add ar helper translation");
 
         Self.build(cx, |cx| {
             let controls = ControlsData::default();
@@ -236,24 +236,6 @@ impl ExamplePage {
         //setup_logging().expect("Failed to init logging");
 
         cx.add_stylesheet(CENTER_LAYOUT).expect("Failed to add stylesheet");
-
-        cx.load_translation(
-            langid!("en-US"),
-            include_str!("../../resources/translations/en-US/helper.ftl"),
-        )
-        .expect("Failed to add en-US helper translation");
-
-        cx.load_translation(
-            langid!("fr"),
-            include_str!("../../resources/translations/fr/helper.ftl"),
-        )
-        .expect("Failed to add fr helper translation");
-
-        cx.load_translation(
-            langid!("ar"),
-            include_str!("../../resources/translations/ar/helper.ftl"),
-        )
-        .expect("Failed to add ar helper translation");
 
         Self.build(cx, |cx| {
             let controls = ControlsData::default();

@@ -25,6 +25,8 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let text =
                 Signal::new(String::from("As well as model data which implements ToString:"));

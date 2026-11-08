@@ -22,6 +22,8 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let value = Signal::new(0.0);
             let normalized_value = Memo::new(move |_| (value.get() + 50.0) / 100.0);

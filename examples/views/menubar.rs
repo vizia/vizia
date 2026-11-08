@@ -6,6 +6,8 @@ use vizia_core::icons::{ICON_CLIPBOARD, ICON_COPY, ICON_CUT};
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             ExamplePage::new(cx, |cx| {
                 MenuBar::new(cx, |cx| {

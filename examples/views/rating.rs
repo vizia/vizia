@@ -23,6 +23,8 @@ enum AppEvent {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let rating1 = Signal::new(3);
             let rating2 = Signal::new(7);

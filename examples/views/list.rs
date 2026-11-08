@@ -43,6 +43,8 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let list = Signal::new((0..15u32).map(Signal::new).collect::<Vec<_>>());
             let orientation = Signal::new(Orientation::Vertical);

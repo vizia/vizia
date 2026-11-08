@@ -52,6 +52,8 @@ fn build_demo_stack(cx: &mut Context, title: &'static str) {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 

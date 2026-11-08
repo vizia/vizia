@@ -31,6 +31,8 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let xy_data = Signal::new((0.25, 0.25));
             let value_x = Memo::new(move |_| xy_data.get().0);

@@ -6,6 +6,8 @@ const COLORS: [Color; 3] = [Color::red(), Color::green(), Color::blue()];
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             ExamplePage::vertical(cx, |cx| {
                 ZStack::new(cx, |cx| {

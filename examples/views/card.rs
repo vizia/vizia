@@ -4,6 +4,8 @@ use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             ExamplePage::vertical(cx, |cx| {
                 HStack::new(cx, |cx| {

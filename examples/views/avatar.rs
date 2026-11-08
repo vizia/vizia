@@ -8,6 +8,8 @@ use vizia::{
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             cx.add_image(
                 "sample-hut",

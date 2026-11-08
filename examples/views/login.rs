@@ -134,6 +134,8 @@ impl Model for LoginData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             cx.add_stylesheet(LOGIN_STYLES).expect("Failed to add login stylesheet");
 

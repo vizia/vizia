@@ -51,6 +51,8 @@ impl Model for AppState {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let &AppState { options, selected_option } = AppState::new().build(cx);
 

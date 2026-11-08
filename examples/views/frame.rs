@@ -38,6 +38,8 @@ fn radio_group(cx: &mut Context, selected: Signal<RadioChoice>, id_prefix: &'sta
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let left_choice = Signal::new(RadioChoice::First);
             let center_choice = Signal::new(RadioChoice::First);

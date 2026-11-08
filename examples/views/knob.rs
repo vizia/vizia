@@ -23,6 +23,8 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let value = Signal::new(0.2);
             AppData { value }.build(cx);

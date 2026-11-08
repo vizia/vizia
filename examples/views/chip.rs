@@ -26,6 +26,8 @@ enum AppEvent {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let chip = Signal::new("chip-label".to_string());
             let chips = Signal::new(vec![

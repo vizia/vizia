@@ -28,6 +28,8 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let list =
                 Signal::new(vec!["Red".to_string(), "Green".to_string(), "Blue".to_string()]);

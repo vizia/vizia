@@ -36,6 +36,8 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let bold = Signal::new(false);
             let italic = Signal::new(false);

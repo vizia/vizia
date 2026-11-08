@@ -22,6 +22,8 @@ const STYLE: &str = r#"
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 

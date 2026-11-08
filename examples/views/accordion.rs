@@ -67,6 +67,8 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let allow_multiple_open = Signal::new(false);
             let open_indices = Signal::new(vec![0]);

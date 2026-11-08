@@ -23,6 +23,8 @@ impl Model for AppState {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let date = Signal::new(Utc::now().date_naive());
 

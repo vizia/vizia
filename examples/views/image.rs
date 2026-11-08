@@ -11,6 +11,8 @@ const SAMPLE_HUT_NAME: &str = "sample-hut";
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let rust_status =
                 cx.add_image(RUST_LOGO_NAME, RUST_LOGO_URL, ImageRetentionPolicy::Forever, None);

@@ -5,6 +5,8 @@ use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             ExamplePage::new(cx, |cx| {
                 Submenu::new(

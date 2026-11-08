@@ -364,6 +364,8 @@ fn build_fs_tree() -> Tree<FsNode> {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let tree = Signal::new(build_fs_tree());
             let root_id = tree.with(|tree| tree.root().id());

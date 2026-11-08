@@ -26,6 +26,8 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
+        load_translations(cx);
+
         Window::new(cx, |cx| {
             let option1 = Signal::new(true);
             let option2 = Signal::new(false);
