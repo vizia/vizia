@@ -8,10 +8,6 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 
-[features]
-default = []
-profiling = []
-
 [dependencies]
 vizia_id.workspace = true
 

@@ -19,8 +19,7 @@
 //!   restyling.
 //!
 //! Every update and draw pass triggered by the change is captured with [`vizia::profiling`] and
-//! printed to stdout, showing which systems ran, how long each took, and how many tree nodes each
-//! one visited.
+//! printed to stdout, showing which systems ran and how long each took.
 //!
 //! Keep the mouse outside the window while profiling, or real mouse-move events will be captured
 //! as well.

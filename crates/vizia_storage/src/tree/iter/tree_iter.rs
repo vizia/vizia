@@ -35,13 +35,10 @@ where
 {
     type Item = I;
     fn next(&mut self) -> Option<I> {
-        let item = {
-            self.tours.next_with(self.tree, |node, direction| match direction {
-                TourDirection::Entering => (Some(node), TourStep::EnterFirstChild),
-                TourDirection::Leaving => (None, TourStep::EnterNextSibling),
-            })
-        };
-        crate::profiling::counted(item)
+        self.tours.next_with(self.tree, |node, direction| match direction {
+            TourDirection::Entering => (Some(node), TourStep::EnterFirstChild),
+            TourDirection::Leaving => (None, TourStep::EnterNextSibling),
+        })
     }
 }
 
@@ -50,13 +47,10 @@ where
     I: GenerationalId,
 {
     fn next_back(&mut self) -> Option<I> {
-        let item = {
-            self.tours.next_back_with(self.tree, |node, direction| match direction {
-                TourDirection::Entering => (None, TourStep::EnterLastChild),
-                TourDirection::Leaving => (Some(node), TourStep::EnterPrevSibling),
-            })
-        };
-        crate::profiling::counted(item)
+        self.tours.next_back_with(self.tree, |node, direction| match direction {
+            TourDirection::Entering => (None, TourStep::EnterLastChild),
+            TourDirection::Leaving => (Some(node), TourStep::EnterPrevSibling),
+        })
     }
 }
 
@@ -95,7 +89,6 @@ where
                 self.queue.push_back(child);
             }
 
-            crate::profiling::record();
             return Some(item);
         }
 

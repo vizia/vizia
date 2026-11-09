@@ -43,19 +43,16 @@ where
     type Item = I;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let item = {
-            self.tours.next_with(self.tree, |node, direction| match direction {
-                TourDirection::Entering => {
-                    if (self.is_hidden)(node) {
-                        (None, TourStep::LeaveCurrent)
-                    } else {
-                        (Some(node), TourStep::EnterFirstChild)
-                    }
+        self.tours.next_with(self.tree, |node, direction| match direction {
+            TourDirection::Entering => {
+                if (self.is_hidden)(node) {
+                    (None, TourStep::LeaveCurrent)
+                } else {
+                    (Some(node), TourStep::EnterFirstChild)
                 }
-                TourDirection::Leaving => (None, TourStep::EnterNextSibling),
-            })
-        };
-        crate::profiling::counted(item)
+            }
+            TourDirection::Leaving => (None, TourStep::EnterNextSibling),
+        })
     }
 }
 
@@ -64,18 +61,15 @@ where
     I: GenerationalId,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        let item = {
-            self.tours.next_back_with(self.tree, |node, direction| match direction {
-                TourDirection::Entering => (None, TourStep::EnterLastChild),
-                TourDirection::Leaving => {
-                    if (self.is_hidden)(node) {
-                        (None, TourStep::EnterPrevSibling)
-                    } else {
-                        (Some(node), TourStep::EnterPrevSibling)
-                    }
+        self.tours.next_back_with(self.tree, |node, direction| match direction {
+            TourDirection::Entering => (None, TourStep::EnterLastChild),
+            TourDirection::Leaving => {
+                if (self.is_hidden)(node) {
+                    (None, TourStep::EnterPrevSibling)
+                } else {
+                    (Some(node), TourStep::EnterPrevSibling)
                 }
-            })
-        };
-        crate::profiling::counted(item)
+            }
+        })
     }
 }

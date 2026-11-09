@@ -1,4 +1,3 @@
-pub mod profiling;
 mod sparse_set;
 mod tree;
 

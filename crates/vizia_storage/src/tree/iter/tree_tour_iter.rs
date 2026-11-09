@@ -29,7 +29,6 @@ where
     type Item = O;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let item = { self.tour.next_with(self.tree, &mut self.cb) };
-        crate::profiling::counted(item)
+        self.tour.next_with(self.tree, &mut self.cb)
     }
 }
