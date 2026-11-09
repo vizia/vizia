@@ -1458,17 +1458,6 @@ impl MatchedRules {
     }
 }
 
-/// Returns the number of ancestors of an entity.
-fn depth(tree: &Tree<Entity>, entity: Entity) -> usize {
-    let mut depth = 0;
-    let mut current = entity;
-    while let Some(parent) = tree.get_parent(current) {
-        depth += 1;
-        current = parent;
-    }
-    depth
-}
-
 // Determines the matching style rules for each entity marked for restyle, then links the entity to
 // the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
@@ -1516,10 +1505,8 @@ pub(crate) fn style_system(cx: &mut Context) {
     }
 
     // Parents before children.
-    let mut entities =
-        restyle.iter().map(|entity| (depth(&cx.tree, *entity), *entity)).collect::<Vec<_>>();
-    entities.sort_unstable_by_key(|(depth, entity)| (*depth, entity.index()));
-    let entities = entities.into_iter().map(|(_, entity)| entity).collect::<Vec<_>>();
+    let mut entities = restyle.iter().copied().collect::<Vec<_>>();
+    cx.tree.sort_by_depth(&mut entities);
 
     // Inherited data only needs to be propagated through the subtrees of the restyled entities,
     // unless the tree or inline data changed since the last pass.
@@ -1622,10 +1609,8 @@ pub(crate) fn style_system(cx: &mut Context) {
             cx.style.matched_rules.get(entity).is_some_and(|rules| !rules.is_empty())
         });
         force.extend(to_link.drain(..));
-        let mut forced =
-            force.into_iter().map(|entity| (depth(&cx.tree, entity), entity)).collect::<Vec<_>>();
-        forced.sort_unstable_by_key(|(depth, entity)| (*depth, entity.index()));
-        to_link = forced.into_iter().map(|(_, entity)| entity).collect();
+        to_link = force.into_iter().collect();
+        cx.tree.sort_by_depth(&mut to_link);
     }
 
     let matched_rules = std::mem::take(&mut cx.style.matched_rules);

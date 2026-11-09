@@ -140,6 +140,22 @@ where
         self.parent.get(entity.index()).and_then(|&parent| parent)
     }
 
+    /// Returns the number of ancestors of an entity.
+    pub fn depth(&self, entity: I) -> usize {
+        let mut depth = 0;
+        let mut current = entity;
+        while let Some(parent) = self.get_parent(current) {
+            depth += 1;
+            current = parent;
+        }
+        depth
+    }
+
+    /// Sorts entities so that every entity comes after its ancestors.
+    pub fn sort_by_depth(&self, entities: &mut [I]) {
+        entities.sort_by_cached_key(|entity| (self.depth(*entity), entity.index()));
+    }
+
     pub fn get_parent_window(&self, entity: I) -> Option<I> {
         // if self.is_window(entity) {
         //     return Some(entity);
@@ -620,5 +636,38 @@ where
 
     fn into_iter(self) -> Self::IntoIter {
         TreeIterator::full(self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use vizia_id::{
+        GENERATIONAL_ID_GENERATION_MASK, GENERATIONAL_ID_INDEX_BITS, GENERATIONAL_ID_INDEX_MASK,
+        impl_generational_id,
+    };
+
+    #[derive(Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct Entity(u64);
+
+    impl_generational_id!(Entity);
+
+    #[test]
+    fn sort_by_depth_puts_ancestors_first() -> Result<(), TreeError> {
+        let mut tree = Tree::new();
+        let root = Entity::root();
+        let [a, b, c, d] = [1, 2, 3, 4].map(|i| Entity::new(i, 0));
+        tree.add(a, root)?;
+        tree.add(b, a)?;
+        tree.add(c, b)?;
+        tree.add(d, root)?;
+
+        assert_eq!(tree.depth(root), 0);
+        assert_eq!(tree.depth(c), 3);
+
+        let mut entities = vec![c, d, b, root, a];
+        tree.sort_by_depth(&mut entities);
+        assert_eq!(entities, vec![root, a, d, b, c]);
+        Ok(())
     }
 }
