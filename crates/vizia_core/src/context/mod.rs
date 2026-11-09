@@ -382,10 +382,6 @@ impl Context {
 
     pub fn needs_retransform(&mut self, entity: Entity) {
         self.style.needs_retransform(entity);
-        let iter = LayoutTreeIterator::subtree(&self.tree, entity);
-        for descendant in iter {
-            self.style.needs_retransform(descendant);
-        }
     }
 
     pub fn needs_reclip(&mut self, entity: Entity) {

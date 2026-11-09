@@ -1182,10 +1182,6 @@ fn link_style_data(
 
     if should_retransform {
         style.needs_retransform(entity);
-        let iter = LayoutTreeIterator::subtree(tree, entity);
-        for descendant in iter {
-            style.needs_retransform(descendant);
-        }
     }
 
     if should_reclip {

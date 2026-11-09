@@ -802,10 +802,6 @@ impl<'a> EventContext<'a> {
 
     pub fn needs_retransform(&mut self) {
         self.style.needs_retransform(self.current);
-        let iter = LayoutTreeIterator::subtree(self.tree, self.current);
-        for descendant in iter {
-            self.style.needs_retransform(descendant);
-        }
     }
 
     pub fn needs_reclip(&mut self) {
