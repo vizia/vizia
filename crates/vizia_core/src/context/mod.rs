@@ -656,15 +656,7 @@ impl Context {
         self.with_current(current, |cx| {
             applied.set_or_bind(cx, move |cx, applied| {
                 let applied = applied.get_value(cx);
-                if let Some(class_list) = cx.style.classes.get_mut(entity) {
-                    if applied {
-                        class_list.insert(name.clone());
-                    } else {
-                        class_list.remove(&name);
-                    }
-                }
-
-                cx.needs_restyle(entity);
+                cx.style.set_class(&cx.tree, entity, &name, applied);
             });
         });
     }

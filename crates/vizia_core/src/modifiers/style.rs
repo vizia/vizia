@@ -27,10 +27,10 @@ pub trait StyleModifiers: internal::Modifiable {
         // TODO - What should happen if the id already exists?
         let id = id.into();
         let entity = self.entity();
-        self.context().style.ids.insert(entity, id.clone());
-        self.context().needs_restyle(entity);
+        let cx = self.context();
+        cx.style.set_id(&cx.tree, entity, id.clone());
 
-        self.context().entity_identifiers.insert(id, entity);
+        cx.entity_identifiers.insert(id, entity);
 
         self
     }
@@ -53,11 +53,8 @@ pub trait StyleModifiers: internal::Modifiable {
     ///```
     fn class(mut self, name: &str) -> Self {
         let entity = self.entity();
-        if let Some(class_list) = self.context().style.classes.get_mut(entity) {
-            class_list.insert(name.to_string());
-        }
-
-        self.context().needs_restyle(entity);
+        let cx = self.context();
+        cx.style.set_class(&cx.tree, entity, name, true);
 
         self
     }
@@ -70,15 +67,7 @@ pub trait StyleModifiers: internal::Modifiable {
         self.context().with_current(current, |cx| {
             applied.set_or_bind(cx, move |cx, applied| {
                 let applied = applied.get_value(cx);
-                if let Some(class_list) = cx.style.classes.get_mut(entity) {
-                    if applied {
-                        class_list.insert(name.clone());
-                    } else {
-                        class_list.remove(&name);
-                    }
-                }
-
-                cx.needs_restyle(entity);
+                cx.style.set_class(&cx.tree, entity, &name, applied);
             });
         });
 

@@ -3,7 +3,7 @@
 //! Run with:
 //!
 //! ```text
-//! cargo run --release --example profile_list --features profiling [-- [hover|resize] <row>]
+//! cargo run --release --example profile_list --features profiling [-- [hover|resize|class] <row>]
 //! ```
 //!
 //! The app builds a list of 3000 rows inside a scroll view. Once the UI has settled, a timer
@@ -15,6 +15,8 @@
 //!   target row and the row below it, exercising the hover and style systems.
 //! - In `resize` mode it alternates the window width between two sizes, exercising the resize
 //!   path (layout and a full repaint of the window).
+//! - In `class` mode it toggles a `selected` class on the target row, exercising class-based
+//!   restyling.
 //!
 //! Every update and draw pass triggered by the change is captured with [`vizia::profiling`] and
 //! printed to stdout, showing which systems ran, how long each took, and how many tree nodes each
@@ -34,12 +36,14 @@ const DEFAULT_ROW: usize = 10;
 const INTERVAL: Duration = Duration::from_secs(1);
 const WINDOW_SIZE: (u32, u32) = (400, 600);
 const RESIZED_WIDTH: u32 = 440;
+const STYLE: &str = ".selected { background-color: #ff783c; }";
 
 #[derive(Clone, Copy, PartialEq)]
 enum Mode {
     Color,
     Hover,
     Resize,
+    Class,
 }
 
 fn main() -> Result<(), ApplicationError> {
@@ -47,6 +51,7 @@ fn main() -> Result<(), ApplicationError> {
     let mode = match args.peek().map(String::as_str) {
         Some("hover") => Mode::Hover,
         Some("resize") => Mode::Resize,
+        Some("class") => Mode::Class,
         _ => Mode::Color,
     };
     if mode != Mode::Color {
@@ -59,17 +64,28 @@ fn main() -> Result<(), ApplicationError> {
         let colors: Vec<Signal<Color>> =
             (0..ROWS).map(|_| Signal::new(Color::transparent())).collect();
         let target = colors[target_row];
+        let selected = Signal::new(false);
+
+        if mode == Mode::Class {
+            cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
+        }
 
         ScrollView::new(cx, move |cx| {
             VStack::new(cx, move |cx| {
                 for (index, color) in colors.iter().enumerate() {
-                    HStack::new(cx, |cx| {
+                    let row = HStack::new(cx, |cx| {
                         Label::new(cx, format!("Row {index}"));
                     })
                     .height(Pixels(ROW_HEIGHT))
                     .padding_left(Pixels(8.0))
-                    .alignment(Alignment::Left)
-                    .background_color(*color);
+                    .alignment(Alignment::Left);
+                    if mode == Mode::Class {
+                        if index == target_row {
+                            row.toggle_class("selected", selected);
+                        }
+                    } else {
+                        row.background_color(*color);
+                    }
                 }
             })
             .height(Auto);
@@ -96,6 +112,8 @@ fn main() -> Result<(), ApplicationError> {
                     (Mode::Resize, false) => format!("window width -> {}", WINDOW_SIZE.0),
                     (Mode::Color, true) => format!("row {target_row} background -> highlighted"),
                     (Mode::Color, false) => format!("row {target_row} background -> transparent"),
+                    (Mode::Class, true) => format!("row {target_row} class `selected` added"),
+                    (Mode::Class, false) => format!("row {target_row} class `selected` removed"),
                 };
                 println!("\n##### Change #{}: {description} #####", changes.get());
                 println!("{capture}");
@@ -125,6 +143,8 @@ fn main() -> Result<(), ApplicationError> {
                         .target(Entity::root())
                         .propagate(Propagation::Direct),
                 );
+            } else if mode == Mode::Class {
+                selected.set(highlighted.get());
             } else {
                 target.set(if highlighted.get() {
                     Color::rgb(255, 120, 60)
@@ -141,6 +161,7 @@ fn main() -> Result<(), ApplicationError> {
         }
         Mode::Resize => format!("Profile: {ROWS} rows, resizing the window"),
         Mode::Color => format!("Profile: {ROWS} rows, toggling row {target_row}"),
+        Mode::Class => format!("Profile: {ROWS} rows, toggling a class on row {target_row}"),
     })
     .inner_size(WINDOW_SIZE)
     .run()
