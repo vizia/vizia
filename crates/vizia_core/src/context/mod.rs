@@ -68,7 +68,7 @@ use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::text::TextContext;
 use vizia_input::{ImeState, MouseState};
-use vizia_storage::{ChildIterator, LayoutTreeIterator};
+use vizia_storage::ChildIterator;
 
 #[cfg(feature = "tokio")]
 pub(crate) type TaskRuntime = Arc<tokio::runtime::Runtime>;
@@ -386,10 +386,6 @@ impl Context {
 
     pub fn needs_reclip(&mut self, entity: Entity) {
         self.style.needs_reclip(entity);
-        let iter = LayoutTreeIterator::subtree(&self.tree, entity);
-        for descendant in iter {
-            self.style.needs_reclip(descendant);
-        }
     }
 
     /// Mark the application as needing to rerun layout computations

@@ -4,7 +4,7 @@ use dashmap::{DashMap, ReadOnlyView};
 use hashbrown::{HashMap, HashSet};
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
-use vizia_storage::{LayoutChildIterator, LayoutParentIterator, LayoutTreeIterator, TreeIterator};
+use vizia_storage::{LayoutChildIterator, LayoutParentIterator, TreeIterator};
 use vizia_style::{
     Element, MatchingContext, MatchingMode, PseudoClass, QuirksMode, SelectorIdent, Selectors,
     matches_selector,
@@ -1186,10 +1186,6 @@ fn link_style_data(
 
     if should_reclip {
         style.needs_reclip(entity);
-        let iter = LayoutTreeIterator::subtree(tree, entity);
-        for descendant in iter {
-            style.needs_reclip(descendant);
-        }
     }
 
     if should_reflow {
