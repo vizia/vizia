@@ -3313,6 +3313,8 @@ impl Style {
         self.matched_rules.remove(&entity);
         self.restyle.remove(&entity);
         self.relayout.remove(&entity);
+        self.retransform.remove(&entity);
+        self.reclip.remove(&entity);
         self.laid_out.remove(&entity);
         self.ids.remove(entity);
         self.classes.remove(entity);
