@@ -1,6 +1,9 @@
-use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
+use vizia_storage::LayoutChildIterator;
 
-use crate::{animation::Interpolator, prelude::*, tree::minimal_layout_dirty_roots};
+use crate::{
+    animation::Interpolator, prelude::*, systems::clipping::has_own_clip,
+    tree::minimal_layout_dirty_roots,
+};
 
 /// Applies transforms to the layout tree.
 ///
@@ -25,14 +28,17 @@ pub(crate) fn transform_system(cx: &mut Context) {
         let changed =
             (parent_changed || retransform.contains(&entity)) && update_transform(cx, entity);
 
-        // Descendants of a changed entity are moved with it, so their clip paths and cached draw
-        // bounds are invalidated once, from the top of the changed subtree.
-        if changed && !parent_changed {
-            for descendant in LayoutTreeIterator::subtree(&cx.tree, entity) {
-                cx.style.needs_reclip(descendant);
-                if descendant != entity {
-                    cx.cache.invalidate_draw_bounds(&cx.tree, descendant);
-                }
+        if changed {
+            // Entities without a clip of their own inherit the clip path of their parent, which
+            // the clipping system propagates, so only entities which clip are marked.
+            if has_own_clip(&cx.style, entity) {
+                cx.style.needs_reclip(entity);
+            }
+
+            // The previous draw bounds of the topmost changed entity are kept so the draw system
+            // can repaint the area it moved away from.
+            if parent_changed {
+                cx.cache.invalidate_draw_bounds(&cx.tree, entity);
             }
         }
 
@@ -165,9 +171,15 @@ mod tests {
         (cx, a, b, c)
     }
 
+    fn clip(cx: &mut Context, entity: Entity) {
+        cx.style.overflowx.insert(entity, Overflow::Hidden);
+        cx.style.overflowy.insert(entity, Overflow::Hidden);
+    }
+
     #[test]
     fn transform_propagates_to_unmarked_descendants() {
         let (mut cx, a, b, c) = setup();
+        clip(&mut cx, a);
         translate(&mut cx, a, 10.0, 20.0);
         transform_system(&mut cx);
 
@@ -176,12 +188,15 @@ mod tests {
         assert_eq!(transform(&cx, b), expected);
         assert_eq!(transform(&cx, c), expected);
         assert!(cx.style.retransform.is_empty());
-        assert!([a, b, c].iter().all(|entity| cx.style.reclip.contains(entity)));
+        // Only entities which clip their content need their own clip path recomputed.
+        assert_eq!(cx.style.reclip, [a].into());
     }
 
     #[test]
     fn nested_change_leaves_ancestors_untouched() {
         let (mut cx, a, b, c) = setup();
+        clip(&mut cx, a);
+        clip(&mut cx, b);
         translate(&mut cx, a, 10.0, 0.0);
         transform_system(&mut cx);
         cx.style.reclip.clear();
@@ -191,23 +206,21 @@ mod tests {
 
         assert_eq!(transform(&cx, a), Matrix::translate((10.0, 0.0)));
         assert_eq!(transform(&cx, c), Matrix::translate((10.0, 5.0)));
-        assert!(!cx.style.reclip.contains(&a));
-        assert!(cx.style.reclip.contains(&b));
-        assert!(cx.style.reclip.contains(&c));
+        assert_eq!(cx.style.reclip, [b].into());
     }
 
     #[test]
-    fn counter_translated_descendants_are_still_reclipped() {
+    fn counter_translated_descendants_are_unchanged() {
         let (mut cx, a, b, c) = setup();
-        translate(&mut cx, b, -10.0, 0.0);
-        transform_system(&mut cx);
-        cx.style.reclip.clear();
+        clip(&mut cx, b);
 
         translate(&mut cx, a, 10.0, 0.0);
+        translate(&mut cx, b, -10.0, 0.0);
         transform_system(&mut cx);
 
+        assert_eq!(transform(&cx, a), Matrix::translate((10.0, 0.0)));
         assert_eq!(transform(&cx, b), Matrix::new_identity());
         assert_eq!(transform(&cx, c), Matrix::new_identity());
-        assert!([a, b, c].iter().all(|entity| cx.style.reclip.contains(entity)));
+        assert!(cx.style.reclip.is_empty());
     }
 }

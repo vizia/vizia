@@ -806,10 +806,6 @@ impl<'a> EventContext<'a> {
 
     pub fn needs_reclip(&mut self) {
         self.style.needs_reclip(self.current);
-        let iter = LayoutTreeIterator::subtree(self.tree, self.current);
-        for descendant in iter {
-            self.style.needs_reclip(descendant);
-        }
     }
 
     /// Reloads the stylesheets linked to the application.
