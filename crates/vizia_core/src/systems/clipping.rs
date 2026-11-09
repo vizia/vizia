@@ -1,6 +1,8 @@
 use skia_safe::{Path, PathBuilder, Point, RRect, Rect};
 use vizia_storage::LayoutChildIterator;
 
+use crate::cache::CachedData;
+
 use crate::{prelude::*, tree::minimal_layout_dirty_roots};
 
 /// Computes the clipping path for each entity in the layout tree.
@@ -48,25 +50,114 @@ pub(crate) fn has_own_clip(style: &Style, entity: Entity) -> bool {
 /// Recomputes the clip path of an entity. Returns true if the clip path changed.
 fn update_clip_path(cx: &mut Context, entity: Entity) -> bool {
     let Some(bounds) = cx.cache.bounds.get(entity).copied() else { return false };
+
+    if has_own_clip(&cx.style, entity) {
+        cx.cache.own_clips.insert(entity);
+    } else {
+        cx.cache.own_clips.remove(&entity);
+    }
+
     let clip_path = compute_clip_path(cx, entity, bounds);
 
-    let previous = cx.cache.clip_path.get(entity);
-    if previous == Some(&clip_path) {
+    // Cached draw bounds are independent of the clip paths of ancestors, so they remain valid.
+    if cx.cache.clip_path.get(entity) == Some(&clip_path) {
         return false;
     }
 
-    let previous_bounds = previous.and_then(Option::as_ref).map(|path| *path.bounds());
-    let new_bounds = clip_path.as_ref().map(|path| *path.bounds());
-    cx.cache.clip_path.insert(entity, clip_path);
-
-    // The cached draw bounds of children are limited by the clip path of their parent.
-    if previous_bounds != new_bounds {
-        for child in LayoutChildIterator::new(&cx.tree, entity) {
-            cx.cache.invalidate_draw_bounds(&cx.tree, child);
+    match clip_path.as_ref() {
+        Some(path) => {
+            let bounds = path.bounds();
+            cx.cache.clip_bounds.insert(
+                entity,
+                BoundingBox::from_min_max(
+                    bounds.left().floor(),
+                    bounds.top().floor(),
+                    bounds.right().ceil(),
+                    bounds.bottom().ceil(),
+                ),
+            );
+        }
+        None => {
+            cx.cache.clip_bounds.remove(entity);
         }
     }
-
+    cx.cache.clip_path.insert(entity, clip_path);
     true
+}
+
+/// Returns the bounds of the clip of an entity in its own coordinate space (i.e. excluding its
+/// transform), ignoring the clips of its ancestors, or `None` if it does not clip its content.
+pub(crate) fn own_clip_bounds(
+    style: &Style,
+    cache: &CachedData,
+    tree: &Tree<Entity>,
+    entity: Entity,
+) -> Option<BoundingBox> {
+    let bounds = cache.bounds.get(entity).copied()?;
+    match (
+        overflow_clip_bounds(style, cache, tree, entity, bounds),
+        shape_clip_bounds(style, entity, bounds),
+    ) {
+        (Some(overflow), Some(shape)) => Some(overflow.intersection(&shape)),
+        (overflow, shape) => overflow.or(shape),
+    }
+}
+
+fn shape_clip_bounds(style: &Style, entity: Entity, bounds: BoundingBox) -> Option<BoundingBox> {
+    let scale = style.scale_factor();
+    match style.clip_path.get(entity) {
+        Some(ClipPath::Shape(rect)) => Some(bounds.shrink_sides(
+            rect.3.to_pixels(bounds.w, scale),
+            rect.0.to_pixels(bounds.h, scale),
+            rect.1.to_pixels(bounds.w, scale),
+            rect.2.to_pixels(bounds.h, scale),
+        )),
+        _ => None,
+    }
+}
+
+fn overflow_clip_bounds(
+    style: &Style,
+    cache: &CachedData,
+    tree: &Tree<Entity>,
+    entity: Entity,
+    bounds: BoundingBox,
+) -> Option<BoundingBox> {
+    let overflowx = style.overflowx.get(entity).copied().unwrap_or_default();
+    let overflowy = style.overflowy.get(entity).copied().unwrap_or_default();
+
+    // A single hidden axis clips to the window bounds along the other axis.
+    let window_bounds = || {
+        let window_entity = if tree.is_window(entity) {
+            entity
+        } else {
+            tree.get_parent_window(entity).unwrap_or(Entity::root())
+        };
+        cache.bounds.get(window_entity).copied().unwrap_or(bounds)
+    };
+
+    match (overflowx, overflowy) {
+        (Overflow::Visible, Overflow::Visible) => None,
+        (Overflow::Hidden, Overflow::Visible) => {
+            let window_bounds = window_bounds();
+            Some(BoundingBox::from_min_max(
+                bounds.left(),
+                window_bounds.top(),
+                bounds.right(),
+                window_bounds.bottom(),
+            ))
+        }
+        (Overflow::Visible, Overflow::Hidden) => {
+            let window_bounds = window_bounds();
+            Some(BoundingBox::from_min_max(
+                window_bounds.left(),
+                bounds.top(),
+                window_bounds.right(),
+                bounds.bottom(),
+            ))
+        }
+        (Overflow::Hidden, Overflow::Hidden) => Some(bounds),
+    }
 }
 
 /// Computes the clip path of an entity, intersecting its own clip with the clip of its parent.
@@ -87,55 +178,10 @@ fn compute_clip_path(cx: &Context, entity: Entity, bounds: BoundingBox) -> Optio
         return parent_clip_path;
     }
 
-    let overflowx = cx.style.overflowx.get(entity).copied().unwrap_or_default();
-    let overflowy = cx.style.overflowy.get(entity).copied().unwrap_or_default();
-
-    let scale = cx.style.scale_factor();
-
-    let transform =
-        cx.cache.transform.get(entity).copied().unwrap_or(skia_safe::Matrix::new_identity());
-
-    let shape_clip_path = cx.style.clip_path.get(entity).and_then(|clip| match clip {
-        ClipPath::Auto => None,
-        ClipPath::Shape(rect) => {
-            let clip_bounds = bounds.shrink_sides(
-                rect.3.to_pixels(bounds.w, scale),
-                rect.0.to_pixels(bounds.h, scale),
-                rect.1.to_pixels(bounds.w, scale),
-                rect.2.to_pixels(bounds.h, scale),
-            );
-
-            Some(build_clip_path(cx, entity, clip_bounds))
-        }
-    });
-
-    let window_entity = if cx.tree.is_window(entity) {
-        entity
-    } else {
-        cx.tree.get_parent_window(entity).unwrap_or(Entity::root())
-    };
-    let window_bounds = cx.cache.bounds.get(window_entity).copied().unwrap_or(bounds);
-
-    let overflow_clip_path = match (overflowx, overflowy) {
-        (Overflow::Visible, Overflow::Visible) => None,
-        (Overflow::Hidden, Overflow::Visible) => {
-            let left = bounds.left();
-            let right = bounds.right();
-            let top = window_bounds.top();
-            let bottom = window_bounds.bottom();
-            let clip_bounds = BoundingBox::from_min_max(left, top, right, bottom);
-            Some(build_clip_path(cx, entity, clip_bounds))
-        }
-        (Overflow::Visible, Overflow::Hidden) => {
-            let left = window_bounds.left();
-            let right = window_bounds.right();
-            let top = bounds.top();
-            let bottom = bounds.bottom();
-            let clip_bounds = BoundingBox::from_min_max(left, top, right, bottom);
-            Some(build_clip_path(cx, entity, clip_bounds))
-        }
-        (Overflow::Hidden, Overflow::Hidden) => Some(build_clip_path(cx, entity, bounds)),
-    };
+    let shape_clip_path = shape_clip_bounds(&cx.style, entity, bounds)
+        .map(|clip_bounds| build_clip_path(cx, entity, clip_bounds));
+    let overflow_clip_path = overflow_clip_bounds(&cx.style, &cx.cache, &cx.tree, entity, bounds)
+        .map(|clip_bounds| build_clip_path(cx, entity, clip_bounds));
 
     let clip_path = match (overflow_clip_path, shape_clip_path) {
         (Some(overflow_path), Some(shape_path)) => {
@@ -146,6 +192,7 @@ fn compute_clip_path(cx: &Context, entity: Entity, bounds: BoundingBox) -> Optio
         (None, None) => None,
     };
 
+    let transform = cx.cache.absolute_transform(&cx.tree, entity);
     let clip_path = clip_path.map(|clip_path| clip_path.make_transform(&transform));
 
     match (clip_path, parent_clip_path) {
@@ -214,12 +261,6 @@ mod tests {
         (cx, a, b, c)
     }
 
-    fn cache_draw_bounds(cx: &mut Context, entities: &[Entity]) {
-        for &entity in entities {
-            cx.cache.draw_bounds.insert(entity, BoundingBox { x: 0.0, y: 0.0, w: 1.0, h: 1.0 });
-        }
-    }
-
     #[test]
     fn descendants_inherit_parent_clip() {
         let (cx, a, b, c) = setup();
@@ -231,26 +272,38 @@ mod tests {
 
     #[test]
     fn clip_change_propagates_to_unmarked_descendants() {
-        let (mut cx, a, b, c) = setup();
-        cache_draw_bounds(&mut cx, &[b, c]);
+        let (mut cx, a, _, c) = setup();
         cx.cache.set_bounds(a, BoundingBox { x: 10.0, y: 10.0, w: 50.0, h: 50.0 });
         cx.style.needs_reclip(a);
         clipping_system(&mut cx);
 
         assert_eq!(clip_bounds(&cx, c), Some(Rect::new(10.0, 10.0, 60.0, 60.0)));
         assert!(cx.style.reclip.is_empty());
-        assert!(!cx.cache.draw_bounds.contains(b));
-        assert!(!cx.cache.draw_bounds.contains(c));
     }
 
     #[test]
-    fn unchanged_clip_keeps_descendant_draw_bounds() {
-        let (mut cx, a, b, c) = setup();
-        cache_draw_bounds(&mut cx, &[b, c]);
+    fn entities_with_own_clips_are_tracked() {
+        let (mut cx, a, b, _) = setup();
+        assert!(cx.cache.own_clips.contains(&a));
+        assert!(!cx.cache.own_clips.contains(&b));
+
+        cx.style.overflowx.insert(a, Overflow::Visible);
+        cx.style.overflowy.insert(a, Overflow::Visible);
         cx.style.needs_reclip(a);
         clipping_system(&mut cx);
+        assert!(!cx.cache.own_clips.contains(&a));
+    }
 
-        assert!(cx.cache.draw_bounds.contains(b));
-        assert!(cx.cache.draw_bounds.contains(c));
+    #[test]
+    fn clip_paths_include_ancestor_transforms() {
+        let (mut cx, a, b, _) = setup();
+        cx.style.overflowx.insert(b, Overflow::Hidden);
+        cx.style.overflowy.insert(b, Overflow::Hidden);
+        cx.cache.set_bounds(b, BoundingBox { x: 20.0, y: 20.0, w: 20.0, h: 20.0 });
+        cx.cache.local_transform.insert(a, skia_safe::Matrix::translate((5.0, 0.0)));
+        cx.style.needs_reclip(b);
+        clipping_system(&mut cx);
+
+        assert_eq!(clip_bounds(&cx, b), Some(Rect::new(25.0, 20.0, 45.0, 40.0)));
     }
 }

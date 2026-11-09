@@ -169,15 +169,11 @@ pub(crate) fn layout_system(cx: &mut Context) {
                     cx.needs_retransform();
                     cx.needs_reclip();
 
-                    // If the entity clips its children (Overflow::Hidden or ClipPath::Shape)
-                    // and its geometry changed, the clip path has changed too, so invalidate
-                    // all descendants' cached draw_bounds.
-                    if matches!(cx.style.overflowx.get(entity), Some(Overflow::Hidden))
-                        || matches!(cx.style.overflowy.get(entity), Some(Overflow::Hidden))
-                        || matches!(cx.style.clip_path.get(entity), Some(ClipPath::Shape(_)))
-                    {
+                    // Cached draw bounds are independent of ancestor clips, except that clips with
+                    // a single hidden axis extend to the window bounds.
+                    if cx.tree.is_window(entity) {
                         for descendant in LayoutTreeIterator::subtree(cx.tree, entity).skip(1) {
-                            cx.cache.invalidate_draw_bounds(cx.tree, descendant);
+                            cx.cache.draw_bounds.remove(descendant);
                         }
                     }
                 }
