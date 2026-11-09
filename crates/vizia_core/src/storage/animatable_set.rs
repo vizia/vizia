@@ -337,7 +337,6 @@ where
         }
 
         if entity_index < self.inline_data.sparse.len() {
-            super::bump_inline_structure_generation();
             let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
             if active_anim_index < self.active_animations.len() {
                 let anim_state = &mut self.active_animations[active_anim_index];
@@ -401,7 +400,6 @@ where
         let entity_index = entity.index();
 
         if entity_index < self.inline_data.sparse.len() {
-            super::bump_inline_structure_generation();
             let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
             if active_anim_index < self.active_animations.len() {
                 let anim_state = &mut self.active_animations[active_anim_index];
