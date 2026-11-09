@@ -9,13 +9,19 @@ use vizia_storage::LayoutTreeIterator;
 pub fn accessibility_system(cx: &mut Context) {
     let _scope = crate::profiling::scope("accessibility_system");
     if !cx.style.reaccess.is_empty() {
-        let iterator = LayoutTreeIterator::full(&cx.tree);
+        // Only update entities which are still in the tree, parents before children.
+        let root = Entity::root();
+        let mut entities = std::mem::take(&mut cx.style.reaccess)
+            .into_iter()
+            .filter(|entity| {
+                cx.entity_manager.is_alive(*entity)
+                    && (*entity == root || cx.tree.get_parent(*entity).is_some())
+                    && !cx.tree.is_ignored(*entity)
+            })
+            .collect::<Vec<_>>();
+        cx.tree.sort_by_depth(&mut entities);
 
-        for entity in iterator {
-            if !cx.style.reaccess.contains(&entity) {
-                continue;
-            }
-
+        for entity in entities {
             let mut access_context = AccessContext {
                 current: entity,
                 tree: &cx.tree,
@@ -49,8 +55,6 @@ pub fn accessibility_system(cx: &mut Context) {
                 }));
             }
         }
-
-        cx.style.reaccess.clear();
     }
 }
 
