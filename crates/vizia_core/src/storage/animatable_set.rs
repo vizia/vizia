@@ -149,6 +149,9 @@ where
 {
     /// Insert an inline value for an entity.
     pub fn insert(&mut self, entity: Entity, value: T) {
+        if !self.inline_data.contains(entity) {
+            super::bump_inline_structure_generation();
+        }
         self.inline_data.insert(entity, value);
     }
 
@@ -157,6 +160,7 @@ where
         let entity_index = entity.index();
 
         if entity_index < self.inline_data.sparse.len() {
+            super::bump_inline_structure_generation();
             let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
 
             if active_anim_index < self.active_animations.len() {
@@ -333,6 +337,7 @@ where
         }
 
         if entity_index < self.inline_data.sparse.len() {
+            super::bump_inline_structure_generation();
             let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
             if active_anim_index < self.active_animations.len() {
                 let anim_state = &mut self.active_animations[active_anim_index];
@@ -396,6 +401,7 @@ where
         let entity_index = entity.index();
 
         if entity_index < self.inline_data.sparse.len() {
+            super::bump_inline_structure_generation();
             let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
             if active_anim_index < self.active_animations.len() {
                 let anim_state = &mut self.active_animations[active_anim_index];

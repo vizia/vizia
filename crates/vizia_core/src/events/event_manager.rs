@@ -769,21 +769,14 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             }
         }
         WindowEvent::MouseEnter => {
-            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(meta.origin) {
-                pseudo_class.set(PseudoClassFlags::OVER, true);
-            }
+            cx.set_pseudo_class(meta.origin, PseudoClassFlags::OVER, true);
         }
         WindowEvent::MouseLeave => {
-            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(meta.origin) {
-                pseudo_class.set(PseudoClassFlags::OVER, false);
-            }
+            cx.set_pseudo_class(meta.origin, PseudoClassFlags::OVER, false);
 
-            let parent_iter = LayoutParentIterator::new(&cx.tree, cx.hovered);
-            for ancestor in parent_iter {
-                if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(ancestor) {
-                    pseudo_classes.set(PseudoClassFlags::HOVER, false);
-                    cx.style.needs_restyle(ancestor);
-                }
+            let ancestors = LayoutParentIterator::new(&cx.tree, cx.hovered).collect::<Vec<_>>();
+            for ancestor in ancestors {
+                cx.set_pseudo_class(ancestor, PseudoClassFlags::HOVER, false);
             }
 
             cx.hovered = Entity::null();

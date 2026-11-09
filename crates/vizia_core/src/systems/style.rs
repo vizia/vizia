@@ -1,10 +1,10 @@
 use crate::{cache::CachedData, prelude::*, text::resolved_text_direction};
 #[cfg(feature = "rayon")]
 use dashmap::{DashMap, ReadOnlyView};
-use hashbrown::HashMap;
+use hashbrown::{HashMap, HashSet};
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
-use vizia_storage::{LayoutParentIterator, LayoutTreeIterator, TreeBreadthIterator};
+use vizia_storage::{LayoutChildIterator, LayoutParentIterator, LayoutTreeIterator, TreeIterator};
 use vizia_style::{
     Element, MatchingContext, MatchingMode, PseudoClass, QuirksMode, SelectorIdent, Selectors,
     matches_selector,
@@ -421,9 +421,18 @@ impl Node<'_, '_> {
     }
 }
 
-/// Link inheritable inline properties to their parent.
-pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut Vec<Entity>) {
-    for entity in cx.tree.into_iter() {
+/// Iterates the entities in the subtrees of the given roots, parents before children.
+fn subtrees<'a>(tree: &'a Tree<Entity>, roots: &'a [Entity]) -> impl Iterator<Item = Entity> + 'a {
+    roots.iter().flat_map(move |root| TreeIterator::subtree(tree, *root))
+}
+
+/// Link inheritable inline properties to their parent within the subtrees of the given roots.
+pub(crate) fn inline_inheritance_system(
+    cx: &mut Context,
+    roots: &[Entity],
+    redraw_entities: &mut Vec<Entity>,
+) {
+    for entity in subtrees(&cx.tree, roots) {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             if cx.style.disabled.inherit_inline(entity, parent)
                 | cx.style.caret_color.inherit_inline(entity, parent)
@@ -458,9 +467,13 @@ pub(crate) fn inline_inheritance_system(cx: &mut Context, redraw_entities: &mut 
     }
 }
 
-/// Link inheritable shared properties to their parent.
-pub(crate) fn shared_inheritance_system(cx: &mut Context, redraw_entities: &mut Vec<Entity>) {
-    for entity in cx.tree.into_iter() {
+/// Link inheritable shared properties to their parent within the subtrees of the given roots.
+pub(crate) fn shared_inheritance_system(
+    cx: &mut Context,
+    roots: &[Entity],
+    redraw_entities: &mut Vec<Entity>,
+) {
+    for entity in subtrees(&cx.tree, roots) {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             if cx.style.font_color.inherit_shared(entity, parent)
                 | cx.style.font_size.inherit_shared(entity, parent)
@@ -615,9 +628,10 @@ fn link_variable_data(
 fn inherit_variable_data(
     style: &mut Style,
     tree: &Tree<Entity>,
+    roots: &[Entity],
     redraw_entities: &mut Vec<Entity>,
 ) {
-    for entity in tree.into_iter() {
+    for entity in subtrees(tree, roots) {
         if let Some(parent) = tree.get_layout_parent(entity) {
             for prop in style.custom_color_props.values_mut() {
                 if prop.inherit_shared(entity, parent) {
@@ -1444,12 +1458,30 @@ impl MatchedRules {
     }
 }
 
-// Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
+/// Returns the number of ancestors of an entity.
+fn depth(tree: &Tree<Entity>, entity: Entity) -> usize {
+    let mut depth = 0;
+    let mut current = entity;
+    while let Some(parent) = tree.get_parent(current) {
+        depth += 1;
+        current = parent;
+    }
+    depth
+}
+
+// Determines the matching style rules for each entity marked for restyle, then links the entity to
+// the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
     let _scope = crate::profiling::scope("style_system");
     let mut redraw_entities = Vec::new();
 
-    inline_inheritance_system(cx, &mut redraw_entities);
+    // Inline inheritance links the inline data of entities to the inline data of their parent, so
+    // it only needs to rerun when the tree or which entities have inline data changes.
+    let structure_key = (cx.tree.generation, crate::storage::inline_structure_generation());
+    if cx.style.inline_inheritance_key != Some(structure_key) {
+        inline_inheritance_system(cx, &[Entity::root()], &mut redraw_entities);
+        cx.style.inline_inheritance_key = Some(structure_key);
+    }
 
     if cx.style.restyle.is_empty() {
         for entity in redraw_entities {
@@ -1458,11 +1490,58 @@ pub(crate) fn style_system(cx: &mut Context) {
         return;
     }
 
-    let current_restyle = std::mem::take(&mut cx.style.restyle);
+    let rules_changed = cx.style.matched_rules_generation != cx.style.rules_generation;
+    if rules_changed {
+        cx.style.matched_rules.clear();
+        cx.style.matched_rules_generation = cx.style.rules_generation;
+    }
 
-    let entities = TreeBreadthIterator::full(&cx.tree)
-        .filter(|e| current_restyle.contains(e))
-        .collect::<Vec<_>>();
+    let root = Entity::root();
+    let mut restyle = cx.style.take_restyle();
+    restyle.retain(|entity| {
+        cx.entity_manager.is_alive(*entity)
+            && (*entity == root || cx.tree.get_parent(*entity).is_some())
+    });
+
+    // Positional selectors (e.g. `:first-child`) of the siblings of new entities may have changed.
+    if cx.style.has_positional_rules() {
+        let parents = restyle
+            .iter()
+            .filter(|entity| !cx.style.matched_rules.contains_key(*entity))
+            .filter_map(|entity| cx.tree.get_layout_parent(*entity))
+            .collect::<HashSet<_>>();
+        for parent in parents {
+            restyle.extend(LayoutChildIterator::new(&cx.tree, parent));
+        }
+    }
+
+    // Parents before children.
+    let mut entities =
+        restyle.iter().map(|entity| (depth(&cx.tree, *entity), *entity)).collect::<Vec<_>>();
+    entities.sort_unstable_by_key(|(depth, entity)| (*depth, entity.index()));
+    let entities = entities.into_iter().map(|(_, entity)| entity).collect::<Vec<_>>();
+
+    // Inherited data only needs to be propagated through the subtrees of the restyled entities,
+    // unless the tree or inline data changed since the last pass.
+    let full_walk = rules_changed || cx.style.style_structure_key != Some(structure_key);
+    let walk_roots = if full_walk {
+        vec![root]
+    } else {
+        entities
+            .iter()
+            .copied()
+            .filter(|entity| {
+                let mut current = *entity;
+                while let Some(parent) = cx.tree.get_parent(current) {
+                    if restyle.contains(&parent) {
+                        return false;
+                    }
+                    current = parent;
+                }
+                true
+            })
+            .collect::<Vec<_>>()
+    };
 
     let mut direction_bloom = BloomFilter::default();
     for entity in entities.iter().copied() {
@@ -1485,7 +1564,7 @@ pub(crate) fn style_system(cx: &mut Context) {
         }
     }
 
-    for entity in cx.tree.into_iter() {
+    for entity in subtrees(&cx.tree, &walk_roots) {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             if cx.style.direction.inherit_shared(entity, parent) {
                 cx.style.needs_text_update(entity);
@@ -1506,28 +1585,80 @@ pub(crate) fn style_system(cx: &mut Context) {
         }
     };
 
-    for entity in entities.iter() {
-        if let Some(matched_rules) = matched_rules.get(entity) {
-            link_variable_data(&mut cx.style, *entity, &mut redraw_entities, matched_rules);
+    // Style data only needs to be relinked for entities whose matched rules changed. Linking also
+    // resolves variables, so the descendants of an entity whose variable-defining rules changed
+    // must be relinked too.
+    let mut to_link = Vec::new();
+    let mut force = HashSet::new();
+    let mut new_rules = Vec::with_capacity(entities.len());
+    for entity in entities.iter().copied() {
+        let rules = matched_rules.get(&entity).map(<[_]>::to_vec).unwrap_or_default();
+        let previous = cx.style.matched_rules.get(&entity);
+        let changed = previous != Some(&rules);
+        if changed {
+            let defines_variables = |rules: &[(Rule, u32)]| {
+                rules.iter().any(|(rule, _)| cx.style.variable_rules.contains(rule))
+            };
+            if defines_variables(&rules) || previous.is_some_and(|p| defines_variables(p)) {
+                force.extend(TreeIterator::subtree(&cx.tree, entity).skip(1));
+            }
+        }
+
+        // Entities which have never matched any rules have no rule data to unlink.
+        let had_rules = previous.is_some_and(|previous| !previous.is_empty());
+        if (full_walk || changed) && (!rules.is_empty() || had_rules) {
+            to_link.push(entity);
+        }
+
+        new_rules.push((entity, rules));
+    }
+
+    for (entity, rules) in new_rules {
+        cx.style.matched_rules.insert(entity, rules);
+    }
+
+    if !force.is_empty() {
+        force.retain(|entity| {
+            cx.style.matched_rules.get(entity).is_some_and(|rules| !rules.is_empty())
+        });
+        force.extend(to_link.drain(..));
+        let mut forced =
+            force.into_iter().map(|entity| (depth(&cx.tree, entity), entity)).collect::<Vec<_>>();
+        forced.sort_unstable_by_key(|(depth, entity)| (*depth, entity.index()));
+        to_link = forced.into_iter().map(|(_, entity)| entity).collect();
+    }
+
+    let matched_rules = std::mem::take(&mut cx.style.matched_rules);
+
+    for entity in to_link.iter() {
+        if let Some(rules) = matched_rules.get(entity) {
+            link_variable_data(&mut cx.style, *entity, &mut redraw_entities, rules);
         }
     }
 
-    inherit_variable_data(&mut cx.style, &cx.tree, &mut redraw_entities);
+    inherit_variable_data(&mut cx.style, &cx.tree, &walk_roots, &mut redraw_entities);
 
-    for entity in entities.iter().copied() {
-        if let Some(matched_rules) = matched_rules.get(&entity) {
+    for entity in to_link.iter().copied() {
+        if let Some(rules) = matched_rules.get(&entity) {
             link_style_data(
                 &mut cx.style,
                 &mut cx.cache,
                 &cx.tree,
                 entity,
                 &mut redraw_entities,
-                matched_rules,
+                rules,
             );
         }
     }
 
-    shared_inheritance_system(cx, &mut redraw_entities);
+    cx.style.matched_rules = matched_rules;
+
+    shared_inheritance_system(cx, &walk_roots, &mut redraw_entities);
+
+    // Linking can replace inline data inherited from the parent, so relink it.
+    inline_inheritance_system(cx, &walk_roots, &mut redraw_entities);
+
+    cx.style.style_structure_key = Some(structure_key);
 
     for entity in redraw_entities {
         cx.needs_redraw(entity);
@@ -1535,7 +1666,6 @@ pub(crate) fn style_system(cx: &mut Context) {
 
     invalidate_focus_on_hidden(cx);
 }
-
 /// Re-validates `cx.focused` after style resolution.
 ///
 /// `WindowEvent::KeyDown` dispatch in `event_manager` routes to

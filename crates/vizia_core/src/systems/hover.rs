@@ -4,46 +4,75 @@ use crate::prelude::*;
 use log::debug;
 use vizia_storage::{DrawChildIterator, LayoutParentIterator};
 
+/// The entities whose hover pseudo-classes were set by the previous run of the hover system.
+#[derive(Debug, Default)]
+pub(crate) struct HoverTracking {
+    /// Entities with the `OVER` pseudo-class (the cursor is within their bounds).
+    over: Vec<Entity>,
+    /// Entities with the `HOVER` pseudo-class (the hovered entity and its ancestors).
+    hover: Vec<Entity>,
+}
+
 // Determines the hovered entity based on the mouse cursor position.
 pub fn hover_system(cx: &mut Context, window_entity: Entity) {
     let _scope = crate::profiling::scope("hover_system");
     cx.current = window_entity;
 
-    // if let Some(pseudo_classes) = cx.style.pseudo_classes.get(window_entity) {
-    //     if !pseudo_classes.contains(PseudoClassFlags::OVER) {
-    //         return;
-    //     }
-    // }
+    // Cached subtree draw bounds are only up to date once the draw system has processed every
+    // pending redraw, so only use them to skip subtrees away from the cursor when nothing is
+    // pending.
+    let prune = cx.windows.get(&window_entity).is_some_and(|window| window.redraw_list.is_empty());
 
     let mut queue = BinaryHeap::new();
     let pointer_events: bool =
         cx.style.pointer_events.get(window_entity).copied().unwrap_or_default().into();
     queue.push(ZEntity { index: 0, pointer_events, entity: window_entity });
     let mut hovered = window_entity;
-    while !queue.is_empty() {
-        let zentity = queue.pop().unwrap();
+    let mut over = Vec::new();
+    while let Some(zentity) = queue.pop() {
         cx.with_current(zentity.entity, |cx| {
             hover_entity(
                 &mut EventContext::new(cx),
                 zentity.index,
                 zentity.pointer_events,
+                prune,
                 &mut queue,
                 &mut hovered,
+                &mut over,
             );
         });
     }
 
-    // Set hover state for hovered view and ancestors
-    let parent_iter = LayoutParentIterator::new(&cx.tree, hovered);
-    for ancestor in parent_iter {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(ancestor) {
-            if pseudo_classes.contains(PseudoClassFlags::OVER)
-                && !pseudo_classes.contains(PseudoClassFlags::HOVER)
-            {
-                pseudo_classes.set(PseudoClassFlags::HOVER, true);
-            }
+    let previous = cx.hover_tracking.remove(&window_entity).unwrap_or_default();
+
+    // Clear the over state of entities which were not visited because they were skipped.
+    for entity in previous.over {
+        if !over.contains(&entity) && cx.entity_manager.is_alive(entity) {
+            cx.set_pseudo_class(entity, PseudoClassFlags::OVER, false);
         }
     }
+
+    // Set hover state for hovered view and ancestors
+    let hover = LayoutParentIterator::new(&cx.tree, hovered)
+        .filter(|ancestor| {
+            cx.style
+                .pseudo_classes
+                .get(*ancestor)
+                .is_some_and(|pseudo_classes| pseudo_classes.contains(PseudoClassFlags::OVER))
+        })
+        .collect::<Vec<_>>();
+
+    for entity in previous.hover {
+        if !hover.contains(&entity) && cx.entity_manager.is_alive(entity) {
+            cx.set_pseudo_class(entity, PseudoClassFlags::HOVER, false);
+        }
+    }
+
+    for &entity in &hover {
+        cx.set_pseudo_class(entity, PseudoClassFlags::HOVER, true);
+    }
+
+    cx.hover_tracking.insert(window_entity, HoverTracking { over, hover });
 
     if hovered != cx.hovered {
         // Useful for debugging
@@ -72,9 +101,6 @@ pub fn hover_system(cx: &mut Context, window_entity: Entity) {
         cx.event_queue.push_back(Event::new(WindowEvent::MouseOver).target(hovered));
         cx.event_queue.push_back(Event::new(WindowEvent::MouseOut).target(cx.hovered));
 
-        cx.style.needs_restyle(cx.hovered);
-        cx.style.needs_restyle(hovered);
-
         cx.hovered = hovered;
     }
 }
@@ -83,8 +109,10 @@ fn hover_entity(
     cx: &mut EventContext,
     current_z: i32,
     parent_pointer_events: bool,
+    prune: bool,
     queue: &mut BinaryHeap<ZEntity>,
     hovered: &mut Entity,
+    over: &mut Vec<Entity>,
 ) {
     // Skip if non-hoverable (will skip any descendants)
     let hoverable = cx
@@ -109,18 +137,26 @@ fn hover_entity(
     // Disabled views (and their descendants through inherited disabled state) should never
     // become hover targets.
     if cx.style.disabled.get(cx.current).copied().unwrap_or_default() {
-        if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
-            let had_hover = pseudo_classes.contains(PseudoClassFlags::HOVER);
-            let had_over = pseudo_classes.contains(PseudoClassFlags::OVER);
+        cx.set_pseudo_class(cx.current, PseudoClassFlags::HOVER | PseudoClassFlags::OVER, false);
+        return;
+    }
 
-            if had_hover || had_over {
-                pseudo_classes.set(PseudoClassFlags::HOVER, false);
-                pseudo_classes.set(PseudoClassFlags::OVER, false);
-                cx.needs_restyle();
+    let cursor_x = cx.mouse.cursor_x;
+    let cursor_y = cx.mouse.cursor_y;
+
+    if cursor_x < 0.0 || cursor_y < 0.0 {
+        return;
+    }
+
+    // Skip the whole subtree if the cursor is outside the bounds of everything drawn within it.
+    // Subtree draw bounds include z-indexed and clip-escaping descendants and contain the
+    // (clipped) bounds of every descendant.
+    if prune && !cx.tree.is_window(cx.current) {
+        if let Some(subtree_bounds) = cx.cache.subtree_draw_bounds.get(cx.current) {
+            if !subtree_bounds.contains_point(cursor_x, cursor_y) {
+                return;
             }
         }
-
-        return;
     }
 
     let pointer_events = cx
@@ -143,15 +179,6 @@ fn hover_entity(
 
     let bounds = cx.bounds();
 
-    let cursor_x = cx.mouse.cursor_x;
-    let cursor_y = cx.mouse.cursor_y;
-
-    if cursor_x < 0.0 || cursor_y < 0.0 {
-        return;
-    }
-
-    // let mut transform = parent_transform;
-
     let transform = cx.transform();
 
     let bounds_rect: skia_safe::Rect = bounds.into();
@@ -163,51 +190,22 @@ fn hover_entity(
 
     let b = transformed_bounds.intersection(&clipping);
 
-    if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.current) {
-        pseudo_classes.set(PseudoClassFlags::HOVER, false);
-    }
-
     if pointer_events {
-        if tx >= b.left() && tx < b.right() && ty >= b.top() && ty < b.bottom() {
+        let is_over = tx >= b.left() && tx < b.right() && ty >= b.top() && ty < b.bottom();
+        if is_over {
             *hovered = cx.current;
-
-            if !cx
-                .style
-                .pseudo_classes
-                .get(cx.current)
-                .copied()
-                .unwrap_or_default()
-                .contains(PseudoClassFlags::OVER)
-            {
-                if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
-                    pseudo_class.set(PseudoClassFlags::OVER, true);
-
-                    cx.needs_restyle();
-                }
-            }
-        } else if cx
-            .style
-            .pseudo_classes
-            .get(cx.current)
-            .copied()
-            .unwrap_or_default()
-            .contains(PseudoClassFlags::OVER)
-        {
-            if let Some(pseudo_class) = cx.style.pseudo_classes.get_mut(cx.current) {
-                pseudo_class.set(PseudoClassFlags::OVER, false);
-
-                cx.needs_restyle();
-            }
+            over.push(cx.current);
         }
+
+        cx.set_pseudo_class(cx.current, PseudoClassFlags::OVER, is_over);
     }
 
     let child_iter = DrawChildIterator::new(cx.tree, cx.current);
     for child in child_iter {
         cx.current = child;
-        hover_entity(cx, current_z, pointer_events, queue, hovered);
+        hover_entity(cx, current_z, pointer_events, prune, queue, hovered, over);
     }
 }
-
 struct ZEntity {
     pub index: i32,
     pub pointer_events: bool,

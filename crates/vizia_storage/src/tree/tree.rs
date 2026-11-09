@@ -15,6 +15,9 @@ where
     pub window: Vec<bool>,
     pub lock_focus_within: Vec<bool>,
     pub changed: bool,
+    /// Incremented whenever the structure of the tree changes, e.g. when an entity is added,
+    /// removed, moved, or ignored. Used to detect when cached tree-derived data is stale.
+    pub generation: u64,
 }
 
 impl<I> Tree<I>
@@ -32,6 +35,7 @@ where
             window: vec![false],
             lock_focus_within: vec![true],
             changed: true,
+            generation: 0,
         }
     }
 
@@ -312,6 +316,7 @@ where
 
         // Set the changed flag
         self.changed = true;
+        self.generation = self.generation.wrapping_add(1);
 
         Ok(())
     }
@@ -360,6 +365,8 @@ where
         self.first_child[parent.index()] = Some(entity);
 
         self.changed = true;
+
+        self.generation = self.generation.wrapping_add(1);
 
         Ok(())
     }
@@ -415,6 +422,8 @@ where
         self.next_sibling[entity.index()] = Some(sibling); // A
 
         self.changed = true;
+
+        self.generation = self.generation.wrapping_add(1);
 
         Ok(())
     }
@@ -475,6 +484,8 @@ where
 
         self.changed = true;
 
+        self.generation = self.generation.wrapping_add(1);
+
         Ok(())
     }
 
@@ -513,17 +524,26 @@ where
         self.parent[entity.index()] = Some(parent);
 
         self.changed = true;
+
+        self.generation = self.generation.wrapping_add(1);
     }
 
     pub fn set_ignored(&mut self, entity: I, flag: bool) {
         if let Some(ignored) = self.ignored.get_mut(entity.index()) {
-            *ignored = flag;
+            if *ignored != flag {
+                *ignored = flag;
+                // Ignoring an entity changes the layout parent of its children.
+                self.generation = self.generation.wrapping_add(1);
+            }
         }
     }
 
     pub fn set_window(&mut self, entity: I, flag: bool) {
         if let Some(window) = self.window.get_mut(entity.index()) {
-            *window = flag;
+            if *window != flag {
+                *window = flag;
+                self.generation = self.generation.wrapping_add(1);
+            }
         };
     }
 
@@ -584,6 +604,8 @@ where
         }
 
         self.changed = true;
+
+        self.generation = self.generation.wrapping_add(1);
 
         Ok(())
     }
