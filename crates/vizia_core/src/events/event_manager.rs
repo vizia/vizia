@@ -41,6 +41,7 @@ impl EventManager {
         cx: &mut Context,
         mut window_event_callback: impl FnMut(&WindowEvent),
     ) {
+        let _scope = crate::profiling::scope("flush_events");
         while {
             // Clear the event queue in the event manager.
             self.event_queue.clear();

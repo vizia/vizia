@@ -59,6 +59,7 @@ fn layout_restart_root(style: &Style, tree: &Tree<Entity>, entity: Entity) -> En
 /// `Node::layout` walks up to the best ancestor to restart layout from before recomputing that
 /// subtree. Marking the root dirty performs a full relayout.
 pub(crate) fn layout_system(cx: &mut Context) {
+    let _scope = crate::profiling::scope("layout_system");
     text_system(cx);
 
     if !cx.style.relayout.is_empty() {

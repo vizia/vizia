@@ -4,6 +4,7 @@ use crate::{animation::Interpolator, prelude::*};
 
 /// Applies transforms to the layout tree.
 pub(crate) fn transform_system(cx: &mut Context) {
+    let _scope = crate::profiling::scope("transform_system");
     if cx.style.retransform.is_empty() {
         return;
     }

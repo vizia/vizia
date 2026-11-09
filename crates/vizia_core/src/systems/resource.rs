@@ -8,6 +8,7 @@ use super::image_system;
 
 // Process queued resource requests through configured loaders and then maintain image resources.
 pub(crate) fn resource_system(cx: &mut Context) {
+    let _scope = crate::profiling::scope("resource_system");
     {
         let resource_cx = &mut ResourceContext::new(cx);
         request_style_images(resource_cx);

@@ -7,6 +7,7 @@ use crate::{prelude::*, tree::minimal_layout_dirty_roots};
 
 /// Computes the clipping path for each entity in the layout tree.
 pub(crate) fn clipping_system(cx: &mut Context) {
+    let _scope = crate::profiling::scope("clipping_system");
     if cx.style.reclip.is_empty() {
         return;
     }

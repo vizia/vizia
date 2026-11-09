@@ -6,6 +6,7 @@ use vizia_storage::{DrawChildIterator, LayoutParentIterator};
 
 // Determines the hovered entity based on the mouse cursor position.
 pub fn hover_system(cx: &mut Context, window_entity: Entity) {
+    let _scope = crate::profiling::scope("hover_system");
     cx.current = window_entity;
 
     // if let Some(pseudo_classes) = cx.style.pseudo_classes.get(window_entity) {

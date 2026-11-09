@@ -23,6 +23,7 @@ rayon = ["vizia_core/rayon"]
 serde = ["vizia_core/serde"]
 tokio = ["vizia_core/tokio", "dep:tokio"]
 url-loader = ["vizia_core/url-loader"]
+profiling = ["vizia_core/profiling"]
 
 [dependencies]
 vizia_core.workspace = true
@@ -324,6 +325,11 @@ path = "examples/custom_view.rs"
 [[example]]
 name = "timers"
 path = "examples/timers.rs"
+
+[[example]]
+name = "profile_list"
+path = "examples/profile_list.rs"
+required-features = ["profiling"]
 
 [[example]]
 name = "markdown"

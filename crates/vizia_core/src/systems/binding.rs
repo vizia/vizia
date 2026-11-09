@@ -2,6 +2,7 @@ use crate::{context::SIGNAL_REBUILDS, prelude::*};
 use hashbrown::HashSet;
 
 pub(crate) fn binding_system(cx: &mut Context) {
+    let _scope = crate::profiling::scope("binding_system");
     // Drain reactive signal rebuild requests queued by `Binding` updater effects,
     // but only consume entries for this context. Leave other contexts' entries queued.
     let signal_rebuilds = SIGNAL_REBUILDS.with_borrow_mut(|set| {
