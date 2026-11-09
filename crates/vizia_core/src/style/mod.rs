@@ -542,13 +542,80 @@ impl Style {
         entity: Entity,
         changed: PseudoClassFlags,
     ) {
-        if entity == Entity::null() || changed.is_empty() {
+        if changed.is_empty() {
+            return;
+        }
+
+        self.needs_restyle_for_change(tree, entity, invalidation::Change::State(changed));
+    }
+
+    /// Marks the entities which may be affected by adding or removing a class of an entity as
+    /// needing to be restyled. Does nothing if no selector uses the class.
+    pub(crate) fn needs_restyle_for_class(
+        &mut self,
+        tree: &Tree<Entity>,
+        entity: Entity,
+        class: &str,
+    ) {
+        self.needs_restyle_for_change(tree, entity, invalidation::Change::Class(class));
+    }
+
+    /// Marks the entities which may be affected by setting or removing the id of an entity as
+    /// needing to be restyled. Does nothing if no selector uses the id.
+    pub(crate) fn needs_restyle_for_id(&mut self, tree: &Tree<Entity>, entity: Entity, id: &str) {
+        self.needs_restyle_for_change(tree, entity, invalidation::Change::Id(id));
+    }
+
+    /// Adds or removes a class of an entity and restyles the entities the change can affect.
+    pub(crate) fn set_class(
+        &mut self,
+        tree: &Tree<Entity>,
+        entity: Entity,
+        class: &str,
+        applied: bool,
+    ) {
+        let changed = match self.classes.get_mut(entity) {
+            Some(classes) if applied => classes.insert(class.to_owned()),
+            Some(classes) => classes.remove(class),
+            None if applied => {
+                self.classes.insert(entity, HashSet::from([class.to_owned()]));
+                true
+            }
+            None => false,
+        };
+
+        if changed {
+            self.needs_restyle_for_class(tree, entity, class);
+        }
+    }
+
+    /// Sets the id of an entity and restyles the entities the change can affect.
+    pub(crate) fn set_id(&mut self, tree: &Tree<Entity>, entity: Entity, id: String) {
+        let previous = self.ids.get(entity).cloned();
+        if previous.as_ref() == Some(&id) {
+            return;
+        }
+
+        self.ids.insert(entity, id.clone());
+        if let Some(previous) = previous {
+            self.needs_restyle_for_id(tree, entity, &previous);
+        }
+        self.needs_restyle_for_id(tree, entity, &id);
+    }
+
+    fn needs_restyle_for_change(
+        &mut self,
+        tree: &Tree<Entity>,
+        entity: Entity,
+        change: invalidation::Change,
+    ) {
+        if entity == Entity::null() {
             return;
         }
 
         self.invalidation_map();
         let Some(map) = self.invalidation.as_ref() else { return };
-        let invalidation = map.state_invalidation(self, entity, changed);
+        let invalidation = map.invalidation(self, entity, change);
         let path_entities = map.path_entities(self, tree, entity, &invalidation);
         if let Some(scope) = invalidation.scope {
             invalidation::mark_scope(&mut self.restyle, tree, entity, scope);

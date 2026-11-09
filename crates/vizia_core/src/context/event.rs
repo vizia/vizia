@@ -773,19 +773,7 @@ impl<'a> EventContext<'a> {
     /// ```
     pub fn toggle_class(&mut self, class_name: &str, applied: bool) {
         let current = self.current();
-        if let Some(class_list) = self.style.classes.get_mut(current) {
-            if applied {
-                class_list.insert(class_name.to_string());
-            } else {
-                class_list.remove(class_name);
-            }
-        } else if applied {
-            let mut class_list = HashSet::new();
-            class_list.insert(class_name.to_string());
-            self.style.classes.insert(current, class_list);
-        }
-
-        self.needs_restyle();
+        self.style.set_class(self.tree, current, class_name, applied);
     }
 
     /// Returns a reference to the [Environment] model.
@@ -936,7 +924,7 @@ impl<'a> EventContext<'a> {
     // Setters
 
     pub fn set_id(&mut self, id: &str) {
-        self.style.ids.insert(self.current, id.to_string())
+        self.style.set_id(self.tree, self.current, id.to_string())
     }
 
     // Pseudoclass Setters
