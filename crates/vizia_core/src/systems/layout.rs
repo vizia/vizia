@@ -176,7 +176,7 @@ pub(crate) fn layout_system(cx: &mut Context) {
                         || matches!(cx.style.clip_path.get(entity), Some(ClipPath::Shape(_)))
                     {
                         for descendant in LayoutTreeIterator::subtree(cx.tree, entity).skip(1) {
-                            cx.cache.draw_bounds.remove(descendant);
+                            cx.cache.invalidate_draw_bounds(cx.tree, descendant);
                         }
                     }
                 }

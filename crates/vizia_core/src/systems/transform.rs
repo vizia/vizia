@@ -81,7 +81,10 @@ pub(crate) fn transform_system(cx: &mut Context) {
 
                 let new_transform = parent_transform * transform;
 
-                if *tx != new_transform {
+                let changed = *tx != new_transform;
+                *tx = new_transform;
+
+                if changed {
                     cx.style.needs_reclip(entity);
                     let iter = LayoutTreeIterator::subtree(&cx.tree, entity);
                     for descendant in iter {
@@ -90,12 +93,10 @@ pub(crate) fn transform_system(cx: &mut Context) {
                         // Invalidate them when ancestor transforms change so dirty/intersection
                         // checks don't cull newly visible descendants.
                         if descendant != entity {
-                            cx.cache.draw_bounds.remove(descendant);
+                            cx.cache.invalidate_draw_bounds(&cx.tree, descendant);
                         }
                     }
                 }
-
-                *tx = new_transform;
             }
         }
     }

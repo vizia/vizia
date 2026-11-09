@@ -49,19 +49,23 @@ pub(crate) fn draw_system(
 
         if entity.visible(&cx.style) {
             let draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
-            let dirty_bounds = cx
-                .cache
-                .draw_bounds
-                .get(entity)
-                .map_or(draw_bounds, |prev_bounds| draw_bounds.union(prev_bounds));
+            let dirty_bounds = match cx.cache.draw_bounds.get(entity) {
+                Some(prev_bounds) if is_non_empty(prev_bounds) && is_non_empty(&draw_bounds) => {
+                    draw_bounds.union(prev_bounds)
+                }
+                Some(prev_bounds) if is_non_empty(prev_bounds) => *prev_bounds,
+                _ => draw_bounds,
+            };
             union_dirty_rect(&mut dirty_rect, dirty_bounds);
             cx.cache.draw_bounds.insert(entity, draw_bounds);
+            cx.cache.invalidate_subtree_draw_bounds(&cx.tree, entity);
         } else {
             // If the entity was previously visible but is no longer, we must dirty
             // its previous area so that it is correctly cleared from the screen.
             if let Some(previous_draw_bounds) = cx.cache.draw_bounds.remove(entity) {
                 union_dirty_rect(&mut dirty_rect, previous_draw_bounds);
             }
+            cx.cache.invalidate_subtree_draw_bounds(&cx.tree, entity);
         }
     }
 
@@ -84,7 +88,11 @@ pub(crate) fn draw_system(
                     let filter_current_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
 
                     // Update cache for visible entity
+                    let previous = cx.cache.draw_bounds.get(entity).copied();
                     cx.cache.draw_bounds.insert(entity, filter_current_bounds);
+                    if previous != Some(filter_current_bounds) {
+                        cx.cache.invalidate_subtree_draw_bounds(&cx.tree, entity);
+                    }
 
                     if filter_current_bounds.w > 0.0 && filter_current_bounds.h > 0.0 {
                         // Ensure bounds are valid
@@ -109,7 +117,9 @@ pub(crate) fn draw_system(
                 }
 
                 // Remove from cache as it's no longer visible with these bounds.
-                cx.cache.draw_bounds.remove(entity);
+                if cx.cache.draw_bounds.contains(entity) {
+                    cx.cache.invalidate_draw_bounds(&cx.tree, entity);
+                }
             }
         }
     }
@@ -130,7 +140,12 @@ pub(crate) fn draw_system(
     cx.resource_manager.mark_images_unused();
 
     let mut queue = BinaryHeap::new();
-    queue.push(ZEntity { index: 0, entity: window_entity, visible: true });
+    // With no dirty area nothing visible has changed, so the retained dirty surface is still
+    // valid and only needs compositing. Surface recreation (e.g. on resize) always dirties the
+    // whole window via `needs_refresh`.
+    if dirty_rect.is_some() {
+        queue.push(ZEntity { index: 0, entity: window_entity, visible: true });
+    }
 
     while let Some(zentity) = queue.pop() {
         canvas.save();
@@ -230,6 +245,16 @@ fn draw_entity(
         return;
     }
 
+    // Skip the whole subtree if nothing within it can intersect the dirty rect. Subtree bounds
+    // include z-indexed and clip-escaping descendants, so it is safe to cull before they would be
+    // deferred to the z-order queue.
+    if let Some(dirty_rect) = dirty_rect {
+        let subtree_bounds = cached_subtree_draw_bounds(cx, current);
+        if !intersects_non_empty(&subtree_bounds, dirty_rect) {
+            return;
+        }
+    }
+
     let z_index = cx.z_index();
 
     if z_index > current_z {
@@ -307,16 +332,6 @@ fn draw_entity(
         None
     };
 
-    canvas.save();
-    if backdrop_filter.is_none() {
-        if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
-            canvas.clip_path(clip_path, ClipOp::Intersect, true);
-        }
-    }
-    if let Some(transform) = cx.cache.transform.get(current) {
-        canvas.set_matrix(&(transform.into()));
-    }
-
     let is_visible = match (visible, cx.visibility()) {
         (v, None) => v,
         (_, Some(Visibility::Hidden)) => false,
@@ -326,7 +341,7 @@ fn draw_entity(
     let should_draw = if is_visible {
         if let Some(dirty_rect) = dirty_rect {
             let bounds = cached_draw_bounds(cx, current);
-            bounds.intersects(dirty_rect)
+            intersects_non_empty(&bounds, dirty_rect)
         } else {
             true
         }
@@ -334,14 +349,25 @@ fn draw_entity(
         false
     };
 
-    // Draw the view
+    // Draw the view. Children set up their own clip and absolute transform, so the canvas state
+    // only needs to be configured when this view actually paints.
     if should_draw {
+        canvas.save();
+        if backdrop_clip_count.is_none() {
+            if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
+                canvas.clip_path(clip_path, ClipOp::Intersect, true);
+            }
+        }
+        if let Some(transform) = cx.cache.transform.get(current) {
+            canvas.set_matrix(&(transform.into()));
+        }
+
         if let Some(view) = cx.views.remove(&current) {
             view.draw(cx, canvas);
             cx.views.insert(current, view);
         }
+        canvas.restore();
     }
-    canvas.restore();
     let child_iter = DrawChildIterator::new(cx.tree, cx.current);
     let descendants_are_backdrop_clipped = ancestor_backdrop_clip || backdrop_clip_count.is_some();
 
@@ -383,6 +409,37 @@ fn draw_entity(
     if let Some(count) = backdrop_clip_count {
         canvas.restore_to_count(count);
     }
+}
+
+fn is_non_empty(bounds: &BoundingBox) -> bool {
+    bounds.w > 0.0 && bounds.h > 0.0
+}
+
+fn intersects_non_empty(a: &BoundingBox, b: &BoundingBox) -> bool {
+    is_non_empty(a) && is_non_empty(b) && a.intersects(b)
+}
+
+/// Returns the union of the draw bounds of an entity and all of its draw descendants, computing
+/// and caching it (and the bounds of every descendant) if necessary.
+fn cached_subtree_draw_bounds(cx: &mut DrawContext, entity: Entity) -> BoundingBox {
+    if let Some(bounds) = cx.cache.subtree_draw_bounds.get(entity).copied() {
+        return bounds;
+    }
+
+    let own = cached_draw_bounds(cx, entity);
+    let mut bounds = if is_non_empty(&own) { Some(own) } else { None };
+
+    let tree = cx.tree;
+    for child in DrawChildIterator::new(tree, entity) {
+        let child_bounds = cached_subtree_draw_bounds(cx, child);
+        if is_non_empty(&child_bounds) {
+            bounds = Some(bounds.map_or(child_bounds, |b| b.union(&child_bounds)));
+        }
+    }
+
+    let bounds = bounds.unwrap_or_default();
+    cx.cache.subtree_draw_bounds.insert(entity, bounds);
+    bounds
 }
 
 fn cached_draw_bounds(cx: &mut DrawContext, entity: Entity) -> BoundingBox {
@@ -464,7 +521,12 @@ pub(crate) fn draw_bounds(
     {
         let child_iter = DrawChildIterator::new(tree, entity);
         for child in child_iter {
-            dirty_bounds = dirty_bounds.union(&draw_bounds(style, cache, tree, child));
+            // Fully clipped children have empty bounds at the origin, which must not stretch the
+            // union towards (0, 0).
+            let child_bounds = draw_bounds(style, cache, tree, child);
+            if is_non_empty(&child_bounds) {
+                dirty_bounds = dirty_bounds.union(&child_bounds);
+            }
         }
     }
 

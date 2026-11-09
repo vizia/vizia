@@ -629,6 +629,8 @@ impl Context {
 
             self.windows.get_mut(&window_entity).unwrap().redraw_list.remove(entity);
 
+            self.cache.invalidate_subtree_draw_bounds(&self.tree, *entity);
+
             if self.windows.contains_key(entity) {
                 self.windows.remove(entity);
                 #[cfg(feature = "clipboard")]
