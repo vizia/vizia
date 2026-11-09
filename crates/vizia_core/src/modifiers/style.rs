@@ -427,6 +427,7 @@ pub trait StyleModifiers: internal::Modifiable {
                     cx.style
                         .background_image
                         .insert(entity, vec![ImageOrGradient::Gradient(value)]);
+                    cx.style.background_image_entities.insert(entity);
                 }
 
                 cx.needs_redraw(entity);
@@ -483,6 +484,7 @@ pub trait StyleModifiers: internal::Modifiable {
 
                 if let Some(image) = image {
                     cx.style.background_image.insert(entity, vec![image]);
+                    cx.style.background_image_entities.insert(entity);
                 }
 
                 cx.needs_redraw(entity);

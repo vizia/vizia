@@ -12,8 +12,8 @@ pub(crate) fn image_system(cx: &mut Context) {
 
     cx.resource_manager.mark_images_unused();
 
-    // Iterate the tree and load any defined images that aren't already loaded
-    for entity in cx.tree.into_iter() {
+    // Only entities with a background image can reference an image.
+    for entity in cx.style.background_image_entities(cx.tree) {
         // Load a background-image if the entity has one
         if let Some(background_images) = cx.style.background_image.get(entity).cloned() {
             for image in background_images.iter() {
