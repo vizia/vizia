@@ -175,6 +175,8 @@ pub struct Context {
     pub(crate) captured: Entity,
     pub(crate) triggered: Entity,
     pub(crate) hovered: Entity,
+    /// The entities whose hover state was set by the hover system, per window.
+    pub(crate) hover_tracking: HashMap<Entity, crate::systems::hover::HoverTracking>,
     pub(crate) drag_hovered: Entity,
     pub(crate) focused: Entity,
     pub(crate) focus_stack: Vec<Entity>,
@@ -246,6 +248,7 @@ impl Context {
             captured: Entity::null(),
             triggered: Entity::null(),
             hovered: Entity::root(),
+            hover_tracking: HashMap::new(),
             drag_hovered: Entity::null(),
             focused: Entity::root(),
             focus_stack: Vec::new(),
@@ -374,20 +377,7 @@ impl Context {
 
     /// Mark the application as needing to recompute view styles
     pub fn needs_restyle(&mut self, entity: Entity) {
-        if entity == Entity::null() || self.style.restyle.contains(&entity) {
-            return;
-        }
-        self.style.restyle.insert(entity);
-        let iter = if let Some(parent) = self.tree.get_layout_parent(entity) {
-            LayoutTreeIterator::subtree(&self.tree, parent)
-        } else {
-            LayoutTreeIterator::subtree(&self.tree, entity)
-        };
-
-        for descendant in iter {
-            self.style.restyle.insert(descendant);
-        }
-        // self.style.needs_restyle();
+        self.style.needs_restyle_with_dependents(&self.tree, entity);
     }
 
     pub fn needs_retransform(&mut self, entity: Entity) {
@@ -463,21 +453,31 @@ impl Context {
             );
         }
 
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(focused) {
-            pseudo_classes.set(PseudoClassFlags::FOCUS, enabled);
-            if !enabled || focus_visible {
-                pseudo_classes.set(PseudoClassFlags::FOCUS_VISIBLE, enabled);
-                self.style.needs_access_update(focused);
-                self.needs_restyle(focused);
-            }
+        self.set_pseudo_class(focused, PseudoClassFlags::FOCUS, enabled);
+        if !enabled || focus_visible {
+            self.set_pseudo_class(focused, PseudoClassFlags::FOCUS_VISIBLE, enabled);
+            self.style.needs_access_update(focused);
         }
 
         let ancestors = focused.parent_iter(&self.tree).collect::<Vec<_>>();
         for entity in ancestors {
-            if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
-                pseudo_classes.set(PseudoClassFlags::FOCUS_WITHIN, enabled);
-            }
-            self.needs_restyle(entity);
+            self.set_pseudo_class(entity, PseudoClassFlags::FOCUS_WITHIN, enabled);
+        }
+    }
+
+    /// Sets or clears pseudo-class flags of an entity, restyling the entities whose matched rules
+    /// may depend on them if they changed.
+    pub(crate) fn set_pseudo_class(
+        &mut self,
+        entity: Entity,
+        flags: PseudoClassFlags,
+        enabled: bool,
+    ) {
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
+            let previous = *pseudo_classes;
+            pseudo_classes.set(flags, enabled);
+            let changed = previous.symmetric_difference(*pseudo_classes);
+            self.style.needs_restyle_for_state(&self.tree, entity, changed);
         }
     }
 

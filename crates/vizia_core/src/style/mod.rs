@@ -99,6 +99,9 @@ pub(crate) use pseudoclass::*;
 mod transform;
 pub(crate) use transform::*;
 
+pub(crate) mod invalidation;
+use invalidation::InvalidationMap;
+
 use crate::animation::{AnimationState, Interpolator, Keyframe, TimingFunction};
 use crate::storage::animatable_set::AnimatableSet;
 use crate::storage::style_set::StyleSet;
@@ -206,6 +209,25 @@ pub struct Style {
 
     // List of rules
     pub(crate) rules: IndexMap<Rule, StyleRule>,
+    /// Incremented whenever the style rules change. Rule ids are reused, so this is used to
+    /// detect when data derived from the rules is stale.
+    pub(crate) rules_generation: u64,
+    /// Rules which define custom properties (variables).
+    pub(crate) variable_rules: HashSet<Rule>,
+    /// Describes how the rules depend on entity state, built lazily from the rules.
+    invalidation: Option<InvalidationMap>,
+    /// Parents whose layout subtrees have been marked for restyle since the last style pass.
+    restyle_sibling_parents: HashSet<Entity>,
+
+    /// The rules matched by each entity in the last style pass, used to skip relinking style data
+    /// when the matched rules of an entity haven't changed.
+    pub(crate) matched_rules: HashMap<Entity, Vec<(Rule, u32)>>,
+    /// The rules generation the matched rules were computed for.
+    pub(crate) matched_rules_generation: u64,
+    /// The tree and inline style structure generations at the last inline inheritance pass.
+    pub(crate) inline_inheritance_key: Option<(u64, u64)>,
+    /// The tree and inline style structure generations at the last style pass.
+    pub(crate) style_structure_key: Option<(u64, u64)>,
 
     pub(crate) default_font: Vec<FamilyOwned>,
 
@@ -447,6 +469,85 @@ impl Style {
     pub(crate) fn remove_rules(&mut self) {
         self.rule_manager.reset();
         self.rules.clear();
+        self.variable_rules.clear();
+        self.rules_generation = self.rules_generation.wrapping_add(1);
+    }
+
+    /// Returns the invalidation map for the current rules, building it if necessary.
+    fn invalidation_map(&mut self) -> &InvalidationMap {
+        if self.invalidation.as_ref().is_none_or(|map| map.generation() != self.rules_generation) {
+            self.invalidation = Some(InvalidationMap::new(
+                self.rules_generation,
+                &self.rules,
+                &self.variable_rules,
+            ));
+        }
+
+        self.invalidation.as_ref().unwrap()
+    }
+
+    /// Whether the rules contain selectors which depend on the position of an entity among its
+    /// siblings, such as `:first-child`.
+    pub(crate) fn has_positional_rules(&mut self) -> bool {
+        self.invalidation_map().positional
+    }
+
+    /// Marks the entities which may be affected by a change to the selector attributes (element,
+    /// id, classes, disabled state, ...) of an entity as needing to be restyled.
+    pub(crate) fn needs_restyle_with_dependents(&mut self, tree: &Tree<Entity>, entity: Entity) {
+        if entity == Entity::null() {
+            return;
+        }
+
+        let map = self.invalidation_map();
+        let sibling_dependent = map.sibling_dependent;
+        let ancestor_dependent = map.ancestor_dependent;
+
+        if sibling_dependent {
+            let parent = tree.get_layout_parent(entity).unwrap_or(entity);
+            if self.restyle_sibling_parents.insert(parent) {
+                invalidation::mark_scope(
+                    &mut self.restyle,
+                    tree,
+                    entity,
+                    invalidation::Scope::Siblings,
+                );
+            }
+        } else {
+            invalidation::mark_scope(
+                &mut self.restyle,
+                tree,
+                entity,
+                invalidation::Scope::Descendants,
+            );
+        }
+
+        if ancestor_dependent {
+            invalidation::mark_ancestors(&mut self.restyle, tree, entity);
+        }
+    }
+
+    /// Marks the entities which may be affected by a change to the given pseudo-class state
+    /// flags of an entity as needing to be restyled. Does nothing if no selector depends on the
+    /// changed flags.
+    pub(crate) fn needs_restyle_for_state(
+        &mut self,
+        tree: &Tree<Entity>,
+        entity: Entity,
+        changed: PseudoClassFlags,
+    ) {
+        if entity == Entity::null() || changed.is_empty() {
+            return;
+        }
+
+        self.invalidation_map();
+        let Some(map) = self.invalidation.as_ref() else { return };
+        let invalidation = map.state_invalidation(self, entity, changed);
+        let path_entities = map.path_entities(self, tree, entity, &invalidation);
+        if let Some(scope) = invalidation.scope {
+            invalidation::mark_scope(&mut self.restyle, tree, entity, scope);
+        }
+        self.restyle.extend(path_entities);
     }
 
     pub(crate) fn get_animation(&self, name: &str) -> Option<&Animation> {
@@ -1140,6 +1241,7 @@ impl Style {
     }
 
     pub(crate) fn parse_theme(&mut self, stylesheet: &str) {
+        self.rules_generation = self.rules_generation.wrapping_add(1);
         if let Ok(stylesheet) = StyleSheet::parse(stylesheet, ParserOptions::new()) {
             let rules = stylesheet.rules.0;
 
@@ -1148,8 +1250,18 @@ impl Style {
                     CssRule::Style(style_rule) => {
                         // let selectors = style_rule.selectors;
 
+                        let defines_variables = style_rule
+                            .declarations
+                            .declarations
+                            .iter()
+                            .any(|property| matches!(property, Property::Custom(_)));
+
                         for selector in style_rule.selectors.slice() {
                             let rule_id = self.rule_manager.create();
+
+                            if defines_variables {
+                                self.variable_rules.insert(rule_id);
+                            }
 
                             for property in style_rule.declarations.declarations.iter() {
                                 match property {
@@ -3122,6 +3234,8 @@ impl Style {
 
     // Remove style data for the given entity.
     pub(crate) fn remove(&mut self, entity: Entity) {
+        self.matched_rules.remove(&entity);
+        self.restyle.remove(&entity);
         self.relayout.remove(&entity);
         self.laid_out.remove(&entity);
         self.ids.remove(entity);
@@ -3319,6 +3433,12 @@ impl Style {
         for store in self.custom_opacity_props.values_mut() {
             store.remove(entity);
         }
+    }
+
+    /// Takes the set of entities which need to be restyled.
+    pub(crate) fn take_restyle(&mut self) -> HashSet<Entity> {
+        self.restyle_sibling_parents.clear();
+        std::mem::take(&mut self.restyle)
     }
 
     pub(crate) fn needs_restyle(&mut self, entity: Entity) {

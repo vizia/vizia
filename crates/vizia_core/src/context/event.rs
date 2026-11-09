@@ -506,21 +506,32 @@ impl<'a> EventContext<'a> {
         }
     }
 
+    /// Sets or clears pseudo-class flags of an entity, restyling the entities whose matched rules
+    /// may depend on them if they changed.
+    pub(crate) fn set_pseudo_class(
+        &mut self,
+        entity: Entity,
+        flags: PseudoClassFlags,
+        enabled: bool,
+    ) {
+        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
+            let previous = *pseudo_classes;
+            pseudo_classes.set(flags, enabled);
+            let changed = previous.symmetric_difference(*pseudo_classes);
+            self.style.needs_restyle_for_state(self.tree, entity, changed);
+        }
+    }
+
     /// Enables or disables PseudoClassFlags for the focus of an entity
     fn set_focus_pseudo_classes(&mut self, focused: Entity, enabled: bool, focus_visible: bool) {
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(focused) {
-            pseudo_classes.set(PseudoClassFlags::FOCUS, enabled);
-            if !enabled || focus_visible {
-                pseudo_classes.set(PseudoClassFlags::FOCUS_VISIBLE, enabled);
-            }
+        self.set_pseudo_class(focused, PseudoClassFlags::FOCUS, enabled);
+        if !enabled || focus_visible {
+            self.set_pseudo_class(focused, PseudoClassFlags::FOCUS_VISIBLE, enabled);
         }
 
-        for ancestor in focused.parent_iter(self.tree) {
-            let entity = ancestor;
-            if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(entity) {
-                pseudo_classes.set(PseudoClassFlags::FOCUS_WITHIN, enabled);
-            }
-            self.style.needs_restyle(entity);
+        let ancestors = focused.parent_iter(self.tree).collect::<Vec<_>>();
+        for ancestor in ancestors {
+            self.set_pseudo_class(ancestor, PseudoClassFlags::FOCUS_WITHIN, enabled);
         }
     }
 
@@ -798,21 +809,7 @@ impl<'a> EventContext<'a> {
 
     /// Marks the current view as needing to be restyled.
     pub fn needs_restyle(&mut self) {
-        if self.current == Entity::null() || self.style.restyle.contains(&self.current) {
-            return;
-        }
-
-        self.style.restyle.insert(self.current);
-        let iter = if let Some(parent) = self.tree.get_layout_parent(self.current) {
-            LayoutTreeIterator::subtree(self.tree, parent)
-        } else {
-            LayoutTreeIterator::subtree(self.tree, self.current)
-        };
-
-        for descendant in iter {
-            self.style.restyle.insert(descendant);
-        }
-        self.style.needs_restyle(self.current);
+        self.style.needs_restyle_with_dependents(self.tree, self.current);
     }
 
     pub fn needs_retransform(&mut self) {
@@ -954,12 +951,7 @@ impl<'a> EventContext<'a> {
     /// ```
     /// Typically this is set by the hover system and should not be set manually.
     pub fn set_hover(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClassFlags::HOVER, flag);
-        }
-
-        self.needs_restyle();
+        self.set_pseudo_class(self.current, PseudoClassFlags::HOVER, flag);
     }
 
     /// Set the active state for the current view.
@@ -971,29 +963,15 @@ impl<'a> EventContext<'a> {
     /// }
     /// ```
     pub fn set_active(&mut self, active: bool) {
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(self.current) {
-            pseudo_classes.set(PseudoClassFlags::ACTIVE, active);
-        }
-
-        self.needs_restyle();
+        self.set_pseudo_class(self.current, PseudoClassFlags::ACTIVE, active);
     }
 
     pub fn set_read_only(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClassFlags::READ_ONLY, flag);
-        }
-
-        self.needs_restyle();
+        self.set_pseudo_class(self.current, PseudoClassFlags::READ_ONLY, flag);
     }
 
     pub fn set_read_write(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClassFlags::READ_WRITE, flag);
-        }
-
-        self.needs_restyle();
+        self.set_pseudo_class(self.current, PseudoClassFlags::READ_WRITE, flag);
     }
 
     /// Sets the checked state of the current view.
@@ -1005,12 +983,7 @@ impl<'a> EventContext<'a> {
     /// }
     /// ```
     pub fn set_checked(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClassFlags::CHECKED, flag);
-        }
-
-        self.needs_restyle();
+        self.set_pseudo_class(self.current, PseudoClassFlags::CHECKED, flag);
     }
 
     /// Sets the valid state of the current view.
@@ -1023,21 +996,12 @@ impl<'a> EventContext<'a> {
     /// ```
     pub fn set_valid(&mut self, flag: bool) {
         let current = self.current();
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClassFlags::VALID, flag);
-            pseudo_classes.set(PseudoClassFlags::INVALID, !flag);
-        }
-
-        self.needs_restyle();
+        self.set_pseudo_class(current, PseudoClassFlags::VALID, flag);
+        self.set_pseudo_class(current, PseudoClassFlags::INVALID, !flag);
     }
 
     pub fn set_placeholder_shown(&mut self, flag: bool) {
-        let current = self.current();
-        if let Some(pseudo_classes) = self.style.pseudo_classes.get_mut(current) {
-            pseudo_classes.set(PseudoClassFlags::PLACEHOLDER_SHOWN, flag);
-        }
-
-        self.needs_restyle();
+        self.set_pseudo_class(self.current, PseudoClassFlags::PLACEHOLDER_SHOWN, flag);
     }
 
     // TODO: Move me

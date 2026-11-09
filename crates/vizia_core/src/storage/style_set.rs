@@ -119,6 +119,9 @@ where
 
     /// Insert an inline value for an entity.
     pub fn insert(&mut self, entity: Entity, value: T) {
+        if !self.inline_data.contains(entity) {
+            super::bump_inline_structure_generation();
+        }
         self.inline_data.insert(entity, value);
     }
 
@@ -127,6 +130,7 @@ where
         let entity_index = entity.index();
 
         if entity_index < self.inline_data.sparse.len() {
+            super::bump_inline_structure_generation();
             let data_index = self.inline_data.sparse[entity_index].data_index;
             if data_index.is_inline() && !data_index.is_inherited() {
                 self.inline_data.remove(entity)
