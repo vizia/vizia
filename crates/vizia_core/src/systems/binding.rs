@@ -22,9 +22,9 @@ pub(crate) fn binding_system(cx: &mut Context) {
     });
 
     if !signal_rebuilds.is_empty() {
-        // Update bindings in tree order to ensure parents are updated before children.
-        let ordered =
-            cx.tree.into_iter().filter(|ent| signal_rebuilds.contains(ent)).collect::<Vec<_>>();
+        // Update bindings in depth order to ensure parents are updated before children.
+        let mut ordered = signal_rebuilds.into_iter().collect::<Vec<_>>();
+        cx.tree.sort_by_depth(&mut ordered);
 
         for entity in ordered {
             if cx.entity_manager.is_alive(entity) {
