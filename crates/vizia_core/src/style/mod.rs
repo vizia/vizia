@@ -281,6 +281,9 @@ pub struct Style {
     // Filters
     pub(crate) filter: AnimatableSet<Filter>,
     pub(crate) backdrop_filter: AnimatableSet<Filter>,
+    /// Entities which may have a filter or backdrop filter, i.e. a superset of the entities for
+    /// which either set returns a value. Used by the draw system to avoid walking the tree.
+    pub(crate) filter_entities: HashSet<Entity>,
 
     pub(crate) blend_mode: StyleSet<BlendMode>,
 
@@ -3288,6 +3291,7 @@ impl Style {
         // Filters
         self.filter.remove(entity);
         self.backdrop_filter.remove(entity);
+        self.filter_entities.remove(&entity);
 
         // Blend Mode
         self.blend_mode.remove(entity);
@@ -3447,16 +3451,20 @@ impl Style {
     /// Entities which no longer have a background image are dropped from the tracking set.
     pub(crate) fn background_image_entities(&mut self, tree: &Tree<Entity>) -> Vec<Entity> {
         let background_image = &self.background_image;
-        self.background_image_entities.retain(|entity| background_image.get(*entity).is_some());
+        tracked_entities(&mut self.background_image_entities, tree, |entity| {
+            background_image.get(entity).is_some()
+        })
+    }
 
-        let mut entities: Vec<Entity> = self
-            .background_image_entities
-            .iter()
-            .copied()
-            .filter(|entity| *entity == Entity::root() || tree.get_parent(*entity).is_some())
-            .collect();
-        tree.sort_by_depth(&mut entities);
-        entities
+    /// Returns the entities in `tree` which currently have a filter or backdrop filter,
+    /// ancestors first.
+    ///
+    /// Entities which no longer have a filter are dropped from the tracking set.
+    pub(crate) fn filter_entities(&mut self, tree: &Tree<Entity>) -> Vec<Entity> {
+        let (filter, backdrop_filter) = (&self.filter, &self.backdrop_filter);
+        tracked_entities(&mut self.filter_entities, tree, |entity| {
+            filter.get(entity).is_some() || backdrop_filter.get(entity).is_some()
+        })
     }
 
     /// Takes the set of entities which need to be restyled.
@@ -3679,4 +3687,22 @@ impl Style {
         self.custom_opacity_props
             .retain(|_, store| !store.shared_data.is_empty() || !store.inline_data.is_empty());
     }
+}
+
+/// Drops entities from a tracking set which no longer satisfy `has_value` and returns the
+/// remaining entities which are in `tree`, ancestors first.
+fn tracked_entities(
+    set: &mut HashSet<Entity>,
+    tree: &Tree<Entity>,
+    has_value: impl Fn(Entity) -> bool,
+) -> Vec<Entity> {
+    set.retain(|entity| has_value(*entity));
+
+    let mut entities: Vec<Entity> = set
+        .iter()
+        .copied()
+        .filter(|entity| *entity == Entity::root() || tree.get_parent(*entity).is_some())
+        .collect();
+    tree.sort_by_depth(&mut entities);
+    entities
 }

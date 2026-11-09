@@ -3,7 +3,7 @@ use morphorm::Node;
 use skia_safe::{ClipOp, ImageFilter, Paint, Rect, SamplingOptions, Surface, canvas::SaveLayerRec};
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
-use vizia_storage::{DrawChildIterator, LayoutTreeIterator};
+use vizia_storage::DrawChildIterator;
 use vizia_style::BlendMode;
 
 fn should_apply_entity_clip(style: &Style, entity: Entity) -> bool {
@@ -70,8 +70,7 @@ pub(crate) fn draw_system(
         }
     }
 
-    let iter = LayoutTreeIterator::full(&cx.tree);
-    for entity in iter {
+    for entity in cx.style.filter_entities(&cx.tree) {
         if cx.tree.is_ignored(entity) {
             continue;
         }
@@ -80,47 +79,44 @@ pub(crate) fn draw_system(
             continue;
         }
 
-        // Check if the entity has a filter style.
-        if cx.style.filter.get(entity).is_some() || cx.style.backdrop_filter.get(entity).is_some() {
-            if entity.visible(&cx.style) {
-                // Entity is VISIBLE and has a filter.
-                // Skip recomputation if already processed in redraw_list.
-                if !redraw_list.contains(&entity) {
-                    let filter_current_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
+        if entity.visible(&cx.style) {
+            // Entity is VISIBLE and has a filter.
+            // Skip recomputation if already processed in redraw_list.
+            if !redraw_list.contains(&entity) {
+                let filter_current_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
 
-                    // Update cache for visible entity
-                    let previous = cx.cache.draw_bounds.get(entity).copied();
-                    cx.cache.draw_bounds.insert(entity, filter_current_bounds);
-                    if previous != Some(filter_current_bounds) {
-                        cx.cache.invalidate_subtree_draw_bounds(&cx.tree, entity);
-                    }
+                // Update cache for visible entity
+                let previous = cx.cache.draw_bounds.get(entity).copied();
+                cx.cache.draw_bounds.insert(entity, filter_current_bounds);
+                if previous != Some(filter_current_bounds) {
+                    cx.cache.invalidate_subtree_draw_bounds(&cx.tree, entity);
+                }
 
-                    if filter_current_bounds.w > 0.0 && filter_current_bounds.h > 0.0 {
-                        // Ensure bounds are valid
-                        // Condition to update dirty_rect:
-                        // 1. dirty_rect is None (then set it to filter_current_bounds).
-                        // 2. dirty_rect is Some, and filter_current_bounds intersects with it (then union).
-                        if dirty_rect.is_none_or(|current_dr_val| {
-                            filter_current_bounds.intersects(&current_dr_val)
-                        }) {
-                            dirty_rect =
-                                Some(dirty_rect.map_or(filter_current_bounds, |current_dr_val| {
-                                    current_dr_val.union(&filter_current_bounds)
-                                }));
-                        }
+                if filter_current_bounds.w > 0.0 && filter_current_bounds.h > 0.0 {
+                    // Ensure bounds are valid
+                    // Condition to update dirty_rect:
+                    // 1. dirty_rect is None (then set it to filter_current_bounds).
+                    // 2. dirty_rect is Some, and filter_current_bounds intersects with it (then union).
+                    if dirty_rect.is_none_or(|current_dr_val| {
+                        filter_current_bounds.intersects(&current_dr_val)
+                    }) {
+                        dirty_rect =
+                            Some(dirty_rect.map_or(filter_current_bounds, |current_dr_val| {
+                                current_dr_val.union(&filter_current_bounds)
+                            }));
                     }
                 }
-            } else {
-                // Entity is INVISIBLE but has (or had) a filter style.
-                // Its *previous* bounds need to be added to dirty_rect.
-                if let Some(previous_draw_bounds) = cx.cache.draw_bounds.get(entity).copied() {
-                    union_dirty_rect(&mut dirty_rect, previous_draw_bounds);
-                }
+            }
+        } else {
+            // Entity is INVISIBLE but has (or had) a filter style.
+            // Its *previous* bounds need to be added to dirty_rect.
+            if let Some(previous_draw_bounds) = cx.cache.draw_bounds.get(entity).copied() {
+                union_dirty_rect(&mut dirty_rect, previous_draw_bounds);
+            }
 
-                // Remove from cache as it's no longer visible with these bounds.
-                if cx.cache.draw_bounds.contains(entity) {
-                    cx.cache.invalidate_draw_bounds(&cx.tree, entity);
-                }
+            // Remove from cache as it's no longer visible with these bounds.
+            if cx.cache.draw_bounds.contains(entity) {
+                cx.cache.invalidate_draw_bounds(&cx.tree, entity);
             }
         }
     }

@@ -1164,12 +1164,14 @@ impl<'a> EventContext<'a> {
     /// Sets the filter of the current view.
     pub fn set_filter(&mut self, filter: Filter) {
         self.style.filter.insert(self.current, filter);
+        self.style.filter_entities.insert(self.current);
         self.needs_redraw();
     }
 
     /// Sets the backdrop filter of the current view.
     pub fn set_backdrop_filter(&mut self, filter: Filter) {
         self.style.backdrop_filter.insert(self.current, filter);
+        self.style.filter_entities.insert(self.current);
         self.needs_redraw();
     }
 

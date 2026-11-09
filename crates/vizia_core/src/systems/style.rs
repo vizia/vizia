@@ -723,10 +723,12 @@ fn link_style_data(
     }
 
     if style.filter.link(entity, matched_rules) {
+        style.filter_entities.insert(entity);
         should_redraw = true;
     }
 
     if style.backdrop_filter.link(entity, matched_rules) {
+        style.filter_entities.insert(entity);
         should_redraw = true;
     }
 
