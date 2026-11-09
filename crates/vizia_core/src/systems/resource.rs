@@ -19,7 +19,7 @@ pub(crate) fn resource_system(cx: &mut Context) {
 }
 
 fn request_style_images(cx: &mut ResourceContext) {
-    for entity in cx.tree.into_iter() {
+    for entity in cx.style.background_image_entities(cx.tree) {
         if let Some(background_images) = cx.style.background_image.get(entity).cloned() {
             for image in background_images.iter() {
                 if let ImageOrGradient::Image(name_or_path) = image {

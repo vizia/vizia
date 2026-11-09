@@ -323,6 +323,9 @@ pub struct Style {
     // Background
     pub(crate) background_color: AnimatableVarSet<Color>,
     pub(crate) background_image: AnimatableSet<Vec<ImageOrGradient>>,
+    /// Entities which may have a background image, i.e. a superset of the entities for which
+    /// `background_image` returns a value. Used to find image references without walking the tree.
+    pub(crate) background_image_entities: HashSet<Entity>,
     pub(crate) background_position: AnimatableSet<Vec<Position>>,
     pub(crate) background_repeat: AnimatableSet<Vec<BackgroundRepeat>>,
     pub(crate) background_size: AnimatableSet<Vec<BackgroundSize>>,
@@ -1104,6 +1107,9 @@ impl Style {
 
         self.background_color.play_animation(entity, animation, start_time, duration, delay);
         self.background_image.play_animation(entity, animation, start_time, duration, delay);
+        if self.background_image.has_active_animation(entity, animation) {
+            self.background_image_entities.insert(entity);
+        }
         self.background_position.play_animation(entity, animation, start_time, duration, delay);
         self.background_repeat.play_animation(entity, animation, start_time, duration, delay);
         self.background_size.play_animation(entity, animation, start_time, duration, delay);
@@ -3323,6 +3329,7 @@ impl Style {
         // Background
         self.background_color.remove(entity);
         self.background_image.remove(entity);
+        self.background_image_entities.remove(&entity);
         self.background_position.remove(entity);
         self.background_repeat.remove(entity);
         self.background_size.remove(entity);
@@ -3433,6 +3440,23 @@ impl Style {
         for store in self.custom_opacity_props.values_mut() {
             store.remove(entity);
         }
+    }
+
+    /// Returns the entities in `tree` which currently have a background image, ancestors first.
+    ///
+    /// Entities which no longer have a background image are dropped from the tracking set.
+    pub(crate) fn background_image_entities(&mut self, tree: &Tree<Entity>) -> Vec<Entity> {
+        let background_image = &self.background_image;
+        self.background_image_entities.retain(|entity| background_image.get(*entity).is_some());
+
+        let mut entities: Vec<Entity> = self
+            .background_image_entities
+            .iter()
+            .copied()
+            .filter(|entity| *entity == Entity::root() || tree.get_parent(*entity).is_some())
+            .collect();
+        tree.sort_by_depth(&mut entities);
+        entities
     }
 
     /// Takes the set of entities which need to be restyled.

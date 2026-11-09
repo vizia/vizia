@@ -51,6 +51,7 @@ impl Svg {
 
             cx.load_svg(&hash, svg_data.as_ref(), ImageRetentionPolicy::DropWhenNoObservers);
             cx.style.background_image.insert(entity, vec![ImageOrGradient::Image(hash)]);
+            cx.style.background_image_entities.insert(entity);
             cx.needs_redraw(entity);
         });
 

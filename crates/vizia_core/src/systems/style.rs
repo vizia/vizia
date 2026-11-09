@@ -969,6 +969,7 @@ fn link_style_data(
     }
 
     if style.background_image.link(entity, matched_rules) {
+        style.background_image_entities.insert(entity);
         should_redraw = true;
     }
 
