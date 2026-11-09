@@ -13,6 +13,13 @@ use vizia_storage::SparseSet;
 pub struct CachedData {
     pub(crate) bounds: SparseSet<BoundingBox>,
     pub(crate) draw_bounds: SparseSet<BoundingBox>,
+    /// Union of the draw bounds of an entity and all of its draw descendants, used by the draw
+    /// system to skip subtrees which do not intersect the dirty rect. An empty (zero-sized) box
+    /// means the subtree draws nothing.
+    ///
+    /// Invariant: if an entity has an entry, so do all of its draw children. Use
+    /// [`CachedData::invalidate_subtree_draw_bounds`] to clear an entry and all of its ancestors.
+    pub(crate) subtree_draw_bounds: SparseSet<BoundingBox>,
     pub(crate) relative_bounds: SparseSet<BoundingBox>,
     pub(crate) geo_changed: SparseSet<GeoChanged>,
     pub(crate) transform: SparseSet<Matrix>,
@@ -32,10 +39,35 @@ impl CachedData {
         self.bounds.remove(entity);
         self.relative_bounds.remove(entity);
         self.draw_bounds.remove(entity);
+        self.subtree_draw_bounds.remove(entity);
         self.geo_changed.remove(entity);
         self.transform.remove(entity);
         self.clip_path.remove(entity);
         self.path.remove(entity);
+    }
+
+    /// Removes the cached draw bounds of an entity and invalidates the subtree draw bounds of the
+    /// entity and its ancestors.
+    pub(crate) fn invalidate_draw_bounds(&mut self, tree: &Tree<Entity>, entity: Entity) {
+        self.draw_bounds.remove(entity);
+        self.invalidate_subtree_draw_bounds(tree, entity);
+    }
+
+    /// Invalidates the cached subtree draw bounds of an entity and all of its ancestors.
+    ///
+    /// Must be called whenever the draw bounds of an entity change, or an entity is added to or
+    /// removed from the tree.
+    pub(crate) fn invalidate_subtree_draw_bounds(&mut self, tree: &Tree<Entity>, entity: Entity) {
+        self.subtree_draw_bounds.remove(entity);
+        let mut ancestor = tree.get_layout_parent(entity);
+        while let Some(current) = ancestor {
+            // A cached entry implies its draw children are cached, so an uncached ancestor means
+            // every ancestor above it is uncached as well.
+            if self.subtree_draw_bounds.remove(current).is_none() {
+                break;
+            }
+            ancestor = tree.get_layout_parent(current);
+        }
     }
 
     /// Returns the bounding box of the entity, determined by the layout system.

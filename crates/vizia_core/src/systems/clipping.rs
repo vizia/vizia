@@ -50,7 +50,7 @@ pub(crate) fn clipping_system(cx: &mut Context) {
 
                 if previous_clip_bounds != new_clip_bounds && should_invalidate_subtree {
                     for descendant in LayoutTreeIterator::subtree(&cx.tree, entity).skip(1) {
-                        cx.cache.draw_bounds.remove(descendant);
+                        cx.cache.invalidate_draw_bounds(&cx.tree, descendant);
                     }
                     invalidated_subtrees.insert(entity);
                 }
@@ -146,7 +146,7 @@ pub(crate) fn clipping_system(cx: &mut Context) {
 
             if previous_clip_bounds != new_clip_bounds && should_invalidate_subtree {
                 for descendant in LayoutTreeIterator::subtree(&cx.tree, entity).skip(1) {
-                    cx.cache.draw_bounds.remove(descendant);
+                    cx.cache.invalidate_draw_bounds(&cx.tree, descendant);
                 }
                 invalidated_subtrees.insert(entity);
             }
