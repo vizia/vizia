@@ -258,6 +258,17 @@ impl BackendContext {
         );
     }
 
+    /// Marks a window for a full repaint after its surfaces were recreated by a resize that did
+    /// not change the scale factor.
+    ///
+    /// Unlike [`needs_refresh`](Self::needs_refresh) this does not restyle or rebuild text for the
+    /// whole tree, since neither depends on the window size. Layout, which [`set_window_size`](Self::set_window_size)
+    /// already schedules, handles any resulting geometry, text layout and path changes.
+    pub fn needs_resize_redraw(&mut self, window_entity: Entity) {
+        self.0.cache.path.remove(window_entity);
+        self.0.needs_redraw(window_entity);
+    }
+
     pub fn needs_refresh(&mut self, window_entity: Entity) {
         self.0.cache.path.remove(window_entity);
         self.0.style.system_flags = SystemFlags::all();

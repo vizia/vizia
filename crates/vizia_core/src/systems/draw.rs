@@ -139,7 +139,7 @@ pub(crate) fn draw_system(
     let mut queue = BinaryHeap::new();
     // With no dirty area nothing visible has changed, so the retained dirty surface is still
     // valid and only needs compositing. Surface recreation (e.g. on resize) always dirties the
-    // whole window via `needs_refresh`.
+    // whole window via `needs_refresh` or `needs_resize_redraw`.
     if dirty_rect.is_some() {
         queue.push(ZEntity { index: 0, entity: window_entity, visible: true });
     }
