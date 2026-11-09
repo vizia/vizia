@@ -53,10 +53,14 @@ impl View for ToggleButton {
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
-            WindowEvent::PressDown { mouse } => {
-                if *mouse {
-                    cx.capture()
-                }
+            // PressDown is queued and can arrive after MouseUp when input events are batched.
+            WindowEvent::MouseDown(MouseButton::Left)
+                if meta.target == cx.current() && !cx.is_disabled() =>
+            {
+                cx.capture();
+            }
+
+            WindowEvent::PressDown { .. } if meta.target == cx.current() => {
                 cx.focus();
             }
 
