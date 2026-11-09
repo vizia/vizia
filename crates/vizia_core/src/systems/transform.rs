@@ -1,15 +1,12 @@
-use vizia_storage::LayoutChildIterator;
+use hashbrown::HashSet;
 
-use crate::{
-    animation::Interpolator, prelude::*, systems::clipping::has_own_clip,
-    tree::minimal_layout_dirty_roots,
-};
+use crate::{animation::Interpolator, prelude::*};
 
-/// Applies transforms to the layout tree.
+/// Computes the local transform of each marked entity, relative to its layout parent.
 ///
-/// Callers only mark the entities whose own transform inputs changed. Starting from the topmost
-/// marked entities, the system recomputes the transform of each marked entity, and of every
-/// descendant whose parent transform changed.
+/// Transforms in window coordinates are derived from the local transforms of an entity and its
+/// ancestors when needed, so a transform change does not need to visit any descendants. Only the
+/// window-space clip paths of descendants which clip their content need to be recomputed.
 pub(crate) fn transform_system(cx: &mut Context) {
     let _scope = crate::profiling::scope("transform_system");
     if cx.style.retransform.is_empty() {
@@ -18,52 +15,46 @@ pub(crate) fn transform_system(cx: &mut Context) {
 
     let retransform = std::mem::take(&mut cx.style.retransform);
 
-    // Each entry holds an entity and whether the transform of its parent changed.
-    let mut stack: Vec<(Entity, bool)> = minimal_layout_dirty_roots(&cx.tree, &retransform)
-        .into_iter()
-        .map(|root| (root, false))
-        .collect();
+    let changed: HashSet<Entity> =
+        retransform.into_iter().filter(|&entity| update_transform(cx, entity)).collect();
 
-    while let Some((entity, parent_changed)) = stack.pop() {
-        let changed =
-            (parent_changed || retransform.contains(&entity)) && update_transform(cx, entity);
+    if changed.is_empty() {
+        return;
+    }
 
-        if changed {
-            // Entities without a clip of their own inherit the clip path of their parent, which
-            // the clipping system propagates, so only entities which clip are marked.
-            if has_own_clip(&cx.style, entity) {
-                cx.style.needs_reclip(entity);
+    for &entity in &changed {
+        // The draw system dirties the previous and new areas of redrawn entities, and recomputes
+        // their draw bounds.
+        cx.needs_redraw(entity);
+    }
+
+    for &entity in &cx.cache.own_clips {
+        let mut current = Some(entity);
+        while let Some(ancestor) = current {
+            if changed.contains(&ancestor) {
+                cx.style.reclip.insert(entity);
+                break;
             }
-
-            // The previous draw bounds of the topmost changed entity are kept so the draw system
-            // can repaint the area it moved away from.
-            if parent_changed {
-                cx.cache.invalidate_draw_bounds(&cx.tree, entity);
+            if cx.tree.is_window(ancestor) {
+                break;
             }
+            current = cx.tree.get_layout_parent(ancestor);
         }
-
-        stack.extend(LayoutChildIterator::new(&cx.tree, entity).map(|child| (child, changed)));
     }
 }
 
-/// Recomputes the transform of an entity from the transform of its parent. Returns true if the
-/// transform changed.
+/// Recomputes the local transform of an entity. Returns true if the transform changed.
 fn update_transform(cx: &mut Context, entity: Entity) -> bool {
-    let Some(parent) = cx.tree.get_layout_parent(entity) else { return false };
-    let parent_transform = cx.cache.transform.get(parent).copied().unwrap();
-    let local_transform = local_transform(cx, entity);
-    let Some(tx) = cx.cache.transform.get_mut(entity) else { return false };
-
-    let new_transform = match local_transform {
-        Some(transform) => parent_transform * transform,
-        None => parent_transform,
-    };
+    if cx.cache.bounds.get(entity).is_none() {
+        return false;
+    }
+    let new_transform = local_transform(cx, entity).unwrap_or_default();
+    let Some(tx) = cx.cache.local_transform.get_mut(entity) else { return false };
 
     let changed = *tx != new_transform;
     *tx = new_transform;
     changed
 }
-
 /// Returns the transform of an entity relative to its parent, or `None` if the entity has no
 /// transform properties.
 fn local_transform(cx: &Context, entity: Entity) -> Option<skia_safe::Matrix> {
@@ -157,7 +148,7 @@ mod tests {
     }
 
     fn transform(cx: &Context, entity: Entity) -> Matrix {
-        cx.cache.transform.get(entity).copied().unwrap()
+        cx.cache.absolute_transform(&cx.tree, entity)
     }
 
     /// Builds root > a > b > c and runs the transform system once.
@@ -174,12 +165,12 @@ mod tests {
     fn clip(cx: &mut Context, entity: Entity) {
         cx.style.overflowx.insert(entity, Overflow::Hidden);
         cx.style.overflowy.insert(entity, Overflow::Hidden);
+        cx.cache.own_clips.insert(entity);
     }
 
     #[test]
-    fn transform_propagates_to_unmarked_descendants() {
+    fn descendants_inherit_ancestor_transforms() {
         let (mut cx, a, b, c) = setup();
-        clip(&mut cx, a);
         translate(&mut cx, a, 10.0, 20.0);
         transform_system(&mut cx);
 
@@ -187,40 +178,50 @@ mod tests {
         assert_eq!(transform(&cx, a), expected);
         assert_eq!(transform(&cx, b), expected);
         assert_eq!(transform(&cx, c), expected);
+        // Only the local transform of the changed entity is stored.
+        assert!(cx.cache.local_transform.get(b).unwrap().is_identity());
         assert!(cx.style.retransform.is_empty());
-        // Only entities which clip their content need their own clip path recomputed.
-        assert_eq!(cx.style.reclip, [a].into());
     }
 
     #[test]
-    fn nested_change_leaves_ancestors_untouched() {
+    fn only_clipping_entities_within_changed_subtrees_are_reclipped() {
         let (mut cx, a, b, c) = setup();
-        clip(&mut cx, a);
+        let d = element(&mut cx, Entity::root());
         clip(&mut cx, b);
+        clip(&mut cx, d);
+        cx.style.reclip.clear();
         translate(&mut cx, a, 10.0, 0.0);
         transform_system(&mut cx);
-        cx.style.reclip.clear();
 
+        assert_eq!(cx.style.reclip, [b].into());
+        assert_eq!(transform(&cx, c), Matrix::translate((10.0, 0.0)));
+        assert!(transform(&cx, d).is_identity());
+    }
+
+    #[test]
+    fn nested_transforms_combine() {
+        let (mut cx, a, b, c) = setup();
+        translate(&mut cx, a, 10.0, 0.0);
         translate(&mut cx, b, 0.0, 5.0);
         transform_system(&mut cx);
 
         assert_eq!(transform(&cx, a), Matrix::translate((10.0, 0.0)));
         assert_eq!(transform(&cx, c), Matrix::translate((10.0, 5.0)));
-        assert_eq!(cx.style.reclip, [b].into());
+
+        translate(&mut cx, b, -10.0, 0.0);
+        transform_system(&mut cx);
+        assert!(transform(&cx, c).is_identity());
     }
 
     #[test]
-    fn counter_translated_descendants_are_unchanged() {
-        let (mut cx, a, b, c) = setup();
-        clip(&mut cx, b);
-
+    fn changed_transforms_are_redrawn() {
+        let (mut cx, a, b, _) = setup();
+        cx.windows.entry(Entity::root()).or_default();
         translate(&mut cx, a, 10.0, 0.0);
-        translate(&mut cx, b, -10.0, 0.0);
         transform_system(&mut cx);
 
-        assert_eq!(transform(&cx, a), Matrix::translate((10.0, 0.0)));
-        assert_eq!(transform(&cx, b), Matrix::new_identity());
-        assert_eq!(transform(&cx, c), Matrix::new_identity());
-        assert!(cx.style.reclip.is_empty());
+        let redraw_list = &cx.windows[&Entity::root()].redraw_list;
+        assert!(redraw_list.contains(&a));
+        assert!(!redraw_list.contains(&b));
     }
 }

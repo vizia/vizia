@@ -2,8 +2,29 @@
 //! results. The main type here is CachedData, usually accessed via `cx.cache`.
 
 use crate::prelude::*;
-use skia_safe::{Matrix, Path};
+use hashbrown::HashSet;
+use skia_safe::{Matrix, Path, matrix::Member};
 use vizia_storage::SparseSet;
+
+/// The cached draw bounds of an entity and its descendants.
+///
+/// All bounds are in the coordinate space of the layout parent of the entity, i.e. they include the
+/// local transform of the entity but not the transforms of its ancestors, and they are not limited
+/// by the clip paths of ancestors. This keeps them valid when an ancestor is transformed (e.g.
+/// scrolled) or clipped differently. Empty (zero-sized) boxes mean nothing is drawn.
+#[derive(Debug, Default, Clone, Copy, PartialEq)]
+pub(crate) struct DrawBounds {
+    /// The bounds drawn by the entity itself.
+    pub(crate) own: BoundingBox,
+    /// The bounds drawn by the entity and its descendants which are limited by the clip path of
+    /// the parent of the entity.
+    pub(crate) clipped: BoundingBox,
+    /// The bounds drawn by descendants (or the entity itself) which escape the clip path of the
+    /// parent of the entity.
+    pub(crate) escaped: BoundingBox,
+    /// Whether the entity itself escapes the clip path of its parent.
+    pub(crate) escapes_clip: bool,
+}
 
 /// Stores data which can be cached between system runs.
 ///
@@ -12,58 +33,97 @@ use vizia_storage::SparseSet;
 #[derive(Default)]
 pub struct CachedData {
     pub(crate) bounds: SparseSet<BoundingBox>,
-    pub(crate) draw_bounds: SparseSet<BoundingBox>,
-    /// Union of the draw bounds of an entity and all of its draw descendants, used by the draw
-    /// system to skip subtrees which do not intersect the dirty rect. An empty (zero-sized) box
-    /// means the subtree draws nothing.
+    /// Draw bounds of an entity and its draw descendants, used by the draw system to skip subtrees
+    /// which do not intersect the dirty rect.
     ///
     /// Invariant: if an entity has an entry, so do all of its draw children. Use
-    /// [`CachedData::invalidate_subtree_draw_bounds`] to clear an entry and all of its ancestors.
-    pub(crate) subtree_draw_bounds: SparseSet<BoundingBox>,
+    /// [`CachedData::invalidate_draw_bounds`] to clear an entry and all of its ancestors.
+    pub(crate) draw_bounds: SparseSet<DrawBounds>,
     pub(crate) relative_bounds: SparseSet<BoundingBox>,
     pub(crate) geo_changed: SparseSet<GeoChanged>,
-    pub(crate) transform: SparseSet<Matrix>,
+    /// The transform of each entity relative to its layout parent. Use
+    /// [`CachedData::absolute_transform`] for the transform in window coordinates.
+    pub(crate) local_transform: SparseSet<Matrix>,
+    /// Clip paths in window coordinates.
     pub(crate) clip_path: SparseSet<Option<Path>>,
+    /// Bounds of the clip paths, expanded to whole pixels.
+    pub(crate) clip_bounds: SparseSet<BoundingBox>,
+    /// Entities which clip their content, rather than only inheriting the clip of their parent.
+    pub(crate) own_clips: HashSet<Entity>,
     pub(crate) path: SparseSet<Path>,
 }
 
+/// Returns true if a matrix only scales and translates. Unlike the Skia type mask, this does not
+/// call into Skia.
+pub(crate) fn is_scale_translate(matrix: &Matrix) -> bool {
+    matrix.skew_x() == 0.0
+        && matrix.skew_y() == 0.0
+        && matrix[Member::Persp0] == 0.0
+        && matrix[Member::Persp1] == 0.0
+        && matrix[Member::Persp2] == 1.0
+}
+
+/// Returns true if a matrix is the identity. Unlike [Matrix::is_identity], this does not call
+/// into Skia.
+pub(crate) fn is_identity(matrix: &Matrix) -> bool {
+    is_scale_translate(matrix)
+        && matrix.scale_x() == 1.0
+        && matrix.scale_y() == 1.0
+        && matrix.translate_x() == 0.0
+        && matrix.translate_y() == 0.0
+}
 impl CachedData {
     pub(crate) fn add(&mut self, entity: Entity) {
         self.bounds.insert(entity, Default::default());
         self.relative_bounds.insert(entity, Default::default());
         self.geo_changed.insert(entity, GeoChanged::empty());
-        self.transform.insert(entity, Matrix::new_identity());
+        self.local_transform.insert(entity, Matrix::new_identity());
     }
 
     pub(crate) fn remove(&mut self, entity: Entity) {
         self.bounds.remove(entity);
         self.relative_bounds.remove(entity);
         self.draw_bounds.remove(entity);
-        self.subtree_draw_bounds.remove(entity);
         self.geo_changed.remove(entity);
-        self.transform.remove(entity);
+        self.local_transform.remove(entity);
         self.clip_path.remove(entity);
+        self.clip_bounds.remove(entity);
+        self.own_clips.remove(&entity);
         self.path.remove(entity);
     }
 
-    /// Removes the cached draw bounds of an entity and invalidates the subtree draw bounds of the
-    /// entity and its ancestors.
-    pub(crate) fn invalidate_draw_bounds(&mut self, tree: &Tree<Entity>, entity: Entity) {
-        self.draw_bounds.remove(entity);
-        self.invalidate_subtree_draw_bounds(tree, entity);
+    /// Returns the transform of an entity in window coordinates, combining its local transform
+    /// with those of its ancestors up to its window.
+    pub(crate) fn absolute_transform(&self, tree: &Tree<Entity>, entity: Entity) -> Matrix {
+        let mut transform: Option<Matrix> = None;
+        let mut current = Some(entity);
+        while let Some(entity) = current {
+            if let Some(local) = self.local_transform.get(entity) {
+                if !is_identity(local) {
+                    transform = Some(transform.map_or(*local, |transform| *local * transform));
+                }
+            }
+
+            if tree.is_window(entity) {
+                break;
+            }
+            current = tree.get_layout_parent(entity);
+        }
+
+        transform.unwrap_or_default()
     }
 
-    /// Invalidates the cached subtree draw bounds of an entity and all of its ancestors.
+    /// Invalidates the cached draw bounds of an entity and all of its ancestors.
     ///
     /// Must be called whenever the draw bounds of an entity change, or an entity is added to or
     /// removed from the tree.
-    pub(crate) fn invalidate_subtree_draw_bounds(&mut self, tree: &Tree<Entity>, entity: Entity) {
-        self.subtree_draw_bounds.remove(entity);
+    pub(crate) fn invalidate_draw_bounds(&mut self, tree: &Tree<Entity>, entity: Entity) {
+        self.draw_bounds.remove(entity);
         let mut ancestor = tree.get_layout_parent(entity);
         while let Some(current) = ancestor {
             // A cached entry implies its draw children are cached, so an uncached ancestor means
             // every ancestor above it is uncached as well.
-            if self.subtree_draw_bounds.remove(current).is_none() {
+            if self.draw_bounds.remove(current).is_none() {
                 break;
             }
             ancestor = tree.get_layout_parent(current);

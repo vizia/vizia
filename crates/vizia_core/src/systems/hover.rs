@@ -1,7 +1,10 @@
 use std::{cmp::Ordering, collections::BinaryHeap};
 
+use crate::cache::is_identity;
 use crate::prelude::*;
+use crate::systems::draw::{clip_bounds, subtree_to_screen};
 use log::debug;
+use skia_safe::Matrix;
 use vizia_storage::{DrawChildIterator, LayoutParentIterator};
 
 /// The entities whose hover pseudo-classes were set by the previous run of the hover system.
@@ -26,7 +29,13 @@ pub fn hover_system(cx: &mut Context, window_entity: Entity) {
     let mut queue = BinaryHeap::new();
     let pointer_events: bool =
         cx.style.pointer_events.get(window_entity).copied().unwrap_or_default().into();
-    queue.push(ZEntity { index: 0, pointer_events, entity: window_entity });
+    queue.push(ZEntity {
+        index: 0,
+        pointer_events,
+        entity: window_entity,
+        parent_transform: Matrix::new_identity(),
+        parent_clip: None,
+    });
     let mut hovered = window_entity;
     let mut over = Vec::new();
     while let Some(zentity) = queue.pop() {
@@ -35,6 +44,8 @@ pub fn hover_system(cx: &mut Context, window_entity: Entity) {
                 &mut EventContext::new(cx),
                 zentity.index,
                 zentity.pointer_events,
+                &zentity.parent_transform,
+                zentity.parent_clip,
                 prune,
                 &mut queue,
                 &mut hovered,
@@ -105,10 +116,13 @@ pub fn hover_system(cx: &mut Context, window_entity: Entity) {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn hover_entity(
     cx: &mut EventContext,
     current_z: i32,
     parent_pointer_events: bool,
+    parent_transform: &Matrix,
+    parent_clip: Option<BoundingBox>,
     prune: bool,
     queue: &mut BinaryHeap<ZEntity>,
     hovered: &mut Entity,
@@ -152,7 +166,8 @@ fn hover_entity(
     // Subtree draw bounds include z-indexed and clip-escaping descendants and contain the
     // (clipped) bounds of every descendant.
     if prune && !cx.tree.is_window(cx.current) {
-        if let Some(subtree_bounds) = cx.cache.subtree_draw_bounds.get(cx.current) {
+        if let Some(bounds) = cx.cache.draw_bounds.get(cx.current) {
+            let subtree_bounds = subtree_to_screen(bounds, parent_transform, parent_clip);
             if !subtree_bounds.contains_point(cursor_x, cursor_y) {
                 return;
             }
@@ -173,13 +188,22 @@ fn hover_entity(
     // Push to queue if the z-index is higher than the current z-index.
     let z_index = cx.style.z_index.get(cx.current).copied().unwrap_or_default();
     if z_index > current_z {
-        queue.push(ZEntity { index: z_index, entity: cx.current, pointer_events });
+        queue.push(ZEntity {
+            index: z_index,
+            entity: cx.current,
+            pointer_events,
+            parent_transform: *parent_transform,
+            parent_clip,
+        });
         return;
     }
 
     let bounds = cx.bounds();
 
-    let transform = cx.transform();
+    let transform = match cx.cache.local_transform.get(cx.current) {
+        Some(local) if !is_identity(local) => *parent_transform * *local,
+        _ => *parent_transform,
+    };
 
     let bounds_rect: skia_safe::Rect = bounds.into();
     let transformed_bounds: BoundingBox = transform.map_rect(bounds_rect).0.into();
@@ -200,16 +224,21 @@ fn hover_entity(
         cx.set_pseudo_class(cx.current, PseudoClassFlags::OVER, is_over);
     }
 
-    let child_iter = DrawChildIterator::new(cx.tree, cx.current);
+    let current = cx.current;
+    let clip = clip_bounds(cx.cache, current);
+    let child_iter = DrawChildIterator::new(cx.tree, current);
     for child in child_iter {
         cx.current = child;
-        hover_entity(cx, current_z, pointer_events, prune, queue, hovered, over);
+        hover_entity(cx, current_z, pointer_events, &transform, clip, prune, queue, hovered, over);
     }
+    cx.current = current;
 }
 struct ZEntity {
     pub index: i32,
     pub pointer_events: bool,
     pub entity: Entity,
+    pub parent_transform: Matrix,
+    pub parent_clip: Option<BoundingBox>,
 }
 
 impl Ord for ZEntity {

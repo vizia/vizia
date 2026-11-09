@@ -282,18 +282,14 @@ impl<'a> EventContext<'a> {
     pub fn transformed_bounds(&self, entity: Entity) -> BoundingBox {
         let bounds = self.cache.get_bounds(entity);
 
-        if let Some(transform) = self.cache.transform.get(entity).copied() {
-            // The cache stores identity matrices for all entities by default, so skip map/rounding
-            // work when no effective transform is present.
-            if transform == Matrix::new_identity() {
-                return bounds;
-            }
-
-            let (rect, _) = transform.map_rect(Rect::from(bounds));
-            rect.into()
-        } else {
-            bounds
+        let transform = self.cache.absolute_transform(self.tree, entity);
+        // Skip map/rounding work when no effective transform is present.
+        if crate::cache::is_identity(&transform) {
+            return bounds;
         }
+
+        let (rect, _) = transform.map_rect(Rect::from(bounds));
+        rect.into()
     }
 
     /// Returns transformed bounds expanded to pixel-snapped extents.
@@ -377,9 +373,9 @@ impl<'a> EventContext<'a> {
         window_bounds
     }
 
-    /// Returns the 2D transform of the current view.
+    /// Returns the 2D transform of the current view in window coordinates.
     pub fn transform(&self) -> Matrix {
-        self.cache.transform.get(self.current).copied().unwrap_or_default()
+        self.cache.absolute_transform(self.tree, self.current)
     }
 
     /// Trigger an animation with the given id to play on the current view.

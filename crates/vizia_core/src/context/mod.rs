@@ -607,21 +607,24 @@ impl Context {
             let window_entity = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
 
             if !self.tree.is_window(*entity) {
-                if let Some(draw_bounds) = self.cache.draw_bounds.get(*entity) {
+                if let Some(draw_bounds) =
+                    crate::systems::draw::cached_screen_bounds(&self.cache, &self.tree, *entity)
+                        .filter(|bounds| bounds.w > 0.0 && bounds.h > 0.0)
+                {
                     if let Some(dirty_rect) =
                         &mut self.windows.get_mut(&window_entity).unwrap().dirty_rect
                     {
-                        *dirty_rect = dirty_rect.union(draw_bounds);
+                        *dirty_rect = dirty_rect.union(&draw_bounds);
                     } else {
                         self.windows.get_mut(&window_entity).unwrap().dirty_rect =
-                            Some(*draw_bounds);
+                            Some(draw_bounds);
                     }
                 }
             }
 
             self.windows.get_mut(&window_entity).unwrap().redraw_list.remove(entity);
 
-            self.cache.invalidate_subtree_draw_bounds(&self.tree, *entity);
+            self.cache.invalidate_draw_bounds(&self.tree, *entity);
 
             if self.windows.contains_key(entity) {
                 self.windows.remove(entity);

@@ -152,9 +152,9 @@ impl DrawContext<'_> {
         None
     }
 
-    /// Returns the 2D transform of the current view.
+    /// Returns the 2D transform of the current view in window coordinates.
     pub fn transform(&self) -> Matrix {
-        self.cache.transform.get(self.current).copied().unwrap_or_default()
+        self.cache.absolute_transform(self.tree, self.current)
     }
 
     /// Returns the visibility of the current view.
