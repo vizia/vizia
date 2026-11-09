@@ -68,7 +68,7 @@ use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::text::TextContext;
 use vizia_input::{ImeState, MouseState};
-use vizia_storage::ChildIterator;
+use vizia_storage::{ChildIterator, LayoutParentIterator};
 
 #[cfg(feature = "tokio")]
 pub(crate) type TaskRuntime = Arc<tokio::runtime::Runtime>;
@@ -547,6 +547,36 @@ impl Context {
             self.needs_redraw(self.current);
         }
 
+        // Dirty the drawn areas of the removed entities before any cached draw bounds are
+        // invalidated, as invalidating an entity also invalidates its ancestors. The cached bounds
+        // of an entity cover all of its descendants, so covered descendants are skipped.
+        let mut dirtied: HashSet<Entity> = HashSet::new();
+        for entity in delete_list.iter().copied() {
+            if self.tree.is_window(entity)
+                || LayoutParentIterator::new(&self.tree, entity)
+                    .skip(1)
+                    .any(|ancestor| dirtied.contains(&ancestor))
+            {
+                continue;
+            }
+
+            let Some(bounds) =
+                crate::systems::draw::cached_screen_bounds(&self.cache, &self.tree, entity)
+            else {
+                continue;
+            };
+            dirtied.insert(entity);
+
+            if bounds.w <= 0.0 || bounds.h <= 0.0 {
+                continue;
+            }
+            let window_entity = self.tree.get_parent_window(entity).unwrap_or(Entity::root());
+            if let Some(window) = self.windows.get_mut(&window_entity) {
+                window.dirty_rect =
+                    Some(window.dirty_rect.map_or(bounds, |dirty_rect| dirty_rect.union(&bounds)));
+            }
+        }
+
         for entity in delete_list.iter().rev() {
             if let Some(mut view) = self.views.remove(entity) {
                 view.event(
@@ -605,22 +635,6 @@ impl Context {
             }
 
             let window_entity = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
-
-            if !self.tree.is_window(*entity) {
-                if let Some(draw_bounds) =
-                    crate::systems::draw::cached_screen_bounds(&self.cache, &self.tree, *entity)
-                        .filter(|bounds| bounds.w > 0.0 && bounds.h > 0.0)
-                {
-                    if let Some(dirty_rect) =
-                        &mut self.windows.get_mut(&window_entity).unwrap().dirty_rect
-                    {
-                        *dirty_rect = dirty_rect.union(&draw_bounds);
-                    } else {
-                        self.windows.get_mut(&window_entity).unwrap().dirty_rect =
-                            Some(draw_bounds);
-                    }
-                }
-            }
 
             self.windows.get_mut(&window_entity).unwrap().redraw_list.remove(entity);
 

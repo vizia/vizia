@@ -821,4 +821,21 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn removing_a_subtree_dirties_the_area_of_its_root() {
+        let mut cx = Context::default();
+        cx.windows.entry(Entity::root()).or_default();
+        let parent = cx.with_current(Entity::root(), |cx| Element::new(cx).entity());
+        let child = cx.with_current(parent, |cx| Element::new(cx).entity());
+        cx.cache.set_bounds(parent, BoundingBox { x: 10.0, y: 10.0, w: 100.0, h: 100.0 });
+        cx.cache.set_bounds(child, BoundingBox { x: 20.0, y: 20.0, w: 10.0, h: 10.0 });
+        screen_bounds(&cx.style, &mut cx.cache, &cx.tree, Entity::root());
+        cx.windows.get_mut(&Entity::root()).unwrap().dirty_rect = None;
+
+        cx.remove(parent);
+
+        let dirty = cx.windows[&Entity::root()].dirty_rect.unwrap();
+        assert!(dirty.contains(&BoundingBox { x: 10.5, y: 10.5, w: 99.0, h: 99.0 }), "{dirty:?}");
+    }
 }
