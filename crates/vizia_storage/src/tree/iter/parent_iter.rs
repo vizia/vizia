@@ -26,15 +26,12 @@ where
     type Item = I;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let item = {
-            if let Some(entity) = self.current {
-                self.current = self.tree.get_parent(entity);
-                Some(entity)
-            } else {
-                None
-            }
-        };
-        crate::profiling::counted(item)
+        if let Some(entity) = self.current {
+            self.current = self.tree.get_parent(entity);
+            Some(entity)
+        } else {
+            None
+        }
     }
 }
 
@@ -62,14 +59,11 @@ where
     type Item = I;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let item = {
-            if let Some(entity) = self.current {
-                self.current = self.tree.get_layout_parent(entity);
-                Some(entity)
-            } else {
-                None
-            }
-        };
-        crate::profiling::counted(item)
+        if let Some(entity) = self.current {
+            self.current = self.tree.get_layout_parent(entity);
+            Some(entity)
+        } else {
+            None
+        }
     }
 }

@@ -18,7 +18,7 @@ rayon = ["dep:rayon", "dep:dashmap", "hashbrown/rayon"]
 serde = ["vizia_reactive/serde"]
 tokio = ["dep:tokio"]
 url-loader = ["dep:reqwest", "reqwest/blocking"]
-profiling = ["vizia_storage/profiling"]
+profiling = []
 
 [dependencies]
 vizia_storage.workspace = true
