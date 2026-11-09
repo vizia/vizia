@@ -38,36 +38,37 @@ pub(crate) fn draw_system(
     //     return false;
     // }
 
-    for &entity in &redraw_list {
-        // Skip binding views
-        if cx.tree.is_ignored(entity) {
-            continue;
-        }
+    let redraw_entities: Vec<Entity> = redraw_list
+        .iter()
+        .copied()
+        .filter(|&entity| {
+            !cx.tree.is_ignored(entity) && (!cx.tree.is_window(entity) || entity == window_entity)
+        })
+        .collect();
 
-        if cx.tree.is_window(entity) && entity != window_entity {
-            continue;
-        }
+    // Take the previous bounds of every redrawn entity before computing any new bounds, so that
+    // draw bounds which include their children never reuse a stale cached value of a child which
+    // is itself being redrawn.
+    let previous_bounds: Vec<Option<BoundingBox>> =
+        redraw_entities.iter().map(|&entity| cx.cache.draw_bounds.remove(entity)).collect();
 
+    for (&entity, previous) in redraw_entities.iter().zip(previous_bounds) {
         if entity.visible(&cx.style) {
-            let draw_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
-            let dirty_bounds = match cx.cache.draw_bounds.get(entity) {
-                Some(prev_bounds) if is_non_empty(prev_bounds) && is_non_empty(&draw_bounds) => {
-                    draw_bounds.union(prev_bounds)
+            let draw_bounds = cached_bounds(&cx.style, &mut cx.cache, &cx.tree, entity);
+            let dirty_bounds = match previous {
+                Some(prev_bounds) if is_non_empty(&prev_bounds) && is_non_empty(&draw_bounds) => {
+                    draw_bounds.union(&prev_bounds)
                 }
-                Some(prev_bounds) if is_non_empty(prev_bounds) => *prev_bounds,
+                Some(prev_bounds) if is_non_empty(&prev_bounds) => prev_bounds,
                 _ => draw_bounds,
             };
             union_dirty_rect(&mut dirty_rect, dirty_bounds);
-            cx.cache.draw_bounds.insert(entity, draw_bounds);
-            cx.cache.invalidate_subtree_draw_bounds(&cx.tree, entity);
-        } else {
+        } else if let Some(previous_draw_bounds) = previous {
             // If the entity was previously visible but is no longer, we must dirty
             // its previous area so that it is correctly cleared from the screen.
-            if let Some(previous_draw_bounds) = cx.cache.draw_bounds.remove(entity) {
-                union_dirty_rect(&mut dirty_rect, previous_draw_bounds);
-            }
-            cx.cache.invalidate_subtree_draw_bounds(&cx.tree, entity);
+            union_dirty_rect(&mut dirty_rect, previous_draw_bounds);
         }
+        cx.cache.invalidate_subtree_draw_bounds(&cx.tree, entity);
     }
 
     for entity in cx.style.filter_entities(&cx.tree) {
@@ -83,11 +84,10 @@ pub(crate) fn draw_system(
             // Entity is VISIBLE and has a filter.
             // Skip recomputation if already processed in redraw_list.
             if !redraw_list.contains(&entity) {
-                let filter_current_bounds = draw_bounds(&cx.style, &cx.cache, &cx.tree, entity);
+                let previous = cx.cache.draw_bounds.remove(entity);
+                let filter_current_bounds =
+                    cached_bounds(&cx.style, &mut cx.cache, &cx.tree, entity);
 
-                // Update cache for visible entity
-                let previous = cx.cache.draw_bounds.get(entity).copied();
-                cx.cache.draw_bounds.insert(entity, filter_current_bounds);
                 if previous != Some(filter_current_bounds) {
                     cx.cache.invalidate_subtree_draw_bounds(&cx.tree, entity);
                 }
@@ -440,19 +440,29 @@ fn cached_subtree_draw_bounds(cx: &mut DrawContext, entity: Entity) -> BoundingB
 }
 
 fn cached_draw_bounds(cx: &mut DrawContext, entity: Entity) -> BoundingBox {
-    if let Some(bounds) = cx.cache.draw_bounds.get(entity).copied() {
+    cached_bounds(cx.style, cx.cache, cx.tree, entity)
+}
+
+/// Returns the cached draw bounds of an entity, computing and caching them if necessary.
+fn cached_bounds(
+    style: &Style,
+    cache: &mut CachedData,
+    tree: &Tree<Entity>,
+    entity: Entity,
+) -> BoundingBox {
+    if let Some(bounds) = cache.draw_bounds.get(entity).copied() {
         return bounds;
     }
 
-    let bounds = draw_bounds(cx.style, cx.cache, cx.tree, entity);
-    cx.cache.draw_bounds.insert(entity, bounds);
+    let bounds = draw_bounds(style, cache, tree, entity);
+    cache.draw_bounds.insert(entity, bounds);
     bounds
 }
 
 // Must be called after transform and clipping systems to be valid.
 pub(crate) fn draw_bounds(
     style: &Style,
-    cache: &CachedData,
+    cache: &mut CachedData,
     tree: &Tree<Entity>,
     entity: Entity,
 ) -> BoundingBox {
@@ -520,7 +530,7 @@ pub(crate) fn draw_bounds(
         for child in child_iter {
             // Fully clipped children have empty bounds at the origin, which must not stretch the
             // union towards (0, 0).
-            let child_bounds = draw_bounds(style, cache, tree, child);
+            let child_bounds = cached_bounds(style, cache, tree, child);
             if is_non_empty(&child_bounds) {
                 dirty_bounds = dirty_bounds.union(&child_bounds);
             }
