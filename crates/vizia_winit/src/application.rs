@@ -804,19 +804,16 @@ impl ApplicationHandler<UserEvent> for Application {
             winit::event::WindowEvent::Occluded(_) => {}
             winit::event::WindowEvent::RedrawRequested => {
                 let _scope = vizia_core::profiling::scope("draw");
-                for window in self.windows.values_mut() {
-                    window.make_current();
-                    //self.cx.needs_refresh(window.entity);
-                    if self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface) {
-                        window.swap_buffers();
-                    }
+                window.make_current();
+                if self.cx.draw(window.entity, &mut window.surface, &mut window.dirty_surface) {
+                    window.swap_buffers();
+                }
 
-                    // Un-cloak
-                    #[cfg(target_os = "windows")]
-                    if window.is_initially_cloaked {
-                        window.is_initially_cloaked = false;
-                        set_cloak(window.window(), false);
-                    }
+                // Un-cloak
+                #[cfg(target_os = "windows")]
+                if window.is_initially_cloaked {
+                    window.is_initially_cloaked = false;
+                    set_cloak(window.window(), false);
                 }
             }
 
@@ -876,8 +873,11 @@ impl ApplicationHandler<UserEvent> for Application {
                 .expect("Failed to send event");
         }
 
-        if self.cx.0.windows.iter().any(|(_, window_state)| !window_state.redraw_list.is_empty()) {
-            for window in self.windows.values() {
+        for window in self.windows.values() {
+            let needs_redraw = self.cx.0.windows.get(&window.entity).is_some_and(|window_state| {
+                !window_state.redraw_list.is_empty() || window_state.dirty_rect.is_some()
+            });
+            if needs_redraw {
                 window.window().request_redraw();
             }
         }
