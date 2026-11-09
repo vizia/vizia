@@ -1446,6 +1446,7 @@ impl MatchedRules {
 
 // Iterates the tree and determines the matching style rules for each entity, then links the entity to the corresponding style rule data.
 pub(crate) fn style_system(cx: &mut Context) {
+    let _scope = crate::profiling::scope("style_system");
     let mut redraw_entities = Vec::new();
 
     inline_inheritance_system(cx, &mut redraw_entities);

@@ -30,16 +30,19 @@ where
     type Item = I;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.tours.next_with(self.tree, |node, direction| match direction {
-            TourDirection::Entering => {
-                if self.tree.is_ignored(node) {
-                    (None, TourStep::EnterFirstChild)
-                } else {
-                    (Some(node), TourStep::EnterFirstChild)
+        let item = {
+            self.tours.next_with(self.tree, |node, direction| match direction {
+                TourDirection::Entering => {
+                    if self.tree.is_ignored(node) {
+                        (None, TourStep::EnterFirstChild)
+                    } else {
+                        (Some(node), TourStep::EnterFirstChild)
+                    }
                 }
-            }
-            TourDirection::Leaving => (None, TourStep::EnterNextSibling),
-        })
+                TourDirection::Leaving => (None, TourStep::EnterNextSibling),
+            })
+        };
+        crate::profiling::counted(item)
     }
 }
 
@@ -48,16 +51,19 @@ where
     I: GenerationalId,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.tours.next_back_with(self.tree, |node, direction| match direction {
-            TourDirection::Entering => (None, TourStep::EnterLastChild),
-            TourDirection::Leaving => {
-                if self.tree.is_ignored(node) {
-                    (None, TourStep::EnterPrevSibling)
-                } else {
-                    (Some(node), TourStep::EnterPrevSibling)
+        let item = {
+            self.tours.next_back_with(self.tree, |node, direction| match direction {
+                TourDirection::Entering => (None, TourStep::EnterLastChild),
+                TourDirection::Leaving => {
+                    if self.tree.is_ignored(node) {
+                        (None, TourStep::EnterPrevSibling)
+                    } else {
+                        (Some(node), TourStep::EnterPrevSibling)
+                    }
                 }
-            }
-        })
+            })
+        };
+        crate::profiling::counted(item)
     }
 }
 
@@ -95,16 +101,19 @@ where
     type Item = I;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.tours.next_with(self.tree, |node, direction| match direction {
-            TourDirection::Entering => {
-                if self.tree.is_ignored(node) {
-                    (None, TourStep::LeaveCurrent)
-                } else {
-                    (Some(node), TourStep::LeaveCurrent)
+        let item = {
+            self.tours.next_with(self.tree, |node, direction| match direction {
+                TourDirection::Entering => {
+                    if self.tree.is_ignored(node) {
+                        (None, TourStep::LeaveCurrent)
+                    } else {
+                        (Some(node), TourStep::LeaveCurrent)
+                    }
                 }
-            }
-            TourDirection::Leaving => (None, TourStep::EnterNextSibling),
-        })
+                TourDirection::Leaving => (None, TourStep::EnterNextSibling),
+            })
+        };
+        crate::profiling::counted(item)
     }
 }
 
@@ -113,16 +122,19 @@ where
     I: GenerationalId,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.tours.next_back_with(self.tree, |node, direction| match direction {
-            TourDirection::Entering => (None, TourStep::LeaveCurrent),
-            TourDirection::Leaving => {
-                if self.tree.is_ignored(node) {
-                    (None, TourStep::EnterPrevSibling)
-                } else {
-                    (Some(node), TourStep::EnterPrevSibling)
+        let item = {
+            self.tours.next_back_with(self.tree, |node, direction| match direction {
+                TourDirection::Entering => (None, TourStep::LeaveCurrent),
+                TourDirection::Leaving => {
+                    if self.tree.is_ignored(node) {
+                        (None, TourStep::EnterPrevSibling)
+                    } else {
+                        (Some(node), TourStep::EnterPrevSibling)
+                    }
                 }
-            }
-        })
+            })
+        };
+        crate::profiling::counted(item)
     }
 }
 
@@ -155,16 +167,19 @@ where
     type Item = I;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.tours.next_with(self.tree, |node, direction| match direction {
-            TourDirection::Entering => {
-                if self.tree.is_window(node) && node != self.root {
-                    (None, TourStep::LeaveCurrent)
-                } else {
-                    (Some(node), TourStep::EnterFirstChild)
+        let item = {
+            self.tours.next_with(self.tree, |node, direction| match direction {
+                TourDirection::Entering => {
+                    if self.tree.is_window(node) && node != self.root {
+                        (None, TourStep::LeaveCurrent)
+                    } else {
+                        (Some(node), TourStep::EnterFirstChild)
+                    }
                 }
-            }
-            TourDirection::Leaving => (None, TourStep::EnterNextSibling),
-        })
+                TourDirection::Leaving => (None, TourStep::EnterNextSibling),
+            })
+        };
+        crate::profiling::counted(item)
     }
 }
 
@@ -173,15 +188,18 @@ where
     I: GenerationalId,
 {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.tours.next_back_with(self.tree, |node, direction| match direction {
-            TourDirection::Entering => (None, TourStep::EnterLastChild),
-            TourDirection::Leaving => {
-                if self.tree.is_ignored(node) {
-                    (None, TourStep::EnterPrevSibling)
-                } else {
-                    (Some(node), TourStep::EnterPrevSibling)
+        let item = {
+            self.tours.next_back_with(self.tree, |node, direction| match direction {
+                TourDirection::Entering => (None, TourStep::EnterLastChild),
+                TourDirection::Leaving => {
+                    if self.tree.is_ignored(node) {
+                        (None, TourStep::EnterPrevSibling)
+                    } else {
+                        (Some(node), TourStep::EnterPrevSibling)
+                    }
                 }
-            }
-        })
+            })
+        };
+        crate::profiling::counted(item)
     }
 }

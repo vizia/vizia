@@ -300,6 +300,8 @@ impl ApplicationRunner {
     /// Handle all reactivity within a frame. The window instance is used to resize the window when
     /// needed.
     pub fn on_frame_update(&mut self) -> bool {
+        let update_scope = vizia_core::profiling::scope("update");
+
         // Pick up any effects enqueued by off-UI-thread `SyncSignal` writes since the last
         // frame. These sit in `SYNC_RUNTIME` until a UI-thread call processes them — this
         // is the analogue of the `drain_pending_work` call in `vizia_winit`'s frame loop.
@@ -447,12 +449,14 @@ impl ApplicationRunner {
         if has_redraw {
             self.should_redraw = true;
         }
+        drop(update_scope);
 
         animations_playing || self.cx.has_queued_events() || has_redraw
     }
 
     pub fn render(&mut self) {
         if self.should_redraw {
+            let _scope = vizia_core::profiling::scope("draw");
             let context = self
                 .window_context
                 .gl_context()

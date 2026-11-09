@@ -31,17 +31,20 @@ where
     type Item = (I, usize);
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.tours.next_with(self.tree, |node, direction| match direction {
-            TourDirection::Entering => {
-                self.depth_forward += 1;
-                // if yielding:
-                (Some((node, self.depth_forward - 1)), TourStep::EnterFirstChild)
-            }
-            TourDirection::Leaving => {
-                self.depth_forward -= 1;
-                // if yielding:
-                (None, TourStep::EnterNextSibling)
-            }
-        })
+        let item = {
+            self.tours.next_with(self.tree, |node, direction| match direction {
+                TourDirection::Entering => {
+                    self.depth_forward += 1;
+                    // if yielding:
+                    (Some((node, self.depth_forward - 1)), TourStep::EnterFirstChild)
+                }
+                TourDirection::Leaving => {
+                    self.depth_forward -= 1;
+                    // if yielding:
+                    (None, TourStep::EnterNextSibling)
+                }
+            })
+        };
+        crate::profiling::counted(item)
     }
 }

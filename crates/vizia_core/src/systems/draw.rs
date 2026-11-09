@@ -16,6 +16,7 @@ pub(crate) fn draw_system(
     surface: &mut Surface,
     dirty_surface: &mut Surface,
 ) -> bool {
+    let _scope = crate::profiling::scope("draw_system");
     if cx.windows.is_empty() {
         return false;
     }

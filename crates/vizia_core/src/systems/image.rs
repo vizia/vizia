@@ -7,6 +7,7 @@ use crate::style::ImageOrGradient;
 // Iterate the tree and load any images used by entities which aren't already loaded.
 // Remove any images no longer being used.
 pub(crate) fn image_system(cx: &mut Context) {
+    let _scope = crate::profiling::scope("image_system");
     let cx = &mut ResourceContext::new(cx);
 
     cx.resource_manager.mark_images_unused();

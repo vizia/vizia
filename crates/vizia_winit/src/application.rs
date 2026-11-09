@@ -803,6 +803,7 @@ impl ApplicationHandler<UserEvent> for Application {
             }
             winit::event::WindowEvent::Occluded(_) => {}
             winit::event::WindowEvent::RedrawRequested => {
+                let _scope = vizia_core::profiling::scope("draw");
                 for window in self.windows.values_mut() {
                     window.make_current();
                     //self.cx.needs_refresh(window.entity);
@@ -830,6 +831,8 @@ impl ApplicationHandler<UserEvent> for Application {
         }
 
         event_loop.set_control_flow(self.control_flow);
+
+        let update_scope = vizia_core::profiling::scope("update");
 
         Runtime::drain_pending_work();
 
@@ -865,6 +868,7 @@ impl ApplicationHandler<UserEvent> for Application {
             self.cx.set_current(Entity::root());
             (idle_callback)(self.cx.context());
         }
+        drop(update_scope);
 
         if self.cx.has_queued_events() {
             self.event_loop_proxy

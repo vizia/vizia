@@ -12,6 +12,7 @@ use crate::text::resolved_text_direction;
 use crate::{cache::CachedData, prelude::*};
 
 pub(crate) fn text_system(cx: &mut Context) {
+    let _scope = crate::profiling::scope("text_system");
     if cx.style.text.is_empty() || cx.style.text_construction.is_empty() {
         return;
     }
@@ -40,6 +41,7 @@ pub(crate) fn text_system(cx: &mut Context) {
 }
 
 pub(crate) fn text_layout_system(cx: &mut Context) {
+    let _scope = crate::profiling::scope("text_layout_system");
     if cx.style.text_layout.is_empty() {
         return;
     }

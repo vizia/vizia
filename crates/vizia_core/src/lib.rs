@@ -29,6 +29,7 @@ pub mod layout;
 pub mod localization;
 pub mod model;
 pub mod modifiers;
+pub mod profiling;
 pub mod resource;
 pub mod style;
 pub(crate) mod systems;

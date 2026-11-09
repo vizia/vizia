@@ -78,6 +78,7 @@ macro_rules! process_auto_animations {
 }
 
 pub(crate) fn animation_system(cx: &mut Context) -> bool {
+    let _scope = crate::profiling::scope("animation_system");
     cx.style.play_pending_animations();
 
     process_auto_animations!(cx, cx.style.max_height, true);
