@@ -537,6 +537,16 @@ pub(crate) fn cached_screen_bounds(
     Some(subtree_to_screen(bounds, &parent_transform, parent_clip))
 }
 
+pub(crate) fn cached_own_screen_bounds(
+    cache: &CachedData,
+    tree: &Tree<Entity>,
+    entity: Entity,
+) -> Option<BoundingBox> {
+    let bounds = cache.draw_bounds.get(entity)?;
+    let (parent_transform, parent_clip) = parent_space(cache, tree, entity);
+    Some(own_to_screen(bounds, &parent_transform, parent_clip))
+}
+
 /// Returns the draw bounds of an entity and its descendants in window coordinates, computing and
 /// caching them if necessary.
 fn screen_bounds(
@@ -837,5 +847,46 @@ mod tests {
 
         let dirty = cx.windows[&Entity::root()].dirty_rect.unwrap();
         assert!(dirty.contains(&BoundingBox { x: 10.5, y: 10.5, w: 99.0, h: 99.0 }), "{dirty:?}");
+    }
+
+    #[test]
+    fn removing_a_child_preserves_the_painted_area_of_its_ancestors() {
+        let mut cx = Context::default();
+        cx.windows.entry(Entity::root()).or_default();
+        let parent = cx.with_current(Entity::root(), |cx| Element::new(cx).entity());
+        let child = cx.with_current(parent, |cx| Element::new(cx).entity());
+        cx.cache.set_bounds(parent, BoundingBox { x: 0.0, y: 0.0, w: 100.0, h: 140.0 });
+        cx.cache.set_bounds(child, BoundingBox { x: 0.0, y: 20.0, w: 100.0, h: 100.0 });
+        screen_bounds(&cx.style, &mut cx.cache, &cx.tree, Entity::root());
+        cx.windows.get_mut(&Entity::root()).unwrap().dirty_rect = None;
+
+        cx.remove(child);
+        cx.cache.set_bounds(parent, BoundingBox { x: 0.0, y: 0.0, w: 100.0, h: 40.0 });
+
+        let dirty = cx.windows[&Entity::root()].dirty_rect.unwrap();
+        assert!(dirty.contains_point(50.0, 139.0), "{dirty:?}");
+    }
+
+    #[test]
+    fn resizing_a_window_invalidates_window_dependent_draw_bounds() {
+        use crate::backend::BackendContext;
+
+        let mut backend = BackendContext::new(Context::default());
+        backend.add_main_window(Entity::root(), &Default::default(), 1.0);
+        let cx = &mut backend.0;
+        cx.windows.entry(Entity::root()).or_default();
+        cx.cache.set_bounds(Entity::root(), BoundingBox { x: 0.0, y: 0.0, w: 100.0, h: 100.0 });
+        let clipper = Element::new(cx).overflowx(Overflow::Hidden).entity();
+        let child = cx.with_current(clipper, |cx| Element::new(cx).entity());
+        cx.cache.set_bounds(clipper, BoundingBox { x: 0.0, y: 0.0, w: 50.0, h: 50.0 });
+        cx.cache.set_bounds(child, BoundingBox { x: 0.0, y: 120.0, w: 20.0, h: 20.0 });
+        let before = screen_bounds(&cx.style, &mut cx.cache, &cx.tree, clipper);
+        assert!(!before.contains_point(10.0, 130.0));
+
+        backend.set_window_size(Entity::root(), 100.0, 200.0);
+
+        let cx = &mut backend.0;
+        let after = screen_bounds(&cx.style, &mut cx.cache, &cx.tree, clipper);
+        assert!(after.contains_point(10.0, 130.0), "{after:?}");
     }
 }

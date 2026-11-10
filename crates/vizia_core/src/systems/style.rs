@@ -426,6 +426,27 @@ fn subtrees<'a>(tree: &'a Tree<Entity>, roots: &'a [Entity]) -> impl Iterator<It
     roots.iter().flat_map(move |root| TreeIterator::subtree(tree, *root))
 }
 
+fn inheritance_roots(
+    tree: &Tree<Entity>,
+    entities: &[Entity],
+    restyle: &HashSet<Entity>,
+) -> Vec<Entity> {
+    entities
+        .iter()
+        .copied()
+        .filter(|entity| {
+            let mut current = *entity;
+            while let Some(parent) = tree.get_parent(current) {
+                if restyle.contains(&parent) {
+                    return false;
+                }
+                current = parent;
+            }
+            true
+        })
+        .collect()
+}
+
 /// Link inheritable inline properties to their parent within the subtrees of the given roots.
 pub(crate) fn inline_inheritance_system(
     cx: &mut Context,
@@ -1495,7 +1516,9 @@ pub(crate) fn style_system(cx: &mut Context) {
             .filter_map(|entity| cx.tree.get_layout_parent(*entity))
             .collect::<HashSet<_>>();
         for parent in parents {
-            restyle.extend(LayoutChildIterator::new(&cx.tree, parent));
+            for sibling in LayoutChildIterator::new(&cx.tree, parent) {
+                restyle.extend(TreeIterator::subtree(&cx.tree, sibling));
+            }
         }
     }
 
@@ -1506,32 +1529,18 @@ pub(crate) fn style_system(cx: &mut Context) {
     // Inherited data only needs to be propagated through the subtrees of the restyled entities,
     // unless the tree or inline data changed since the last pass.
     let full_walk = rules_changed || cx.style.style_structure_key != Some(structure_key);
-    let walk_roots = if full_walk {
-        vec![root]
-    } else {
-        entities
-            .iter()
-            .copied()
-            .filter(|entity| {
-                let mut current = *entity;
-                while let Some(parent) = cx.tree.get_parent(current) {
-                    if restyle.contains(&parent) {
-                        return false;
-                    }
-                    current = parent;
-                }
-                true
-            })
-            .collect::<Vec<_>>()
-    };
+    let mut walk_roots =
+        if full_walk { vec![root] } else { inheritance_roots(&cx.tree, &entities, &restyle) };
 
     let mut direction_bloom = BloomFilter::default();
+    let mut direction_changed = HashSet::new();
     for entity in entities.iter().copied() {
         compute_element_hash(entity, &cx.tree, &cx.style, &mut direction_bloom);
         let matched_direction_rules =
             compute_matched_direction_rules(entity, &cx.style, &cx.tree, &direction_bloom);
 
         if cx.style.direction.link(entity, &matched_direction_rules) {
+            direction_changed.insert(entity);
             // Direction affects layout flow; mark this entity dirty so incremental layout runs.
             cx.style.needs_relayout(entity);
             redraw_entities.push(entity);
@@ -1549,10 +1558,23 @@ pub(crate) fn style_system(cx: &mut Context) {
     for entity in subtrees(&cx.tree, &walk_roots) {
         if let Some(parent) = cx.tree.get_layout_parent(entity) {
             if cx.style.direction.inherit_shared(entity, parent) {
+                direction_changed.insert(entity);
                 cx.style.needs_text_update(entity);
                 // Only this entity's direction changed; relayout incrementally from it.
                 cx.style.needs_relayout(entity);
             }
+        }
+    }
+
+    if !direction_changed.is_empty() {
+        for entity in direction_changed {
+            cx.style.needs_restyle_with_dependents(&cx.tree, entity);
+        }
+        restyle.extend(cx.style.take_restyle());
+        entities = restyle.iter().copied().collect();
+        cx.tree.sort_by_depth(&mut entities);
+        if !full_walk {
+            walk_roots = inheritance_roots(&cx.tree, &entities, &restyle);
         }
     }
 
@@ -1700,7 +1722,8 @@ fn invalidate_focus_on_hidden(cx: &mut Context) {
 
 #[cfg(test)]
 mod tests {
-    use super::sort_matched_rules;
+    use super::{sort_matched_rules, style_system};
+    use crate::prelude::*;
     use crate::style::Rule;
     use vizia_id::GenerationalId;
 
@@ -1724,5 +1747,100 @@ mod tests {
                 (Rule::new(1, 0), 10),
             ]
         );
+    }
+
+    #[test]
+    fn adding_a_sibling_restyles_descendants_of_the_previous_last_child() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".row:last-child > label { font-size: 30px; }").unwrap();
+        let parent = Element::new(&mut cx).entity();
+        let mut label = Entity::null();
+        cx.with_current(parent, |cx| {
+            VStack::new(cx, |cx| {
+                label = Label::new(cx, "first").entity();
+            })
+            .class("row");
+        });
+        style_system(&mut cx);
+        assert_eq!(cx.style.font_size.get(label), Some(&FontSize::from(30.0)));
+
+        cx.with_current(parent, |cx| {
+            VStack::new(cx, |_| {}).class("row");
+        });
+        style_system(&mut cx);
+        assert_ne!(cx.style.font_size.get(label), Some(&FontSize::from(30.0)));
+    }
+
+    #[test]
+    fn inherited_direction_changes_rematch_selectors_and_their_dependents() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".rtl { direction: rtl; }
+             label:dir(rtl) { font-size: 30px; }
+             .row:dir(rtl) > label { opacity: 0.5; }
+             .row:dir(rtl) + .other { opacity: 0.25; }",
+        )
+        .unwrap();
+        let parent = Element::new(&mut cx).entity();
+        let mut label = Entity::null();
+        let mut sibling = Entity::null();
+        cx.with_current(parent, |cx| {
+            VStack::new(cx, |cx| {
+                label = Label::new(cx, "text").entity();
+            })
+            .class("row");
+            sibling = Element::new(cx).class("other").entity();
+        });
+        style_system(&mut cx);
+        cx.style.set_class(&cx.tree, parent, "rtl", true);
+        style_system(&mut cx);
+        assert_eq!(cx.style.font_size.get(label), Some(&FontSize::from(30.0)));
+        assert_eq!(cx.style.opacity.get(label), Some(&Opacity(0.5)));
+        assert_eq!(cx.style.opacity.get(sibling), Some(&Opacity(0.25)));
+
+        cx.style.set_class(&cx.tree, parent, "rtl", false);
+        style_system(&mut cx);
+        assert_ne!(cx.style.font_size.get(label), Some(&FontSize::from(30.0)));
+        assert_ne!(cx.style.opacity.get(label), Some(&Opacity(0.5)));
+        assert_ne!(cx.style.opacity.get(sibling), Some(&Opacity(0.25)));
+    }
+
+    #[test]
+    fn explicit_css_font_size_overrides_inherited_inline_font_size() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".unused { font-size: 10px; }
+             label { font-size: 30px; }",
+        )
+        .unwrap();
+        let mut label = Entity::null();
+        VStack::new(&mut cx, |cx| {
+            label = Label::new(cx, "text").entity();
+        })
+        .font_size(20.0);
+        style_system(&mut cx);
+        assert_eq!(cx.style.font_size.get(label), Some(&FontSize::from(30.0)));
+    }
+
+    #[test]
+    fn direction_dependents_outside_the_changed_subtree_propagate_inheritance() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".trigger.rtl { direction: rtl; }
+             .trigger:dir(rtl) + .other { font-size: 30px; }",
+        )
+        .unwrap();
+        let trigger = Element::new(&mut cx).class("trigger").entity();
+        let mut label = Entity::null();
+        VStack::new(&mut cx, |cx| {
+            label = Label::new(cx, "text").entity();
+        })
+        .class("other");
+        style_system(&mut cx);
+
+        cx.style.set_class(&cx.tree, trigger, "rtl", true);
+        style_system(&mut cx);
+
+        assert_eq!(cx.style.font_size.get(label), Some(&FontSize::from(30.0)));
     }
 }

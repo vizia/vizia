@@ -550,6 +550,22 @@ impl Context {
         // Dirty the drawn areas of the removed entities before any cached draw bounds are
         // invalidated, as invalidating an entity also invalidates its ancestors. The cached bounds
         // of an entity cover all of its descendants, so covered descendants are skipped.
+        // Surviving ancestors can shrink during relayout, so preserve their own painted areas too.
+        for ancestor in LayoutParentIterator::new(&self.tree, entity)
+            .skip(1)
+            .take_while(|ancestor| !self.tree.is_window(*ancestor))
+        {
+            if let Some(bounds) =
+                crate::systems::draw::cached_own_screen_bounds(&self.cache, &self.tree, ancestor)
+                    .filter(|bounds| bounds.w > 0.0 && bounds.h > 0.0)
+            {
+                let window_entity = self.tree.get_parent_window(ancestor).unwrap_or(Entity::root());
+                let window = self.windows.get_mut(&window_entity).unwrap();
+                window.dirty_rect =
+                    Some(window.dirty_rect.map_or(bounds, |dirty_rect| dirty_rect.union(&bounds)));
+            }
+        }
+
         let mut dirtied: HashSet<Entity> = HashSet::new();
         for entity in delete_list.iter().copied() {
             if self.tree.is_window(entity)
