@@ -1,13 +1,14 @@
 use crate::window::ViziaWindow;
 use crate::window::create_surface;
-use baseview::{WindowContext, WindowHandle, WindowScalePolicy};
+use crate::window_settings::{FramePolicy, WindowScalePolicy};
+use baseview::{Window, WindowContext};
 use gl_rs as gl;
 use gl_rs::types::GLint;
 use raw_window_handle::HasWindowHandle;
 use skia_safe::gpu::gl::FramebufferInfo;
 use vizia_core::events::EventManager;
 
-use crate::proxy::queue_get;
+use crate::proxy::ProxyQueue;
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
 
@@ -34,6 +35,7 @@ where
     app: F,
     window_description: WindowDescription,
     window_scale_policy: WindowScalePolicy,
+    frame_policy: FramePolicy,
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
     ignore_default_theme: bool,
 }
@@ -48,6 +50,7 @@ where
             app,
             window_description: WindowDescription::new(),
             window_scale_policy: WindowScalePolicy::SystemScaleFactor,
+            frame_policy: FramePolicy::default(),
             on_idle: None,
             ignore_default_theme: false,
         }
@@ -64,6 +67,12 @@ where
     /// [`WindowDescription::scale_factor`] to set a separate arbitrary scale factor.
     pub fn with_scale_policy(mut self, scale_policy: WindowScalePolicy) -> Self {
         self.window_scale_policy = scale_policy;
+        self
+    }
+
+    /// Controls how often the window's frame loop is driven.
+    pub fn with_frame_policy(mut self, frame_policy: FramePolicy) -> Self {
+        self.frame_policy = frame_policy;
         self
     }
 
@@ -107,6 +116,7 @@ where
         ViziaWindow::open_blocking(
             self.window_description,
             self.window_scale_policy,
+            self.frame_policy,
             self.app,
             self.on_idle,
             self.ignore_default_theme,
@@ -122,11 +132,12 @@ where
     ///
     /// * `parent` - The parent window.
     /// * `app` - The Vizia application builder.
-    pub fn open_parented<P: HasWindowHandle>(self, parent: &P) -> WindowHandle {
+    pub fn open_parented<P: HasWindowHandle>(self, parent: &P) -> Window {
         ViziaWindow::open_parented(
             parent,
             self.window_description,
             self.window_scale_policy,
+            self.frame_policy,
             self.app,
             self.on_idle,
             self.ignore_default_theme,
@@ -162,19 +173,15 @@ pub(crate) struct ApplicationRunner {
     cx: BackendContext,
     event_manager: EventManager,
     window_context: WindowContext,
+    proxy_queue: ProxyQueue,
     pub gr_context: skia_safe::gpu::DirectContext,
     should_redraw: bool,
+    frame_policy: FramePolicy,
 
-    /// If this is set to `true`, then `window_scale_factor` will be updated during
-    /// [`baseview::WindowEvent::Resized`] events in accordance to the system's reported DPI. This
-    /// can change at runtime when the window is dragged between displays. Otherwise
-    /// `window_scale_factor` will not change.
-    use_system_scaling: bool,
-    /// The scale factor for the window itself. This is either determined by either the operating
-    /// system or explicitly overridden by the creator of the window. In some cases window resize
-    /// events may change this scaling policy. This value is only used when translating logical
-    /// mouse coordinates to physical window coordinates. For any other use within VIZIA itself this
-    /// always needs to be multiplied by `user_scale_factor`.
+    /// The window's DPI scale factor, as reported by the platform. Updated on
+    /// resize (e.g. when the window is dragged between displays). Only used when
+    /// translating logical mouse coordinates to physical window coordinates; for
+    /// any other use within VIZIA it must be multiplied by `user_scale_factor`.
     window_scale_factor: f64,
     // /// The scale factor applied on top of the `window_scale` to convert the window's logical size
     // /// to a physical size. If this is different from `*cx.user_scale_factor` after handling the
@@ -188,7 +195,7 @@ pub(crate) struct ApplicationRunner {
     window_description: WindowDescription,
     is_initialized: bool,
     /// `true` when the underlying baseview window was opened via
-    /// [`Window::open_parented`] (i.e. the vizia application is embedded
+    /// [`Application::open_parented`] (i.e. the vizia application is embedded
     /// inside a host such as a DAW). Gates lifecycle decisions that
     /// should be left to the host: when parented, vizia_baseview must
     /// not interpret Cmd+Q as a close request, because closing the
@@ -202,8 +209,9 @@ impl ApplicationRunner {
     pub fn new(
         cx: BackendContext,
         gr_context: skia_safe::gpu::DirectContext,
-        use_system_scaling: bool,
         window_scale_factor: f64,
+        frame_policy: FramePolicy,
+        proxy_queue: ProxyQueue,
         surface: skia_safe::Surface,
         dirty_surface: skia_safe::Surface,
         window_description: WindowDescription,
@@ -212,13 +220,12 @@ impl ApplicationRunner {
     ) -> Self {
         ApplicationRunner {
             should_redraw: true,
+            frame_policy,
             gr_context,
             event_manager: EventManager::new(),
             window_context,
-            use_system_scaling,
+            proxy_queue,
             window_scale_factor,
-            //current_user_scale_factor: cx.user_scale_factor(),
-            //current_window_size: *cx.window_size(),
             cx,
             surface,
             dirty_surface,
@@ -250,7 +257,8 @@ impl ApplicationRunner {
         let scaled_logical_w = base_logical_w * new_user_scale;
         let scaled_logical_h = base_logical_h * new_user_scale;
         self.window_context
-            .resize(baseview::dpi::LogicalSize::new(scaled_logical_w, scaled_logical_h));
+            .resize(baseview::dpi::LogicalSize::new(scaled_logical_w, scaled_logical_h))
+            .expect("Failed to resize window");
 
         let new_dpi_factor = self.window_scale_factor * new_user_scale;
         self.cx.set_scale_factor(new_dpi_factor);
@@ -291,15 +299,20 @@ impl ApplicationRunner {
 
     /// Handle all reactivity within a frame. The window instance is used to resize the window when
     /// needed.
-    pub fn on_frame_update(&mut self) {
+    pub fn on_frame_update(&mut self) -> bool {
         // Pick up any effects enqueued by off-UI-thread `SyncSignal` writes since the last
         // frame. These sit in `SYNC_RUNTIME` until a UI-thread call processes them — this
         // is the analogue of the `drain_pending_work` call in `vizia_winit`'s frame loop.
         Runtime::drain_pending_work();
 
-        while let Some(event) = queue_get() {
+        for event in self.proxy_queue.take_events() {
             self.cx.send_event(event.into_event());
         }
+
+        // Fire due timers and scheduled events before flushing so they're handled this
+        // frame, mirroring `vizia_winit`'s `new_events`.
+        self.cx.process_timers();
+        self.cx.emit_scheduled_events();
 
         // Events. The flush callback can't borrow `&mut self`, so size /
         // scale change requests get latched into locals here and applied
@@ -312,11 +325,14 @@ impl ApplicationRunner {
                 WindowEvent::FocusIn => {
                     #[cfg(not(target_os = "linux"))] // not implemented for linux yet
                     if !self.window_context.has_focus() {
-                        self.window_context.focus();
+                        self.window_context.focus().expect("Failed to focus window");
                     }
                 }
                 WindowEvent::SetUserScale(factor) => {
                     pending_user_scale = Some(*factor);
+                }
+                WindowEvent::SetCursor(icon) => {
+                    _ = self.window_context.set_mouse_cursor(translate_mouse_cursor(*icon))
                 }
                 _ => {}
             }
@@ -331,15 +347,19 @@ impl ApplicationRunner {
         if !self.is_initialized {
             // Resizing the window doesn't apply unless the size has actually changed.
             // So we resize the window slightly larger and then back again to force a resize event.
-            self.window_context.resize(baseview::dpi::LogicalSize::new(
-                self.window_description.inner_size.width as f64 + 1.0,
-                self.window_description.inner_size.height as f64 + 1.0,
-            ));
+            self.window_context
+                .resize(baseview::dpi::LogicalSize::new(
+                    self.window_description.inner_size.width as f64 + 1.0,
+                    self.window_description.inner_size.height as f64 + 1.0,
+                ))
+                .expect("Failed to resize window");
 
-            self.window_context.resize(baseview::dpi::LogicalSize::new(
-                self.window_description.inner_size.width as f64,
-                self.window_description.inner_size.height as f64,
-            ));
+            self.window_context
+                .resize(baseview::dpi::LogicalSize::new(
+                    self.window_description.inner_size.width as f64,
+                    self.window_description.inner_size.height as f64,
+                ))
+                .expect("Failed to resize window");
             self.is_initialized = true;
         }
 
@@ -414,19 +434,21 @@ impl ApplicationRunner {
 
         let context =
             self.window_context.gl_context().expect("Window was created without OpenGL support");
-        unsafe { context.make_current() };
+        unsafe { context.make_current() }.expect("Failed to make GL context current");
         self.cx.process_style_updates();
-        unsafe { context.make_not_current() };
+        unsafe { context.make_not_current() }.expect("Failed to make GL context not current");
 
-        self.cx.process_animations();
+        let animations_playing = self.cx.process_animations();
 
         self.cx.process_visual_updates();
 
-        if self.cx.0.windows.iter().any(|(_, window_state)| !window_state.redraw_list.is_empty()) {
+        let has_redraw =
+            self.cx.0.windows.iter().any(|(_, window_state)| !window_state.redraw_list.is_empty());
+        if has_redraw {
             self.should_redraw = true;
         }
 
-        self.cx.process_timers();
+        animations_playing || self.cx.has_queued_events() || has_redraw
     }
 
     pub fn render(&mut self) {
@@ -435,16 +457,18 @@ impl ApplicationRunner {
                 .window_context
                 .gl_context()
                 .expect("Window was created without OpenGL support");
-            unsafe { context.make_current() };
+            unsafe { context.make_current() }.expect("Failed to make GL context current");
             self.cx.draw(Entity::root(), &mut self.surface, &mut self.dirty_surface);
             self.gr_context.flush_and_submit();
             self.should_redraw = false;
-            context.swap_buffers();
-            unsafe { context.make_not_current() };
+            context.swap_buffers().expect("Failed to swap buffers");
+            unsafe { context.make_not_current() }.expect("Failed to make GL context not current");
         }
     }
 
-    pub fn handle_event(&mut self, event: baseview::Event) {
+    pub fn handle_event(&mut self, event: baseview::Event) -> baseview::EventStatus {
+        let status = self.event_status(&event);
+
         if requests_exit(&event, self.is_parented) {
             self.cx.send_event(Event::new(WindowEvent::WindowClose));
             self.window_context.request_close();
@@ -470,7 +494,7 @@ impl ApplicationRunner {
                 baseview::MouseEvent::CursorMoved { position, modifiers } => {
                     update_modifiers(modifiers);
 
-                    // baseview v0.2 delivers cursor coordinates in physical pixels, so no
+                    // baseview v0.4 delivers cursor coordinates in physical pixels, so no
                     // additional DPI scaling should be applied here.
                     let cursor_x = position.x as f32;
                     let cursor_y = position.y as f32;
@@ -522,6 +546,26 @@ impl ApplicationRunner {
                     self.cx.emit_origin(WindowEvent::MouseLeave);
                 }
 
+                baseview::MouseEvent::DragDropped { modifiers, data, .. } => {
+                    update_modifiers(modifiers);
+
+                    if let baseview::DropData::Files(files) = data {
+                        for file in files {
+                            // Try mimic vizia winit drop handling
+                            self.cx.emit_window_event(
+                                Entity::root(),
+                                WindowEvent::Drop(DropData::File(file)),
+                            );
+                        }
+                    }
+                }
+
+                // Vizia winit discard HoveredFile | HoveredFileCancelled
+                // so we mirror the behavior on baseview.
+                baseview::MouseEvent::DragEntered { .. }
+                | baseview::MouseEvent::DragLeft
+                | baseview::MouseEvent::DragMoved { .. } => {}
+
                 _ => {}
             },
             baseview::Event::Keyboard(event) => {
@@ -571,12 +615,14 @@ impl ApplicationRunner {
             },
             _ => {}
         }
+
+        status
     }
 
     pub fn handle_resized(&mut self, new_size: baseview::WindowSize) {
         let context =
             self.window_context.gl_context().expect("Window was created without OpenGL support");
-        unsafe { context.make_current() };
+        unsafe { context.make_current() }.expect("Failed to make GL context current");
 
         let fb_info = {
             let mut fboid: GLint = 0;
@@ -596,12 +642,9 @@ impl ApplicationRunner {
 
         self.dirty_surface = self.surface.new_surface_with_dimensions((width, height)).unwrap();
 
-        unsafe { context.make_not_current() };
+        unsafe { context.make_not_current() }.expect("Failed to make GL context not current");
 
-        // Only use new DPI settings when `WindowScalePolicy::SystemScaleFactor` was used.
-        if self.use_system_scaling {
-            self.window_scale_factor = new_size.scale_factor;
-        }
+        self.window_scale_factor = new_size.scale_factor;
 
         self.cx
             .set_scale_factor(self.window_scale_factor * self.window_description.user_scale_factor);
@@ -622,9 +665,61 @@ impl ApplicationRunner {
         }
     }
 
+    /// How long until the next vizia timer or scheduled event needs to fire.
+    fn next_timer_wake(&self) -> Option<Duration> {
+        let next = self.cx.get_next_timer_time()?;
+        Some(next.saturating_duration_since(Instant::now()))
+    }
+
+    /// Wake the event loop so [`WindowHandler::draw`] is called.
+    pub(crate) fn request_redraw(&self) {
+        self.window_context.request_redraw();
+    }
+
+    /// Force the next [`WindowHandler::draw`] to re-render the window even when
+    /// no vizia-level redraw was requested. This doesn't request a redraw.
+    pub(crate) fn mark_damaged(&mut self) {
+        self.should_redraw = true;
+    }
+
+    /// Schedule the next frame according to the configured [`FramePolicy`].
+    pub(crate) fn schedule_next_frame(&self, needs_redraw: bool) {
+        if self.frame_policy == FramePolicy::Continuous || needs_redraw {
+            self.window_context.request_redraw();
+        } else if let Some(duration) = self.next_timer_wake() {
+            self.window_context.request_redraw_after(duration);
+        }
+    }
+
     /// Element name of the view that currently has keyboard focus.
     pub fn focused_element(&self) -> Option<&'static str> {
         self.cx.focused_element()
+    }
+
+    /// Returns the [`EventStatus`](`baseview::EventStatus`) for this `event`
+    fn event_status(&self, event: &baseview::Event) -> baseview::EventStatus {
+        match event {
+            // macOS and Windows only perform the drop if
+            // the drag-enter/move callbacks report an acceptable operation.
+            // The events can still be ignored inside `handle_event`.
+            // (X11 ignores the return status.)
+            baseview::Event::Mouse(
+                baseview::MouseEvent::DragEntered { .. }
+                | baseview::MouseEvent::DragMoved { .. }
+                | baseview::MouseEvent::DragDropped { .. },
+            ) => baseview::EventStatus::AcceptDrop(baseview::DropEffect::Copy),
+
+            // If a text input currently holds focus, a native keyboard event is
+            // intended for the plugin. Report it as `Captured` so the backend
+            // does not forward the platform event further — otherwise the host
+            // (e.g. a DAW) also processes the same keystroke, producing double
+            // handling and a system beep on macOS.
+            baseview::Event::Keyboard(_) if self.focused_element() == Some("textbox") => {
+                baseview::EventStatus::Captured
+            }
+
+            _ => baseview::EventStatus::Ignored,
+        }
     }
 }
 
@@ -676,5 +771,45 @@ fn translate_mouse_button(button: baseview::MouseButton) -> MouseButton {
         baseview::MouseButton::Back => MouseButton::Other(4),
         baseview::MouseButton::Forward => MouseButton::Other(5),
         _ => MouseButton::Other(0),
+    }
+}
+
+fn translate_mouse_cursor(icon: CursorIcon) -> baseview::MouseCursor {
+    match icon {
+        CursorIcon::Default | CursorIcon::Arrow => baseview::MouseCursor::Default,
+        CursorIcon::None => baseview::MouseCursor::Hidden,
+        CursorIcon::Cell => baseview::MouseCursor::Cell,
+        CursorIcon::Crosshair => baseview::MouseCursor::Crosshair,
+        CursorIcon::Text => baseview::MouseCursor::Text,
+        CursorIcon::VerticalText => baseview::MouseCursor::VerticalText,
+        CursorIcon::ContextMenu => baseview::MouseCursor::Default,
+        CursorIcon::Help => baseview::MouseCursor::Help,
+        CursorIcon::Hand => baseview::MouseCursor::Hand,
+        CursorIcon::Progress => baseview::MouseCursor::PtrWorking,
+        CursorIcon::Wait => baseview::MouseCursor::Working,
+        CursorIcon::Alias => baseview::MouseCursor::Alias,
+        CursorIcon::Copy => baseview::MouseCursor::Copy,
+        CursorIcon::Move => baseview::MouseCursor::Move,
+        CursorIcon::NoDrop => baseview::MouseCursor::NotAllowed,
+        CursorIcon::NotAllowed => baseview::MouseCursor::NotAllowed,
+        CursorIcon::Grab => baseview::MouseCursor::Hand,
+        CursorIcon::Grabbing => baseview::MouseCursor::HandGrabbing,
+        CursorIcon::ZoomIn => baseview::MouseCursor::ZoomIn,
+        CursorIcon::ZoomOut => baseview::MouseCursor::ZoomOut,
+        CursorIcon::NResize => baseview::MouseCursor::NResize,
+        CursorIcon::EResize => baseview::MouseCursor::EResize,
+        CursorIcon::SResize => baseview::MouseCursor::SResize,
+        CursorIcon::WResize => baseview::MouseCursor::WResize,
+        CursorIcon::NeResize => baseview::MouseCursor::NeResize,
+        CursorIcon::NwResize => baseview::MouseCursor::NwResize,
+        CursorIcon::SeResize => baseview::MouseCursor::SeResize,
+        CursorIcon::SwResize => baseview::MouseCursor::SwResize,
+        CursorIcon::EwResize => baseview::MouseCursor::EwResize,
+        CursorIcon::NsResize => baseview::MouseCursor::NsResize,
+        CursorIcon::NeswResize => baseview::MouseCursor::NeswResize,
+        CursorIcon::NwseResize => baseview::MouseCursor::NwseResize,
+        CursorIcon::AllScroll => baseview::MouseCursor::AllScroll,
+        CursorIcon::ColResize => baseview::MouseCursor::ColResize,
+        CursorIcon::RowResize => baseview::MouseCursor::RowResize,
     }
 }

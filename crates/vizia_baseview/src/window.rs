@@ -1,8 +1,8 @@
 use crate::application::ApplicationRunner;
+use crate::window_settings::{FramePolicy, WindowScalePolicy};
 use baseview::gl::GlConfig;
 use baseview::{
-    Event, EventStatus, Window, WindowContext, WindowHandle, WindowHandler, WindowOpenOptions,
-    WindowScalePolicy,
+    Event, EventStatus, HandlerError, Window, WindowContext, WindowHandler, WindowSettings,
 };
 use gl::types::GLint;
 use gl_rs as gl;
@@ -14,7 +14,8 @@ use skia_safe::gpu::{
 use skia_safe::{ColorSpace, ColorType, PixelGeometry, Surface, SurfaceProps, SurfacePropsFlags};
 use std::cell::RefCell;
 
-use crate::proxy::BaseviewProxy;
+use crate::proxy::ProxyQueue;
+use crate::sync_waker::{SyncWakerGuard, register_window, wake};
 use vizia_core::backend::*;
 use vizia_core::prelude::*;
 
@@ -23,13 +24,15 @@ pub(crate) struct ViziaWindow {
     application: RefCell<ApplicationRunner>,
     #[allow(clippy::type_complexity)]
     on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
+    // Droping this deregister the waker on drop.
+    _sync_waker: Option<SyncWakerGuard>,
 }
 
 impl ViziaWindow {
     fn new(
         mut cx: BackendContext,
         win_desc: WindowDescription,
-        window_scale_policy: WindowScalePolicy,
+        frame_policy: FramePolicy,
         window: WindowContext,
         builder: Option<Box<dyn FnOnce(&mut Context) + Send>>,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
@@ -43,27 +46,28 @@ impl ViziaWindow {
         // apply those effects on this thread.
         Runtime::init_on_ui_thread();
 
-        // Register a no-op sync waker. baseview doesn't expose a proxy-event primitive we
-        // can use to wake the event loop from another thread, but it drives `on_frame` at
-        // the host compositor's vsync rate anyway — signal changes from off-UI writes will
-        // be observed on the next frame (at most one frame of latency).
-        //
-        // Registering the waker here — even as a no-op — has two benefits: (1) it matches
-        // the pattern in `vizia_winit`, so embedders don't have to know about sync-runtime
-        // internals; (2) if a future baseview release gains a window-wake mechanism, only
-        // this one line needs to change.
-        Runtime::set_sync_effect_waker(|| {});
+        // The runner owns the queue and drains it in `on_frame_update`.
+        // proxies only hold a weak reference, so sending fails once the window is closed.
+        let proxy_queue = ProxyQueue::default();
+        cx.set_event_proxy(Box::new(proxy_queue.proxy(window.waker())));
+
+        // Register the window as needing wake only if the policy is `OnDemand`.
+        // `Continuous` draw runs every vsync frame anyway.
+        let guard =
+            (frame_policy == FramePolicy::OnDemand).then(|| register_window(window.waker()));
+        Runtime::set_sync_effect_waker(wake);
+
         let context = window.gl_context().expect("Window was created without OpenGL support");
 
-        unsafe { context.make_current() };
+        unsafe { context.make_current() }.expect("Failed to make GL context current");
 
         // Build skia renderer
-        gl::load_with(|s| context.get_proc_address(s));
+        gl::load_with(|s| context.get_proc_address_from_str(s));
         let interface = skia_safe::gpu::gl::Interface::new_load_with(|name| {
             if name == "eglGetCurrentDisplay" {
                 return std::ptr::null();
             }
-            context.get_proc_address(name)
+            context.get_proc_address_from_str(name)
         })
         .expect("Could not create interface");
 
@@ -95,12 +99,13 @@ impl ViziaWindow {
         let dirty_surface =
             surface.new_surface_with_dimensions((initial_width, initial_height)).unwrap();
 
-        // Scaling is a combination of the window's current scale factor (system-provided unless
-        // explicitly overridden by the hosting application) and a custom user scale factor.
-        let (use_system_scaling, window_scale_factor) = match window_scale_policy {
-            WindowScalePolicy::ScaleFactor(scale) => (false, scale),
-            WindowScalePolicy::SystemScaleFactor => (true, window.scale_factor()),
-        };
+        // baseview determines the scale factor from the platform. The
+        // `WindowScalePolicy::ScaleFactor(scale)`
+        // value is only used as a fallback (via
+        // `with_fallback_scale_factor` in `open_parented`/`open_blocking`) when the platform
+        // cannot report one, so always read the actual scale factor here to keep vizia's layout consistent with the
+        // real window.
+        let window_scale_factor = window.scale_factor();
         let dpi_factor = window_scale_factor * win_desc.user_scale_factor;
 
         cx.add_main_window(Entity::root(), &win_desc, dpi_factor as f32);
@@ -119,17 +124,18 @@ impl ViziaWindow {
         let application = ApplicationRunner::new(
             cx,
             gr_context,
-            use_system_scaling,
             window_scale_factor,
+            frame_policy,
+            proxy_queue,
             surface,
             dirty_surface,
             win_desc,
             is_parented,
             window,
         );
-        unsafe { context.make_not_current() };
+        unsafe { context.make_not_current() }.expect("Failed to make GL context not current");
 
-        ViziaWindow { application: RefCell::new(application), on_idle }
+        ViziaWindow { application: RefCell::new(application), on_idle, _sync_waker: guard }
     }
 
     /// Open a new child window.
@@ -140,16 +146,17 @@ impl ViziaWindow {
         parent: &P,
         win_desc: WindowDescription,
         scale_policy: WindowScalePolicy,
+        frame_policy: FramePolicy,
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
         ignore_default_theme: bool,
-    ) -> WindowHandle
+    ) -> Window
     where
         P: HasWindowHandle,
         F: Fn(&mut Context),
         F: 'static + Send,
     {
-        let window_settings = WindowOpenOptions::new()
+        let window_settings = WindowSettings::new()
             .with_title(win_desc.title.clone())
             .with_size(baseview::dpi::LogicalSize::new(
                 // We have our own uniform non-DPI scaling factor that gets applied in addition to
@@ -157,33 +164,39 @@ impl ViziaWindow {
                 win_desc.inner_size.width as f64 * win_desc.user_scale_factor,
                 win_desc.inner_size.height as f64 * win_desc.user_scale_factor,
             ))
-            .with_scale_policy(scale_policy)
-            .with_gl_config(GlConfig { vsync: true, ..GlConfig::default() });
+            .with_parent(Some(parent))
+            .with_fallback_scale_factor(match scale_policy {
+                WindowScalePolicy::ScaleFactor(scale) => Some(scale),
+                WindowScalePolicy::SystemScaleFactor => None,
+            })
+            .with_gl_config(GlConfig::default());
 
-        Window::open_parented(
-            parent,
+        let window = Window::create(
             window_settings,
-            move |window: WindowContext| -> ViziaWindow {
+            move |window: WindowContext| -> Result<ViziaWindow, HandlerError> {
                 Runtime::init_on_ui_thread();
                 let mut cx = Context::new();
 
                 cx.ignore_default_theme = ignore_default_theme;
                 cx.add_built_in_styles();
 
-                let mut cx = BackendContext::new(cx);
+                let cx = BackendContext::new(cx);
 
-                cx.set_event_proxy(Box::new(BaseviewProxy));
-                ViziaWindow::new(
+                Ok(ViziaWindow::new(
                     cx,
                     win_desc,
-                    scale_policy,
+                    frame_policy,
                     window,
                     Some(Box::new(app)),
                     on_idle,
                     true, // is_parented
-                )
+                ))
             },
         )
+        .expect("Failed to create baseview window");
+
+        window.show().expect("Failed to show baseview window");
+        window
     }
 
     /// Open a new window that blocks the current thread until the window is destroyed.
@@ -192,6 +205,7 @@ impl ViziaWindow {
     pub fn open_blocking<F>(
         win_desc: WindowDescription,
         scale_policy: WindowScalePolicy,
+        frame_policy: FramePolicy,
         app: F,
         on_idle: Option<Box<dyn Fn(&mut Context) + Send>>,
         ignore_default_theme: bool,
@@ -199,47 +213,63 @@ impl ViziaWindow {
         F: Fn(&mut Context),
         F: 'static + Send,
     {
-        let window_settings = WindowOpenOptions::new()
+        let window_settings = WindowSettings::new()
             .with_title(win_desc.title.clone())
             .with_size(baseview::dpi::LogicalSize::new(
                 win_desc.inner_size.width as f64 * win_desc.user_scale_factor,
                 win_desc.inner_size.height as f64 * win_desc.user_scale_factor,
             ))
-            .with_scale_policy(scale_policy)
-            .with_gl_config(GlConfig { vsync: true, ..GlConfig::default() });
+            .with_fallback_scale_factor(match scale_policy {
+                WindowScalePolicy::ScaleFactor(scale) => Some(scale),
+                WindowScalePolicy::SystemScaleFactor => None,
+            })
+            .with_gl_config(GlConfig::default());
 
-        Window::open_blocking(window_settings, move |window: WindowContext| -> ViziaWindow {
-            Runtime::init_on_ui_thread();
-            let mut cx = Context::new();
+        let window = Window::create(
+            window_settings,
+            move |window: WindowContext| -> Result<ViziaWindow, HandlerError> {
+                Runtime::init_on_ui_thread();
+                let mut cx = Context::new();
 
-            cx.ignore_default_theme = ignore_default_theme;
-            cx.add_built_in_styles();
+                cx.ignore_default_theme = ignore_default_theme;
+                cx.add_built_in_styles();
 
-            let mut cx = BackendContext::new(cx);
+                let cx = BackendContext::new(cx);
 
-            cx.set_event_proxy(Box::new(BaseviewProxy));
-            ViziaWindow::new(
-                cx,
-                win_desc,
-                scale_policy,
-                window,
-                Some(Box::new(app)),
-                on_idle,
-                false, // is_parented
-            )
-        })
+                Ok(ViziaWindow::new(
+                    cx,
+                    win_desc,
+                    frame_policy,
+                    window,
+                    Some(Box::new(app)),
+                    on_idle,
+                    false, // is_parented
+                ))
+            },
+        )
+        .expect("Failed to create baseview window");
+
+        window.run_until_closed().expect("baseview event loop failed");
     }
 }
 
 impl WindowHandler for ViziaWindow {
-    fn on_frame(&self) {
+    fn damage(&self, _area: baseview::DamageArea) {
+        // Some hosts dispatch baseview callbacks from a different UI thread than
+        // window construction; ensure this callback thread is registered.
+        Runtime::init_on_ui_thread();
+        if let Ok(mut application) = self.application.try_borrow_mut() {
+            application.mark_damaged();
+        }
+    }
+
+    fn draw(&self) -> Result<(), HandlerError> {
         // Some hosts dispatch baseview callbacks from a different UI thread than
         // window construction; ensure this callback thread is registered.
         Runtime::init_on_ui_thread();
         let Ok(mut application) = self.application.try_borrow_mut() else {
-            return;
+            return Ok(());
         };
-        application.on_frame_update();
 
         // Run the embedder's idle callback on every frame tick, not only after
         // an AppKit event. Mirrors what `vizia_winit` does in its
@@ -252,14 +282,26 @@ impl WindowHandler for ViziaWindow {
         // the next mouse move or key event happened to arrive.
         application.handle_idle(&self.on_idle);
 
+        // Compute needs redraw after the idle callback so
+        // event queued during on idle now trigger the cb.
+        let needs_redraw = application.on_frame_update();
+
         application.render();
+
+        // Schedule the next frame according to the configured frame policy.
+        application.schedule_next_frame(needs_redraw);
+
+        Ok(())
     }
 
-    fn resized(&self, new_size: baseview::WindowSize) {
+    fn resized(&self, new_size: baseview::WindowSize) -> Result<(), HandlerError> {
         Runtime::init_on_ui_thread();
         if let Ok(mut application) = self.application.try_borrow_mut() {
             application.handle_resized(new_size);
+            application.request_redraw();
         }
+
+        Ok(())
     }
 
     fn on_event(&self, event: Event) -> EventStatus {
@@ -270,19 +312,14 @@ impl WindowHandler for ViziaWindow {
             return EventStatus::Ignored;
         };
 
-        // If a text input currently holds focus, a native keyboard event is
-        // intended for the plugin. Report it as `Captured` so the backend
-        // does not forward the platform event further — otherwise the host
-        // (e.g. a DAW) also processes the same keystroke, producing double
-        // handling and a system beep on macOS.
-        let captured =
-            matches!(event, Event::Keyboard(_)) && application.focused_element() == Some("textbox");
-
-        application.handle_event(event);
+        let status = application.handle_event(event);
 
         application.handle_idle(&self.on_idle);
 
-        if captured { EventStatus::Captured } else { EventStatus::Ignored }
+        // Wake the loop so the event is rendered on the next frame.
+        application.request_redraw();
+
+        status
     }
 }
 
