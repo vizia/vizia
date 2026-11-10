@@ -479,6 +479,10 @@ impl Context {
             return;
         }
 
+        self.update_focus(focus_visible);
+    }
+
+    fn update_focus(&mut self, focus_visible: bool) {
         let old_focus = self.focused;
         let new_focus = self.current;
         self.set_focus_pseudo_classes(old_focus, false, focus_visible);
@@ -631,7 +635,12 @@ impl Context {
                 // and later crash consumers of the focus id (e.g. the accesskit tree update).
                 // Force focus to the nearest surviving ancestor window (or root) in that case.
                 if self.focused == *entity {
-                    self.focused = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
+                    let fallback = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
+                    let focus_visible =
+                        self.style.pseudo_classes.get_mut(*entity).is_some_and(|classes| {
+                            classes.contains(PseudoClassFlags::FOCUS_VISIBLE)
+                        });
+                    self.with_current(fallback, |cx| cx.update_focus(focus_visible));
                 }
             }
 
