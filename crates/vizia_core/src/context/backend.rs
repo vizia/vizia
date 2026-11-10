@@ -158,6 +158,11 @@ impl BackendContext {
             BoundingBox::from_min_max(0.0, 0.0, physical_width, physical_height),
         );
 
+        // Single-axis overflow clips use the window size even when their own geometry is unchanged.
+        for entity in LayoutTreeIterator::subtree(&self.0.tree, window_entity) {
+            self.0.cache.draw_bounds.remove(entity);
+        }
+
         let logical_width = self.0.style.physical_to_logical(physical_width);
         let logical_height = self.0.style.physical_to_logical(physical_height);
         self.0.style.width.insert(window_entity, Units::Pixels(logical_width));

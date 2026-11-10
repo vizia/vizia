@@ -159,30 +159,19 @@ where
 
                 let entity_sparse_index = self.inline_data.sparse[entity_index];
 
-                if self.inline_data.sparse[entity_index].data_index.index()
-                    != parent_sparse_index.data_index.index()
-                {
-                    if entity_sparse_index.data_index.index() < self.inline_data.dense.len() {
-                        if entity_sparse_index.data_index.is_inherited()
-                            && entity_sparse_index.data_index.is_inline()
-                        {
-                            self.inline_data.sparse[entity_index] = Index {
-                                data_index: DataIndex::inline(
-                                    parent_sparse_index.data_index.index(),
-                                )
-                                .inherited(),
-                                anim_index: u32::MAX,
-                            };
-                            return true;
-                        }
+                let current = entity_sparse_index.data_index;
+                let explicit = !current.is_inherited()
+                    && if current.is_inline() {
+                        current.index() < self.inline_data.dense.len()
                     } else {
-                        self.inline_data.sparse[entity_index] = Index {
-                            data_index: DataIndex::inline(parent_sparse_index.data_index.index())
-                                .inherited(),
-                            anim_index: u32::MAX,
-                        };
-                        return true;
-                    }
+                        current.index() < self.shared_data.dense.len()
+                    };
+                let inherited =
+                    DataIndex::inline(parent_sparse_index.data_index.index()).inherited();
+                if !explicit && current != inherited {
+                    self.inline_data.sparse[entity_index] =
+                        Index { data_index: inherited, anim_index: entity_sparse_index.anim_index };
+                    return true;
                 }
             }
         }
@@ -231,6 +220,15 @@ where
                         return true;
                     }
                 }
+                return false;
+            }
+        }
+
+        if let Some(index) = self.inline_data.sparse.get_mut(entity_index) {
+            let current = index.data_index;
+            if !current.is_inline() && current.is_inherited() && current != DataIndex::null() {
+                index.data_index = DataIndex::null();
+                return true;
             }
         }
 
