@@ -63,6 +63,20 @@ mod tests {
                 store.insert(child, 40.0);
                 assert!(!store.inherit_inline(child, parent));
                 assert_eq!(store.get(child), Some(&40.0));
+
+                let mut store = <$store>::default();
+                store.insert_rule(Rule::new(0, 0), 30.0);
+                store.insert_rule(Rule::new(1, 0), 40.0);
+                store.link(parent, &[(Rule::new(0, 0), 0)] $(, $variables)?);
+                assert!(store.inherit_shared(child, parent));
+                assert!(store.link(child, &[(Rule::new(0, 0), 0)] $(, $variables)?));
+                assert!(!store.link(child, &[(Rule::new(0, 0), 0)] $(, $variables)?));
+                store.link(parent, &[(Rule::new(1, 0), 0)] $(, $variables)?);
+                assert!(!store.inherit_shared(child, parent));
+                assert_eq!(store.get(child), Some(&30.0));
+                store.link(parent, &[] $(, $variables)?);
+                assert!(!store.inherit_shared(child, parent));
+                assert_eq!(store.get(child), Some(&30.0));
             }
         };
     }
@@ -94,5 +108,22 @@ mod tests {
         assert!(!store.inherit_shared(child, parent));
         assert!(!store.inherit_shared(explicit_child, parent));
         assert_eq!(store.get(explicit_child), Some(&30.0));
+    }
+
+    #[test]
+    fn resolved_variable_link_promotes_an_inherited_rule_to_explicit() {
+        let mut store = AnimatableVarSet::<f32>::default();
+        let parent = Entity::new(1, 0);
+        let child = Entity::new(2, 0);
+        let variables = hashbrown::HashMap::new();
+        store.insert_rule(Rule::new(0, 0), 30.0);
+        store.insert_rule(Rule::new(1, 0), 40.0);
+        store.link_with_resolved(parent, &[(Rule::new(0, 0), 0)], &variables);
+        assert!(store.inherit_shared(child, parent));
+        assert!(store.link_with_resolved(child, &[(Rule::new(0, 0), 0)], &variables));
+        assert!(!store.link_with_resolved(child, &[(Rule::new(0, 0), 0)], &variables));
+        store.link_with_resolved(parent, &[(Rule::new(1, 0), 0)], &variables);
+        assert!(!store.inherit_shared(child, parent));
+        assert_eq!(store.get(child), Some(&30.0));
     }
 }

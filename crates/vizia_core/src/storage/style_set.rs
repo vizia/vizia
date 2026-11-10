@@ -350,7 +350,10 @@ where
 
                 let data_index = self.inline_data.sparse[entity_index].data_index;
                 // Already linked
-                if !data_index.is_inline() && data_index.index() == shared_data_index.index() {
+                if !data_index.is_inline()
+                    && !data_index.is_inherited()
+                    && data_index.index() == shared_data_index.index()
+                {
                     return false;
                 }
 

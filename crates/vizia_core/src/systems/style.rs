@@ -975,12 +975,6 @@ fn link_style_data(
         should_redraw = true;
     }
 
-    if style.direction.link(entity, matched_rules) {
-        should_relayout = true;
-        should_redraw = true;
-        should_reflow = true;
-    }
-
     if style.wrap.link(entity, matched_rules) {
         should_relayout = true;
         should_redraw = true;
@@ -1533,40 +1527,61 @@ pub(crate) fn style_system(cx: &mut Context) {
         if full_walk { vec![root] } else { inheritance_roots(&cx.tree, &entities, &restyle) };
 
     let mut direction_bloom = BloomFilter::default();
-    let mut direction_changed = HashSet::new();
-    for entity in entities.iter().copied() {
-        compute_element_hash(entity, &cx.tree, &cx.style, &mut direction_bloom);
-        let matched_direction_rules =
-            compute_matched_direction_rules(entity, &cx.style, &cx.tree, &direction_bloom);
+    let mut direction_states = Vec::new();
+    loop {
+        let mut state = entities
+            .iter()
+            .map(|entity| (*entity, cx.style.direction.get(*entity).copied()))
+            .collect::<Vec<_>>();
+        state.sort_unstable_by_key(|(entity, _)| entity.index());
+        // A :dir() selector can change direction itself. Stop on a repeated state, keeping
+        // this resolved direction snapshot for the final matching pass rather than oscillating.
+        if direction_states.contains(&state) {
+            log::warn!("Cyclic direction selectors detected; keeping the last resolved directions");
+            break;
+        }
+        direction_states.push(state);
 
-        if cx.style.direction.link(entity, &matched_direction_rules) {
-            direction_changed.insert(entity);
-            // Direction affects layout flow; mark this entity dirty so incremental layout runs.
-            cx.style.needs_relayout(entity);
-            redraw_entities.push(entity);
+        let mut direction_changed = HashSet::new();
+        for entity in entities.iter().copied() {
+            compute_element_hash(entity, &cx.tree, &cx.style, &mut direction_bloom);
+            let matched_direction_rules =
+                compute_matched_direction_rules(entity, &cx.style, &cx.tree, &direction_bloom);
+            let previous = cx.style.direction.get(entity).copied();
 
-            let iter = LayoutParentIterator::new(&cx.tree, entity);
-            for parent in iter {
-                if cx.style.display.get(parent).copied().unwrap_or_default() != Display::None {
-                    cx.style.needs_text_update(parent);
-                    break;
+            if cx.style.direction.link(entity, &matched_direction_rules) {
+                if previous != cx.style.direction.get(entity).copied() {
+                    direction_changed.insert(entity);
+                }
+                cx.style.needs_relayout(entity);
+                redraw_entities.push(entity);
+
+                let iter = LayoutParentIterator::new(&cx.tree, entity);
+                for parent in iter {
+                    if cx.style.display.get(parent).copied().unwrap_or_default() != Display::None {
+                        cx.style.needs_text_update(parent);
+                        break;
+                    }
                 }
             }
         }
-    }
 
-    for entity in subtrees(&cx.tree, &walk_roots) {
-        if let Some(parent) = cx.tree.get_layout_parent(entity) {
-            if cx.style.direction.inherit_shared(entity, parent) {
-                direction_changed.insert(entity);
-                cx.style.needs_text_update(entity);
-                // Only this entity's direction changed; relayout incrementally from it.
-                cx.style.needs_relayout(entity);
+        for entity in subtrees(&cx.tree, &walk_roots) {
+            if let Some(parent) = cx.tree.get_layout_parent(entity) {
+                let previous = cx.style.direction.get(entity).copied();
+                if cx.style.direction.inherit_shared(entity, parent) {
+                    if previous != cx.style.direction.get(entity).copied() {
+                        direction_changed.insert(entity);
+                    }
+                    cx.style.needs_text_update(entity);
+                    cx.style.needs_relayout(entity);
+                }
             }
         }
-    }
 
-    if !direction_changed.is_empty() {
+        if direction_changed.is_empty() {
+            break;
+        }
         for entity in direction_changed {
             cx.style.needs_restyle_with_dependents(&cx.tree, entity);
         }
@@ -1578,6 +1593,8 @@ pub(crate) fn style_system(cx: &mut Context) {
         }
     }
 
+    // Direction is now resolved; linking the remaining properties must not change the
+    // direction snapshot against which their :dir() selectors were matched.
     let matched_rules = {
         #[cfg(feature = "rayon")]
         {
@@ -1842,5 +1859,103 @@ mod tests {
         style_system(&mut cx);
 
         assert_eq!(cx.style.font_size.get(label), Some(&FontSize::from(30.0)));
+    }
+
+    #[test]
+    fn chained_direction_dependents_are_resolved_before_matching() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".trigger.rtl { direction: rtl; }
+             .trigger:dir(rtl) + .other { direction: rtl; }
+             .other:dir(rtl) > label { font-size: 30px; }",
+        )
+        .unwrap();
+        let trigger = Element::new(&mut cx).class("trigger").entity();
+        let mut label = Entity::null();
+        let other = VStack::new(&mut cx, |cx| {
+            label = Label::new(cx, "text").entity();
+        })
+        .class("other")
+        .entity();
+        style_system(&mut cx);
+
+        cx.style.set_class(&cx.tree, trigger, "rtl", true);
+        style_system(&mut cx);
+        assert_eq!(cx.style.direction.get(other), Some(&Direction::RightToLeft));
+        assert_eq!(cx.style.font_size.get(label), Some(&FontSize::from(30.0)));
+
+        cx.style.set_class(&cx.tree, trigger, "rtl", false);
+        style_system(&mut cx);
+        assert_ne!(cx.style.direction.get(other), Some(&Direction::RightToLeft));
+        assert_ne!(cx.style.font_size.get(label), Some(&FontSize::from(30.0)));
+    }
+
+    #[test]
+    fn explicit_font_weight_survives_removal_of_the_same_inherited_rule() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".bold { font-weight: 700; }").unwrap();
+        let mut label = Entity::null();
+        let parent = VStack::new(&mut cx, |cx| {
+            label = Label::new(cx, "text").entity();
+        })
+        .class("bold")
+        .entity();
+        style_system(&mut cx);
+        let weight = cx.style.font_weight.get(label).copied();
+        assert!(weight.is_some());
+        cx.style.set_class(&cx.tree, label, "bold", true);
+        style_system(&mut cx);
+        cx.style.set_class(&cx.tree, parent, "bold", false);
+        style_system(&mut cx);
+        assert_eq!(cx.style.font_weight.get(label).copied(), weight);
+    }
+
+    #[test]
+    fn direction_propagates_through_multiple_sibling_dependencies() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".rtl { direction: rtl; }
+             .step:dir(rtl) + .step { direction: rtl; }
+             .step:dir(rtl) > label { font-size: 30px; }",
+        )
+        .unwrap();
+        let trigger = Element::new(&mut cx).class("step").entity();
+        let mut labels = Vec::new();
+        for _ in 0..4 {
+            VStack::new(&mut cx, |cx| {
+                labels.push(Label::new(cx, "text").entity());
+            })
+            .class("step");
+        }
+        style_system(&mut cx);
+
+        for rtl in [true, false] {
+            cx.style.set_class(&cx.tree, trigger, "rtl", rtl);
+            style_system(&mut cx);
+            for label in &labels {
+                assert_eq!(cx.style.font_size.get(*label) == Some(&FontSize::from(30.0)), rtl);
+            }
+        }
+    }
+
+    #[test]
+    fn cyclic_direction_selectors_terminate_with_consistent_final_matching() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".cycle:dir(ltr) { direction: rtl; }
+             .cycle:dir(rtl) { direction: ltr; font-size: 30px; }",
+        )
+        .unwrap();
+        let entity = Element::new(&mut cx).class("cycle").entity();
+        style_system(&mut cx);
+        let direction = cx.style.direction.get(entity).copied();
+        assert!(direction.is_some());
+        assert_eq!(
+            cx.style.font_size.get(entity) == Some(&FontSize::from(30.0)),
+            direction == Some(Direction::RightToLeft)
+        );
+        assert!(cx.style.restyle.is_empty());
+        style_system(&mut cx);
+        assert_eq!(cx.style.direction.get(entity).copied(), direction);
     }
 }
