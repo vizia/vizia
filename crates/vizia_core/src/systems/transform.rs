@@ -1,4 +1,5 @@
 use hashbrown::HashSet;
+use vizia_storage::LayoutParentIterator;
 
 use crate::{animation::Interpolator, prelude::*};
 
@@ -7,10 +8,10 @@ use crate::{animation::Interpolator, prelude::*};
 /// Transforms in window coordinates are derived from the local transforms of an entity and its
 /// ancestors when needed, so a transform change does not need to visit any descendants. Only the
 /// window-space clip paths of descendants which clip their content need to be recomputed.
-pub(crate) fn transform_system(cx: &mut Context) {
+pub(crate) fn transform_system(cx: &mut Context) -> bool {
     let _scope = crate::profiling::scope("transform_system");
     if cx.style.retransform.is_empty() {
-        return;
+        return false;
     }
 
     let retransform = std::mem::take(&mut cx.style.retransform);
@@ -19,8 +20,11 @@ pub(crate) fn transform_system(cx: &mut Context) {
         retransform.into_iter().filter(|&entity| update_transform(cx, entity)).collect();
 
     if changed.is_empty() {
-        return;
+        return false;
     }
+
+    let hover_affected =
+        LayoutParentIterator::new(&cx.tree, cx.hovered).any(|entity| changed.contains(&entity));
 
     for &entity in &changed {
         // The draw system dirties the previous and new areas of redrawn entities, and recomputes
@@ -41,6 +45,8 @@ pub(crate) fn transform_system(cx: &mut Context) {
             current = cx.tree.get_layout_parent(ancestor);
         }
     }
+
+    hover_affected
 }
 
 /// Recomputes the local transform of an entity. Returns true if the transform changed.
@@ -223,5 +229,23 @@ mod tests {
         let redraw_list = &cx.windows[&Entity::root()].redraw_list;
         assert!(redraw_list.contains(&a));
         assert!(!redraw_list.contains(&b));
+    }
+
+    #[test]
+    fn hovered_entity_ancestor_transform_requests_refresh() {
+        let (mut cx, ancestor, _, hovered) = setup();
+        cx.hovered = hovered;
+        translate(&mut cx, ancestor, 10.0, 0.0);
+
+        assert!(transform_system(&mut cx));
+    }
+
+    #[test]
+    fn unrelated_descendant_transform_does_not_request_refresh() {
+        let (mut cx, _, parent, hovered) = setup();
+        cx.hovered = parent;
+        translate(&mut cx, hovered, 10.0, 0.0);
+
+        assert!(!transform_system(&mut cx));
     }
 }
