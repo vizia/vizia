@@ -327,16 +327,6 @@ name = "timers"
 path = "examples/timers.rs"
 
 [[example]]
-name = "profile_list"
-path = "examples/profile_list.rs"
-required-features = ["profiling"]
-
-[[example]]
-name = "profile_scroll"
-path = "examples/profile_scroll.rs"
-required-features = ["profiling"]
-
-[[example]]
 name = "markdown"
 path = "examples/views/markdown.rs"
 required-features = ["markdown"]
