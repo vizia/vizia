@@ -671,18 +671,6 @@ impl Context {
                 self.tree.get_parent_window(*entity).unwrap_or(Entity::root())
             };
 
-            if !self.tree.is_window(*entity) {
-                if let Some(draw_bounds) = self.cache.draw_bounds.get(*entity) {
-                    if let Some(ws) = self.windows.get_mut(&window_entity) {
-                        if let Some(dirty_rect) = &mut ws.dirty_rect {
-                            *dirty_rect = dirty_rect.union(draw_bounds);
-                        } else {
-                            ws.dirty_rect = Some(*draw_bounds);
-                        }
-                    }
-                }
-            }
-
             if let Some(ws) = self.windows.get_mut(&window_entity) {
                 ws.redraw_list.remove(entity);
             }
