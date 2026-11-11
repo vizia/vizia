@@ -59,8 +59,12 @@ impl EventManager {
                 });
 
                 // Handle internal events.
-                event.take(|internal_event, _| match internal_event {
+                event.take(|internal_event, meta| match internal_event {
                     InternalEvent::Redraw => cx.needs_redraw(Entity::root()),
+                    InternalEvent::RefreshHover => {
+                        hover_system(cx, meta.origin);
+                        meta.consume();
+                    }
                     InternalEvent::LoadImage { path, image, policy } => {
                         if let Some(image) = image.lock().unwrap().take() {
                             ResourceContext::new(cx).load_image(path, image, policy);
@@ -856,4 +860,38 @@ fn emit_direct_or_up<M: Any>(cx: &mut Context, message: M, direct: Entity, up: E
     let mut event = Event::new(message);
     mutate_direct_or_up(&mut event.meta, direct, up, root);
     cx.emit_custom(event);
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::context::{Context, InternalEvent, WindowState};
+    use crate::events::{Event, EventManager, Propagation};
+    use crate::prelude::{Entity, WindowEvent};
+    use vizia_id::GenerationalId;
+
+    #[test]
+    fn queued_hover_refresh_preserves_newer_cursor_position() {
+        let mut context = Context::default();
+        context.windows.insert(Entity::root(), WindowState::default());
+        context.mouse.cursor_x = 537.0;
+        context.mouse.cursor_y = 97.0;
+        let refresh = Event::new(InternalEvent::RefreshHover)
+            .target(Entity::root())
+            .origin(Entity::root())
+            .propagate(Propagation::Up);
+        context.event_queue.push_back(
+            Event::new(WindowEvent::MouseMove(542.0, 433.0))
+                .target(Entity::root())
+                .origin(Entity::root())
+                .propagate(Propagation::Up),
+        );
+        context.event_queue.push_back(refresh);
+
+        EventManager::new().flush_events(&mut context, |_| {});
+
+        assert_eq!(context.mouse.cursor_x, 542.0);
+        assert_eq!(context.mouse.cursor_y, 433.0);
+        assert_eq!(context.mouse.previous_cursor_x, 537.0);
+        assert_eq!(context.mouse.previous_cursor_y, 97.0);
+    }
 }

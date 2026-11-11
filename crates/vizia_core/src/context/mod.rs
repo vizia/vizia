@@ -1263,6 +1263,7 @@ impl Context {
 
 pub(crate) enum InternalEvent {
     Redraw,
+    RefreshHover,
     LoadImage { path: String, image: Mutex<Option<skia_safe::Image>>, policy: ImageRetentionPolicy },
     LoadSvg { path: String, data: Vec<u8>, policy: ImageRetentionPolicy },
     LoadFont { path: String, data: Vec<u8> },

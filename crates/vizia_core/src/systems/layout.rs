@@ -2,6 +2,7 @@ use hashbrown::HashSet;
 use morphorm::Node;
 use vizia_storage::LayoutTreeIterator;
 
+use crate::context::InternalEvent;
 use crate::events::ProxyEvent;
 use crate::layout::node::SubLayout;
 use crate::prelude::*;
@@ -194,16 +195,13 @@ pub(crate) fn layout_system(cx: &mut Context) {
             }
         }
 
-        // A relayout, retransform, or reclip, can cause the element under the cursor to change. So we push a mouse move event here to force
-        // a new event cycle and the hover system to trigger.
-        // However, skip this during capture to avoid sending stale coordinates that interfere with drag operations.
+        // Refresh hover after layout without replaying a captured cursor position.
         if let Some(proxy) = &cx.event_proxy {
             if cx.captured.is_null() {
-                let event =
-                    ProxyEvent::new(WindowEvent::MouseMove(cx.mouse.cursor_x, cx.mouse.cursor_y))
-                        .target(Entity::root())
-                        .origin(Entity::root())
-                        .propagate(Propagation::Up);
+                let event = ProxyEvent::new(InternalEvent::RefreshHover)
+                    .target(Entity::root())
+                    .origin(Entity::root())
+                    .propagate(Propagation::Up);
 
                 proxy.send(event).expect("Failed to send event");
             }
