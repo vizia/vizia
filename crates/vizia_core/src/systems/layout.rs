@@ -10,6 +10,16 @@ use crate::tree::minimal_layout_dirty_roots;
 
 use super::{clipping_system, text_layout_system, text_system, transform_system};
 
+fn hover_geometry_changed(entity: Entity, hovered: Entity, geo: GeoChanged) -> bool {
+    entity == hovered
+        && geo.intersects(
+            GeoChanged::POSX_CHANGED
+                | GeoChanged::POSY_CHANGED
+                | GeoChanged::WIDTH_CHANGED
+                | GeoChanged::HEIGHT_CHANGED,
+        )
+}
+
 /// Returns whether an entity is a valid restart point for incremental layout, mirroring
 /// morphorm's `NodeExt::is_restartable`: its width and height must both be `Pixels` or `Stretch`.
 fn is_restartable(style: &Style, entity: Entity) -> bool {
@@ -61,6 +71,7 @@ fn layout_restart_root(style: &Style, tree: &Tree<Entity>, entity: Entity) -> En
 /// subtree. Marking the root dirty performs a full relayout.
 pub(crate) fn layout_system(cx: &mut Context) {
     let _scope = crate::profiling::scope("layout_system");
+    let mut hover_geometry_affected = false;
     text_system(cx);
 
     if !cx.style.relayout.is_empty() {
@@ -158,6 +169,8 @@ pub(crate) fn layout_system(cx: &mut Context) {
             }
 
             if let Some(geo) = cx.cache.geo_changed.get(entity).copied() {
+                hover_geometry_affected |= hover_geometry_changed(entity, *cx.hovered, geo);
+
                 if !geo.is_empty() && cx.style.text.contains(entity) {
                     cx.style.needs_text_layout(entity);
                 }
@@ -195,24 +208,25 @@ pub(crate) fn layout_system(cx: &mut Context) {
             }
         }
 
-        // Refresh hover after layout without replaying a captured cursor position.
-        if let Some(proxy) = &cx.event_proxy {
-            if cx.captured.is_null() {
-                let event = ProxyEvent::new(InternalEvent::RefreshHover)
-                    .target(Entity::root())
-                    .origin(Entity::root())
-                    .propagate(Propagation::Up);
-
-                proxy.send(event).expect("Failed to send event");
-            }
-        }
-
         cx.style.system_flags.set(SystemFlags::RELAYOUT, false);
     }
 
     text_layout_system(cx);
-    transform_system(cx);
-    clipping_system(cx);
+    let transform_hover_changed = transform_system(cx);
+    let clipping_hover_changed = clipping_system(cx);
+
+    if (hover_geometry_affected || transform_hover_changed || clipping_hover_changed)
+        && cx.captured.is_null()
+    {
+        if let Some(proxy) = &cx.event_proxy {
+            let event = ProxyEvent::new(InternalEvent::RefreshHover)
+                .target(Entity::root())
+                .origin(Entity::root())
+                .propagate(Propagation::Up);
+
+            proxy.send(event).expect("Failed to send event");
+        }
+    }
 }
 
 fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
@@ -244,5 +258,21 @@ fn visit_entity(cx: &mut EventContext, entity: Entity, event: &mut Event) {
         view.event(cx, event);
 
         cx.views.insert(entity, view);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::hover_geometry_changed;
+    use crate::prelude::*;
+
+    #[test]
+    fn hover_refresh_requires_geometry_change_on_hovered_entity() {
+        let hovered = Entity::root();
+
+        assert!(hover_geometry_changed(hovered, hovered, GeoChanged::WIDTH_CHANGED));
+        assert!(hover_geometry_changed(hovered, hovered, GeoChanged::POSY_CHANGED));
+        assert!(!hover_geometry_changed(hovered, hovered, GeoChanged::empty()));
+        assert!(!hover_geometry_changed(Entity::null(), hovered, GeoChanged::WIDTH_CHANGED));
     }
 }

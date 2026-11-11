@@ -1,5 +1,6 @@
+use hashbrown::HashSet;
 use skia_safe::{Path, PathBuilder, Point, RRect, Rect};
-use vizia_storage::LayoutChildIterator;
+use vizia_storage::{LayoutChildIterator, LayoutParentIterator};
 
 use crate::cache::CachedData;
 
@@ -10,13 +11,16 @@ use crate::{prelude::*, tree::minimal_layout_dirty_roots};
 /// Callers only mark the entities whose own clip inputs changed. Starting from the topmost marked
 /// entities, the system recomputes the clip path of each marked entity, and of every descendant
 /// whose parent clip path changed.
-pub(crate) fn clipping_system(cx: &mut Context) {
+pub(crate) fn clipping_system(cx: &mut Context) -> bool {
     let _scope = crate::profiling::scope("clipping_system");
     if cx.style.reclip.is_empty() {
-        return;
+        return false;
     }
 
     let reclip = std::mem::take(&mut cx.style.reclip);
+    let hovered_ancestors: HashSet<Entity> =
+        LayoutParentIterator::new(&cx.tree, cx.hovered).collect();
+    let mut hover_affected = false;
 
     // Each entry holds an entity, whether the clip path of its parent changed, and whether its
     // clip path must be recomputed regardless.
@@ -28,6 +32,7 @@ pub(crate) fn clipping_system(cx: &mut Context) {
     while let Some((entity, parent_changed, forced)) = stack.pop() {
         let marked = reclip.contains(&entity);
         let changed = (forced || parent_changed || marked) && update_clip_path(cx, entity);
+        hover_affected |= changed && hovered_ancestors.contains(&entity);
 
         // Clip paths with a single hidden axis extend to the window bounds, so a change to a window
         // recomputes everything within it.
@@ -37,6 +42,8 @@ pub(crate) fn clipping_system(cx: &mut Context) {
             LayoutChildIterator::new(&cx.tree, entity).map(|child| (child, changed, forced)),
         );
     }
+
+    hover_affected
 }
 
 /// Returns true if the entity clips its content, rather than only inheriting the clip path of its
@@ -305,5 +312,26 @@ mod tests {
         clipping_system(&mut cx);
 
         assert_eq!(clip_bounds(&cx, b), Some(Rect::new(25.0, 20.0, 45.0, 40.0)));
+    }
+
+    #[test]
+    fn hovered_entity_ancestor_clip_requests_refresh() {
+        let (mut cx, ancestor, _, hovered) = setup();
+        cx.hovered = hovered;
+        cx.cache.set_bounds(ancestor, BoundingBox { x: 10.0, y: 10.0, w: 50.0, h: 50.0 });
+        cx.style.needs_reclip(ancestor);
+
+        assert!(clipping_system(&mut cx));
+    }
+
+    #[test]
+    fn unrelated_descendant_clip_does_not_request_refresh() {
+        let (mut cx, hovered, descendant, _) = setup();
+        cx.hovered = hovered;
+        cx.style.overflowx.insert(descendant, Overflow::Hidden);
+        cx.style.overflowy.insert(descendant, Overflow::Hidden);
+        cx.style.needs_reclip(descendant);
+
+        assert!(!clipping_system(&mut cx));
     }
 }
