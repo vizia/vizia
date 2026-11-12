@@ -3316,6 +3316,7 @@ impl Style {
         self.retransform.remove(&entity);
         self.reclip.remove(&entity);
         self.laid_out.remove(&entity);
+        self.element.remove(entity);
         self.ids.remove(entity);
         self.classes.remove(entity);
         self.pseudo_classes.remove(entity);

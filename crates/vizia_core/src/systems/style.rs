@@ -1766,6 +1766,47 @@ mod tests {
         );
     }
 
+    struct Unnamed;
+
+    impl View for Unnamed {}
+
+    #[test]
+    fn recycled_views_resolve_only_their_own_element_selector() {
+        let mut cx = Context::default();
+        cx.add_stylesheet("label { width: 111px; }").unwrap();
+
+        let label = Label::new(&mut cx, "label").entity();
+        style_system(&mut cx);
+        assert_eq!(cx.style.element.get(label), Some(&fxhash::hash32("label")));
+        assert_eq!(cx.style.width.get(label), Some(&Units::Pixels(111.0)));
+        cx.remove(label);
+
+        // The entity manager quarantines freed indices; cycle until it hands this one out again.
+        let unnamed = loop {
+            let candidate = Unnamed.build(&mut cx, |_| {}).entity();
+            if candidate.index() == label.index() {
+                break candidate;
+            }
+            cx.remove(candidate);
+        };
+        assert_ne!(unnamed.generation(), label.generation());
+        assert!(cx.style.element.get(unnamed).is_none());
+        style_system(&mut cx);
+        assert_ne!(cx.style.width.get(unnamed), Some(&Units::Pixels(111.0)));
+        cx.remove(unnamed);
+
+        let replacement = loop {
+            let candidate = Label::new(&mut cx, "replacement").entity();
+            if candidate.index() == unnamed.index() {
+                break candidate;
+            }
+            cx.remove(candidate);
+        };
+        assert_ne!(replacement.generation(), unnamed.generation());
+        style_system(&mut cx);
+        assert_eq!(cx.style.width.get(replacement), Some(&Units::Pixels(111.0)));
+    }
+
     #[test]
     fn adding_a_sibling_restyles_descendants_of_the_previous_last_child() {
         let mut cx = Context::default();
