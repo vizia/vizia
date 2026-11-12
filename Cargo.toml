@@ -37,6 +37,8 @@ chrono.workspace = true
 log.workspace = true
 fern.workspace = true
 ego-tree.workspace = true
+serde.workspace = true
+serde_json = "1"
 
 [workspace]
 members = [ "crates/*", "examples/todo", "examples/widget_gallery", "examples/gallery"]
@@ -392,6 +394,11 @@ required-features = ["winit", "markdown"]
 [[example]]
 name = "multiwindow"
 path = "examples/multiwindow.rs"
+required-features = ["winit"]
+
+[[example]]
+name = "window_state"
+path = "examples/window_state.rs"
 required-features = ["winit"]
 
 [[example]]
