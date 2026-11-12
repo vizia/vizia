@@ -109,7 +109,7 @@ impl ViziaWindow {
         let dpi_factor = window_scale_factor * win_desc.user_scale_factor;
 
         cx.add_main_window(Entity::root(), &win_desc, dpi_factor as f32);
-        cx.add_window(WindowView {});
+        cx.add_window(Entity::root(), WindowView {});
 
         cx.0.windows.insert(
             Entity::root(),
@@ -331,7 +331,11 @@ impl Drop for ViziaWindow {
 
 pub struct WindowView {}
 
-impl View for WindowView {}
+impl View for WindowView {
+    fn element(&self) -> Option<&'static str> {
+        Some("window")
+    }
+}
 
 pub fn create_surface(
     size: (i32, i32),

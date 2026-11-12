@@ -57,31 +57,35 @@ fn input_box<R>(
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
+        Window::new(cx, |cx| {
+            cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        let options = Signal::new(["one-way flight", "return flight"].map(Signal::new).to_vec());
-        let selected_option = Signal::new(Some(0));
-        let start_date = Signal::new(NaiveDate::from_ymd_opt(2022, 2, 12).unwrap());
-        let end_date = Signal::new(NaiveDate::from_ymd_opt(2022, 2, 26).unwrap());
+            let options =
+                Signal::new(["one-way flight", "return flight"].map(Signal::new).to_vec());
+            let selected_option = Signal::new(Some(0));
+            let start_date = Signal::new(NaiveDate::from_ymd_opt(2022, 2, 12).unwrap());
+            let end_date = Signal::new(NaiveDate::from_ymd_opt(2022, 2, 26).unwrap());
 
-        let start_date_text =
-            Memo::new(move |_| format!("{}", start_date.get().format("%Y:%m:%d")));
-        let end_date_text = Memo::new(move |_| format!("{}", end_date.get().format("%Y:%m:%d")));
+            let start_date_text =
+                Memo::new(move |_| format!("{}", start_date.get().format("%Y:%m:%d")));
+            let end_date_text =
+                Memo::new(move |_| format!("{}", end_date.get().format("%Y:%m:%d")));
 
-        AppData { selected_option, start_date, end_date }.build(cx);
+            AppData { selected_option, start_date, end_date }.build(cx);
 
-        VStack::new(cx, |cx| {
-            Select::new(cx, options, selected_option, true)
-                .on_select(|cx, index| cx.emit(AppEvent::SetChoice(index)));
+            VStack::new(cx, |cx| {
+                Select::new(cx, options, selected_option, true)
+                    .on_select(|cx, index| cx.emit(AppEvent::SetChoice(index)));
 
-            input_box(cx, start_date_text, AppEvent::SetStartDate);
-            input_box(cx, end_date_text, AppEvent::SetEndDate);
+                input_box(cx, start_date_text, AppEvent::SetStartDate);
+                input_box(cx, end_date_text, AppEvent::SetEndDate);
 
-            Button::new(cx, |cx| Label::new(cx, "Book"));
+                Button::new(cx, |cx| Label::new(cx, "Book"));
+            })
+            .class("container");
         })
-        .class("container");
+        .title("Flight Booker")
+        .inner_size((250, 250));
     })
-    .title("Flight Booker")
-    .inner_size((250, 250))
     .run()
 }

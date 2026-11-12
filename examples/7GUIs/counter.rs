@@ -18,18 +18,21 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let count = Signal::new(0);
-        AppData { count }.build(cx);
+        Window::new(cx, |cx| {
+            let count = Signal::new(0);
+            AppData { count }.build(cx);
 
-        HStack::new(cx, |cx| {
-            Button::new(cx, |cx| Label::new(cx, "Increment"))
-                .on_press(|cx| cx.emit(AppEvent::Increment));
-            Label::new(cx, count).width(Pixels(50.0)).live(Live::Polite);
+            HStack::new(cx, |cx| {
+                Button::new(cx, |cx| Label::new(cx, "Increment"))
+                    .on_press(|cx| cx.emit(AppEvent::Increment));
+                Label::new(cx, count).width(Pixels(50.0)).live(Live::Polite);
+            })
+            .height(Stretch(1.0))
+            .alignment(Alignment::Center)
+            .gap(Pixels(50.0));
         })
-        .alignment(Alignment::Center)
-        .horizontal_gap(Pixels(50.0));
+        .title("Counter")
+        .inner_size((400, 100));
     })
-    .title("Counter")
-    .inner_size((400, 100))
     .run()
 }

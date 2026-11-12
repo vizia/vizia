@@ -185,8 +185,16 @@ pub(crate) fn draw_system(
 
     canvas.restore();
 
-    surface.canvas().clear(Color::transparent());
-    dirty_surface.draw(surface.canvas(), (0, 0), SamplingOptions::default(), None);
+    // Composite dirty surface with Src blend so transparent pixels in dirty
+    // regions replace destination pixels instead of preserving stale content.
+    let mut composite_paint = Paint::default();
+    composite_paint.set_blend_mode(skia_safe::BlendMode::Src);
+    dirty_surface.draw(
+        surface.canvas(),
+        (0, 0),
+        SamplingOptions::default(),
+        Some(&composite_paint),
+    );
 
     // Debug overlay: outline the views which underwent layout in the most recent layout pass by
     // stroking their transformed bounds with an orange rectangle. The overlay persists across

@@ -3,7 +3,7 @@
 use vizia::prelude::*;
 
 const STYLE: &str = r#"
-    :root {
+    window {
         alignment: center;
     }
     textbox:invalid {
@@ -32,32 +32,34 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
-        let number = Signal::new(5);
-        AppData { number }.build(cx);
+        Window::new(cx, |cx| {
+            cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
+            let number = Signal::new(5);
+            AppData { number }.build(cx);
 
-        HStack::new(cx, |cx| {
-            Textbox::new(cx, number)
-                .validate(|val| *val < 50)
-                .on_submit(|cx, val, _| {
-                    cx.emit(AppEvent::SetNumber(val));
-                })
-                .width(Pixels(200.0))
-                .padding_left(Pixels(5.0));
+            HStack::new(cx, |cx| {
+                Textbox::new(cx, number)
+                    .validate(|val| *val < 50)
+                    .on_submit(|cx, val, _| {
+                        cx.emit(AppEvent::SetNumber(val));
+                    })
+                    .width(Pixels(200.0))
+                    .padding_left(Pixels(5.0));
 
-            Label::new(cx, number)
-                .width(Pixels(200.0))
-                .height(Pixels(32.0))
-                .alignment(Alignment::Center)
-                .padding_left(Pixels(5.0));
+                Label::new(cx, number)
+                    .width(Pixels(200.0))
+                    .height(Pixels(32.0))
+                    .alignment(Alignment::Center)
+                    .padding_left(Pixels(5.0));
+            })
+            .alignment(Alignment::Center)
+            .height(Auto)
+            .space(Stretch(1.0))
+            .alignment(Alignment::Center)
+            .horizontal_gap(Pixels(10.0));
         })
-        .alignment(Alignment::Center)
-        .height(Auto)
-        .space(Stretch(1.0))
-        .alignment(Alignment::Center)
-        .horizontal_gap(Pixels(10.0));
+        .title("Number Input")
+        .inner_size((600, 300));
     })
-    .title("Number Input")
-    .inner_size((600, 300))
     .run()
 }

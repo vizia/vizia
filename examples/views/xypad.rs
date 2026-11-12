@@ -31,37 +31,41 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let xy_data = Signal::new((0.25, 0.25));
-        let value_x = Memo::new(move |_| xy_data.get().0);
-        let value_y = Memo::new(move |_| xy_data.get().1);
+        load_translations(cx);
 
-        AppData { xy_data }.build(cx);
+        Window::new(cx, |cx| {
+            let xy_data = Signal::new((0.25, 0.25));
+            let value_x = Memo::new(move |_| xy_data.get().0);
+            let value_y = Memo::new(move |_| xy_data.get().1);
 
-        ExamplePage::vertical(cx, |cx| {
-            HStack::new(cx, |cx| {
-                Slider::new(cx, value_y)
-                    .width(Pixels(10.0))
-                    .height(Pixels(100.0))
+            AppData { xy_data }.build(cx);
+
+            ExamplePage::vertical(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    Slider::new(cx, value_y)
+                        .width(Pixels(10.0))
+                        .height(Pixels(100.0))
+                        .range(0.0..1.0)
+                        .vertical(true)
+                        .on_change(move |cx, val| cx.emit(AppEvent::YSliderChange(val)));
+                    // XY pad
+                    XYPad::new(cx, xy_data)
+                        .on_change(|ex, value_x, value_y| {
+                            ex.emit(AppEvent::XYPadChange(value_x, value_y))
+                        })
+                        .background_color(Color::gray());
+                })
+                .size(Auto)
+                .horizontal_gap(Pixels(5.0))
+                .alignment(Alignment::Center);
+                Slider::new(cx, value_x)
+                    .width(Pixels(100.0))
+                    .height(Pixels(10.0))
                     .range(0.0..1.0)
-                    .vertical(true)
-                    .on_change(move |cx, val| cx.emit(AppEvent::YSliderChange(val)));
-                // XY pad
-                XYPad::new(cx, xy_data)
-                    .on_change(|ex, value_x, value_y| {
-                        ex.emit(AppEvent::XYPadChange(value_x, value_y))
-                    })
-                    .background_color(Color::gray());
-            })
-            .size(Auto)
-            .horizontal_gap(Pixels(5.0))
-            .alignment(Alignment::Center);
-            Slider::new(cx, value_x)
-                .width(Pixels(100.0))
-                .height(Pixels(10.0))
-                .range(0.0..1.0)
-                .on_change(move |cx, val| cx.emit(AppEvent::XSliderChange(val)));
-        });
+                    .on_change(move |cx, val| cx.emit(AppEvent::XSliderChange(val)));
+            });
+        })
+        .title(Localized::new("view-title-xypad"));
     })
-    .title(Localized::new("view-title-xypad"))
     .run()
 }

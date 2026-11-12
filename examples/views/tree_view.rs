@@ -364,139 +364,144 @@ fn build_fs_tree() -> Tree<FsNode> {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let tree = Signal::new(build_fs_tree());
-        let root_id = tree.with(|tree| tree.root().id());
-        let selected_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
-        let expanded_rows: Signal<Vec<NodeId>> = Signal::new(vec![root_id]);
-        let filter_text = Signal::new(String::new());
-        let selectable = Signal::new(Selectable::Single);
-        let selection_follows_focus = Signal::new(false);
-        let multiselect_enabled = Memo::new(move |_| selectable.get() == Selectable::Multi);
-        let selection_follows_focus_disabled =
-            Memo::new(move |_| selectable.get() != Selectable::Single);
+        load_translations(cx);
 
-        AppData {
-            tree,
-            selected_rows,
-            expanded_rows,
-            filter_text,
-            selectable,
-            selection_follows_focus,
-        }
-        .build(cx);
+        Window::new(cx, |cx| {
+            let tree = Signal::new(build_fs_tree());
+            let root_id = tree.with(|tree| tree.root().id());
+            let selected_rows: Signal<Vec<NodeId>> = Signal::new(vec![]);
+            let expanded_rows: Signal<Vec<NodeId>> = Signal::new(vec![root_id]);
+            let filter_text = Signal::new(String::new());
+            let selectable = Signal::new(Selectable::Single);
+            let selection_follows_focus = Signal::new(false);
+            let multiselect_enabled = Memo::new(move |_| selectable.get() == Selectable::Multi);
+            let selection_follows_focus_disabled =
+                Memo::new(move |_| selectable.get() != Selectable::Single);
 
-        ExamplePage::vertical(cx, move |cx| {
-            Textbox::new(cx, filter_text).width(Pixels(320.0)).placeholder("Filter rows").on_edit(
-                move |cx, text| {
-                    cx.emit(AppEvent::SetFilterText(text));
-                },
-            );
-
-            HStack::new(cx, |cx| {
-                HStack::new(cx, |cx| {
-                    Switch::new(cx, multiselect_enabled)
-                        .on_toggle(|cx| cx.emit(AppEvent::ToggleMultiSelect))
-                        .id("treeview_multiselect");
-                    Label::new(cx, "Multi-select").describing("treeview_multiselect");
-                })
-                .size(Auto)
-                .alignment(Alignment::Center)
-                .gap(Pixels(6.0));
-
-                HStack::new(cx, |cx| {
-                    Switch::new(cx, selection_follows_focus)
-                        .on_toggle(|cx| cx.emit(AppEvent::ToggleSelectionFollowsFocus))
-                        .disabled(selection_follows_focus_disabled)
-                        .id("treeview_selection_follows_focus");
-                    Label::new(cx, "Selection follows focus (single-select)")
-                        .describing("treeview_selection_follows_focus");
-                })
-                .size(Auto)
-                .alignment(Alignment::Center)
-                .gap(Pixels(6.0));
-            })
-            .size(Auto)
-            .alignment(Alignment::Left)
-            .gap(Pixels(16.0));
-
-            TreeView::from_hierarchy(
-                cx,
+            AppData {
                 tree,
-                move |tree: &Tree<FsNode>| vec![tree.root().id()],
-                move |tree: &Tree<FsNode>, parent_id: &NodeId| {
-                    tree.get(*parent_id)
-                        .map(|node| node.children().map(|child| child.id()).collect::<Vec<_>>())
-                        .unwrap_or_default()
-                },
-                |tree: &Tree<FsNode>, node_id: &NodeId| {
-                    if *node_id == tree.root().id() {
-                        true
-                    } else {
-                        tree.get(*node_id).map(|node| node.value().visible).unwrap_or(false)
-                    }
-                },
-                move |cx, row| {
-                    let row_id = row.get().id;
-                    let text = tree.map({
-                        let node_id = row_id;
-                        move |tree| {
-                            tree.get(node_id)
-                                .map(|node| node.value().name.clone())
-                                .unwrap_or_default()
-                        }
-                    });
-                    let checked = tree.map({
-                        let node_id = row_id;
-                        move |tree| node_check_state(tree, node_id) == CheckState::Checked
-                    });
-                    let intermediate = tree.map({
-                        let node_id = row_id;
-                        move |tree| node_check_state(tree, node_id) == CheckState::Intermediate
+                selected_rows,
+                expanded_rows,
+                filter_text,
+                selectable,
+                selection_follows_focus,
+            }
+            .build(cx);
+
+            ExamplePage::vertical(cx, move |cx| {
+                Textbox::new(cx, filter_text)
+                    .width(Pixels(320.0))
+                    .placeholder("Filter rows")
+                    .on_edit(move |cx, text| {
+                        cx.emit(AppEvent::SetFilterText(text));
                     });
 
-                    HStack::new(cx, move |cx| {
-                        Checkbox::intermediate(cx, checked, intermediate)
-                            .on_toggle({
-                                let node_id = row_id;
-                                move |cx| {
-                                    cx.emit(AppEvent::ToggleCheckState(node_id));
-                                }
-                            })
-                            .navigable(false)
-                            .pointer_events(PointerEvents::Auto);
-                        Label::new(cx, text).text_wrap(false).hoverable(false);
+                HStack::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        Switch::new(cx, multiselect_enabled)
+                            .on_toggle(|cx| cx.emit(AppEvent::ToggleMultiSelect))
+                            .id("treeview_multiselect");
+                        Label::new(cx, "Multi-select").describing("treeview_multiselect");
                     })
-                    .pointer_events(PointerEvents::None)
-                    .height(Auto)
-                    .alignment(Alignment::Left)
-                    .gap(Pixels(8.0));
-                },
-            )
-            .selectable(selectable)
-            .selection_follows_focus(selection_follows_focus)
-            .selected_row_ids(selected_rows)
-            .expanded_row_ids(expanded_rows)
-            .checked_row(move |row| {
-                tree.with(|tree| {
-                    tree.get(row.id)
-                        .map(|node| node.value().check_state != CheckState::Unchecked)
-                        .unwrap_or(false)
+                    .size(Auto)
+                    .alignment(Alignment::Center)
+                    .gap(Pixels(6.0));
+
+                    HStack::new(cx, |cx| {
+                        Switch::new(cx, selection_follows_focus)
+                            .on_toggle(|cx| cx.emit(AppEvent::ToggleSelectionFollowsFocus))
+                            .disabled(selection_follows_focus_disabled)
+                            .id("treeview_selection_follows_focus");
+                        Label::new(cx, "Selection follows focus (single-select)")
+                            .describing("treeview_selection_follows_focus");
+                    })
+                    .size(Auto)
+                    .alignment(Alignment::Center)
+                    .gap(Pixels(6.0));
                 })
-            })
-            .type_ahead_text(move |row| {
-                tree.with(|tree| tree.get(row.id).map(|node| node.value().name.clone()))
-            })
-            .on_row_select(move |cx, id| {
-                cx.emit(AppEvent::SelectRow(id));
-            })
-            .on_row_check_toggle(move |cx, id| {
-                cx.emit(AppEvent::ToggleCheckState(id));
-            })
-            .on_row_toggle(move |cx, id, expanded| {
-                cx.emit(AppEvent::ToggleRow(id, expanded));
-            })
-            .width(Stretch(1.0))
-            .height(Pixels(360.0));
+                .size(Auto)
+                .alignment(Alignment::Left)
+                .gap(Pixels(16.0));
+
+                TreeView::from_hierarchy(
+                    cx,
+                    tree,
+                    move |tree: &Tree<FsNode>| vec![tree.root().id()],
+                    move |tree: &Tree<FsNode>, parent_id: &NodeId| {
+                        tree.get(*parent_id)
+                            .map(|node| node.children().map(|child| child.id()).collect::<Vec<_>>())
+                            .unwrap_or_default()
+                    },
+                    |tree: &Tree<FsNode>, node_id: &NodeId| {
+                        if *node_id == tree.root().id() {
+                            true
+                        } else {
+                            tree.get(*node_id).map(|node| node.value().visible).unwrap_or(false)
+                        }
+                    },
+                    move |cx, row| {
+                        let row_id = row.get().id;
+                        let text = tree.map({
+                            let node_id = row_id;
+                            move |tree| {
+                                tree.get(node_id)
+                                    .map(|node| node.value().name.clone())
+                                    .unwrap_or_default()
+                            }
+                        });
+                        let checked = tree.map({
+                            let node_id = row_id;
+                            move |tree| node_check_state(tree, node_id) == CheckState::Checked
+                        });
+                        let intermediate = tree.map({
+                            let node_id = row_id;
+                            move |tree| node_check_state(tree, node_id) == CheckState::Intermediate
+                        });
+
+                        HStack::new(cx, move |cx| {
+                            Checkbox::intermediate(cx, checked, intermediate)
+                                .on_toggle({
+                                    let node_id = row_id;
+                                    move |cx| {
+                                        cx.emit(AppEvent::ToggleCheckState(node_id));
+                                    }
+                                })
+                                .navigable(false)
+                                .pointer_events(PointerEvents::Auto);
+                            Label::new(cx, text).text_wrap(false).hoverable(false);
+                        })
+                        .pointer_events(PointerEvents::None)
+                        .height(Auto)
+                        .alignment(Alignment::Left)
+                        .gap(Pixels(8.0));
+                    },
+                )
+                .selectable(selectable)
+                .selection_follows_focus(selection_follows_focus)
+                .selected_row_ids(selected_rows)
+                .expanded_row_ids(expanded_rows)
+                .checked_row(move |row| {
+                    tree.with(|tree| {
+                        tree.get(row.id)
+                            .map(|node| node.value().check_state != CheckState::Unchecked)
+                            .unwrap_or(false)
+                    })
+                })
+                .type_ahead_text(move |row| {
+                    tree.with(|tree| tree.get(row.id).map(|node| node.value().name.clone()))
+                })
+                .on_row_select(move |cx, id| {
+                    cx.emit(AppEvent::SelectRow(id));
+                })
+                .on_row_check_toggle(move |cx, id| {
+                    cx.emit(AppEvent::ToggleCheckState(id));
+                })
+                .on_row_toggle(move |cx, id, expanded| {
+                    cx.emit(AppEvent::ToggleRow(id, expanded));
+                })
+                .width(Stretch(1.0))
+                .height(Pixels(360.0));
+            });
         });
     })
     .run()

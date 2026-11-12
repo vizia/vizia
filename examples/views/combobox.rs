@@ -51,16 +51,20 @@ impl Model for AppState {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let &AppState { options, selected_option } = AppState::new().build(cx);
+        load_translations(cx);
 
-        ExamplePage::new(cx, |cx| {
-            ComboBox::new(cx, options, selected_option)
-                .on_select(|cx, index| cx.emit(AppEvent::SetOption(index)))
-                .width(Pixels(140.0))
-                .top(Pixels(100.0));
-        });
+        Window::new(cx, |cx| {
+            let &AppState { options, selected_option } = AppState::new().build(cx);
+
+            ExamplePage::new(cx, |cx| {
+                ComboBox::new(cx, options, selected_option)
+                    .on_select(|cx, index| cx.emit(AppEvent::SetOption(index)))
+                    .width(Pixels(140.0))
+                    .top(Pixels(100.0));
+            });
+        })
+        .title(Localized::new("view-title-combobox"))
+        .inner_size((400, 400));
     })
-    .title(Localized::new("view-title-combobox"))
-    .inner_size((400, 400))
     .run()
 }

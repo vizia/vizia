@@ -400,7 +400,9 @@ impl View for CircleDrawer {
 #[cfg(not(feature = "baseview"))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx: &mut Context| {
-        CircleDrawer::new(cx);
+        Window::new(cx, |cx| {
+            CircleDrawer::new(cx);
+        });
     })
     .run()
 }

@@ -4,20 +4,24 @@ use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        ExamplePage::new(cx, |cx| {
-            HStack::new(cx, |cx| {
-                Divider::new(cx);
-                Divider::horizontal(cx);
-                Divider::vertical(cx);
+        load_translations(cx);
+
+        Window::new(cx, |cx| {
+            ExamplePage::new(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    Divider::new(cx);
+                    Divider::horizontal(cx);
+                    Divider::vertical(cx);
+                });
+                VStack::new(cx, |cx| {
+                    Divider::new(cx);
+                    Divider::horizontal(cx);
+                    Divider::vertical(cx);
+                });
             });
-            VStack::new(cx, |cx| {
-                Divider::new(cx);
-                Divider::horizontal(cx);
-                Divider::vertical(cx);
-            });
-        });
+        })
+        .title(Localized::new("view-title-divider"))
+        .inner_size((350, 300));
     })
-    .title(Localized::new("view-title-divider"))
-    .inner_size((350, 300))
     .run()
 }

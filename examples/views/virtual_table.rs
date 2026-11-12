@@ -86,85 +86,93 @@ fn filter_rows(rows: Vec<PerfRow>, filter_text: &str) -> Vec<PerfRow> {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let rows = Signal::new(make_rows(5000));
-        let sort_state = Signal::new(None);
-        let selected_rows = Signal::new(Vec::<u32>::new());
-        let filter_text = Signal::new(String::new());
+        load_translations(cx);
 
-        PerfTableDemo { sort_state, selected_rows, filter_text }.build(cx);
+        Window::new(cx, |cx| {
+            let rows = Signal::new(make_rows(5000));
+            let sort_state = Signal::new(None);
+            let selected_rows = Signal::new(Vec::<u32>::new());
+            let filter_text = Signal::new(String::new());
 
-        let sorted_rows = Memo::new(move |_| {
-            let filtered_rows = filter_rows(rows.get(), &filter_text.get());
-            sort_rows(filtered_rows, sort_state.get())
-        });
+            PerfTableDemo { sort_state, selected_rows, filter_text }.build(cx);
 
-        let columns: Signal<Vec<TableColumn<PerfRow, TableHeader<String>>>> = Signal::new(vec![
-            TableColumn::new(
-                "Name",
-                |cx, sort_direction| TableHeader::new(cx, "Name", "Name", sort_direction),
-                |cx, row| {
-                    let text = row.map(|row: &PerfRow| row.name.clone());
-                    Label::new(cx, text).class("table-cell-text").text_wrap(true);
-                },
-            )
-            .width(180.0)
-            .min_width(120.0)
-            .resizable(true),
-            TableColumn::new(
-                "Group",
-                |cx, sort_direction| TableHeader::new(cx, "Group", "Group", sort_direction),
-                |cx, row| {
-                    let text = row.map(|row: &PerfRow| row.group.clone());
-                    Label::new(cx, text).class("table-cell-text").text_wrap(true);
-                },
-            )
-            .width(160.0)
-            .min_width(100.0)
-            .resizable(true),
-            TableColumn::new(
-                "notes",
-                |cx, sort_direction| TableHeader::new(cx, "notes", "Notes", sort_direction),
-                |cx, row| {
-                    let notes = row.map(|row: &PerfRow| row.notes.clone());
-                    Label::new(cx, notes).class("table-cell-text").text_wrap(true);
-                },
-            )
-            .width(520.0)
-            .min_width(220.0)
-            .resizable(true),
-        ]);
+            let sorted_rows = Memo::new(move |_| {
+                let filtered_rows = filter_rows(rows.get(), &filter_text.get());
+                sort_rows(filtered_rows, sort_state.get())
+            });
 
-        ExamplePage::vertical(cx, |cx| {
-            Label::new(cx, Localized::new("virtual-table-heading")).font_size(18.0).height(Auto);
+            let columns: Signal<Vec<TableColumn<PerfRow, TableHeader<String>>>> =
+                Signal::new(vec![
+                    TableColumn::new(
+                        "Name",
+                        |cx, sort_direction| TableHeader::new(cx, "Name", "Name", sort_direction),
+                        |cx, row| {
+                            let text = row.map(|row: &PerfRow| row.name.clone());
+                            Label::new(cx, text).class("table-cell-text").text_wrap(true);
+                        },
+                    )
+                    .width(180.0)
+                    .min_width(120.0)
+                    .resizable(true),
+                    TableColumn::new(
+                        "Group",
+                        |cx, sort_direction| TableHeader::new(cx, "Group", "Group", sort_direction),
+                        |cx, row| {
+                            let text = row.map(|row: &PerfRow| row.group.clone());
+                            Label::new(cx, text).class("table-cell-text").text_wrap(true);
+                        },
+                    )
+                    .width(160.0)
+                    .min_width(100.0)
+                    .resizable(true),
+                    TableColumn::new(
+                        "notes",
+                        |cx, sort_direction| TableHeader::new(cx, "notes", "Notes", sort_direction),
+                        |cx, row| {
+                            let notes = row.map(|row: &PerfRow| row.notes.clone());
+                            Label::new(cx, notes).class("table-cell-text").text_wrap(true);
+                        },
+                    )
+                    .width(520.0)
+                    .min_width(220.0)
+                    .resizable(true),
+                ]);
 
-            Label::new(cx, Localized::new("virtual-table-description"))
-                .class("table-cell-meta")
-                .height(Auto);
+            ExamplePage::vertical(cx, |cx| {
+                Label::new(cx, Localized::new("virtual-table-heading"))
+                    .font_size(18.0)
+                    .height(Auto);
 
-            Textbox::new(cx, filter_text).width(Pixels(320.0)).placeholder("Filter rows").on_edit(
-                |cx, text| {
-                    cx.emit(PerfTableEvent::SetFilterText(text));
-                },
-            );
+                Label::new(cx, Localized::new("virtual-table-description"))
+                    .class("table-cell-meta")
+                    .height(Auto);
 
-            VirtualTable::new(cx, sorted_rows, columns, 34.0, |row: &PerfRow| row.id)
-                .sort_state(sort_state)
-                .sort_cycle(TableSortCycle::TriState)
-                .resizable_columns(true)
-                .selectable(Selectable::Single)
-                .selected_row_ids(selected_rows)
-                .on_sort(|cx, key, direction| {
-                    cx.emit(PerfTableEvent::SetSortState(key, direction));
-                })
-                .on_row_select(|cx, id| cx.emit(PerfTableEvent::SelectRow(id)))
-                .width(Stretch(1.0))
-                .height(Stretch(1.0));
+                Textbox::new(cx, filter_text)
+                    .width(Pixels(320.0))
+                    .placeholder("Filter rows")
+                    .on_edit(|cx, text| {
+                        cx.emit(PerfTableEvent::SetFilterText(text));
+                    });
+
+                VirtualTable::new(cx, sorted_rows, columns, 34.0, |row: &PerfRow| row.id)
+                    .sort_state(sort_state)
+                    .sort_cycle(TableSortCycle::TriState)
+                    .resizable_columns(true)
+                    .selectable(Selectable::Single)
+                    .selected_row_ids(selected_rows)
+                    .on_sort(|cx, key, direction| {
+                        cx.emit(PerfTableEvent::SetSortState(key, direction));
+                    })
+                    .on_row_select(|cx, id| cx.emit(PerfTableEvent::SelectRow(id)))
+                    .width(Stretch(1.0))
+                    .height(Stretch(1.0));
+            })
+            .size(Stretch(1.0))
+            .padding(Pixels(12.0))
+            .gap(Pixels(6.0));
         })
-        .size(Stretch(1.0))
-        .padding(Pixels(12.0))
-        .gap(Pixels(6.0));
+        .title(Localized::new("view-title-virtual-table"))
+        .inner_size((1100, 760));
     })
-    .title(Localized::new("view-title-virtual-table"))
-    .inner_size((1100, 760))
     .run()
 }

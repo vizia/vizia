@@ -38,49 +38,53 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let option = Signal::new(Options::First);
+        load_translations(cx);
 
-        AppData { option }.build(cx);
+        Window::new(cx, |cx| {
+            let option = Signal::new(Options::First);
 
-        // Exclusive checkboxes (radio buttons) with labels
-        // Only one checkbox can be checked at a time and cannot be unchecked
-        ExamplePage::vertical(cx, |cx| {
-            Label::new(cx, Localized::new("radiobutton-basic"));
-            HStack::new(cx, |cx| {
-                for i in 0..3 {
-                    let current_option = index_to_option(i);
-                    let selected = Memo::new(move |_| option.get() == current_option);
-                    RadioButton::new(cx, selected)
-                        .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)));
-                }
-            })
-            .size(Auto)
-            .horizontal_gap(Pixels(20.0));
+            AppData { option }.build(cx);
 
-            Label::new(cx, Localized::new("radiobutton-with-labels")).top(Pixels(20.0));
-
-            VStack::new(cx, |cx| {
-                for i in 0..3 {
-                    let current_option = index_to_option(i);
-                    let selected = Memo::new(move |_| option.get() == current_option);
-                    HStack::new(cx, move |cx| {
+            // Exclusive checkboxes (radio buttons) with labels
+            // Only one checkbox can be checked at a time and cannot be unchecked
+            ExamplePage::vertical(cx, |cx| {
+                Label::new(cx, Localized::new("radiobutton-basic"));
+                HStack::new(cx, |cx| {
+                    for i in 0..3 {
+                        let current_option = index_to_option(i);
+                        let selected = Memo::new(move |_| option.get() == current_option);
                         RadioButton::new(cx, selected)
-                            .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)))
-                            .id(format!("button_{i}"));
+                            .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)));
+                    }
+                })
+                .size(Auto)
+                .horizontal_gap(Pixels(20.0));
 
-                        Label::new(cx, Localized::new(option_label_key(current_option)))
-                            .describing(format!("button_{i}"));
-                    })
-                    .size(Auto)
-                    .alignment(Alignment::Center)
-                    .horizontal_gap(Pixels(5.0));
-                }
-            })
-            .vertical_gap(Pixels(10.0))
-            .size(Auto);
-        });
+                Label::new(cx, Localized::new("radiobutton-with-labels")).top(Pixels(20.0));
+
+                VStack::new(cx, |cx| {
+                    for i in 0..3 {
+                        let current_option = index_to_option(i);
+                        let selected = Memo::new(move |_| option.get() == current_option);
+                        HStack::new(cx, move |cx| {
+                            RadioButton::new(cx, selected)
+                                .on_select(move |cx| cx.emit(AppEvent::SetOption(current_option)))
+                                .id(format!("button_{i}"));
+
+                            Label::new(cx, Localized::new(option_label_key(current_option)))
+                                .describing(format!("button_{i}"));
+                        })
+                        .size(Auto)
+                        .alignment(Alignment::Center)
+                        .horizontal_gap(Pixels(5.0));
+                    }
+                })
+                .vertical_gap(Pixels(10.0))
+                .size(Auto);
+            });
+        })
+        .title(Localized::new("view-title-radiobutton"));
     })
-    .title(Localized::new("view-title-radiobutton"))
     .run()
 }
 

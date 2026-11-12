@@ -72,66 +72,74 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let tabs = Signal::new(vec!["Tab1", "Tab2", "Tab3", "Tab4", "Tab5", "Tab6"]);
-        let selected_tab = Signal::new(0usize);
+        load_translations(cx);
 
-        AppData { tabs, selected_tab }.build(cx);
+        Window::new(cx, |cx| {
+            let tabs = Signal::new(vec!["Tab1", "Tab2", "Tab3", "Tab4", "Tab5", "Tab6"]);
+            let selected_tab = Signal::new(0usize);
 
-        ExamplePage::new(cx, |cx| {
-            VStack::new(cx, |cx| {
-                HStack::new(cx, |cx| {
-                    Button::new(cx, |cx| Label::new(cx, "Add Tab").hoverable(false))
-                        .on_press(|cx| cx.emit(AppEvent::AddTab));
-                    Button::new(cx, |cx| Label::new(cx, "Previous").hoverable(false))
-                        .on_press(|cx| cx.emit(AppEvent::PrevTab));
-                    Button::new(cx, |cx| Label::new(cx, "Next").hoverable(false))
-                        .on_press(|cx| cx.emit(AppEvent::NextTab));
+            AppData { tabs, selected_tab }.build(cx);
+
+            ExamplePage::new(cx, |cx| {
+                VStack::new(cx, |cx| {
+                    HStack::new(cx, |cx| {
+                        Button::new(cx, |cx| Label::new(cx, "Add Tab").hoverable(false))
+                            .on_press(|cx| cx.emit(AppEvent::AddTab));
+                        Button::new(cx, |cx| Label::new(cx, "Previous").hoverable(false))
+                            .on_press(|cx| cx.emit(AppEvent::PrevTab));
+                        Button::new(cx, |cx| Label::new(cx, "Next").hoverable(false))
+                            .on_press(|cx| cx.emit(AppEvent::NextTab));
+                    })
+                    .horizontal_gap(Pixels(8.0));
+
+                    TabView::new(cx, tabs, |_, _, item| match item {
+                        "Tab1" => TabPair::new(
+                            move |cx| {
+                                Label::new(cx, item).hoverable(false);
+                                Element::new(cx).class("indicator");
+                            },
+                            |cx| {
+                                Element::new(cx).size(Pixels(200.0)).background_color(Color::red());
+                            },
+                        )
+                        .closeable(false),
+
+                        "Tab2" => TabPair::new(
+                            move |cx| {
+                                Label::new(cx, item).hoverable(false);
+                                Element::new(cx).class("indicator");
+                            },
+                            |cx| {
+                                Element::new(cx)
+                                    .size(Pixels(200.0))
+                                    .background_color(Color::blue());
+                            },
+                        )
+                        .closeable(true),
+
+                        _ => TabPair::new(
+                            move |cx| {
+                                Label::new(cx, item).hoverable(false);
+                                Element::new(cx).class("indicator");
+                            },
+                            |cx| {
+                                Element::new(cx)
+                                    .size(Pixels(200.0))
+                                    .background_color(Color::gray());
+                            },
+                        )
+                        .closeable(true),
+                    })
+                    .with_selected(selected_tab)
+                    .on_select(|cx, index| cx.emit(AppEvent::SetSelectedTab(index)))
+                    .on_close(|cx, index| cx.emit(AppEvent::CloseTab(index)))
+                    .width(Pixels(500.0))
+                    .height(Pixels(300.0));
                 })
-                .horizontal_gap(Pixels(8.0));
-
-                TabView::new(cx, tabs, |_, _, item| match item {
-                    "Tab1" => TabPair::new(
-                        move |cx| {
-                            Label::new(cx, item).hoverable(false);
-                            Element::new(cx).class("indicator");
-                        },
-                        |cx| {
-                            Element::new(cx).size(Pixels(200.0)).background_color(Color::red());
-                        },
-                    )
-                    .closeable(false),
-
-                    "Tab2" => TabPair::new(
-                        move |cx| {
-                            Label::new(cx, item).hoverable(false);
-                            Element::new(cx).class("indicator");
-                        },
-                        |cx| {
-                            Element::new(cx).size(Pixels(200.0)).background_color(Color::blue());
-                        },
-                    )
-                    .closeable(true),
-
-                    _ => TabPair::new(
-                        move |cx| {
-                            Label::new(cx, item).hoverable(false);
-                            Element::new(cx).class("indicator");
-                        },
-                        |cx| {
-                            Element::new(cx).size(Pixels(200.0)).background_color(Color::gray());
-                        },
-                    )
-                    .closeable(true),
-                })
-                .with_selected(selected_tab)
-                .on_select(|cx, index| cx.emit(AppEvent::SetSelectedTab(index)))
-                .on_close(|cx, index| cx.emit(AppEvent::CloseTab(index)))
-                .width(Pixels(500.0))
-                .height(Pixels(300.0));
-            })
-            .vertical_gap(Pixels(8.0));
-        });
+                .vertical_gap(Pixels(8.0));
+            });
+        })
+        .title(Localized::new("view-title-tabview"));
     })
-    .title(Localized::new("view-title-tabview"))
     .run()
 }

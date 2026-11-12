@@ -134,74 +134,84 @@ impl Model for LoginData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_stylesheet(LOGIN_STYLES).expect("Failed to add login stylesheet");
+        load_translations(cx);
 
-        let &LoginData {
-            username,
-            password,
-            password_visible,
-            username_error,
-            password_error,
-            can_submit,
-            status,
-        } = LoginData::new().build(cx);
+        Window::new(cx, |cx| {
+            cx.add_stylesheet(LOGIN_STYLES).expect("Failed to add login stylesheet");
 
-        ExamplePage::vertical(cx, |cx| {
-            VStack::new(cx, |cx| {
-                Label::new(cx, "Welcome Back").class("login-title");
+            let &LoginData {
+                username,
+                password,
+                password_visible,
+                username_error,
+                password_error,
+                can_submit,
+                status,
+            } = LoginData::new().build(cx);
 
+            ExamplePage::vertical(cx, |cx| {
                 VStack::new(cx, |cx| {
-                    Label::new(cx, "Username").height(Auto).font_weight(FontWeightKeyword::Bold);
-                    Textbox::new(cx, username)
-                        .width(Stretch(1.0))
-                        .placeholder("Enter username")
-                        .validate(|value: &String| LoginData::username_error(value).is_none())
-                        .on_edit(|cx, text| cx.emit(LoginEvent::SetUsername(text)));
-                    Label::new(cx, username_error).class("error-text");
-                })
-                .height(Auto)
-                .gap(Pixels(4.0));
-                VStack::new(cx, |cx| {
-                    Label::new(cx, "Password").height(Auto).font_weight(FontWeightKeyword::Bold);
-                    ZStack::new(cx, |cx| {
-                        Textbox::new(cx, password)
+                    Label::new(cx, "Welcome Back").class("login-title");
+
+                    VStack::new(cx, |cx| {
+                        Label::new(cx, "Username")
+                            .height(Auto)
+                            .font_weight(FontWeightKeyword::Bold);
+                        Textbox::new(cx, username)
                             .width(Stretch(1.0))
-                            .placeholder("Enter password")
-                            .mask_char(Some('*'))
-                            .mask_visible(password_visible)
-                            .validate(|value: &String| LoginData::password_error(value).is_none())
-                            .on_edit(|cx, text| cx.emit(LoginEvent::SetPassword(text)))
-                            .padding_right(Pixels(50.0));
-
-                        ToggleButton::with_contents(
-                            cx,
-                            password_visible,
-                            |cx| Svg::new(cx, ICON_EYE),
-                            |cx| Svg::new(cx, ICON_EYE_OFF),
-                        )
-                        .on_toggle(move |cx| {
-                            cx.emit(LoginEvent::TogglePasswordVisible);
-                        });
+                            .placeholder("Enter username")
+                            .validate(|value: &String| LoginData::username_error(value).is_none())
+                            .on_edit(|cx, text| cx.emit(LoginEvent::SetUsername(text)));
+                        Label::new(cx, username_error).class("error-text");
                     })
-                    .width(Stretch(1.0))
                     .height(Auto)
-                    .alignment(Alignment::Right);
+                    .gap(Pixels(4.0));
+                    VStack::new(cx, |cx| {
+                        Label::new(cx, "Password")
+                            .height(Auto)
+                            .font_weight(FontWeightKeyword::Bold);
+                        ZStack::new(cx, |cx| {
+                            Textbox::new(cx, password)
+                                .width(Stretch(1.0))
+                                .placeholder("Enter password")
+                                .mask_char(Some('*'))
+                                .mask_visible(password_visible)
+                                .validate(|value: &String| {
+                                    LoginData::password_error(value).is_none()
+                                })
+                                .on_edit(|cx, text| cx.emit(LoginEvent::SetPassword(text)))
+                                .padding_right(Pixels(50.0));
 
-                    Label::new(cx, password_error).class("error-text");
+                            ToggleButton::with_contents(
+                                cx,
+                                password_visible,
+                                |cx| Svg::new(cx, ICON_EYE),
+                                |cx| Svg::new(cx, ICON_EYE_OFF),
+                            )
+                            .on_toggle(move |cx| {
+                                cx.emit(LoginEvent::TogglePasswordVisible);
+                            });
+                        })
+                        .width(Stretch(1.0))
+                        .height(Auto)
+                        .alignment(Alignment::Right);
+
+                        Label::new(cx, password_error).class("error-text");
+                    })
+                    .height(Auto)
+                    .gap(Pixels(4.0));
+                    Button::new(cx, |cx| Label::new(cx, "Login"))
+                        .width(Stretch(1.0))
+                        .on_press(|cx| cx.emit(LoginEvent::Submit))
+                        .disabled(can_submit);
+
+                    Label::new(cx, status).class("status-text");
                 })
-                .height(Auto)
-                .gap(Pixels(4.0));
-                Button::new(cx, |cx| Label::new(cx, "Login"))
-                    .width(Stretch(1.0))
-                    .on_press(|cx| cx.emit(LoginEvent::Submit))
-                    .disabled(can_submit);
-
-                Label::new(cx, status).class("status-text");
-            })
-            .class("login-card");
-        });
+                .class("login-card");
+            });
+        })
+        .title("Login Example")
+        .inner_size((700, 400));
     })
-    .title("Login Example")
-    .inner_size((700, 400))
     .run()
 }

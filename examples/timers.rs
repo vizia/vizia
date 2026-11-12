@@ -33,47 +33,49 @@ impl Model for AppState {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        // Emit event every second
-        let timer = cx.add_timer(Duration::from_millis(10), None, |cx, action| match action {
-            TimerAction::Start => {
-                debug!("Start timer");
-            }
+        Window::new(cx, |cx| {
+            // Emit event every second
+            let timer = cx.add_timer(Duration::from_millis(10), None, |cx, action| match action {
+                TimerAction::Start => {
+                    debug!("Start timer");
+                }
 
-            TimerAction::Stop => {
-                debug!("Stop timer");
-            }
+                TimerAction::Stop => {
+                    debug!("Stop timer");
+                }
 
-            TimerAction::Tick(_delta) => {
-                cx.emit(AppEvent::Increment);
-            }
-        });
-
-        let count = Signal::new(0);
-        AppState { count, timer }.build(cx);
-
-        VStack::new(cx, |cx| {
-            Label::new(cx, count).font_size(80.0);
-
-            Button::new(cx, |cx| Label::new(cx, "Start")).on_press(move |cx| {
-                cx.start_timer(timer);
+                TimerAction::Tick(_delta) => {
+                    cx.emit(AppEvent::Increment);
+                }
             });
-            Button::new(cx, |cx| Label::new(cx, "Stop")).on_press(move |cx| {
-                cx.stop_timer(timer);
-            });
-            Button::new(cx, |cx| Label::new(cx, "Reset")).on_press(move |cx| {
-                cx.schedule_emit(AppEvent::Reset, Instant::now() + Duration::from_secs(2));
-            });
-            Button::new(cx, |cx| Label::new(cx, "1s Interval")).on_press(move |cx| {
-                cx.modify_timer(timer, |timer_state| {
-                    timer_state.set_interval(Duration::from_secs(1));
+
+            let count = Signal::new(0);
+            AppState { count, timer }.build(cx);
+
+            VStack::new(cx, |cx| {
+                Label::new(cx, count).font_size(80.0);
+
+                Button::new(cx, |cx| Label::new(cx, "Start")).on_press(move |cx| {
+                    cx.start_timer(timer);
                 });
-            });
+                Button::new(cx, |cx| Label::new(cx, "Stop")).on_press(move |cx| {
+                    cx.stop_timer(timer);
+                });
+                Button::new(cx, |cx| Label::new(cx, "Reset")).on_press(move |cx| {
+                    cx.schedule_emit(AppEvent::Reset, Instant::now() + Duration::from_secs(2));
+                });
+                Button::new(cx, |cx| Label::new(cx, "1s Interval")).on_press(move |cx| {
+                    cx.modify_timer(timer, |timer_state| {
+                        timer_state.set_interval(Duration::from_secs(1));
+                    });
+                });
+            })
+            .size(Stretch(1.0))
+            .alignment(Alignment::Center)
+            .gap(Units::Pixels(8.0));
         })
-        .size(Stretch(1.0))
-        .alignment(Alignment::Center)
-        .gap(Units::Pixels(8.0));
+        .title("Timer")
+        .inner_size((300, 300));
     })
-    .title("Timer")
-    .inner_size((300, 300))
     .run()
 }

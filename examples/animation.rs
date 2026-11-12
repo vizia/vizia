@@ -16,25 +16,32 @@ const STYLE: &str = r#"
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
+        Window::new(cx, |cx| {
+            cx.add_stylesheet(STYLE).expect("Failed to add stylesheet");
 
-        let animation = AnimationBuilder::new()
-            .keyframe(0.0, |key| key.scale("1"))
-            .keyframe(1.0, |key| key.scale("2.5"));
+            let animation = AnimationBuilder::new()
+                .keyframe(0.0, |key| key.scale("1"))
+                .keyframe(1.0, |key| key.scale("2.5"));
 
-        let anim_id = cx.add_animation(animation);
+            let anim_id = cx.add_animation(animation);
 
-        Element::new(cx)
-            .background_color(Color::red())
-            .size(Pixels(100.0))
-            .position_type(PositionType::Absolute)
-            .id("elem");
+            Element::new(cx)
+                .background_color(Color::red())
+                .size(Pixels(100.0))
+                .position_type(PositionType::Absolute)
+                .id("elem");
 
-        Button::new(cx, |cx| Label::new(cx, "Play 1")).on_press(|cx| {
-            cx.play_animation_for("slidein", "elem", Duration::from_secs(2), Duration::default())
-        });
-        Button::new(cx, |cx| Label::new(cx, "Play 2")).on_press(move |cx| {
-            cx.play_animation_for(anim_id, "elem", Duration::from_secs(2), Duration::default())
+            Button::new(cx, |cx| Label::new(cx, "Play 1")).on_press(|cx| {
+                cx.play_animation_for(
+                    "slidein",
+                    "elem",
+                    Duration::from_secs(2),
+                    Duration::default(),
+                )
+            });
+            Button::new(cx, |cx| Label::new(cx, "Play 2")).on_press(move |cx| {
+                cx.play_animation_for(anim_id, "elem", Duration::from_secs(2), Duration::default())
+            });
         });
     })
     .run()

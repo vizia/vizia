@@ -51,15 +51,19 @@ impl Model for AppState {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let &AppState { options, selected_option } = AppState::new().build(cx);
+        load_translations(cx);
 
-        ExamplePage::vertical(cx, |cx| {
-            Select::new(cx, options, selected_option, true)
-                .placeholder(Localized::new("select-placeholder"))
-                .on_select(|cx, index| cx.emit(AppEvent::SetOption(index)))
-                .width(Pixels(150.0));
-        });
+        Window::new(cx, |cx| {
+            let &AppState { options, selected_option } = AppState::new().build(cx);
+
+            ExamplePage::vertical(cx, |cx| {
+                Select::new(cx, options, selected_option, true)
+                    .placeholder(Localized::new("select-placeholder"))
+                    .on_select(|cx, index| cx.emit(AppEvent::SetOption(index)))
+                    .width(Pixels(150.0));
+            });
+        })
+        .title(Localized::new("view-title-select"));
     })
-    .title(Localized::new("view-title-select"))
     .run()
 }

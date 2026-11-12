@@ -48,45 +48,49 @@ pub enum AppEvent {
 #[cfg(all(feature = "winit", not(feature = "baseview")))]
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let color = Signal::new(Color::white());
-        let show_popup = Signal::new(false);
-        let red = Memo::new(move |_| color.get().r() as f32 / 255.0);
-        let green = Memo::new(move |_| color.get().g() as f32 / 255.0);
-        let blue = Memo::new(move |_| color.get().b() as f32 / 255.0);
+        Window::new(cx, |cx| {
+            let color = Signal::new(Color::white());
+            let show_popup = Signal::new(false);
+            let red = Memo::new(move |_| color.get().r() as f32 / 255.0);
+            let green = Memo::new(move |_| color.get().g() as f32 / 255.0);
+            let blue = Memo::new(move |_| color.get().b() as f32 / 255.0);
 
-        AppData { color, show_popup }.build(cx);
+            AppData { color, show_popup }.build(cx);
 
-        Binding::new(cx, show_popup, move |cx| {
-            let show_subwindow = show_popup.get();
-            if show_subwindow {
-                Window::popup(cx, false, move |cx| {
-                    VStack::new(cx, |cx: &mut Context| {
-                        Slider::new(cx, red).on_change(|cx, val| cx.emit(AppEvent::SetRed(val)));
-                        Slider::new(cx, green)
-                            .on_change(|cx, val| cx.emit(AppEvent::SetGreen(val)));
-                        Slider::new(cx, blue).on_change(|cx, val| cx.emit(AppEvent::SetBlue(val)));
+            Binding::new(cx, show_popup, move |cx| {
+                let show_subwindow = show_popup.get();
+                if show_subwindow {
+                    Window::popup(cx, false, move |cx| {
+                        VStack::new(cx, |cx: &mut Context| {
+                            Slider::new(cx, red)
+                                .on_change(|cx, val| cx.emit(AppEvent::SetRed(val)));
+                            Slider::new(cx, green)
+                                .on_change(|cx, val| cx.emit(AppEvent::SetGreen(val)));
+                            Slider::new(cx, blue)
+                                .on_change(|cx, val| cx.emit(AppEvent::SetBlue(val)));
+                        })
+                        .padding(Pixels(20.0))
+                        .alignment(Alignment::Center)
+                        .vertical_gap(Pixels(12.0));
                     })
-                    .padding(Pixels(20.0))
-                    .alignment(Alignment::Center)
-                    .vertical_gap(Pixels(12.0));
-                })
-                .on_close(|cx| {
-                    cx.emit(AppEvent::PopupClosed);
-                })
-                .title("Set color...")
-                .inner_size((400, 200))
-                .anchor(Anchor::Center);
-            }
-        });
+                    .on_close(|cx| {
+                        cx.emit(AppEvent::PopupClosed);
+                    })
+                    .title("Set color...")
+                    .inner_size((400, 200))
+                    .anchor(Anchor::Center);
+                }
+            });
 
-        HStack::new(cx, |cx| {
-            Button::new(cx, |cx| Label::new(cx, "Show Popup"))
-                .on_press(|cx| cx.emit(AppEvent::ShowPopup));
+            HStack::new(cx, |cx| {
+                Button::new(cx, |cx| Label::new(cx, "Show Popup"))
+                    .on_press(|cx| cx.emit(AppEvent::ShowPopup));
+            })
+            .padding(Pixels(20.0))
+            .background_color(color);
         })
-        .padding(Pixels(20.0))
-        .background_color(color);
+        .title("Main")
+        .position((100, 100));
     })
-    .title("Main")
-    .position((100, 100))
     .run()
 }

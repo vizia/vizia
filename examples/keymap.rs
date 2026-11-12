@@ -17,57 +17,59 @@ use vizia::prelude::*;
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        // Build the keymap.
-        Keymap::from(vec![
-            (
-                KeyChord::new(Modifiers::empty(), Code::KeyA),
-                KeymapEntry::new(Action::OnA, |_| debug!("Action A")),
-            ),
-            (
-                KeyChord::new(Modifiers::empty(), Code::KeyB),
-                KeymapEntry::new(Action::OnB, |_| debug!("Action B")),
-            ),
-            (
-                KeyChord::new(Modifiers::empty(), Code::KeyC),
-                KeymapEntry::new(Action::OnC, |_| debug!("Action C")),
-            ),
-            (
-                KeyChord::new(Modifiers::CTRL, Code::KeyA),
-                KeymapEntry::new(Action::OnCtrlA, |_| debug!("Action OnCtrlA")),
-            ),
-            (
-                KeyChord::new(Modifiers::ALT, Code::KeyA),
-                KeymapEntry::new(Action::OnAltA, |_| debug!("Action OnAltA")),
-            ),
-            (
-                KeyChord::new(Modifiers::SHIFT, Code::KeyA),
-                KeymapEntry::new(Action::OnShiftA, |_| debug!("Action OnShiftA")),
-            ),
-            (
-                KeyChord::new(Modifiers::SUPER, Code::KeyA),
-                KeymapEntry::new(Action::OnLogoA, |_| debug!("Action OnLogoA")),
-            ),
-            (
-                KeyChord::new(Modifiers::ALT | Modifiers::SHIFT, Code::KeyX),
-                KeymapEntry::new(Action::OnAltShiftX, |_| debug!("Action OnAltShiftX")),
-            ),
-            (
-                KeyChord::new(Modifiers::CTRL | Modifiers::ALT | Modifiers::SHIFT, Code::KeyY),
-                KeymapEntry::new(Action::OnCtrlAltShiftY, |_| debug!("Action OnCtrlAltShiftY")),
-            ),
-            (
-                KeyChord::new(
-                    Modifiers::CTRL | Modifiers::ALT | Modifiers::SHIFT | Modifiers::SUPER,
-                    Code::KeyZ,
+        Window::new(cx, |cx| {
+            // Build the keymap.
+            Keymap::from(vec![
+                (
+                    KeyChord::new(Modifiers::empty(), Code::KeyA),
+                    KeymapEntry::new(Action::OnA, |_| debug!("Action A")),
                 ),
-                KeymapEntry::new(Action::OnCtrlAltShiftLogoZ, |_| {
-                    debug!("Action OnCtrlAltShiftLogoZ")
-                }),
-            ),
-        ])
-        .build(cx);
+                (
+                    KeyChord::new(Modifiers::empty(), Code::KeyB),
+                    KeymapEntry::new(Action::OnB, |_| debug!("Action B")),
+                ),
+                (
+                    KeyChord::new(Modifiers::empty(), Code::KeyC),
+                    KeymapEntry::new(Action::OnC, |_| debug!("Action C")),
+                ),
+                (
+                    KeyChord::new(Modifiers::CTRL, Code::KeyA),
+                    KeymapEntry::new(Action::OnCtrlA, |_| debug!("Action OnCtrlA")),
+                ),
+                (
+                    KeyChord::new(Modifiers::ALT, Code::KeyA),
+                    KeymapEntry::new(Action::OnAltA, |_| debug!("Action OnAltA")),
+                ),
+                (
+                    KeyChord::new(Modifiers::SHIFT, Code::KeyA),
+                    KeymapEntry::new(Action::OnShiftA, |_| debug!("Action OnShiftA")),
+                ),
+                (
+                    KeyChord::new(Modifiers::SUPER, Code::KeyA),
+                    KeymapEntry::new(Action::OnLogoA, |_| debug!("Action OnLogoA")),
+                ),
+                (
+                    KeyChord::new(Modifiers::ALT | Modifiers::SHIFT, Code::KeyX),
+                    KeymapEntry::new(Action::OnAltShiftX, |_| debug!("Action OnAltShiftX")),
+                ),
+                (
+                    KeyChord::new(Modifiers::CTRL | Modifiers::ALT | Modifiers::SHIFT, Code::KeyY),
+                    KeymapEntry::new(Action::OnCtrlAltShiftY, |_| debug!("Action OnCtrlAltShiftY")),
+                ),
+                (
+                    KeyChord::new(
+                        Modifiers::CTRL | Modifiers::ALT | Modifiers::SHIFT | Modifiers::SUPER,
+                        Code::KeyZ,
+                    ),
+                    KeymapEntry::new(Action::OnCtrlAltShiftLogoZ, |_| {
+                        debug!("Action OnCtrlAltShiftLogoZ")
+                    }),
+                ),
+            ])
+            .build(cx);
+        })
+        .title("Keymap");
     })
-    .title("Keymap")
     .run()
 }
 

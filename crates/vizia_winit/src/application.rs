@@ -3,7 +3,6 @@ use crate::window::set_cloak;
 use crate::{
     convert::{winit_key_code_to_code, winit_key_to_key},
     window::{WinState, Window},
-    window_modifiers::WindowModifiers,
 };
 #[cfg(feature = "accesskit")]
 use accesskit_winit::Adapter;
@@ -28,7 +27,6 @@ use vizia_input::ImeState;
 // use accesskit::{Action, NodeBuilder, NodeId, TreeUpdate};
 // #[cfg(feature = "accesskit")]
 // use accesskit_winit;
-// use std::cell::RefCell;
 use vizia_core::context::EventProxy;
 use vizia_core::events::ProxyEvent;
 use vizia_core::prelude::*;
@@ -76,6 +74,10 @@ pub enum UserEvent {
     Event(ProxyEvent),
     #[cfg(feature = "accesskit")]
     AccessKitEvent(accesskit_winit::Event),
+    #[cfg(feature = "tray")]
+    TrayIconEvent(tray_icon::TrayIconEvent),
+    #[cfg(feature = "tray")]
+    TrayMenuEvent(tray_icon::menu::MenuEvent),
 }
 
 #[cfg(feature = "accesskit")]
@@ -86,6 +88,9 @@ impl From<accesskit_winit::Event> for UserEvent {
 }
 
 type IdleCallback = Option<Box<dyn Fn(&mut Context)>>;
+
+#[cfg(feature = "tray")]
+type TrayIconBuilderCallback = Box<dyn FnOnce() -> tray_icon::TrayIconBuilder + Send>;
 
 #[derive(Debug)]
 pub enum ApplicationError {
@@ -104,28 +109,46 @@ impl Display for ApplicationError {
 
 impl std::error::Error for ApplicationError {}
 
-///Creating a new application creates a root `Window` and a `Context`. Views declared within the closure passed to `Application::new()` are added to the context and rendered into the root window.
+/// Creating an application creates a `Context`. Create windows explicitly with `Window::new`.
 ///
 /// # Example
 /// ```no_run
 /// # use vizia_core::prelude::*;
 /// # use vizia_winit::application::Application;
-/// Application::new(|cx|{
-///    // Content goes here
+/// # use vizia_winit::window::Window;
+/// Application::new(|cx| {
+///     Window::new(cx, |cx| {
+///         Label::new(cx, "Hello, Vizia!");
+///     });
 /// })
 /// .run();
 ///```
-/// Calling `run()` on the `Application` causes the program to enter the event loop and for the main window to display.
+/// Calling `run()` on the `Application` enters the event loop.
 pub struct Application {
     cx: BackendContext,
     event_manager: EventManager,
     pub(crate) event_loop: Option<EventLoop<UserEvent>>,
     on_idle: IdleCallback,
-    window_description: WindowDescription,
     control_flow: ControlFlow,
     event_loop_proxy: EventLoopProxy<UserEvent>,
     windows: HashMap<WindowId, WinState>,
     window_ids: HashMap<Entity, WindowId>,
+    custom_cursors: Arc<HashMap<CursorIcon, CustomCursor>>,
+    exit_when_no_windows: bool,
+    had_windows: bool,
+    #[cfg(feature = "tray")]
+    tray_icon_builder: Option<TrayIconBuilderCallback>,
+    #[cfg(all(
+        feature = "tray",
+        not(any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ))
+    ))]
+    tray_icon: Option<tray_icon::TrayIcon>,
     #[cfg(feature = "accesskit")]
     accesskit_adapter: Option<accesskit_winit::Adapter>,
     #[cfg(feature = "accesskit")]
@@ -164,7 +187,7 @@ impl Application {
         let proxy = event_loop.create_proxy();
         cx.set_event_proxy(Box::new(WinitEventProxy(proxy.clone())));
 
-        // Ensure we wake the event loop when a SyncSignal is mutated off the UI thread.
+        // Wake the event loop when a SyncSignal changes off the UI thread.
         let waker_proxy = proxy.clone();
         Runtime::set_sync_effect_waker(move || {
             let _ = waker_proxy.send_event(UserEvent::Event(ProxyEvent::new(())));
@@ -173,17 +196,33 @@ impl Application {
         cx.renegotiate_language();
         cx.0.add_built_in_translations();
         (content)(cx.context());
+        cx.0.add_built_in_styles();
 
         Self {
             cx,
             event_manager: EventManager::new(),
             event_loop: Some(event_loop),
             on_idle: None,
-            window_description: WindowDescription::new(),
             control_flow: ControlFlow::Wait,
             event_loop_proxy: proxy,
             windows: HashMap::new(),
             window_ids: HashMap::new(),
+            custom_cursors: Arc::new(HashMap::new()),
+            exit_when_no_windows: true,
+            had_windows: false,
+            #[cfg(feature = "tray")]
+            tray_icon_builder: None,
+            #[cfg(all(
+                feature = "tray",
+                not(any(
+                    target_os = "linux",
+                    target_os = "dragonfly",
+                    target_os = "freebsd",
+                    target_os = "netbsd",
+                    target_os = "openbsd"
+                ))
+            ))]
+            tray_icon: None,
             #[cfg(feature = "accesskit")]
             accesskit_adapter: None,
             #[cfg(feature = "accesskit")]
@@ -198,8 +237,7 @@ impl Application {
         window_description: &WindowDescription,
         #[allow(unused_variables)] owner: Option<Arc<winit::window::Window>>,
     ) -> Result<Arc<winit::window::Window>, Box<dyn Error>> {
-        #[allow(unused_mut)]
-        let mut window_attributes = apply_window_description(window_description);
+        let window_attributes = apply_window_description(window_description);
 
         let window_state = WinState::new(
             event_loop,
@@ -234,7 +272,6 @@ impl Application {
                 };
 
                 let window_size = window.inner_size();
-
                 let anchor_target = window_description.anchor_target.unwrap_or_default();
                 let parent = match anchor_target {
                     AnchorTarget::Monitor => window
@@ -300,7 +337,6 @@ impl Application {
                     let y = (((parent_size.height as f32 * py) as i32
                         - (window_size.height as f32 * y) as i32)
                         as f32) as i32;
-
                     let offset = window_description.offset.unwrap_or_default();
                     let offset: PhysicalPosition<i32> = PhysicalPosition::from_logical(
                         LogicalPosition::new(offset.x, offset.y),
@@ -332,6 +368,7 @@ impl Application {
         ))]
         self.init_wayland_clipboard(window_entity, &window);
 
+        self.had_windows = true;
         Ok(window)
     }
 
@@ -352,8 +389,7 @@ impl Application {
         };
 
         if let RawDisplayHandle::Wayland(handle) = display_handle.as_raw() {
-            // SAFETY: The display handle comes from a live winit window and remains valid for
-            // at least as long as the window/application lifetime where the provider is used.
+            // SAFETY: The display handle is from a live window and is valid for the provider's lifetime.
             let (_, clipboard) =
                 unsafe { create_clipboards_from_external(handle.display.as_ptr()) };
             self.cx.set_clipboard_provider(window_entity, Box::new(clipboard));
@@ -383,9 +419,12 @@ impl Application {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
+    /// # use vizia_winit::window::Window;
     /// #
     /// Application::new(|cx| {
-    ///     // Build application here
+    ///     Window::new(cx, |cx| {
+    ///         // Build application here
+    ///     });
     /// })
     /// .on_idle(|cx| {
     ///     // Code here runs at the end of every event loop after OS and vizia events have been handled
@@ -398,12 +437,128 @@ impl Application {
         self
     }
 
+    /// Controls whether the application exits automatically when all windows are closed.
+    ///
+    /// Defaults to `true`. The exit only triggers once at least one window has been opened and
+    /// then all windows are closed, so applications that start without windows are not affected
+    /// until their first window is created and subsequently closed.
+    /// Set to `false` to keep the event loop running as a daemon even after all windows close.
+    pub fn exit_when_no_windows(mut self, exit: bool) -> Self {
+        self.exit_when_no_windows = exit;
+        self
+    }
+
+    /// Adds a system tray icon to the application, built with the [`tray-icon`](https://docs.rs/tray-icon) crate.
+    ///
+    /// The provided closure is called once the event loop is running and should return a
+    /// [`tray_icon::TrayIconBuilder`] describing the tray icon. The returned builder is built by
+    /// vizia at the appropriate time for each platform:
+    ///
+    /// - On Windows the tray icon is created once the event loop has started.
+    /// - On macOS the tray icon is created once the event loop has started, as required by the OS.
+    /// - On Linux and the BSDs the closure is invoked on a dedicated thread which initializes
+    ///   `gtk`, since the tray icon requires gtk while winit does not use it. This is why the
+    ///   closure must be `Send`.
+    ///
+    /// [`tray_icon::TrayIconEvent`]s and [`tray_icon::menu::MenuEvent`]s are forwarded to the
+    /// application and propagated through the entire tree, so they can be handled from any view
+    /// or model with [`Event::map`](vizia_core::events::Event::map).
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_winit::application::Application;
+    /// # use vizia_winit::tray_icon;
+    /// # let icon_rgba: Vec<u8> = vec![255; 32 * 32 * 4];
+    /// Application::new(|cx| {
+    ///     // Build application here
+    /// })
+    /// .with_tray_icon(move || {
+    ///     let icon = tray_icon::Icon::from_rgba(icon_rgba, 32, 32).unwrap();
+    ///     tray_icon::TrayIconBuilder::new().with_tooltip("My app").with_icon(icon)
+    /// })
+    /// .run();
+    /// ```
+    #[cfg(feature = "tray")]
+    pub fn with_tray_icon<F>(mut self, build_tray: F) -> Self
+    where
+        F: FnOnce() -> tray_icon::TrayIconBuilder + Send + 'static,
+    {
+        // Forward tray icon and tray menu events to the event loop, waking it up in the process.
+        let proxy = self.event_loop_proxy.clone();
+        tray_icon::TrayIconEvent::set_event_handler(Some(move |event| {
+            let _ = proxy.send_event(UserEvent::TrayIconEvent(event));
+        }));
+
+        let proxy = self.event_loop_proxy.clone();
+        tray_icon::menu::MenuEvent::set_event_handler(Some(move |event| {
+            let _ = proxy.send_event(UserEvent::TrayMenuEvent(event));
+        }));
+
+        self.tray_icon_builder = Some(Box::new(build_tray));
+        self
+    }
+
+    #[cfg(all(
+        feature = "tray",
+        not(any(
+            target_os = "linux",
+            target_os = "dragonfly",
+            target_os = "freebsd",
+            target_os = "netbsd",
+            target_os = "openbsd"
+        ))
+    ))]
+    fn create_tray_icon(&mut self) {
+        let Some(build_tray) = self.tray_icon_builder.take() else {
+            return;
+        };
+
+        match (build_tray)().build() {
+            Ok(tray_icon) => self.tray_icon = Some(tray_icon),
+            Err(err) => warn!("Failed to create tray icon: {}", err),
+        }
+
+        // On macOS the main run loop must be woken up for the tray icon to show up immediately.
+        #[cfg(target_os = "macos")]
+        if let Some(run_loop) = objc2_core_foundation::CFRunLoop::main() {
+            run_loop.wake_up();
+        }
+    }
+
     /// Returns a `ContextProxy` which can be used to send events from another thread.
     pub fn get_proxy(&self) -> ContextProxy {
         self.cx.0.get_proxy()
     }
 
     pub fn run(mut self) -> Result<(), ApplicationError> {
+        // Winit doesn't use gtk on Linux but the tray icon requires it, so initialize gtk and
+        // create the tray icon on a dedicated thread.
+        #[cfg(all(
+            feature = "tray",
+            any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd"
+            )
+        ))]
+        if let Some(build_tray) = self.tray_icon_builder.take() {
+            std::thread::spawn(move || {
+                if let Err(err) = gtk::init() {
+                    warn!("Failed to initialize gtk for the tray icon: {}", err);
+                    return;
+                }
+
+                match (build_tray)().build() {
+                    Ok(_tray_icon) => gtk::main(),
+                    Err(err) => warn!("Failed to create tray icon: {}", err),
+                }
+            });
+        }
+
         self.event_loop.take().unwrap().run_app(&mut self).map_err(ApplicationError::EventLoopError)
     }
 }
@@ -413,6 +568,26 @@ impl ApplicationHandler<UserEvent> for Application {
         match user_event {
             UserEvent::Event(event) => {
                 self.cx.send_event(event.into_event());
+            }
+
+            #[cfg(feature = "tray")]
+            UserEvent::TrayIconEvent(event) => {
+                self.cx.send_event(
+                    Event::new(event)
+                        .target(Entity::root())
+                        .origin(Entity::root())
+                        .propagate(Propagation::Subtree),
+                );
+            }
+
+            #[cfg(feature = "tray")]
+            UserEvent::TrayMenuEvent(event) => {
+                self.cx.send_event(
+                    Event::new(event)
+                        .target(Entity::root())
+                        .origin(Entity::root())
+                        .propagate(Propagation::Subtree),
+                );
             }
 
             #[cfg(feature = "accesskit")]
@@ -454,60 +629,13 @@ impl ApplicationHandler<UserEvent> for Application {
 
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
         if self.windows.is_empty() {
-            // Create the main window
-            let main_window: Arc<winit::window::Window> = self
-                .create_window(event_loop, Entity::root(), &self.window_description.clone(), None)
-                .expect("failed to create initial window");
-
-            let custom_cursors = Arc::new(load_default_cursors(event_loop));
-            self.cx.add_main_window(
-                Entity::root(),
-                &self.window_description,
-                main_window.scale_factor() as f32,
-            );
-            self.cx.add_window(Window {
-                window: Some(main_window.clone()),
-                on_close: None,
-                on_create: None,
-                should_close: false,
-                custom_cursors: custom_cursors.clone(),
-            });
-
-            self.cx.0.windows.insert(
-                Entity::root(),
-                WindowState {
-                    window_description: self.window_description.clone(),
-                    ..Default::default()
-                },
-            );
-
-            #[cfg(feature = "accesskit")]
-            {
-                self.accesskit_adapter = Some(Adapter::with_event_loop_proxy(
-                    event_loop,
-                    &main_window,
-                    self.event_loop_proxy.clone(),
-                ));
+            if self.custom_cursors.is_empty() {
+                self.custom_cursors = Arc::new(load_default_cursors(event_loop));
             }
-
-            main_window.set_visible(self.window_description.visible);
-
-            // set current system theme if available
-            if let Some(theme) = main_window.theme() {
-                let theme = match theme {
-                    winit::window::Theme::Light => ThemeMode::LightMode,
-                    winit::window::Theme::Dark => ThemeMode::DarkMode,
-                };
-                self.cx.emit_origin(WindowEvent::ThemeChanged(theme));
-            }
-
             self.cx.0.add_built_in_styles();
 
-            // Create any subwindows
+            // Create user-defined windows.
             for (window_entity, window_state) in self.cx.0.windows.clone().into_iter() {
-                if window_entity == Entity::root() {
-                    continue;
-                }
                 let owner = window_state.owner.and_then(|entity| {
                     self.window_ids
                         .get(&entity)
@@ -523,12 +651,20 @@ impl ApplicationHandler<UserEvent> for Application {
                     )
                     .expect("Failed to create window");
 
+                #[cfg(feature = "accesskit")]
+                if self.accesskit_adapter.is_none() {
+                    self.accesskit_adapter = Some(Adapter::with_event_loop_proxy(
+                        event_loop,
+                        &window,
+                        self.event_loop_proxy.clone(),
+                    ));
+                }
+
                 self.cx.add_main_window(
                     window_entity,
                     &window_state.window_description,
                     window.scale_factor() as f32,
                 );
-
                 window.set_visible(window_state.window_description.visible);
 
                 self.cx.0.with_current(window_entity, |cx| {
@@ -538,7 +674,7 @@ impl ApplicationHandler<UserEvent> for Application {
                 });
                 self.cx.mutate_window(window_entity, |cx, win: &mut Window| {
                     win.window = Some(window.clone());
-                    win.custom_cursors = custom_cursors.clone();
+                    win.custom_cursors = self.custom_cursors.clone();
                     if let Some(callback) = &win.on_create {
                         (callback)(&mut EventContext::new_with_current(
                             cx.context(),
@@ -546,6 +682,15 @@ impl ApplicationHandler<UserEvent> for Application {
                         ));
                     }
                 });
+                if self.windows.len() == 1 {
+                    if let Some(theme) = window.theme() {
+                        let theme = match theme {
+                            winit::window::Theme::Light => ThemeMode::LightMode,
+                            winit::window::Theme::Dark => ThemeMode::DarkMode,
+                        };
+                        self.cx.emit_origin(WindowEvent::ThemeChanged(theme));
+                    }
+                }
                 self.cx.needs_refresh(window_entity);
             }
         }
@@ -822,9 +967,8 @@ impl ApplicationHandler<UserEvent> for Application {
     }
 
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
-        if self.windows.is_empty() {
-            event_loop.exit();
-            return;
+        if self.custom_cursors.is_empty() {
+            self.custom_cursors = Arc::new(load_default_cursors(event_loop));
         }
 
         event_loop.set_control_flow(self.control_flow);
@@ -902,10 +1046,11 @@ impl ApplicationHandler<UserEvent> for Application {
             self.cx.0.remove(window_entity);
         }
 
-        // Sync window state with context
+        // Sync OS window state with the logical window map.
         self.windows.retain(|_, win| self.cx.0.windows.contains_key(&win.entity));
         self.window_ids.retain(|e, _| self.cx.0.windows.contains_key(e));
 
+        // Create any logical windows that don't yet have an OS window.
         if self.windows.len() != self.cx.0.windows.len() {
             for (window_entity, window_state) in self.cx.0.windows.clone().iter() {
                 if !self.window_ids.contains_key(window_entity) {
@@ -924,12 +1069,20 @@ impl ApplicationHandler<UserEvent> for Application {
                         )
                         .expect("Failed to create window");
 
+                    #[cfg(feature = "accesskit")]
+                    if self.accesskit_adapter.is_none() {
+                        self.accesskit_adapter = Some(Adapter::with_event_loop_proxy(
+                            event_loop,
+                            &window,
+                            self.event_loop_proxy.clone(),
+                        ));
+                    }
+
                     self.cx.add_main_window(
                         *window_entity,
                         &window_state.window_description,
                         window.scale_factor() as f32,
                     );
-
                     window.set_visible(window_state.window_description.visible);
 
                     self.cx.0.with_current(*window_entity, |cx| {
@@ -940,6 +1093,7 @@ impl ApplicationHandler<UserEvent> for Application {
 
                     self.cx.mutate_window(*window_entity, |cx, win: &mut Window| {
                         win.window = Some(window.clone());
+                        win.custom_cursors = self.custom_cursors.clone();
                         if let Some(callback) = &win.on_create {
                             (callback)(&mut EventContext::new_with_current(
                                 cx.context(),
@@ -951,193 +1105,41 @@ impl ApplicationHandler<UserEvent> for Application {
             }
         }
 
-        if self.windows.is_empty() {
+        // Exit when all windows have been closed. The `had_windows` guard prevents
+        // premature exit at startup for applications that begin without windows —
+        // the exit only fires after at least one window has been opened and closed.
+        if self.exit_when_no_windows
+            && self.had_windows
+            && self.windows.is_empty()
+            && self.cx.0.windows.is_empty()
+        {
             event_loop.exit();
         }
     }
 
     fn new_events(&mut self, _event_loop: &ActiveEventLoop, _cause: winit::event::StartCause) {
+        // Create the tray icon once the event loop is actually running to prevent issues
+        // such as https://github.com/tauri-apps/tray-icon/issues/90.
+        #[cfg(all(
+            feature = "tray",
+            not(any(
+                target_os = "linux",
+                target_os = "dragonfly",
+                target_os = "freebsd",
+                target_os = "netbsd",
+                target_os = "openbsd"
+            ))
+        ))]
+        if matches!(_cause, winit::event::StartCause::Init) {
+            self.create_tray_icon();
+        }
+
         self.cx.process_timers();
         self.cx.emit_scheduled_events();
     }
 
     fn exiting(&mut self, _event_loop: &ActiveEventLoop) {
         Runtime::deinit_on_ui_thread();
-    }
-}
-
-impl WindowModifiers for Application {
-    fn title<T: ToStringLocalized>(mut self, title: impl Res<T> + Clone + 'static) -> Self {
-        self.window_description.title = title.get_value(&self.cx.0).to_string_local(&self.cx.0);
-
-        let getter_for_locale = title.clone();
-
-        title.set_or_bind(&mut self.cx.0, move |cx, val| {
-            let title_str = val.get_value(cx).to_string_local(cx);
-
-            cx.emit(WindowEvent::SetTitle(title_str));
-        });
-
-        let locale = self.cx.0.environment().locale;
-        locale.set_or_bind(&mut self.cx.0, move |cx, _| {
-            let title = getter_for_locale.get_value(cx).to_string_local(cx);
-            cx.emit(WindowEvent::SetTitle(title));
-        });
-
-        self
-    }
-
-    fn inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
-        self.window_description.inner_size = size.get_value(&self.cx.0).into();
-
-        size.set_or_bind(&mut self.cx.0, |cx, size| {
-            cx.emit(WindowEvent::SetSize(size.get_value(cx).into()));
-        });
-
-        self
-    }
-
-    fn min_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.min_inner_size = size.get_value(&self.cx.0).map(|s| s.into());
-
-        size.set_or_bind(&mut self.cx.0, |cx, size| {
-            cx.emit(WindowEvent::SetMinSize(size.get_value(cx).map(|s| s.into())));
-        });
-
-        self
-    }
-
-    fn max_inner_size<S: Into<WindowSize>>(mut self, size: impl Res<Option<S>>) -> Self {
-        self.window_description.max_inner_size = size.get_value(&self.cx.0).map(|s| s.into());
-
-        size.set_or_bind(&mut self.cx.0, |cx, size| {
-            cx.emit(WindowEvent::SetMaxSize(size.get_value(cx).map(|s| s.into())));
-        });
-        self
-    }
-
-    fn position<P: Into<WindowPosition>>(mut self, position: impl Res<P>) -> Self {
-        self.window_description.position = Some(position.get_value(&self.cx.0).into());
-
-        position.set_or_bind(&mut self.cx.0, |cx, size| {
-            cx.emit(WindowEvent::SetPosition(size.get_value(cx).into()));
-        });
-
-        self
-    }
-
-    fn offset<P: Into<WindowPosition>>(mut self, offset: impl Res<P>) -> Self {
-        self.window_description.offset = Some(offset.get_value(&self.cx.0).into());
-
-        self
-    }
-
-    fn anchor<P: Into<Anchor>>(mut self, anchor: impl Res<P>) -> Self {
-        self.window_description.anchor = Some(anchor.get_value(&self.cx.0).into());
-
-        self
-    }
-
-    fn anchor_target<P: Into<AnchorTarget>>(mut self, anchor_target: impl Res<P>) -> Self {
-        self.window_description.anchor_target = Some(anchor_target.get_value(&self.cx.0).into());
-
-        self
-    }
-
-    fn parent_anchor<P: Into<Anchor>>(mut self, parent_anchor: impl Res<P>) -> Self {
-        self.window_description.parent_anchor = Some(parent_anchor.get_value(&self.cx.0).into());
-
-        self
-    }
-
-    fn resizable(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.resizable = flag.get_value(&self.cx.0);
-
-        flag.set_or_bind(&mut self.cx.0, |cx, flag| {
-            cx.emit(WindowEvent::SetResizable(flag.get_value(cx)));
-        });
-
-        self
-    }
-
-    fn minimized(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.minimized = flag.get_value(&self.cx.0);
-
-        flag.set_or_bind(&mut self.cx.0, |cx, flag| {
-            cx.emit(WindowEvent::SetMinimized(flag.get_value(cx)));
-        });
-        self
-    }
-
-    fn maximized(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.maximized = flag.get_value(&self.cx.0);
-
-        flag.set_or_bind(&mut self.cx.0, |cx, flag| {
-            cx.emit(WindowEvent::SetMaximized(flag.get_value(cx)));
-        });
-
-        self
-    }
-
-    fn visible(mut self, flag: impl Res<bool>) -> Self {
-        self.window_description.visible = flag.get_value(&self.cx.0);
-
-        flag.set_or_bind(&mut self.cx.0, |cx, flag| {
-            cx.emit(WindowEvent::SetVisible(flag.get_value(cx)));
-        });
-
-        self
-    }
-
-    fn transparent(mut self, flag: bool) -> Self {
-        self.window_description.transparent = flag;
-
-        self
-    }
-
-    fn decorations(mut self, flag: bool) -> Self {
-        self.window_description.decorations = flag;
-
-        self
-    }
-
-    fn always_on_top(mut self, flag: bool) -> Self {
-        self.window_description.always_on_top = flag;
-        self
-    }
-
-    fn vsync(mut self, flag: bool) -> Self {
-        self.window_description.vsync = flag;
-
-        self
-    }
-
-    fn skia_resource_cache_limit(mut self, limit: usize) -> Self {
-        self.window_description.skia_resource_cache_limit = limit;
-
-        self
-    }
-
-    fn icon(mut self, width: u32, height: u32, image: Vec<u8>) -> Self {
-        self.window_description.icon = Some(image);
-        self.window_description.icon_width = width;
-        self.window_description.icon_height = height;
-
-        self
-    }
-
-    fn on_close(self, _callback: impl Fn(&mut EventContext)) -> Self {
-        self
-    }
-
-    fn on_create(self, _callback: impl Fn(&mut EventContext)) -> Self {
-        self
-    }
-
-    fn enabled_window_buttons(mut self, window_buttons: WindowButtons) -> Self {
-        self.window_description.enabled_window_buttons = window_buttons;
-
-        self
     }
 }
 

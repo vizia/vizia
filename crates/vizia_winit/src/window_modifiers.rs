@@ -12,10 +12,14 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .title("Vizia Application");
     /// })
-    /// .title("Vizia Application")
     /// .run();
     /// ```
     fn title<T: ToStringLocalized>(self, title: impl Res<T> + Clone + 'static) -> Self;
@@ -27,10 +31,14 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .inner_size((300, 300));
     /// })
-    /// .inner_size((300, 300))
     /// .run();
     /// ```
     fn inner_size<S: Into<WindowSize>>(self, size: impl Res<S>) -> Self;
@@ -42,10 +50,14 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .min_inner_size(Some((300, 300)));
     /// })
-    /// .min_inner_size(Some((300, 300)))
     /// .run();
     /// ```
     fn min_inner_size<S: Into<WindowSize>>(self, size: impl Res<Option<S>>) -> Self;
@@ -57,10 +69,14 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .max_inner_size(Some((1000, 1000)));
     /// })
-    /// .max_inner_size(Some((1000, 1000)))
     /// .run();
     /// ```
     fn max_inner_size<S: Into<WindowSize>>(self, size: impl Res<Option<S>>) -> Self;
@@ -70,10 +86,14 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .position((100, 200));
     /// })
-    /// .position((100, 200))
     /// .run();
     /// ```
     fn position<P: Into<WindowPosition>>(self, position: impl Res<P>) -> Self;
@@ -92,10 +112,14 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .resizable(false);
     /// })
-    /// .resizable(false)
     /// .run();
     /// ```
     fn resizable(self, flag: impl Res<bool>) -> Self;
@@ -105,10 +129,14 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .minimized(true);
     /// })
-    /// .minimized(true)
     /// .run();
     /// ```
     fn minimized(self, flag: impl Res<bool>) -> Self;
@@ -118,10 +146,14 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .maximized(true);
     /// })
-    /// .maximized(true)
     /// .run();
     /// ```
     fn maximized(self, flag: impl Res<bool>) -> Self;
@@ -131,10 +163,14 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .visible(false);
     /// })
-    /// .visible(false)
     /// .run();
     /// ```
     fn visible(self, flag: impl Res<bool>) -> Self;
@@ -144,10 +180,14 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .transparent(true);
     /// })
-    /// .transparent(true)
     /// .run();
     /// ```
     fn transparent(self, flag: bool) -> Self;
@@ -157,10 +197,14 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .decorations(false);
     /// })
-    /// .decorations(false)
     /// .run();
     /// ```
     fn decorations(self, flag: bool) -> Self;
@@ -170,10 +214,14 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .always_on_top(true);
     /// })
-    /// .always_on_top(true)
     /// .run();
     /// ```
     fn always_on_top(self, flag: bool) -> Self;
@@ -183,10 +231,14 @@ pub trait WindowModifiers {
     /// ```no_run
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .vsync(true);
     /// })
-    /// .vsync(true)
     /// .run();
     /// ```
     fn vsync(self, flag: bool) -> Self;
@@ -198,14 +250,18 @@ pub trait WindowModifiers {
     /// ```no_run, ignore
     /// # use vizia_core::prelude::*;
     /// # use vizia_winit::application::Application;
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
     ///
     /// let icon = vizia::image::load_from_memory(include_bytes!("../icon.png"))
     ///     .expect("Failed to load icon");
     ///
-    /// Application::new(|cx|{
-    ///     // Content here
+    /// Application::new(|cx| {
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .icon(icon.width(), icon.height(), icon.into_bytes());
     /// })
-    /// .icon(icon.width(), icon.height(), icon.into_bytes())
     /// .run();
     /// ```
     fn icon(self, width: u32, height: u32, image: Vec<u8>) -> Self;

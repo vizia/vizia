@@ -52,19 +52,17 @@ fn direction_from_locale(locale: &LanguageIdentifier) -> Direction {
     }
 }
 
-fn apply_direction_class(cx: &mut EventContext, direction: Direction) {
+pub(crate) fn apply_direction_class(cx: &mut EventContext, direction: Direction) {
     let rtl = direction == Direction::RightToLeft;
-    let window_entities = cx.windows.keys().copied().collect::<Vec<_>>();
-
     cx.with_current(Entity::root(), |cx| {
         cx.toggle_class("rtl", rtl);
     });
+}
 
-    for window_entity in window_entities {
-        cx.with_current(window_entity, |cx| {
-            cx.toggle_class("rtl", rtl);
-        });
-    }
+pub(crate) fn apply_theme_class(cx: &mut EventContext, is_dark: bool) {
+    cx.with_current(Entity::root(), |cx| {
+        cx.toggle_class("dark", is_dark);
+    });
 }
 
 fn detect_theme() -> ThemeMode {
@@ -167,9 +165,7 @@ impl Model for Environment {
             EnvironmentEvent::SetThemeMode(theme) => {
                 self.theme_mode = theme;
                 let is_dark = self.effective_theme() == ThemeMode::DarkMode;
-                cx.with_current(Entity::root(), |cx| {
-                    cx.toggle_class("dark", is_dark);
-                });
+                apply_theme_class(cx, is_dark);
                 cx.reload_styles().unwrap();
             }
 
@@ -193,9 +189,7 @@ impl Model for Environment {
                 self.theme_mode = theme_mode;
 
                 let is_dark = self.effective_theme() == ThemeMode::DarkMode;
-                cx.with_current(Entity::root(), |cx| {
-                    cx.toggle_class("dark", is_dark);
-                });
+                apply_theme_class(cx, is_dark);
 
                 cx.reload_styles().unwrap();
             }
@@ -236,9 +230,7 @@ impl Model for Environment {
                 self.system_theme_mode = *theme;
                 if self.theme_mode == ThemeMode::System {
                     let is_dark = self.system_theme_mode == ThemeMode::DarkMode;
-                    cx.with_current(Entity::root(), |cx| {
-                        cx.toggle_class("dark", is_dark);
-                    });
+                    apply_theme_class(cx, is_dark);
                     cx.reload_styles().unwrap();
                 }
             }

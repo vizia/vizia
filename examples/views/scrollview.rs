@@ -23,90 +23,94 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let scroll_x = Signal::new(0.0);
-        let scroll_y = Signal::new(0.0);
-        let show_horizontal_scrollbar = Signal::new(true);
-        let show_vertical_scrollbar = Signal::new(true);
-        let scroll_to_cursor = Signal::new(false);
+        load_translations(cx);
 
-        AppData { scroll_x, scroll_y }.build(cx);
+        Window::new(cx, |cx| {
+            let scroll_x = Signal::new(0.0);
+            let scroll_y = Signal::new(0.0);
+            let show_horizontal_scrollbar = Signal::new(true);
+            let show_vertical_scrollbar = Signal::new(true);
+            let scroll_to_cursor = Signal::new(false);
 
-        ExamplePage::vertical(cx, |cx| {
-            HStack::new(cx, |cx| {
-                ScrollView::new(cx, |cx| {
-                    Label::new(cx, Localized::new("scroll-vertical"))
-                        .height(Pixels(1000.0))
-                        .width(Stretch(1.0));
-                })
-                .size(Pixels(200.0))
-                .class("bg-default");
+            AppData { scroll_x, scroll_y }.build(cx);
 
-                ScrollView::new(cx, |cx| {
-                    Label::new(cx, Localized::new("scroll-horizontal"))
-                        .width(Pixels(1000.0))
-                        .height(Stretch(1.0));
-                })
-                .size(Pixels(200.0))
-                .class("bg-default");
+            ExamplePage::vertical(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    ScrollView::new(cx, |cx| {
+                        Label::new(cx, Localized::new("scroll-vertical"))
+                            .height(Pixels(1000.0))
+                            .width(Stretch(1.0));
+                    })
+                    .size(Pixels(200.0))
+                    .class("bg-default");
 
-                ScrollView::new(cx, |cx| {
-                    Label::new(cx, Localized::new("scroll-horizontal-vertical"))
-                        .width(Pixels(1000.0))
-                        .height(Pixels(1000.0));
-                })
-                .size(Pixels(200.0))
-                .class("bg-default");
-            })
-            .alignment(Alignment::Center)
-            .gap(Pixels(50.0));
+                    ScrollView::new(cx, |cx| {
+                        Label::new(cx, Localized::new("scroll-horizontal"))
+                            .width(Pixels(1000.0))
+                            .height(Stretch(1.0));
+                    })
+                    .size(Pixels(200.0))
+                    .class("bg-default");
 
-            HStack::new(cx, |cx| {
-                ScrollView::new(cx, |cx| {
-                    Label::new(cx, Localized::new("scroll-vertical"))
-                        .height(Pixels(1000.0))
-                        .width(Stretch(1.0));
+                    ScrollView::new(cx, |cx| {
+                        Label::new(cx, Localized::new("scroll-horizontal-vertical"))
+                            .width(Pixels(1000.0))
+                            .height(Pixels(1000.0));
+                    })
+                    .size(Pixels(200.0))
+                    .class("bg-default");
                 })
-                .scroll_y(scroll_y)
-                .show_vertical_scrollbar(show_vertical_scrollbar)
-                .scroll_to_cursor(scroll_to_cursor)
-                .on_scroll(|cx, _, scroll_y| cx.emit(AppEvent::ScrollY(scroll_y)))
-                .size(Pixels(200.0))
-                .class("bg-default");
+                .alignment(Alignment::Center)
+                .gap(Pixels(50.0));
 
-                ScrollView::new(cx, |cx| {
-                    Label::new(cx, Localized::new("scroll-horizontal"))
-                        .width(Pixels(1000.0))
-                        .height(Stretch(1.0));
-                })
-                .scroll_x(scroll_x)
-                .show_horizontal_scrollbar(show_horizontal_scrollbar)
-                .scroll_to_cursor(scroll_to_cursor)
-                .on_scroll(|cx, scroll_x, _| cx.emit(AppEvent::ScrollX(scroll_x)))
-                .size(Pixels(200.0))
-                .class("bg-default");
+                HStack::new(cx, |cx| {
+                    ScrollView::new(cx, |cx| {
+                        Label::new(cx, Localized::new("scroll-vertical"))
+                            .height(Pixels(1000.0))
+                            .width(Stretch(1.0));
+                    })
+                    .scroll_y(scroll_y)
+                    .show_vertical_scrollbar(show_vertical_scrollbar)
+                    .scroll_to_cursor(scroll_to_cursor)
+                    .on_scroll(|cx, _, scroll_y| cx.emit(AppEvent::ScrollY(scroll_y)))
+                    .size(Pixels(200.0))
+                    .class("bg-default");
 
-                ScrollView::new(cx, |cx| {
-                    Label::new(cx, Localized::new("scroll-horizontal-vertical"))
-                        .width(Pixels(1000.0))
-                        .height(Pixels(1000.0));
+                    ScrollView::new(cx, |cx| {
+                        Label::new(cx, Localized::new("scroll-horizontal"))
+                            .width(Pixels(1000.0))
+                            .height(Stretch(1.0));
+                    })
+                    .scroll_x(scroll_x)
+                    .show_horizontal_scrollbar(show_horizontal_scrollbar)
+                    .scroll_to_cursor(scroll_to_cursor)
+                    .on_scroll(|cx, scroll_x, _| cx.emit(AppEvent::ScrollX(scroll_x)))
+                    .size(Pixels(200.0))
+                    .class("bg-default");
+
+                    ScrollView::new(cx, |cx| {
+                        Label::new(cx, Localized::new("scroll-horizontal-vertical"))
+                            .width(Pixels(1000.0))
+                            .height(Pixels(1000.0));
+                    })
+                    .scroll_x(scroll_x)
+                    .scroll_y(scroll_y)
+                    .show_horizontal_scrollbar(show_horizontal_scrollbar)
+                    .show_vertical_scrollbar(show_vertical_scrollbar)
+                    .scroll_to_cursor(scroll_to_cursor)
+                    .on_scroll(|cx, scroll_x, scroll_y| {
+                        cx.emit(AppEvent::ScrollX(scroll_x));
+                        cx.emit(AppEvent::ScrollY(scroll_y));
+                    })
+                    .size(Pixels(200.0))
+                    .class("bg-default");
                 })
-                .scroll_x(scroll_x)
-                .scroll_y(scroll_y)
-                .show_horizontal_scrollbar(show_horizontal_scrollbar)
-                .show_vertical_scrollbar(show_vertical_scrollbar)
-                .scroll_to_cursor(scroll_to_cursor)
-                .on_scroll(|cx, scroll_x, scroll_y| {
-                    cx.emit(AppEvent::ScrollX(scroll_x));
-                    cx.emit(AppEvent::ScrollY(scroll_y));
-                })
-                .size(Pixels(200.0))
-                .class("bg-default");
-            })
-            .alignment(Alignment::Center)
-            .gap(Pixels(50.0));
-        });
+                .alignment(Alignment::Center)
+                .gap(Pixels(50.0));
+            });
+        })
+        .title(Localized::new("view-title-scrollview"))
+        .inner_size((1100, 800));
     })
-    .title(Localized::new("view-title-scrollview"))
-    .inner_size((1100, 800))
     .run()
 }

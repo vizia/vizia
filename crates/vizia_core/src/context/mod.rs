@@ -58,10 +58,8 @@ use crate::{
     model::ModelData,
 };
 
-use crate::{
-    binding::BindingHandler,
-    resource::{LoadingStatus, StoredImage},
-};
+use crate::environment::{apply_direction_class, apply_theme_class};
+use crate::{binding::BindingHandler, resource::StoredImage};
 use crate::{cache::CachedData, resource::ImageOrSvg};
 
 use crate::prelude::*;
@@ -298,8 +296,6 @@ impl Context {
             active_drag_view: None,
         };
 
-        result.tree.set_window(Entity::root(), true);
-
         result.style.needs_restyle(Entity::root());
         result.style.needs_relayout(Entity::root());
         result.style.needs_retransform(Entity::root());
@@ -313,8 +309,6 @@ impl Context {
         Environment::new(&mut result).build(&mut result);
 
         result.entity_manager.create();
-
-        result.style.role.insert(Entity::root(), Role::Window);
 
         result
     }
@@ -349,7 +343,7 @@ impl Context {
         self.data::<Environment>()
     }
 
-    /// Returns the entity id of the  parent window to the current view.
+    /// Returns the entity id of the parent window of the current view.
     pub fn parent_window(&self) -> Entity {
         self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
     }
@@ -485,6 +479,10 @@ impl Context {
             return;
         }
 
+        self.update_focus(focus_visible);
+    }
+
+    fn update_focus(&mut self, focus_visible: bool) {
         let old_focus = self.focused;
         let new_focus = self.current;
         self.set_focus_pseudo_classes(old_focus, false, focus_visible);
@@ -626,7 +624,23 @@ impl Context {
                 if let Some(new_focus) = self.focus_stack.pop() {
                     self.with_current(new_focus, |cx| cx.focus());
                 } else {
-                    self.with_current(Entity::root(), |cx| cx.focus());
+                    // Fall back to the nearest enclosing window so focus is never
+                    // stranded on the root sentinel.
+                    let fallback = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
+                    self.with_current(fallback, |cx| cx.focus());
+                }
+
+                // `focus()` silently refuses to move focus to a non-focusable target (such as
+                // a plain window), which would leave `focused` dangling on the deleted entity
+                // and later crash consumers of the focus id (e.g. the accesskit tree update).
+                // Force focus to the nearest surviving ancestor window (or root) in that case.
+                if self.focused == *entity {
+                    let fallback = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
+                    let focus_visible =
+                        self.style.pseudo_classes.get_mut(*entity).is_some_and(|classes| {
+                            classes.contains(PseudoClassFlags::FOCUS_VISIBLE)
+                        });
+                    self.with_current(fallback, |cx| cx.update_focus(focus_visible));
                 }
             }
 
@@ -650,9 +664,16 @@ impl Context {
                 self.stop_timer(timer);
             }
 
-            let window_entity = self.tree.get_parent_window(*entity).unwrap_or(Entity::root());
+            let window_entity = if self.tree.is_window(*entity) {
+                // The entity being removed IS a window – its own WindowState is the target.
+                *entity
+            } else {
+                self.tree.get_parent_window(*entity).unwrap_or(Entity::root())
+            };
 
-            self.windows.get_mut(&window_entity).unwrap().redraw_list.remove(entity);
+            if let Some(ws) = self.windows.get_mut(&window_entity) {
+                ws.redraw_list.remove(entity);
+            }
 
             self.cache.invalidate_draw_bounds(&self.tree, *entity);
 
@@ -898,11 +919,9 @@ impl Context {
             let environment = self.data::<Environment>();
             let theme_mode = environment.effective_theme();
             let direction = environment.direction.get();
-            self.with_current(Entity::root(), |cx| {
-                let cx = &mut EventContext::new(cx);
-                cx.toggle_class("dark", theme_mode == ThemeMode::DarkMode);
-                cx.toggle_class("rtl", direction == Direction::RightToLeft);
-            })
+            let cx = &mut EventContext::new(self);
+            apply_theme_class(cx, theme_mode == ThemeMode::DarkMode);
+            apply_direction_class(cx, direction);
         } else {
             // Add an empty stylesheet to ensure that the list of styles contains at least three entries.
             self.resource_manager.styles.push(Box::new(""));

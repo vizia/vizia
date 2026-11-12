@@ -29,35 +29,39 @@ impl Model for AppData {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let option1 = Signal::new(true);
-        let option2 = Signal::new(false);
+        load_translations(cx);
 
-        AppData { option1, option2 }.build(cx);
+        Window::new(cx, |cx| {
+            let option1 = Signal::new(true);
+            let option2 = Signal::new(false);
 
-        ExamplePage::vertical(cx, |cx| {
-            Label::new(cx, Localized::new("switch-basic"));
+            AppData { option1, option2 }.build(cx);
 
-            HStack::new(cx, |cx| {
-                Switch::new(cx, option1)
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1))
-                    .id("Switch_1");
-                Label::new(cx, Localized::new("switch-1")).describing("Switch_1");
-            })
-            .size(Auto)
-            .horizontal_gap(Pixels(5.0))
-            .alignment(Alignment::Center);
+            ExamplePage::vertical(cx, |cx| {
+                Label::new(cx, Localized::new("switch-basic"));
 
-            HStack::new(cx, |cx| {
-                Switch::new(cx, option2)
-                    .on_toggle(|cx| cx.emit(AppEvent::ToggleOption2))
-                    .id("Switch_2");
-                Label::new(cx, Localized::new("switch-2")).describing("Switch_2");
-            })
-            .size(Auto)
-            .horizontal_gap(Pixels(5.0))
-            .alignment(Alignment::Center);
-        });
+                HStack::new(cx, |cx| {
+                    Switch::new(cx, option1)
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleOption1))
+                        .id("Switch_1");
+                    Label::new(cx, Localized::new("switch-1")).describing("Switch_1");
+                })
+                .size(Auto)
+                .horizontal_gap(Pixels(5.0))
+                .alignment(Alignment::Center);
+
+                HStack::new(cx, |cx| {
+                    Switch::new(cx, option2)
+                        .on_toggle(|cx| cx.emit(AppEvent::ToggleOption2))
+                        .id("Switch_2");
+                    Label::new(cx, Localized::new("switch-2")).describing("Switch_2");
+                })
+                .size(Auto)
+                .horizontal_gap(Pixels(5.0))
+                .alignment(Alignment::Center);
+            });
+        })
+        .title(Localized::new("view-title-switch"));
     })
-    .title(Localized::new("view-title-switch"))
     .run()
 }

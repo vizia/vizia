@@ -34,82 +34,88 @@ pub enum AppEvent {
 
 fn main() -> Result<(), ApplicationError> {
     Application::new(|cx| {
-        let editable_text = Signal::new("".to_string());
-        let password_text = Signal::new("".to_string());
-        let password_visible = Signal::new(false);
-        let multiline_text =
-            Signal::new("This is some text which is editable and spans multiple lines".to_string());
-        let non_editable_text = Signal::new("This text can be selected but not edited".to_string());
-        let non_editable_multiline_text = Signal::new(
-            "This text can be selected but not edited and spans multiple lines".to_string(),
-        );
+        load_translations(cx);
 
-        AppData {
-            editable_text,
-            password_text,
-            password_visible,
-            multiline_text,
-            _non_editable_text: non_editable_text,
-            _non_editable_multiline_text: non_editable_multiline_text,
-        }
-        .build(cx);
+        Window::new(cx, |cx| {
+            let editable_text = Signal::new("".to_string());
+            let password_text = Signal::new("".to_string());
+            let password_visible = Signal::new(false);
+            let multiline_text = Signal::new(
+                "This is some text which is editable and spans multiple lines".to_string(),
+            );
+            let non_editable_text =
+                Signal::new("This text can be selected but not edited".to_string());
+            let non_editable_multiline_text = Signal::new(
+                "This text can be selected but not edited and spans multiple lines".to_string(),
+            );
 
-        ExamplePage::vertical(cx, |cx| {
-            Textbox::new(cx, editable_text)
-                .width(Pixels(300.0))
-                .placeholder(Localized::new("textbox-placeholder-type"))
-                .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
+            AppData {
+                editable_text,
+                password_text,
+                password_visible,
+                multiline_text,
+                _non_editable_text: non_editable_text,
+                _non_editable_multiline_text: non_editable_multiline_text,
+            }
+            .build(cx);
 
-            ZStack::new(cx, |cx| {
-                Textbox::new(cx, password_text)
-                    .width(Stretch(1.0))
-                    .placeholder("Password")
-                    .mask_char(Some('*'))
-                    .mask_visible(password_visible)
-                    .on_edit(|cx, text| cx.emit(AppEvent::SetPasswordText(text)))
-                    .padding_right(Pixels(50.0));
-
-                ToggleButton::with_contents(
-                    cx,
-                    password_visible,
-                    |cx| Svg::new(cx, ICON_EYE),
-                    |cx| Svg::new(cx, ICON_EYE_OFF),
-                )
-                //.variant(ButtonVariant::Text)
-                .on_toggle(move |cx| {
-                    cx.emit(AppEvent::TogglePasswordVisible);
-                });
-            })
-            .width(Pixels(300.0))
-            .height(Auto)
-            .alignment(Alignment::Right);
-
-            HStack::new(cx, |cx| {
+            ExamplePage::vertical(cx, |cx| {
                 Textbox::new(cx, editable_text)
-                    .class("icon-before")
-                    .width(Stretch(1.0))
-                    .placeholder(Localized::new("textbox-placeholder-search"))
+                    .width(Pixels(300.0))
+                    .placeholder(Localized::new("textbox-placeholder-type"))
                     .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
-                Svg::new(cx, ICON_SEARCH)
-                    .color(Color::gray())
-                    .position_type(PositionType::Absolute)
-                    .left(Pixels(5.0))
-                    .top(Stretch(1.0))
-                    .bottom(Stretch(1.0));
-            })
-            .height(Auto)
-            .width(Pixels(300.0));
 
-            Textbox::new_multiline(cx, multiline_text, true)
-                .width(Pixels(300.0))
-                .on_edit(|cx, text| cx.emit(AppEvent::SetMultilineText(text)));
+                ZStack::new(cx, |cx| {
+                    Textbox::new(cx, password_text)
+                        .width(Stretch(1.0))
+                        .placeholder("Password")
+                        .mask_char(Some('*'))
+                        .mask_visible(password_visible)
+                        .on_edit(|cx, text| cx.emit(AppEvent::SetPasswordText(text)))
+                        .padding_right(Pixels(50.0));
 
-            Textbox::new(cx, non_editable_text).width(Auto).read_only(true);
-            Textbox::new_multiline(cx, non_editable_multiline_text, true)
+                    ToggleButton::with_contents(
+                        cx,
+                        password_visible,
+                        |cx| Svg::new(cx, ICON_EYE),
+                        |cx| Svg::new(cx, ICON_EYE_OFF),
+                    )
+                    //.variant(ButtonVariant::Text)
+                    .on_toggle(move |cx| {
+                        cx.emit(AppEvent::TogglePasswordVisible);
+                    });
+                })
                 .width(Pixels(300.0))
-                .read_only(true);
-        });
+                .height(Auto)
+                .alignment(Alignment::Right);
+
+                HStack::new(cx, |cx| {
+                    Textbox::new(cx, editable_text)
+                        .class("icon-before")
+                        .width(Stretch(1.0))
+                        .placeholder(Localized::new("textbox-placeholder-search"))
+                        .on_edit(|cx, text| cx.emit(AppEvent::SetEditableText(text)));
+                    Svg::new(cx, ICON_SEARCH)
+                        .color(Color::gray())
+                        .position_type(PositionType::Absolute)
+                        .left(Pixels(5.0))
+                        .top(Stretch(1.0))
+                        .bottom(Stretch(1.0));
+                })
+                .height(Auto)
+                .width(Pixels(300.0));
+
+                Textbox::new_multiline(cx, multiline_text, true)
+                    .width(Pixels(300.0))
+                    .on_edit(|cx, text| cx.emit(AppEvent::SetMultilineText(text)));
+
+                Textbox::new(cx, non_editable_text).width(Auto).read_only(true);
+                Textbox::new_multiline(cx, non_editable_multiline_text, true)
+                    .width(Pixels(300.0))
+                    .read_only(true);
+            });
+        })
+        .title(Localized::new("view-title-textbox"));
     })
-    .title(Localized::new("view-title-textbox"))
     .run()
 }

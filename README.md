@@ -126,26 +126,27 @@ impl Model for AppData {
 fn main() {
     // Create an application
     Application::new(|cx| {
-      let count = Signal::new(0);
+        Window::new(cx, |cx| {
+            let count = Signal::new(0);
 
-        // Build the model data into the tree
-      AppData { count }.build(cx);
+            // Build the model data into the tree
+            AppData { count }.build(cx);
 
-        // Declare views which make up the UI
-        HStack::new(cx, |cx| {
-          
-            // Declare a button which emits an event
-            Button::new(cx, |cx| Label::new(cx, "Increment"))
-              .on_press(|cx| cx.emit(AppEvent::Increment));
+            // Declare views which make up the UI
+            HStack::new(cx, |cx| {
+                // Declare a button which emits an event
+                Button::new(cx, |cx| Label::new(cx, "Increment"))
+                    .on_press(|cx| cx.emit(AppEvent::Increment));
 
-            // Declare a label which is bound to part of the model, updating when it changes
-            Label::new(cx, count).width(Pixels(50.0));
+                // Declare a label which is bound to part of the model, updating when it changes
+                Label::new(cx, count).width(Pixels(50.0));
+            })
+            .alignment(Alignment::Center)  // Apply style and layout modifiers
+            .horizontal_gap(Pixels(50.0));
         })
-        .alignment(Alignment::Center)  // Apply style and layout modifiers
-        .horizontal_gap(Pixels(50.0));
+        .title("Counter") // Configure window properties
+        .inner_size((400, 100));
     })
-    .title("Counter") // Configure window properties
-    .inner_size((400, 100))
     .run();
 }
 ```

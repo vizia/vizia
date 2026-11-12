@@ -1341,78 +1341,86 @@ fn main() -> Result<(), ApplicationError> {
     // setup_logging()?;
 
     Application::new(|cx: &mut Context| {
-        cx.load_translation(
-            langid!("en-US"),
-            include_str!("../resources/translations/en-US/helper.ftl"),
-        )
-        .unwrap();
-
-        cx.load_translation(langid!("fr"), include_str!("../resources/translations/fr/helper.ftl"))
+        Window::new(cx, |cx| {
+            cx.load_translation(
+                langid!("en-US"),
+                include_str!("../resources/translations/en-US/helper.ftl"),
+            )
             .unwrap();
 
-        cx.load_translation(langid!("ar"), include_str!("../resources/translations/ar/helper.ftl"))
+            cx.load_translation(
+                langid!("fr"),
+                include_str!("../resources/translations/fr/helper.ftl"),
+            )
             .unwrap();
 
-        cx.load_image(
-            "vizia.png",
-            include_bytes!("../resources/images/vizia-logo-01.png"),
-            ImageRetentionPolicy::Forever,
-        );
+            cx.load_translation(
+                langid!("ar"),
+                include_str!("../resources/translations/ar/helper.ftl"),
+            )
+            .unwrap();
 
-        let app_data = AppData::new();
-        app_data.build(cx);
+            cx.load_image(
+                "vizia.png",
+                include_bytes!("../resources/images/vizia-logo-01.png"),
+                ImageRetentionPolicy::Forever,
+            );
 
-        cx.add_stylesheet(include_style!("resources/themes/theme.css"))
-            .expect("Failed to add stylesheet");
+            let app_data = AppData::new();
+            app_data.build(cx);
 
-        cx.add_stylesheet(include_style!("resources/themes/accents.css"))
-            .expect("Failed to add stylesheet");
+            cx.add_stylesheet(include_style!("resources/themes/theme.css"))
+                .expect("Failed to add stylesheet");
 
-        VStack::new(cx, |cx| {
-            HStack::new(cx, |cx| {
-                Sidebar::new(
-                    cx,
-                    move |cx| {
-                        VStack::new(cx, |cx| {
-                            HStack::new(cx, |cx| {
-                                Image::new(cx, "vizia.png").class("sidebar-logo");
-                                Label::new(cx, "Widget Gallery").class("sidebar-title");
+            cx.add_stylesheet(include_style!("resources/themes/accents.css"))
+                .expect("Failed to add stylesheet");
+
+            VStack::new(cx, |cx| {
+                HStack::new(cx, |cx| {
+                    Sidebar::new(
+                        cx,
+                        move |cx| {
+                            VStack::new(cx, |cx| {
+                                HStack::new(cx, |cx| {
+                                    Image::new(cx, "vizia.png").class("sidebar-logo");
+                                    Label::new(cx, "Widget Gallery").class("sidebar-title");
+                                })
+                                .size(Auto)
+                                .alignment(Alignment::Left);
+
+                                Textbox::new(cx, app_data.search_text)
+                                    .on_edit(|cx, text| cx.emit(AppEvent::SetSearchText(text)))
+                                    .placeholder("Search widgets...")
+                                    .class("sidebar-search");
                             })
-                            .size(Auto)
-                            .alignment(Alignment::Left);
-
-                            Textbox::new(cx, app_data.search_text)
-                                .on_edit(|cx, text| cx.emit(AppEvent::SetSearchText(text)))
-                                .placeholder("Search widgets...")
-                                .class("sidebar-search");
+                            .height(Auto)
+                            .gap(Pixels(8.0));
+                        },
+                        move |cx| {
+                            build_sidebar_content(cx, app_data.selected_view, app_data.search_text)
+                        },
+                        move |cx| {
+                            Label::new(cx, "Sidebar Footer").class("sidebar-footer");
+                        },
+                    );
+                    VStack::new(cx, |cx| {
+                        HStack::new(cx, |cx| {
+                            controls_menu(cx, app_data);
                         })
-                        .height(Auto)
-                        .gap(Pixels(8.0));
-                    },
-                    move |cx| {
-                        build_sidebar_content(cx, app_data.selected_view, app_data.search_text)
-                    },
-                    move |cx| {
-                        Label::new(cx, "Sidebar Footer").class("sidebar-footer");
-                    },
-                );
-                VStack::new(cx, |cx| {
-                    HStack::new(cx, |cx| {
-                        controls_menu(cx, app_data);
-                    })
-                    .class("gallery-toolbar")
-                    .alignment(Alignment::Right)
-                    .padding(Pixels(12.0))
-                    .width(Stretch(1.0))
-                    .height(Auto);
-                    content_area(cx, app_data.selected_view);
-                });
-            })
-            .height(Stretch(1.0));
-        });
+                        .class("gallery-toolbar")
+                        .alignment(Alignment::Right)
+                        .padding(Pixels(12.0))
+                        .width(Stretch(1.0))
+                        .height(Auto);
+                        content_area(cx, app_data.selected_view);
+                    });
+                })
+                .height(Stretch(1.0));
+            });
+        })
+        .title("Widget Gallery")
+        .inner_size((1000, 760))
+        .min_inner_size(Some((800, 400)));
     })
-    .title("Widget Gallery")
-    .inner_size((1000, 760))
-    .min_inner_size(Some((800, 400)))
     .run()
 }
