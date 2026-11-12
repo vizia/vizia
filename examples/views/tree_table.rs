@@ -432,7 +432,7 @@ fn columns(
                 TreeTableFirstCell::new(cx, row_for_first_cell, move |cx, row| {
                     let row_id = row.id;
                     let text = tree.map({
-                        let node_id = row_id.clone();
+                        let node_id = row_id;
                         move |tree| {
                             tree.get(node_id)
                                 .map(|node| node.value().name.clone())
@@ -440,11 +440,11 @@ fn columns(
                         }
                     });
                     let checked = tree.map({
-                        let node_id = row_id.clone();
+                        let node_id = row_id;
                         move |tree| node_check_state(tree, node_id) == CheckState::Checked
                     });
                     let intermediate = tree.map({
-                        let node_id = row_id.clone();
+                        let node_id = row_id;
                         move |tree| node_check_state(tree, node_id) == CheckState::Intermediate
                     });
 
@@ -453,7 +453,7 @@ fn columns(
                             .pointer_events(PointerEvents::Auto)
                             .navigable(false)
                             .on_toggle({
-                                let node_id = row_id.clone();
+                                let node_id = row_id;
                                 move |cx| {
                                     cx.emit(AppEvent::ToggleCheckState(node_id));
                                 }

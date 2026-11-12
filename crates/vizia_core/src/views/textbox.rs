@@ -1891,49 +1891,44 @@ where
                 //self.scroll(cx, *x, *y);
             }
 
-            TextEvent::Copy =>
-            {
+            TextEvent::Copy => {
                 #[cfg(feature = "clipboard")]
-                if self.edit && self.can_copy.get() {
-                    if let Some(selected_text) = self.clone_selected(cx) {
-                        if !selected_text.is_empty() {
-                            cx.set_clipboard(selected_text)
-                                .expect("Failed to add text to clipboard");
-                        }
-                    }
+                if self.edit
+                    && self.can_copy.get()
+                    && let Some(selected_text) = self.clone_selected(cx)
+                    && !selected_text.is_empty()
+                {
+                    cx.set_clipboard(selected_text).expect("Failed to add text to clipboard");
                 }
             }
 
-            TextEvent::Paste =>
-            {
+            TextEvent::Paste => {
                 #[cfg(feature = "clipboard")]
-                if self.edit && self.can_paste.get() {
-                    if let Ok(text) = cx.get_clipboard() {
-                        cx.emit(TextEvent::InsertText(text));
-                    }
+                if self.edit
+                    && self.can_paste.get()
+                    && let Ok(text) = cx.get_clipboard()
+                {
+                    cx.emit(TextEvent::InsertText(text));
                 }
             }
 
-            TextEvent::Cut =>
-            {
+            TextEvent::Cut => {
                 #[cfg(feature = "clipboard")]
-                if self.edit {
-                    if let Some(selected_text) = self.clone_selected(cx) {
-                        if !selected_text.is_empty() {
-                            self.edited_since_focus = true;
-                            self.edited_once = true;
-                            cx.set_clipboard(selected_text)
-                                .expect("Failed to add text to clipboard");
-                            self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
+                if self.edit
+                    && let Some(selected_text) = self.clone_selected(cx)
+                    && !selected_text.is_empty()
+                {
+                    self.edited_since_focus = true;
+                    self.edited_once = true;
+                    cx.set_clipboard(selected_text).expect("Failed to add text to clipboard");
+                    self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
 
-                            let text = self.clone_text(cx);
+                    let text = self.clone_text(cx);
 
-                            cx.set_valid(self.is_text_valid(&text));
+                    cx.set_valid(self.is_text_valid(&text));
 
-                            if let Some(callback) = &self.on_edit {
-                                (callback)(cx, text);
-                            }
-                        }
+                    if let Some(callback) = &self.on_edit {
+                        (callback)(cx, text);
                     }
                 }
             }

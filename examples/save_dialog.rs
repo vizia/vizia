@@ -14,11 +14,11 @@ impl Model for AppData {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| {
             // Intercept WindowClose event to show a dialog if not 'saved'.
-            if let WindowEvent::WindowClose = window_event {
-                if !self.is_saved.get() {
-                    self.show_dialog.set(true);
-                    meta.consume();
-                }
+            if let WindowEvent::WindowClose = window_event
+                && !self.is_saved.get()
+            {
+                self.show_dialog.set(true);
+                meta.consume();
             }
         });
 
