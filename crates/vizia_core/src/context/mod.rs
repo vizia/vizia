@@ -675,7 +675,6 @@ impl Context {
                 ws.redraw_list.remove(entity);
             }
 
-
             self.cache.invalidate_draw_bounds(&self.tree, *entity);
 
             if self.windows.contains_key(entity) {
