@@ -48,12 +48,11 @@ where
 
     /// Returns the index of the data associated with the key if it exists
     pub fn dense_idx<K: GenerationalId>(&self, key: K) -> Option<I> {
-        if let Some(dense_index) = self.sparse.get(key.index()) {
-            if let Some(entry) = self.dense.get(dense_index.index()) {
-                if entry.key.index() == key.index() {
-                    return Some(*dense_index);
-                }
-            }
+        if let Some(dense_index) = self.sparse.get(key.index())
+            && let Some(entry) = self.dense.get(dense_index.index())
+            && entry.key.index() == key.index()
+        {
+            return Some(*dense_index);
         }
         None
     }
