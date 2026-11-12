@@ -709,8 +709,8 @@ impl ApplicationHandler<UserEvent> for Application {
 
         match event {
             winit::event::WindowEvent::Resized(size) => {
-                if window.resize(size) {
-                    self.cx.set_window_size(window.entity, size.width as f32, size.height as f32);
+                if let Some((width, height)) = resized_bounds(size, |size| window.resize(size)) {
+                    self.cx.set_window_size(window.entity, width, height);
                     self.cx.needs_resize_redraw(window.entity);
                 }
                 window.window().request_redraw();
@@ -1272,4 +1272,44 @@ pub fn load_default_cursors(event_loop: &ActiveEventLoop) -> HashMap<CursorIcon,
     }
 
     custom_cursors
+}
+
+/// Applies a `Resized` extent through `resize` and returns the window bounds to publish.
+///
+/// Returns `None` when `resize` leaves the existing targets untouched (a zero extent), so the
+/// caller neither sets the window size nor requests a resize redraw.
+fn resized_bounds(
+    size: winit::dpi::PhysicalSize<u32>,
+    resize: impl FnOnce(winit::dpi::PhysicalSize<u32>) -> bool,
+) -> Option<(f32, f32)> {
+    resize(size).then_some((size.width as f32, size.height as f32))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use winit::dpi::PhysicalSize;
+
+    fn resized_bounds_through_targets(size: PhysicalSize<u32>) -> Option<(f32, f32)> {
+        resized_bounds(size, |size| {
+            crate::window::resize_targets(size, |_, _| {}, |_| ()).is_some()
+        })
+    }
+
+    #[test]
+    fn resized_bounds_skips_zero_extent() {
+        for extent in
+            [PhysicalSize::new(0, 1480), PhysicalSize::new(2320, 0), PhysicalSize::new(0, 0)]
+        {
+            assert_eq!(resized_bounds_through_targets(extent), None);
+        }
+    }
+
+    #[test]
+    fn resized_bounds_publishes_non_zero_extent() {
+        assert_eq!(
+            resized_bounds_through_targets(PhysicalSize::new(2320, 1480)),
+            Some((2320.0, 1480.0))
+        );
+    }
 }

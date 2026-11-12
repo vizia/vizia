@@ -272,7 +272,7 @@ impl WinState {
 ///
 /// `construct_targets` builds the Skia surfaces at `size` and `resize_gl` resizes the GL surface to
 /// the same extent. A zero extent invokes neither and returns `None`.
-fn resize_targets<T>(
+pub(crate) fn resize_targets<T>(
     size: PhysicalSize<u32>,
     resize_gl: impl FnOnce(NonZeroU32, NonZeroU32),
     construct_targets: impl FnOnce(PhysicalSize<u32>) -> T,
