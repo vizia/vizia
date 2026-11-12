@@ -463,7 +463,7 @@ impl ApplicationRunner {
                 .expect("Window was created without OpenGL support");
             unsafe { context.make_current() }.expect("Failed to make GL context current");
             self.cx.draw(Entity::root(), &mut self.surface, &mut self.dirty_surface);
-            self.gr_context.flush_and_submit();
+            self.gr_context.flush_and_submit().expect("Failed to flush and submit GPU commands");
             self.should_redraw = false;
             context.swap_buffers().expect("Failed to swap buffers");
             unsafe { context.make_not_current() }.expect("Failed to make GL context not current");

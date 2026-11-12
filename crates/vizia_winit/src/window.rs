@@ -263,7 +263,7 @@ impl WinState {
     }
 
     pub fn swap_buffers(&mut self) {
-        self.gr_context.flush_and_submit();
+        self.gr_context.flush_and_submit().expect("Failed to flush and submit GPU commands");
         self.gl_surface.swap_buffers(&self.gl_context).expect("Failed to swap buffers");
     }
 }

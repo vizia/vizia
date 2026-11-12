@@ -1,5 +1,7 @@
 use crate::{accessibility::IntoNode, events::ViewHandler, prelude::*};
-use accesskit::{Node, NodeId, Orientation as AccessOrientation, Rect, Toggled, Tree, TreeUpdate};
+use accesskit::{
+    Node, NodeId, Orientation as AccessOrientation, Rect, Toggled, TreeInfo, TreeUpdate,
+};
 use hashbrown::HashMap;
 use vizia_storage::LayoutTreeIterator;
 
@@ -104,7 +106,7 @@ pub fn initial_accessibility_system(cx: &mut Context) -> TreeUpdate {
 
     TreeUpdate {
         nodes,
-        tree: Some(Tree::new(Entity::root().accesskit_id())),
+        tree: Some(TreeInfo::new(Entity::root().accesskit_id())),
         tree_id: accesskit::TreeId::ROOT,
         focus: Entity::root().accesskit_id(),
     }
