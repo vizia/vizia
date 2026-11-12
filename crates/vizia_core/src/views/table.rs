@@ -541,10 +541,10 @@ where
 
             TableEvent::SelectRow(index) => {
                 let rows = self.rows.get();
-                if let Some(row) = rows.deref().get(*index) {
-                    if let Some(callback) = &self.on_row_select {
-                        (callback)(cx, (self.row_id)(row));
-                    }
+                if let Some(row) = rows.deref().get(*index)
+                    && let Some(callback) = &self.on_row_select
+                {
+                    (callback)(cx, (self.row_id)(row));
                 }
             }
 

@@ -196,34 +196,36 @@ impl Model for ActionsModel {
                 if cx.current() != over && !over.is_descendant_of(cx.tree, cx.current()) {
                     return;
                 }
-                if !cx.is_disabled() && cx.current == meta.target {
-                    if let Some(action) = &self.on_press_down {
-                        (action)(cx);
-                    }
+                if !cx.is_disabled()
+                    && cx.current == meta.target
+                    && let Some(action) = &self.on_press_down
+                {
+                    (action)(cx);
                 }
             }
 
             WindowEvent::MouseDoubleClick(button) => {
-                if meta.target == cx.current && !cx.is_disabled() {
-                    if let Some(action) = &self.on_double_click {
-                        (action)(cx, *button);
-                    }
+                if meta.target == cx.current
+                    && !cx.is_disabled()
+                    && let Some(action) = &self.on_double_click
+                {
+                    (action)(cx, *button);
                 }
             }
 
             WindowEvent::MouseEnter => {
-                if meta.target == cx.current() {
-                    if let Some(action) = &self.on_hover {
-                        (action)(cx);
-                    }
+                if meta.target == cx.current()
+                    && let Some(action) = &self.on_hover
+                {
+                    (action)(cx);
                 }
             }
 
             WindowEvent::MouseLeave => {
-                if meta.target == cx.current() {
-                    if let Some(action) = &self.on_hover_out {
-                        (action)(cx);
-                    }
+                if meta.target == cx.current()
+                    && let Some(action) = &self.on_hover_out
+                {
+                    (action)(cx);
                 }
             }
 
@@ -272,10 +274,10 @@ impl Model for ActionsModel {
             }
 
             WindowEvent::GeometryChanged(geo) => {
-                if meta.target == cx.current() {
-                    if let Some(action) = &self.on_geo_changed {
-                        (action)(cx, *geo);
-                    }
+                if meta.target == cx.current()
+                    && let Some(action) = &self.on_geo_changed
+                {
+                    (action)(cx, *geo);
                 }
             }
 

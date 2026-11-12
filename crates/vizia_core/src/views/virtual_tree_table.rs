@@ -860,11 +860,12 @@ where
             TreeTableEvent::FocusRight => {
                 let next_focus = match self.focused.get() {
                     Some(TableFocus::Row(id)) => {
-                        if let Some(row) = self.focused_visible_row() {
-                            if row.has_children && !row.expanded {
-                                cx.emit(TreeTableEvent::<K, Id>::ExpandSelected);
-                                return;
-                            }
+                        if let Some(row) = self.focused_visible_row()
+                            && row.has_children
+                            && !row.expanded
+                        {
+                            cx.emit(TreeTableEvent::<K, Id>::ExpandSelected);
+                            return;
                         }
 
                         let first_column_key =
@@ -894,10 +895,11 @@ where
             TreeTableEvent::FocusLeft => {
                 let next_focus = match self.focused.get() {
                     Some(TableFocus::Row(_)) => {
-                        if let Some(row) = self.focused_visible_row() {
-                            if row.has_children && row.expanded {
-                                self.emit_toggle(cx, row.id, false);
-                            }
+                        if let Some(row) = self.focused_visible_row()
+                            && row.has_children
+                            && row.expanded
+                        {
+                            self.emit_toggle(cx, row.id, false);
                         }
 
                         None

@@ -121,10 +121,10 @@ where
     T: PartialEq + Clone + 'static,
     Id: Clone + Eq + Hash + 'static,
 {
-    if let Some(focused_row_id) = focused_row_id {
-        if let Some(index) = visible_rows.iter().position(|row| &row.id == focused_row_id) {
-            return Some(index);
-        }
+    if let Some(focused_row_id) = focused_row_id
+        && let Some(index) = visible_rows.iter().position(|row| &row.id == focused_row_id)
+    {
+        return Some(index);
     }
 
     visible_rows
@@ -475,10 +475,10 @@ where
     fn focused_or_selected_visible_row(&self) -> Option<TreeTableRow<T, Id>> {
         let visible_rows = self.visible_rows();
 
-        if let Some(focused_id) = self.focused_row_id.get() {
-            if let Some(row) = visible_rows.iter().find(|row| row.id == focused_id) {
-                return Some(row.clone());
-            }
+        if let Some(focused_id) = self.focused_row_id.get()
+            && let Some(row) = visible_rows.iter().find(|row| row.id == focused_id)
+        {
+            return Some(row.clone());
         }
 
         let selected_id = self.selected_row_ids.get().first().cloned()?;

@@ -65,10 +65,10 @@ impl VirtualList {
         let previous = self.focused.get();
         self.focused.set(focused);
 
-        if previous != focused {
-            if let (Some(index), Some(callback)) = (focused, self.on_focus.as_ref()) {
-                callback(cx, index);
-            }
+        if previous != focused
+            && let (Some(index), Some(callback)) = (focused, self.on_focus.as_ref())
+        {
+            callback(cx, index);
         }
     }
 

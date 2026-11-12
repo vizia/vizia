@@ -126,45 +126,45 @@ pub(crate) fn layout_system(cx: &mut Context) {
             // Morphorm produces relative positions so convert to absolute.
             if let Some(parent) = cx.tree.get_layout_parent(entity) {
                 let parent_bounds = cx.cache.get_bounds(parent);
-                if let Some(bounds) = cx.cache.bounds.get_mut(entity) {
-                    if let Some(relative_bounds) = cx.cache.relative_bounds.get(entity) {
-                        let x = relative_bounds.x + parent_bounds.x;
-                        let y = relative_bounds.y + parent_bounds.y;
-                        let w = relative_bounds.w;
-                        let h = relative_bounds.h;
+                if let Some(bounds) = cx.cache.bounds.get_mut(entity)
+                    && let Some(relative_bounds) = cx.cache.relative_bounds.get(entity)
+                {
+                    let x = relative_bounds.x + parent_bounds.x;
+                    let y = relative_bounds.y + parent_bounds.y;
+                    let w = relative_bounds.w;
+                    let h = relative_bounds.h;
 
-                        let mut geo_changed = GeoChanged::empty();
+                    let mut geo_changed = GeoChanged::empty();
 
-                        if x != bounds.x {
-                            geo_changed.set(GeoChanged::POSX_CHANGED, true);
-                        }
-
-                        if y != bounds.y {
-                            geo_changed.set(GeoChanged::POSY_CHANGED, true);
-                        }
-
-                        if w != bounds.w {
-                            geo_changed.set(GeoChanged::WIDTH_CHANGED, true);
-                            cx.cache.path.remove(entity);
-                        }
-
-                        if h != bounds.h {
-                            geo_changed.set(GeoChanged::HEIGHT_CHANGED, true);
-                            cx.cache.path.remove(entity);
-                        }
-
-                        if let Some(geo) = cx.cache.geo_changed.get_mut(entity) {
-                            *geo = geo_changed;
-                        }
-
-                        let new_bounds = BoundingBox { x, y, w, h };
-
-                        // if new_bounds != *bounds && *bounds != BoundingBox::default() {
-                        //     cx.needs_redraw();
-                        // }
-
-                        *bounds = new_bounds;
+                    if x != bounds.x {
+                        geo_changed.set(GeoChanged::POSX_CHANGED, true);
                     }
+
+                    if y != bounds.y {
+                        geo_changed.set(GeoChanged::POSY_CHANGED, true);
+                    }
+
+                    if w != bounds.w {
+                        geo_changed.set(GeoChanged::WIDTH_CHANGED, true);
+                        cx.cache.path.remove(entity);
+                    }
+
+                    if h != bounds.h {
+                        geo_changed.set(GeoChanged::HEIGHT_CHANGED, true);
+                        cx.cache.path.remove(entity);
+                    }
+
+                    if let Some(geo) = cx.cache.geo_changed.get_mut(entity) {
+                        *geo = geo_changed;
+                    }
+
+                    let new_bounds = BoundingBox { x, y, w, h };
+
+                    // if new_bounds != *bounds && *bounds != BoundingBox::default() {
+                    //     cx.needs_redraw();
+                    // }
+
+                    *bounds = new_bounds;
                 }
             }
 
@@ -217,15 +217,14 @@ pub(crate) fn layout_system(cx: &mut Context) {
 
     if (hover_geometry_affected || transform_hover_changed || clipping_hover_changed)
         && cx.captured.is_null()
+        && let Some(proxy) = &cx.event_proxy
     {
-        if let Some(proxy) = &cx.event_proxy {
-            let event = ProxyEvent::new(InternalEvent::RefreshHover)
-                .target(Entity::root())
-                .origin(Entity::root())
-                .propagate(Propagation::Up);
+        let event = ProxyEvent::new(InternalEvent::RefreshHover)
+            .target(Entity::root())
+            .origin(Entity::root())
+            .propagate(Propagation::Up);
 
-            proxy.send(event).expect("Failed to send event");
-        }
+        proxy.send(event).expect("Failed to send event");
     }
 }
 

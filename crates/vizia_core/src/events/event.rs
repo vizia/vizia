@@ -119,10 +119,10 @@ impl Event {
         M: Any,
         F: FnOnce(&M, &mut EventMeta),
     {
-        if let Some(message) = &self.message {
-            if let Some(message) = message.as_ref().downcast_ref() {
-                (f)(message, &mut self.meta);
-            }
+        if let Some(message) = &self.message
+            && let Some(message) = message.as_ref().downcast_ref()
+        {
+            (f)(message, &mut self.meta);
         }
     }
 
@@ -159,15 +159,15 @@ impl Event {
     where
         F: FnOnce(M, &mut EventMeta),
     {
-        if let Some(message) = &self.message {
-            if message.as_ref().is::<M>() {
-                // Safe to unwrap because we already checked it exists
-                let m = self.message.take().unwrap();
-                // Safe to unwrap because we already checked it can be cast to M
-                let v = m.downcast().unwrap();
-                self.meta.consume();
-                (f)(*v, &mut self.meta);
-            }
+        if let Some(message) = &self.message
+            && message.as_ref().is::<M>()
+        {
+            // Safe to unwrap because we already checked it exists
+            let m = self.message.take().unwrap();
+            // Safe to unwrap because we already checked it can be cast to M
+            let v = m.downcast().unwrap();
+            self.meta.consume();
+            (f)(*v, &mut self.meta);
         }
     }
 }

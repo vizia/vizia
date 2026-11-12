@@ -1509,17 +1509,17 @@ impl DrawContext<'_> {
                                     .collect::<Vec<_>>();
 
                                 // Insert a stop at the front if the first stop is not at 0.
-                                if let Some(first) = stops.first() {
-                                    if first.0 != 0.0 {
-                                        stops.insert(0, (0.0, first.1));
-                                    }
+                                if let Some(first) = stops.first()
+                                    && first.0 != 0.0
+                                {
+                                    stops.insert(0, (0.0, first.1));
                                 }
 
                                 // Insert a stop at the end if the last stop is not at 1.0.
-                                if let Some(last) = stops.last() {
-                                    if last.0 != 1.0 {
-                                        stops.push((1.0, last.1));
-                                    }
+                                if let Some(last) = stops.last()
+                                    && last.0 != 1.0
+                                {
+                                    stops.push((1.0, last.1));
                                 }
 
                                 let (offsets, colors): (Vec<f32>, Vec<skia_safe::Color>) =
@@ -1571,17 +1571,17 @@ impl DrawContext<'_> {
                                     .collect::<Vec<_>>();
 
                                 // Insert a stop at the front if the first stop is not at 0.
-                                if let Some(first) = stops.first() {
-                                    if first.0 != 0.0 {
-                                        stops.insert(0, (0.0, first.1));
-                                    }
+                                if let Some(first) = stops.first()
+                                    && first.0 != 0.0
+                                {
+                                    stops.insert(0, (0.0, first.1));
                                 }
 
                                 // Insert a stop at the end if the last stop is not at 1.0.
-                                if let Some(last) = stops.last() {
-                                    if last.0 != 1.0 {
-                                        stops.push((1.0, last.1));
-                                    }
+                                if let Some(last) = stops.last()
+                                    && last.0 != 1.0
+                                {
+                                    stops.push((1.0, last.1));
                                 }
 
                                 let (offsets, colors): (Vec<f32>, Vec<skia_safe::Color>) =
@@ -1618,18 +1618,18 @@ impl DrawContext<'_> {
 
                         ImageOrGradient::Image(image_name) => {
                             if let Some(image_id) = self.resource_manager.image_ids.get(image_name)
+                                && let Some(image) = self.resource_manager.images.get(image_id)
                             {
-                                if let Some(image) = self.resource_manager.images.get(image_id) {
-                                    match &image.image {
-                                        ImageOrSvg::Image(image) => {
-                                            let image_width = image.width();
-                                            let image_height = image.height();
-                                            let (width, height) = if let Some(background_size) =
-                                                image_sizes.get(index)
-                                            {
-                                                match background_size {
-                                                    BackgroundSize::Explicit { width, height } => {
-                                                        let w = match width {
+                                match &image.image {
+                                    ImageOrSvg::Image(image) => {
+                                        let image_width = image.width();
+                                        let image_height = image.height();
+                                        let (width, height) = if let Some(background_size) =
+                                            image_sizes.get(index)
+                                        {
+                                            match background_size {
+                                                BackgroundSize::Explicit { width, height } => {
+                                                    let w = match width {
                                                 LengthPercentageOrAuto::LengthPercentage(
                                                     length,
                                                 ) => {
@@ -1638,7 +1638,7 @@ impl DrawContext<'_> {
                                                 LengthPercentageOrAuto::Auto => image_width as f32,
                                             };
 
-                                                        let h = match height {
+                                                    let h = match height {
                                                 LengthPercentageOrAuto::LengthPercentage(
                                                     length,
                                                 ) => {
@@ -1647,113 +1647,125 @@ impl DrawContext<'_> {
                                                 LengthPercentageOrAuto::Auto => image_height as f32,
                                             };
 
-                                                        (w, h)
-                                                    }
-
-                                                    BackgroundSize::Contain => {
-                                                        let image_ratio = image_width as f32
-                                                            / image_height as f32;
-                                                        let container_ratio = bounds.w / bounds.h;
-
-                                                        let (w, h) =
-                                                            if image_ratio > container_ratio {
-                                                                (bounds.w, bounds.w / image_ratio)
-                                                            } else {
-                                                                (bounds.h * image_ratio, bounds.h)
-                                                            };
-
-                                                        (w, h)
-                                                    }
-
-                                                    BackgroundSize::Cover => {
-                                                        let image_ratio = image_width as f32
-                                                            / image_height as f32;
-                                                        let container_ratio = bounds.w / bounds.h;
-
-                                                        let (w, h) =
-                                                            if image_ratio < container_ratio {
-                                                                (bounds.w, bounds.w / image_ratio)
-                                                            } else {
-                                                                (bounds.h * image_ratio, bounds.h)
-                                                            };
-
-                                                        (w, h)
-                                                    }
+                                                    (w, h)
                                                 }
-                                            } else {
-                                                (image_width as f32, image_height as f32)
-                                            };
 
-                                            let position = image_positions
-                                                .get(index)
-                                                .cloned()
-                                                .or_else(|| image_positions.last().cloned())
-                                                .unwrap_or_default();
+                                                BackgroundSize::Contain => {
+                                                    let image_ratio =
+                                                        image_width as f32 / image_height as f32;
+                                                    let container_ratio = bounds.w / bounds.h;
 
-                                            let posx =
-                                                position.x.to_length_or_percentage().to_pixels(
-                                                    bounds.width() - width,
-                                                    self.scale_factor(),
+                                                    let (w, h) = if image_ratio > container_ratio {
+                                                        (bounds.w, bounds.w / image_ratio)
+                                                    } else {
+                                                        (bounds.h * image_ratio, bounds.h)
+                                                    };
+
+                                                    (w, h)
+                                                }
+
+                                                BackgroundSize::Cover => {
+                                                    let image_ratio =
+                                                        image_width as f32 / image_height as f32;
+                                                    let container_ratio = bounds.w / bounds.h;
+
+                                                    let (w, h) = if image_ratio < container_ratio {
+                                                        (bounds.w, bounds.w / image_ratio)
+                                                    } else {
+                                                        (bounds.h * image_ratio, bounds.h)
+                                                    };
+
+                                                    (w, h)
+                                                }
+                                            }
+                                        } else {
+                                            (image_width as f32, image_height as f32)
+                                        };
+
+                                        let position = image_positions
+                                            .get(index)
+                                            .cloned()
+                                            .or_else(|| image_positions.last().cloned())
+                                            .unwrap_or_default();
+
+                                        let posx = position
+                                            .x
+                                            .to_length_or_percentage()
+                                            .to_pixels(bounds.width() - width, self.scale_factor());
+                                        let posy = position.y.to_length_or_percentage().to_pixels(
+                                            bounds.height() - height,
+                                            self.scale_factor(),
+                                        );
+                                        let repeat = image_repeats
+                                            .get(index)
+                                            .copied()
+                                            .or_else(|| image_repeats.last().copied())
+                                            .unwrap_or(BackgroundRepeat::Repeat);
+
+                                        if width <= 0.0 || height <= 0.0 {
+                                            continue;
+                                        }
+
+                                        let mut paint = Paint::default();
+                                        paint.set_anti_alias(true);
+
+                                        let origin_x = bounds.left() + posx;
+                                        let origin_y = bounds.top() + posy;
+
+                                        let mut start_x = origin_x;
+                                        let mut start_y = origin_y;
+
+                                        if matches!(
+                                            repeat,
+                                            BackgroundRepeat::Repeat | BackgroundRepeat::RepeatX
+                                        ) {
+                                            let tiles_to_left =
+                                                ((bounds.left() - origin_x) / width).floor();
+                                            start_x = origin_x + tiles_to_left * width;
+                                            if start_x > bounds.left() {
+                                                start_x -= width;
+                                            }
+                                        }
+
+                                        if matches!(
+                                            repeat,
+                                            BackgroundRepeat::Repeat | BackgroundRepeat::RepeatY
+                                        ) {
+                                            let tiles_to_top =
+                                                ((bounds.top() - origin_y) / height).floor();
+                                            start_y = origin_y + tiles_to_top * height;
+                                            if start_y > bounds.top() {
+                                                start_y -= height;
+                                            }
+                                        }
+
+                                        canvas.save();
+                                        canvas.clip_rrect(rrect, ClipOp::Intersect, true);
+
+                                        match repeat {
+                                            BackgroundRepeat::NoRepeat => {
+                                                let dst = Rect::new(
+                                                    origin_x,
+                                                    origin_y,
+                                                    origin_x + width,
+                                                    origin_y + height,
                                                 );
-                                            let posy =
-                                                position.y.to_length_or_percentage().to_pixels(
-                                                    bounds.height() - height,
-                                                    self.scale_factor(),
+                                                canvas.draw_image_rect_with_sampling_options(
+                                                    image,
+                                                    None,
+                                                    dst,
+                                                    SamplingOptions::default(),
+                                                    &paint,
                                                 );
-                                            let repeat = image_repeats
-                                                .get(index)
-                                                .copied()
-                                                .or_else(|| image_repeats.last().copied())
-                                                .unwrap_or(BackgroundRepeat::Repeat);
-
-                                            if width <= 0.0 || height <= 0.0 {
-                                                continue;
                                             }
 
-                                            let mut paint = Paint::default();
-                                            paint.set_anti_alias(true);
-
-                                            let origin_x = bounds.left() + posx;
-                                            let origin_y = bounds.top() + posy;
-
-                                            let mut start_x = origin_x;
-                                            let mut start_y = origin_y;
-
-                                            if matches!(
-                                                repeat,
-                                                BackgroundRepeat::Repeat
-                                                    | BackgroundRepeat::RepeatX
-                                            ) {
-                                                let tiles_to_left =
-                                                    ((bounds.left() - origin_x) / width).floor();
-                                                start_x = origin_x + tiles_to_left * width;
-                                                if start_x > bounds.left() {
-                                                    start_x -= width;
-                                                }
-                                            }
-
-                                            if matches!(
-                                                repeat,
-                                                BackgroundRepeat::Repeat
-                                                    | BackgroundRepeat::RepeatY
-                                            ) {
-                                                let tiles_to_top =
-                                                    ((bounds.top() - origin_y) / height).floor();
-                                                start_y = origin_y + tiles_to_top * height;
-                                                if start_y > bounds.top() {
-                                                    start_y -= height;
-                                                }
-                                            }
-
-                                            canvas.save();
-                                            canvas.clip_rrect(rrect, ClipOp::Intersect, true);
-
-                                            match repeat {
-                                                BackgroundRepeat::NoRepeat => {
+                                            BackgroundRepeat::RepeatX => {
+                                                let mut x = start_x;
+                                                while x < bounds.right() {
                                                     let dst = Rect::new(
-                                                        origin_x,
+                                                        x,
                                                         origin_y,
-                                                        origin_x + width,
+                                                        x + width,
                                                         origin_y + height,
                                                     );
                                                     canvas.draw_image_rect_with_sampling_options(
@@ -1763,17 +1775,37 @@ impl DrawContext<'_> {
                                                         SamplingOptions::default(),
                                                         &paint,
                                                     );
+                                                    x += width;
                                                 }
+                                            }
 
-                                                BackgroundRepeat::RepeatX => {
+                                            BackgroundRepeat::RepeatY => {
+                                                let mut y = start_y;
+                                                while y < bounds.bottom() {
+                                                    let dst = Rect::new(
+                                                        origin_x,
+                                                        y,
+                                                        origin_x + width,
+                                                        y + height,
+                                                    );
+                                                    canvas.draw_image_rect_with_sampling_options(
+                                                        image,
+                                                        None,
+                                                        dst,
+                                                        SamplingOptions::default(),
+                                                        &paint,
+                                                    );
+                                                    y += height;
+                                                }
+                                            }
+
+                                            BackgroundRepeat::Repeat => {
+                                                let mut y = start_y;
+                                                while y < bounds.bottom() {
                                                     let mut x = start_x;
                                                     while x < bounds.right() {
-                                                        let dst = Rect::new(
-                                                            x,
-                                                            origin_y,
-                                                            x + width,
-                                                            origin_y + height,
-                                                        );
+                                                        let dst =
+                                                            Rect::new(x, y, x + width, y + height);
                                                         canvas
                                                             .draw_image_rect_with_sampling_options(
                                                                 image,
@@ -1784,102 +1816,55 @@ impl DrawContext<'_> {
                                                             );
                                                         x += width;
                                                     }
-                                                }
-
-                                                BackgroundRepeat::RepeatY => {
-                                                    let mut y = start_y;
-                                                    while y < bounds.bottom() {
-                                                        let dst = Rect::new(
-                                                            origin_x,
-                                                            y,
-                                                            origin_x + width,
-                                                            y + height,
-                                                        );
-                                                        canvas
-                                                            .draw_image_rect_with_sampling_options(
-                                                                image,
-                                                                None,
-                                                                dst,
-                                                                SamplingOptions::default(),
-                                                                &paint,
-                                                            );
-                                                        y += height;
-                                                    }
-                                                }
-
-                                                BackgroundRepeat::Repeat => {
-                                                    let mut y = start_y;
-                                                    while y < bounds.bottom() {
-                                                        let mut x = start_x;
-                                                        while x < bounds.right() {
-                                                            let dst = Rect::new(
-                                                                x,
-                                                                y,
-                                                                x + width,
-                                                                y + height,
-                                                            );
-                                                            canvas.draw_image_rect_with_sampling_options(
-                                                                image,
-                                                                None,
-                                                                dst,
-                                                                SamplingOptions::default(),
-                                                                &paint,
-                                                            );
-                                                            x += width;
-                                                        }
-                                                        y += height;
-                                                    }
+                                                    y += height;
                                                 }
                                             }
-
-                                            canvas.restore();
                                         }
 
-                                        ImageOrSvg::Svg(svg) => {
-                                            canvas.save_layer(&SaveLayerRec::default());
-                                            canvas.translate((bounds.x, bounds.y));
-                                            let (scale_x, scale_y) = (
-                                                bounds.width() / svg.inner().fContainerSize.fWidth,
-                                                bounds.height()
-                                                    / svg.inner().fContainerSize.fHeight,
-                                            );
+                                        canvas.restore();
+                                    }
 
-                                            if scale_x.is_finite() && scale_y.is_finite() {
-                                                canvas.scale((scale_x, scale_y));
-                                            } else {
-                                                svg.clone().set_container_size((
-                                                    bounds.width(),
-                                                    bounds.height(),
-                                                ));
-                                            }
+                                    ImageOrSvg::Svg(svg) => {
+                                        canvas.save_layer(&SaveLayerRec::default());
+                                        canvas.translate((bounds.x, bounds.y));
+                                        let (scale_x, scale_y) = (
+                                            bounds.width() / svg.inner().fContainerSize.fWidth,
+                                            bounds.height() / svg.inner().fContainerSize.fHeight,
+                                        );
 
-                                            svg.render(canvas);
-
-                                            if let Some(color) = self.style.fill.get_resolved(
-                                                self.current,
-                                                &self.style.custom_color_props,
-                                            ) {
-                                                // Escape hatch for multi-color SVGs (logos,
-                                                // illustrations) that would otherwise be flooded
-                                                // by the root-level `fill: var(--foreground)`
-                                                // tint in the default theme. Setting
-                                                // `fill: transparent` on such elements makes the
-                                                // SrcIn pass a no-op, so the SVG's own path
-                                                // fills render untouched. Icon SVGs that want
-                                                // the tint still work — they set a
-                                                // non-transparent fill explicitly. See #636.
-                                                if color.a() != 0 {
-                                                    let mut paint = Paint::default();
-                                                    paint.set_anti_alias(true);
-                                                    paint.set_blend_mode(
-                                                        skia_safe::BlendMode::SrcIn,
-                                                    );
-                                                    paint.set_color(color);
-                                                    canvas.draw_paint(&paint);
-                                                }
-                                            }
-                                            canvas.restore();
+                                        if scale_x.is_finite() && scale_y.is_finite() {
+                                            canvas.scale((scale_x, scale_y));
+                                        } else {
+                                            svg.clone().set_container_size((
+                                                bounds.width(),
+                                                bounds.height(),
+                                            ));
                                         }
+
+                                        svg.render(canvas);
+
+                                        if let Some(color) = self.style.fill.get_resolved(
+                                            self.current,
+                                            &self.style.custom_color_props,
+                                        ) {
+                                            // Escape hatch for multi-color SVGs (logos,
+                                            // illustrations) that would otherwise be flooded
+                                            // by the root-level `fill: var(--foreground)`
+                                            // tint in the default theme. Setting
+                                            // `fill: transparent` on such elements makes the
+                                            // SrcIn pass a no-op, so the SVG's own path
+                                            // fills render untouched. Icon SVGs that want
+                                            // the tint still work — they set a
+                                            // non-transparent fill explicitly. See #636.
+                                            if color.a() != 0 {
+                                                let mut paint = Paint::default();
+                                                paint.set_anti_alias(true);
+                                                paint.set_blend_mode(skia_safe::BlendMode::SrcIn);
+                                                paint.set_color(color);
+                                                canvas.draw_paint(&paint);
+                                            }
+                                        }
+                                        canvas.restore();
                                     }
                                 }
                             }
@@ -1952,17 +1937,17 @@ impl DataContext for DrawContext<'_> {
 
         for entity in self.current.parent_iter(self.tree) {
             // Return model data.
-            if let Some(models) = self.models.get(&entity) {
-                if let Some(model) = models.get(&TypeId::of::<T>()) {
-                    return model.downcast_ref::<T>();
-                }
+            if let Some(models) = self.models.get(&entity)
+                && let Some(model) = models.get(&TypeId::of::<T>())
+            {
+                return model.downcast_ref::<T>();
             }
 
             // Return view data.
-            if let Some(view_handler) = self.views.get(&entity) {
-                if let Some(data) = view_handler.downcast_ref::<T>() {
-                    return Some(data);
-                }
+            if let Some(view_handler) = self.views.get(&entity)
+                && let Some(data) = view_handler.downcast_ref::<T>()
+            {
+                return Some(data);
             }
         }
 

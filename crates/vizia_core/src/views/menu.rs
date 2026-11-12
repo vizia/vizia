@@ -99,12 +99,12 @@ impl View for MenuBar {
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         event.map(|window_event, meta| match window_event {
             WindowEvent::FocusIn => {
-                if meta.target == cx.current() {
-                    if let Some(first_item) = first_menu_bar_item(cx, cx.current()) {
-                        focus_entity(cx, first_item);
-                        self.focused_item.set(Some(first_item));
-                        meta.consume();
-                    }
+                if meta.target == cx.current()
+                    && let Some(first_item) = first_menu_bar_item(cx, cx.current())
+                {
+                    focus_entity(cx, first_item);
+                    self.focused_item.set(Some(first_item));
+                    meta.consume();
                 }
             }
 
@@ -138,44 +138,44 @@ impl View for MenuBar {
             }
 
             MenuEvent::FocusPrevMenuBarItem => {
-                if let Some(current) = self.focused_item.get() {
-                    if let Some(next) = prev_sibling_wrapped(cx, current) {
-                        focus_entity(cx, next);
-                        if self.is_open.get() {
-                            cx.emit_custom(
-                                Event::new(MenuEvent::Close)
-                                    .target(current)
-                                    .propagate(Propagation::Subtree),
-                            );
-                            cx.emit_custom(
-                                Event::new(MenuEvent::TriggerArrowDown)
-                                    .target(next)
-                                    .propagate(Propagation::Direct),
-                            );
-                        }
-                        self.focused_item.set(Some(next));
+                if let Some(current) = self.focused_item.get()
+                    && let Some(next) = prev_sibling_wrapped(cx, current)
+                {
+                    focus_entity(cx, next);
+                    if self.is_open.get() {
+                        cx.emit_custom(
+                            Event::new(MenuEvent::Close)
+                                .target(current)
+                                .propagate(Propagation::Subtree),
+                        );
+                        cx.emit_custom(
+                            Event::new(MenuEvent::TriggerArrowDown)
+                                .target(next)
+                                .propagate(Propagation::Direct),
+                        );
                     }
+                    self.focused_item.set(Some(next));
                 }
             }
 
             MenuEvent::FocusNextMenuBarItem => {
-                if let Some(current) = self.focused_item.get() {
-                    if let Some(next) = next_sibling_wrapped(cx, current) {
-                        focus_entity(cx, next);
-                        if self.is_open.get() {
-                            cx.emit_custom(
-                                Event::new(MenuEvent::Close)
-                                    .target(current)
-                                    .propagate(Propagation::Subtree),
-                            );
-                            cx.emit_custom(
-                                Event::new(MenuEvent::TriggerArrowDown)
-                                    .target(next)
-                                    .propagate(Propagation::Direct),
-                            );
-                        }
-                        self.focused_item.set(Some(next));
+                if let Some(current) = self.focused_item.get()
+                    && let Some(next) = next_sibling_wrapped(cx, current)
+                {
+                    focus_entity(cx, next);
+                    if self.is_open.get() {
+                        cx.emit_custom(
+                            Event::new(MenuEvent::Close)
+                                .target(current)
+                                .propagate(Propagation::Subtree),
+                        );
+                        cx.emit_custom(
+                            Event::new(MenuEvent::TriggerArrowDown)
+                                .target(next)
+                                .propagate(Propagation::Direct),
+                        );
                     }
+                    self.focused_item.set(Some(next));
                 }
             }
 
@@ -363,10 +363,10 @@ impl Menu {
 
             (content)(cx);
 
-            if focus_on_open.get() {
-                if let Some(first_item) = first_focusable_descendant(&cx.tree, &cx.style, popup) {
-                    cx.with_current(first_item, |cx| cx.focus());
-                }
+            if focus_on_open.get()
+                && let Some(first_item) = first_focusable_descendant(&cx.tree, &cx.style, popup)
+            {
+                cx.with_current(first_item, |cx| cx.focus());
             }
         })
         .role(Role::Menu)

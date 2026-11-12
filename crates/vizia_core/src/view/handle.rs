@@ -22,17 +22,17 @@ impl<V> DataContext for Handle<'_, V> {
 
         for entity in self.entity.parent_iter(&self.cx.tree) {
             // Return any model data.
-            if let Some(models) = self.cx.models.get(&entity) {
-                if let Some(model) = models.get(&TypeId::of::<T>()) {
-                    return model.downcast_ref::<T>();
-                }
+            if let Some(models) = self.cx.models.get(&entity)
+                && let Some(model) = models.get(&TypeId::of::<T>())
+            {
+                return model.downcast_ref::<T>();
             }
 
             // Return any view data.
-            if let Some(view_handler) = self.cx.views.get(&entity) {
-                if let Some(data) = view_handler.downcast_ref::<T>() {
-                    return Some(data);
-                }
+            if let Some(view_handler) = self.cx.views.get(&entity)
+                && let Some(data) = view_handler.downcast_ref::<T>()
+            {
+                return Some(data);
             }
         }
 

@@ -108,11 +108,11 @@ impl ResourceLoader for FileResourceLoader {
 
                 cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Loading);
 
-                if let Ok(data) = std::fs::read(&path) {
-                    if let Ok(ftl) = String::from_utf8(data) {
-                        cx.load_translation(req.lang, req.path.clone(), &ftl);
-                        return true;
-                    }
+                if let Ok(data) = std::fs::read(&path)
+                    && let Ok(ftl) = String::from_utf8(data)
+                {
+                    cx.load_translation(req.lang, req.path.clone(), &ftl);
+                    return true;
                 }
 
                 cx.resource_manager.set_resource_status(req.path.clone(), LoadingStatus::Error);

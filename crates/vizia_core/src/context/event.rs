@@ -201,10 +201,10 @@ impl<'a> EventContext<'a> {
     pub fn get_entity_by_element_id(&self, element: &str) -> Option<Entity> {
         let descendants = LayoutTreeIterator::subtree(self.tree, self.current);
         for descendant in descendants {
-            if let Some(id) = self.views.get(&descendant).and_then(|view| view.element()) {
-                if id == element {
-                    return Some(descendant);
-                }
+            if let Some(id) = self.views.get(&descendant).and_then(|view| view.element())
+                && id == element
+            {
+                return Some(descendant);
             }
         }
 
@@ -216,10 +216,10 @@ impl<'a> EventContext<'a> {
         let mut entities = Vec::new();
         let descendants = LayoutTreeIterator::subtree(self.tree, self.current);
         for descendant in descendants {
-            if let Some(class_list) = self.style.classes.get(descendant) {
-                if class_list.contains(class) {
-                    entities.push(descendant);
-                }
+            if let Some(class_list) = self.style.classes.get(descendant)
+                && class_list.contains(class)
+            {
+                entities.push(descendant);
             }
         }
 
@@ -397,10 +397,10 @@ impl<'a> EventContext<'a> {
         duration: Duration,
         delay: Duration,
     ) {
-        if let Some(target_entity) = self.resolve_entity_identifier(target) {
-            if let Some(animation_id) = anim_id.get(self) {
-                self.style.enqueue_animation(target_entity, animation_id, duration, delay)
-            }
+        if let Some(target_entity) = self.resolve_entity_identifier(target)
+            && let Some(animation_id) = anim_id.get(self)
+        {
+            self.style.enqueue_animation(target_entity, animation_id, duration, delay)
         }
     }
 
@@ -1474,17 +1474,17 @@ impl DataContext for EventContext<'_> {
 
         for entity in self.current.parent_iter(self.tree) {
             // Return model data.
-            if let Some(models) = self.models.get(&entity) {
-                if let Some(model) = models.get(&TypeId::of::<T>()) {
-                    return model.downcast_ref::<T>();
-                }
+            if let Some(models) = self.models.get(&entity)
+                && let Some(model) = models.get(&TypeId::of::<T>())
+            {
+                return model.downcast_ref::<T>();
             }
 
             // Return view data.
-            if let Some(view_handler) = self.views.get(&entity) {
-                if let Some(data) = view_handler.downcast_ref::<T>() {
-                    return Some(data);
-                }
+            if let Some(view_handler) = self.views.get(&entity)
+                && let Some(data) = view_handler.downcast_ref::<T>()
+            {
+                return Some(data);
             }
         }
 

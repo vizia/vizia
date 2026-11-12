@@ -686,14 +686,12 @@ where
 
         // Loop through matched rules and link to the first valid rule
         for (rule, _) in rules {
-            if let Some(shared_data) = self.shared_data.get_mut(*rule) {
-                if shared_data.variable_name_hash != u64::MAX {
-                    if let Some(prop) = variables.get(&shared_data.variable_name_hash) {
-                        if let Some(data) = prop.get_with_variables(entity, variables) {
-                            shared_data.value = data;
-                        }
-                    }
-                }
+            if let Some(shared_data) = self.shared_data.get_mut(*rule)
+                && shared_data.variable_name_hash != u64::MAX
+                && let Some(prop) = variables.get(&shared_data.variable_name_hash)
+                && let Some(data) = prop.get_with_variables(entity, variables)
+            {
+                shared_data.value = data;
             }
 
             if let Some(shared_data_index) = self.shared_data.dense_idx(*rule) {
@@ -869,34 +867,28 @@ where
                             .iter()
                             .find(|si| si.index() == current_dense_idx && !si.animation.is_null())
                             .map(|si| si.animation)
+                            && let Some(transition_state) = self.animations.get_mut(departing_anim)
                         {
-                            if let Some(transition_state) = self.animations.get_mut(departing_anim)
-                            {
-                                let prev_rule = transition_state.from_rule;
-                                if prev_rule < self.shared_data.dense.len() {
-                                    let start_value = self.shared_data.dense[current_dense_idx]
-                                        .value
-                                        .value
-                                        .clone();
-                                    let end_value =
-                                        self.shared_data.dense[prev_rule].value.value.clone();
-                                    transition_state.keyframes.first_mut().unwrap().value =
-                                        start_value;
-                                    transition_state.keyframes.last_mut().unwrap().value =
-                                        end_value;
-                                    transition_state.from_rule = current_dense_idx;
-                                    transition_state.to_rule = prev_rule;
-                                    let duration = transition_state.duration;
-                                    let delay = transition_state.delay;
-                                    if transition_state.from_rule != transition_state.to_rule {
-                                        self.play_animation(
-                                            entity,
-                                            departing_anim,
-                                            Instant::now(),
-                                            duration,
-                                            delay,
-                                        );
-                                    }
+                            let prev_rule = transition_state.from_rule;
+                            if prev_rule < self.shared_data.dense.len() {
+                                let start_value =
+                                    self.shared_data.dense[current_dense_idx].value.value.clone();
+                                let end_value =
+                                    self.shared_data.dense[prev_rule].value.value.clone();
+                                transition_state.keyframes.first_mut().unwrap().value = start_value;
+                                transition_state.keyframes.last_mut().unwrap().value = end_value;
+                                transition_state.from_rule = current_dense_idx;
+                                transition_state.to_rule = prev_rule;
+                                let duration = transition_state.duration;
+                                let delay = transition_state.delay;
+                                if transition_state.from_rule != transition_state.to_rule {
+                                    self.play_animation(
+                                        entity,
+                                        departing_anim,
+                                        Instant::now(),
+                                        duration,
+                                        delay,
+                                    );
                                 }
                             }
                         }
@@ -942,12 +934,11 @@ where
         for (rule, _) in rules {
             // Bake the resolved variable value into the shared slot, using the
             // pre-computed snapshot instead of a live map lookup.
-            if let Some(shared_data) = self.shared_data.get_mut(*rule) {
-                if shared_data.variable_name_hash != u64::MAX {
-                    if let Some(data) = resolved_vars.get(&shared_data.variable_name_hash) {
-                        shared_data.value = data.clone();
-                    }
-                }
+            if let Some(shared_data) = self.shared_data.get_mut(*rule)
+                && shared_data.variable_name_hash != u64::MAX
+                && let Some(data) = resolved_vars.get(&shared_data.variable_name_hash)
+            {
+                shared_data.value = data.clone();
             }
 
             if let Some(shared_data_index) = self.shared_data.dense_idx(*rule) {
@@ -1109,34 +1100,28 @@ where
                             .iter()
                             .find(|si| si.index() == current_dense_idx && !si.animation.is_null())
                             .map(|si| si.animation)
+                            && let Some(transition_state) = self.animations.get_mut(departing_anim)
                         {
-                            if let Some(transition_state) = self.animations.get_mut(departing_anim)
-                            {
-                                let prev_rule = transition_state.from_rule;
-                                if prev_rule < self.shared_data.dense.len() {
-                                    let start_value = self.shared_data.dense[current_dense_idx]
-                                        .value
-                                        .value
-                                        .clone();
-                                    let end_value =
-                                        self.shared_data.dense[prev_rule].value.value.clone();
-                                    transition_state.keyframes.first_mut().unwrap().value =
-                                        start_value;
-                                    transition_state.keyframes.last_mut().unwrap().value =
-                                        end_value;
-                                    transition_state.from_rule = current_dense_idx;
-                                    transition_state.to_rule = prev_rule;
-                                    let duration = transition_state.duration;
-                                    let delay = transition_state.delay;
-                                    if transition_state.from_rule != transition_state.to_rule {
-                                        self.play_animation(
-                                            entity,
-                                            departing_anim,
-                                            Instant::now(),
-                                            duration,
-                                            delay,
-                                        );
-                                    }
+                            let prev_rule = transition_state.from_rule;
+                            if prev_rule < self.shared_data.dense.len() {
+                                let start_value =
+                                    self.shared_data.dense[current_dense_idx].value.value.clone();
+                                let end_value =
+                                    self.shared_data.dense[prev_rule].value.value.clone();
+                                transition_state.keyframes.first_mut().unwrap().value = start_value;
+                                transition_state.keyframes.last_mut().unwrap().value = end_value;
+                                transition_state.from_rule = current_dense_idx;
+                                transition_state.to_rule = prev_rule;
+                                let duration = transition_state.duration;
+                                let delay = transition_state.delay;
+                                if transition_state.from_rule != transition_state.to_rule {
+                                    self.play_animation(
+                                        entity,
+                                        departing_anim,
+                                        Instant::now(),
+                                        duration,
+                                        delay,
+                                    );
                                 }
                             }
                         }

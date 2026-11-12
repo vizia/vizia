@@ -93,13 +93,13 @@ where
     /// This method is for internal use only.
     /// To remove an entry of the keymap at runtime use the [`KeymapEvent::RemoveAction`] event.
     fn remove(&mut self, chord: &KeyChord, action: &T) {
-        if let Some(actions) = self.entries.get_mut(chord) {
-            if let Some(index) = actions.iter().position(|x| x == action) {
-                if actions.len() == 1 {
-                    self.entries.swap_remove(chord);
-                } else {
-                    actions.swap_remove(index);
-                }
+        if let Some(actions) = self.entries.get_mut(chord)
+            && let Some(index) = actions.iter().position(|x| x == action)
+        {
+            if actions.len() == 1 {
+                self.entries.swap_remove(chord);
+            } else {
+                actions.swap_remove(index);
             }
         }
     }

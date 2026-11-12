@@ -704,10 +704,9 @@ impl View for Calendar {
                     let focused_date = self.focused_date.get();
                     if focused_date.month() == self.view_date.get().month()
                         && focused_date.year() == self.view_date.get().year()
+                        && let Some(callback) = &self.on_select
                     {
-                        if let Some(callback) = &self.on_select {
-                            (callback)(cx, focused_date);
-                        }
+                        (callback)(cx, focused_date);
                     }
                 }
             }

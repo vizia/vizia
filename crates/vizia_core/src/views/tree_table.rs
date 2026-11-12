@@ -1120,11 +1120,12 @@ where
                 // If focus is on a row, move it to the first cell. If it's on a cell, move it to the next cell.
                 let next_focus = match self.focused.get() {
                     Some(TableFocus::Row(id)) => {
-                        if let Some(row) = self.focused_visible_row() {
-                            if row.has_children && !row.expanded {
-                                cx.emit(TreeTableEvent::<K, Id>::ExpandSelected);
-                                return;
-                            }
+                        if let Some(row) = self.focused_visible_row()
+                            && row.has_children
+                            && !row.expanded
+                        {
+                            cx.emit(TreeTableEvent::<K, Id>::ExpandSelected);
+                            return;
                         }
                         let first_column_key =
                             self.columns.with(|columns| columns.first().cloned()).unwrap();
@@ -1155,10 +1156,11 @@ where
                 let next_focus = match self.focused.get() {
                     // If focus is on an expanded row, collapse it. Otherwise, move focus to the parent row if there is one.
                     Some(TableFocus::Row(_)) => {
-                        if let Some(row) = self.focused_visible_row() {
-                            if row.has_children && row.expanded {
-                                self.emit_toggle(cx, row.id, false);
-                            }
+                        if let Some(row) = self.focused_visible_row()
+                            && row.has_children
+                            && row.expanded
+                        {
+                            self.emit_toggle(cx, row.id, false);
                         }
                         None
                     }
