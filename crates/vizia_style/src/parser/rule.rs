@@ -101,7 +101,7 @@ pub struct NestedRuleParser<'a, 'i> {
 }
 
 impl<'i> NestedRuleParser<'_, 'i> {
-    pub fn parse_nested<'t>(
+    pub fn parse_nested(
         &mut self,
         input: &mut Parser<'i>,
         is_style_rule: bool,

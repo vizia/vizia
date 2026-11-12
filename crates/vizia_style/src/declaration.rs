@@ -9,7 +9,7 @@ pub struct DeclarationBlock<'i> {
 }
 
 impl<'i> DeclarationBlock<'i> {
-    pub fn parse<'a, 't>(
+    pub fn parse<'a>(
         input: &mut Parser<'i>,
         options: &'a ParserOptions<'i>,
     ) -> Result<Self, ParseError<CustomParseError<'i>>> {

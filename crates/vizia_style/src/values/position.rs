@@ -123,7 +123,7 @@ impl<'i, S: Parse<'i> + Copy + Into<LengthOrPercentage>> Parse<'i> for PositionC
             return Ok(PositionComponent::Center);
         }
 
-        if let Ok(lp) = input.try_parse(|input| LengthOrPercentage::parse(input)) {
+        if let Ok(lp) = input.try_parse(LengthOrPercentage::parse) {
             return Ok(PositionComponent::Length(lp));
         }
 

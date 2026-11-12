@@ -33,26 +33,26 @@ impl<'i> Parse<'i> for Border {
         loop {
             let mut consumed = false;
 
-            if width.is_none() {
-                if let Ok(value) = input.try_parse(|i| BorderWidthValue::parse(i)) {
-                    width = Some(value);
-                    any = true;
-                    consumed = true;
-                }
+            if width.is_none()
+                && let Ok(value) = input.try_parse(BorderWidthValue::parse)
+            {
+                width = Some(value);
+                any = true;
+                consumed = true;
             }
-            if style.is_none() {
-                if let Ok(value) = input.try_parse(BorderStyle::parse) {
-                    style = Some(value);
-                    any = true;
-                    consumed = true;
-                }
+            if style.is_none()
+                && let Ok(value) = input.try_parse(BorderStyle::parse)
+            {
+                style = Some(value);
+                any = true;
+                consumed = true;
             }
-            if color.is_none() {
-                if let Ok(value) = input.try_parse(|i| Color::parse(i)) {
-                    color = Some(value);
-                    any = true;
-                    consumed = true;
-                }
+            if color.is_none()
+                && let Ok(value) = input.try_parse(Color::parse)
+            {
+                color = Some(value);
+                any = true;
+                consumed = true;
             }
 
             if !consumed {

@@ -20,32 +20,32 @@ impl<'i> Parse<'i> for TextDecoration {
         let mut color = None;
 
         loop {
-            if line.is_none() {
-                if let Ok(value) = input.try_parse(TextDecorationLine::parse) {
-                    line = Some(value);
-                    continue;
-                }
+            if line.is_none()
+                && let Ok(value) = input.try_parse(TextDecorationLine::parse)
+            {
+                line = Some(value);
+                continue;
             }
 
-            if style.is_none() {
-                if let Ok(value) = input.try_parse(TextDecorationStyle::parse) {
-                    style = Some(value);
-                    continue;
-                }
+            if style.is_none()
+                && let Ok(value) = input.try_parse(TextDecorationStyle::parse)
+            {
+                style = Some(value);
+                continue;
             }
 
-            if thickness.is_none() {
-                if let Ok(value) = input.try_parse(LengthOrPercentage::parse) {
-                    thickness = Some(value);
-                    continue;
-                }
+            if thickness.is_none()
+                && let Ok(value) = input.try_parse(LengthOrPercentage::parse)
+            {
+                thickness = Some(value);
+                continue;
             }
 
-            if color.is_none() {
-                if let Ok(value) = input.try_parse(Color::parse) {
-                    color = Some(value);
-                    continue;
-                }
+            if color.is_none()
+                && let Ok(value) = input.try_parse(Color::parse)
+            {
+                color = Some(value);
+                continue;
             }
 
             break;

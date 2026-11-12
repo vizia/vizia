@@ -11,7 +11,7 @@ pub struct CustomProperty<'i> {
 }
 
 impl<'i> CustomProperty<'i> {
-    pub fn parse<'t>(
+    pub fn parse(
         name: CowRcStr<'i>,
         input: &mut Parser<'i>,
     ) -> Result<Self, ParseError<CustomParseError<'i>>> {
@@ -33,7 +33,7 @@ pub struct UnparsedProperty<'i> {
 }
 
 impl<'i> UnparsedProperty<'i> {
-    pub fn parse<'t>(
+    pub fn parse(
         name: CowRcStr<'i>,
         input: &mut Parser<'i>,
     ) -> Result<Self, ParseError<CustomParseError<'i>>> {
@@ -71,7 +71,7 @@ impl TokenOrValue<'_> {
 }
 
 impl<'i> TokenList<'i> {
-    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
+    fn parse(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         input.parse_until_before(Delimiter::Bang | Delimiter::Semicolon, |input| {
             let mut tokens = vec![];
             TokenList::parse_into(input, &mut tokens)?;
@@ -93,7 +93,7 @@ impl<'i> TokenList<'i> {
         })
     }
 
-    fn parse_into<'t>(
+    fn parse_into(
         input: &mut Parser<'i>,
         tokens: &mut Vec<TokenOrValue<'i>>,
     ) -> Result<(), ParseError<CustomParseError<'i>>> {
@@ -227,7 +227,7 @@ pub struct Variable<'i> {
 }
 
 impl<'i> Variable<'i> {
-    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
+    fn parse(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let name = DashedIdent::parse(input)?;
 
         let fallback = if input.try_parse(|input| input.expect_comma()).is_ok() {

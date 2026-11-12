@@ -27,10 +27,10 @@ impl<'i> ParserOptions<'i> {
 
     #[inline]
     pub(crate) fn warn(&self, warning: ParseError<CustomParseError<'i>>, location: SourceLocation) {
-        if let Some(warnings) = &self.warnings {
-            if let Ok(mut warnings) = warnings.write() {
-                warnings.push(Error::from_at(warning, self.filename.clone(), Some(location)));
-            }
+        if let Some(warnings) = &self.warnings
+            && let Ok(mut warnings) = warnings.write()
+        {
+            warnings.push(Error::from_at(warning, self.filename.clone(), Some(location)));
         }
     }
 }

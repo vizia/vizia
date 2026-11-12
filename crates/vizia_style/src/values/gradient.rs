@@ -116,8 +116,7 @@ pub struct LinearGradient {
 
 impl<'i> Parse<'i> for LinearGradient {
     fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
-        let direction = if let Ok(direction) = input.try_parse(|input| LineDirection::parse(input))
-        {
+        let direction = if let Ok(direction) = input.try_parse(LineDirection::parse) {
             input.expect_comma()?;
             direction
         } else {
@@ -176,9 +175,7 @@ pub struct RadialGradient {
 }
 
 impl<'i> RadialGradient {
-    fn parse<'t>(
-        input: &mut Parser<'i>,
-    ) -> Result<RadialGradient, ParseError<CustomParseError<'i>>> {
+    fn parse(input: &mut Parser<'i>) -> Result<RadialGradient, ParseError<CustomParseError<'i>>> {
         // let shape = input.try_parse(EndingShape::parse).ok();
         let position = input
             .try_parse(|input| {
