@@ -14,6 +14,7 @@ use crate::events::{TimedEvent, TimedEventHandle, TimerState, ViewHandler};
 use crate::prelude::*;
 use crate::resource::{ImageOrSvg, ResourceManager, StoredImage};
 use crate::tree::{focus_backward, focus_forward, is_navigatable};
+use vizia_id::IdManager;
 use vizia_input::MouseState;
 
 use skia_safe::{Matrix, Rect};
@@ -61,6 +62,7 @@ type Models = HashMap<Entity, HashMap<TypeId, Box<dyn ModelData>>>;
 /// ```
 pub struct EventContext<'a> {
     pub(crate) current: Entity,
+    entity_manager: &'a IdManager<Entity>,
     pub(crate) captured: &'a mut Entity,
     pub(crate) focused: &'a mut Entity,
     pub(crate) hovered: &'a Entity,
@@ -100,6 +102,7 @@ impl<'a> EventContext<'a> {
     pub fn new(cx: &'a mut Context) -> Self {
         Self {
             current: cx.current,
+            entity_manager: &cx.entity_manager,
             captured: &mut cx.captured,
             focused: &mut cx.focused,
             hovered: &cx.hovered,
@@ -138,6 +141,7 @@ impl<'a> EventContext<'a> {
     pub fn new_with_current(cx: &'a mut Context, current: Entity) -> Self {
         Self {
             current,
+            entity_manager: &cx.entity_manager,
             captured: &mut cx.captured,
             focused: &mut cx.focused,
             hovered: &cx.hovered,
@@ -980,6 +984,13 @@ impl<'a> EventContext<'a> {
         self.set_pseudo_class(self.current, PseudoClassFlags::PLACEHOLDER_SHOWN, flag);
     }
 
+    /// Returns whether the entity is still alive, that is, it has been created and not removed.
+    ///
+    /// This is independent of [`is_valid`](Self::is_valid), which reports form validation.
+    pub fn is_entity_alive(&self, entity: Entity) -> bool {
+        self.entity_manager.is_alive(entity)
+    }
+
     // TODO: Move me
     pub fn is_valid(&self) -> bool {
         self.style
@@ -1550,5 +1561,25 @@ impl TreeProps for EventContext<'_> {
 
     fn parent_window(&self) -> Entity {
         self.tree.get_parent_window(self.current).unwrap_or(Entity::root())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn entity_alive_follows_removal_and_ignores_form_validity() {
+        let mut cx = Context::new();
+        let removed = Element::new(&mut cx).entity();
+        let invalid = Element::new(&mut cx).entity();
+        EventContext::new_with_current(&mut cx, invalid).set_valid(false);
+        cx.remove(removed);
+
+        let cx = EventContext::new_with_current(&mut cx, invalid);
+        assert!(!cx.is_valid());
+        assert!(cx.is_entity_alive(invalid));
+        assert!(cx.is_entity_alive(Entity::root()));
+        assert!(!cx.is_entity_alive(removed));
     }
 }
