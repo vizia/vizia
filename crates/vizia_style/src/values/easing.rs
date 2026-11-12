@@ -1,3 +1,4 @@
+use crate::ParserErrorExt;
 use crate::{CustomParseError, Parse};
 use cssparser::*;
 
@@ -14,7 +15,7 @@ pub enum EasingFunction {
 }
 
 impl<'i> Parse<'i> for EasingFunction {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let location = input.current_source_location();
         if let Ok(ident) = input.try_parse(|i| i.expect_ident_cloned()) {
             let keyword = match_ignore_ascii_case! { &ident,

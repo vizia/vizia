@@ -8,7 +8,7 @@ pub struct Url<'a> {
 }
 
 impl<'i> Parse<'i> for Url<'i> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let url = input.expect_url_or_string()?;
         Ok(Url { url })
     }
@@ -16,8 +16,7 @@ impl<'i> Parse<'i> for Url<'i> {
 
 impl<'a> From<&'a str> for Url<'a> {
     fn from(s: &'a str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         Url::parse(&mut parser).unwrap_or_default()
     }
 }

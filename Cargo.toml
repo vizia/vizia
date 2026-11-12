@@ -49,7 +49,7 @@ authors = ["George Atkinson"]
 edition = "2024"
 license = "MIT"
 repository = "https://github.com/vizia/vizia"
-rust-version = "1.85"
+rust-version = "1.95"
 
 [workspace.dependencies]
 vizia = { version = "0.4.0", path = "." }
@@ -62,42 +62,43 @@ vizia_storage = { version = "0.4.0", path = "crates/vizia_storage" }
 vizia_style = { version = "0.4.0", path = "crates/vizia_style" }
 vizia_window = { version = "0.4.0", path = "crates/vizia_window" }
 vizia_reactive = { version = "0.4.0", path = "crates/vizia_reactive" }
-accesskit = "0.24"
-accesskit_winit = "0.33"
+accesskit = "0.25"
+accesskit_winit = "0.34"
 baseview = { version = "0.4.2", features = ["opengl"] }
-bitflags = "2.13"
+bitflags = "2.13.2"
 chrono = "0.4"
-comrak = { version = "0.54", default-features = false }
+comrak = { version = "0.59", default-features = false }
 copypasta = { version = "0.10", default-features = false }
-cssparser = "0.37"
-cssparser-color = "0.5"
-dashmap = { version = "6.1", features = ["inline"] }
+cssparser = "0.38"
+cssparser-color = "0.6"
+dashmap = { version = "6.2", features = ["inline"] }
 fern = "0.7"
 fluent-bundle = "0.16.0"
-fluent-langneg = "0.13.1"
-ego-tree = "0.10"
+fluent-langneg = "0.14.2"
+ego-tree = "0.11"
 fxhash = "0.2"
 gl-rs = { package = "gl", version = "0.14" }
 glutin = { version = "0.32", default-features = false, features = ["egl", "wgl", "glx"] }
 glutin-winit = { version = "0.5", default-features = false, features = ["egl", "wgl", "glx"] }
 hashbrown = "0.17"
-indexmap = "2.13"
+indexmap = "2.14"
 keyboard-types = { version = "0.8", default-features = false }
 log = "0.4"
 morphorm = "0.9"
-open = "5.4"
-parking_lot = "0.12"
+open = "5.4.5"
+parking_lot = "0.13"
 raw-window-handle = "0.6"
 rayon = "1.12"
-reqwest = { version = "0.13" }
-selectors = "0.39"
+reqwest = { version = "0.13.5" }
+selectors = "0.43"
 serde = { version = "1.0", features = ["derive"] }
-skia-safe = { version = "0.99", features = ["gl", "textlayout", "svg"] }
+skia-safe = { version = "0.157", features = ["gl", "textlayout", "svg"] }
 sys-locale = "0.3"
-tokio = { version = "1.53", features = ["rt-multi-thread", "time", "fs", "io-util"] }
+tokio = { version = "1.54", features = ["rt-multi-thread", "time", "fs", "io-util"] }
 tray-icon = "0.26"
 gtk = "0.18"
 objc2-core-foundation = { version = "0.3.2", default-features = false, features = ["std", "CFRunLoop"] }
+
 unic-langid = { version = "0.9.6", features = ["macros"] }
 unicode-segmentation = "1.13"
 unicode-bidi = "0.3"
@@ -105,15 +106,15 @@ windows-sys = { version = "0.61", default-features = false, features = ["Win32_G
 winit = { version = "0.30", default-features = false }
 
 [target."cfg(target_os = \"macos\")".dependencies.skia-safe]
-version = "0.99"
+version = "0.157"
 features = ["textlayout", "svg", "metal", "gl"]
 
 [target."cfg(target_os = \"linux\")".dependencies.skia-safe]
-version = "0.99"
+version = "0.157"
 features = ["textlayout", "svg", "x11", "wayland", "gl"]
 
 [target."cfg(target_os = \"windows\")".dependencies.skia-safe]
-version = "0.99"
+version = "0.157"
 features = ["textlayout", "svg", "d3d", "vulkan", "gl"]
 
 [workspace.lints.rust]

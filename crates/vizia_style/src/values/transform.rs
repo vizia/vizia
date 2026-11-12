@@ -1,3 +1,4 @@
+use crate::ParserErrorExt;
 use crate::{Angle, CustomParseError, LengthOrPercentage, Matrix, Parse, PercentageOrNumber};
 use cssparser::{ParseError, Parser, Token, match_ignore_ascii_case};
 
@@ -35,7 +36,7 @@ pub enum Transform {
 }
 
 impl<'i> Parse<'i> for Transform {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let function = input.expect_function()?.clone();
 
         input.parse_nested_block(|input| {
@@ -113,7 +114,7 @@ impl<'i> Parse<'i> for Transform {
 }
 
 impl<'i> Parse<'i> for Vec<Transform> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let mut results = vec![Transform::parse(input)?];
         loop {
             if input.is_exhausted() {
@@ -121,15 +122,10 @@ impl<'i> Parse<'i> for Vec<Transform> {
             }
 
             input.skip_whitespace();
-            let location = input.current_source_location();
-
             if let Ok(transform) = input.try_parse(Transform::parse) {
                 results.push(transform);
             } else {
-                return Err(cssparser::ParseError {
-                    kind: cssparser::ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),
-                    location,
-                });
+                return Err(ParseError::custom(CustomParseError::InvalidDeclaration));
             }
         }
     }

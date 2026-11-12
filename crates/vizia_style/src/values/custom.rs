@@ -13,8 +13,8 @@ pub struct CustomProperty<'i> {
 impl<'i> CustomProperty<'i> {
     pub fn parse<'t>(
         name: CowRcStr<'i>,
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+        input: &mut Parser<'i>,
+    ) -> Result<Self, ParseError<CustomParseError<'i>>> {
         //let value = TokenList::parse(input)?;
         // Ok(CustomProperty {
         //     name: CowRcStr::from("TODO"),
@@ -35,8 +35,8 @@ pub struct UnparsedProperty<'i> {
 impl<'i> UnparsedProperty<'i> {
     pub fn parse<'t>(
         name: CowRcStr<'i>,
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+        input: &mut Parser<'i>,
+    ) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let value = TokenList::parse(input)?;
         Ok(UnparsedProperty { name, value })
     }
@@ -71,7 +71,7 @@ impl TokenOrValue<'_> {
 }
 
 impl<'i> TokenList<'i> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         input.parse_until_before(Delimiter::Bang | Delimiter::Semicolon, |input| {
             let mut tokens = vec![];
             TokenList::parse_into(input, &mut tokens)?;
@@ -94,9 +94,9 @@ impl<'i> TokenList<'i> {
     }
 
     fn parse_into<'t>(
-        input: &mut Parser<'i, 't>,
+        input: &mut Parser<'i>,
         tokens: &mut Vec<TokenOrValue<'i>>,
-    ) -> Result<(), ParseError<'i, CustomParseError<'i>>> {
+    ) -> Result<(), ParseError<CustomParseError<'i>>> {
         let mut last_is_delim = false;
         let mut last_is_whitespace = false;
         loop {
@@ -200,7 +200,7 @@ impl<'i> TokenList<'i> {
 fn try_parse_color_token<'i>(
     f: &CowRcStr<'i>,
     state: &ParserState,
-    input: &mut Parser<'i, '_>,
+    input: &mut Parser<'i>,
 ) -> Option<Color> {
     match_ignore_ascii_case! { f,
         "rgb" | "rgba" | "hsl" | "hsla" | "hwb" | "lab" | "lch" | "oklab" | "oklch" | "color" | "color-mix" => {
@@ -227,7 +227,7 @@ pub struct Variable<'i> {
 }
 
 impl<'i> Variable<'i> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let name = DashedIdent::parse(input)?;
 
         let fallback = if input.try_parse(|input| input.expect_comma()).is_ok() {
@@ -242,15 +242,14 @@ impl<'i> Variable<'i> {
 
 #[cfg(test)]
 mod tests {
-    use cssparser::CowRcStr;
+    use cssparser::{CowRcStr, Parser};
 
     use crate::CustomProperty;
 
     #[test]
     fn parse_custom_ident() {
         let success_string = "left";
-        let mut parser_input = cssparser::ParserInput::new(success_string);
-        let mut parser = cssparser::Parser::new(&mut parser_input);
+        let mut parser = Parser::new(success_string);
         let _result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
         // assert_eq!(result, Ok($value));
     }
@@ -258,8 +257,7 @@ mod tests {
     #[test]
     fn parse_custom_color() {
         let success_string = "#456789";
-        let mut parser_input = cssparser::ParserInput::new(success_string);
-        let mut parser = cssparser::Parser::new(&mut parser_input);
+        let mut parser = Parser::new(success_string);
         let _result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
         // assert_eq!(result, Ok($value));
     }
@@ -267,8 +265,7 @@ mod tests {
     #[test]
     fn parse_custom_value() {
         let success_string = "3px";
-        let mut parser_input = cssparser::ParserInput::new(success_string);
-        let mut parser = cssparser::Parser::new(&mut parser_input);
+        let mut parser = Parser::new(success_string);
         let _result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
         // assert_eq!(result, Ok($value));
     }
@@ -276,8 +273,7 @@ mod tests {
     #[test]
     fn parse_custom_complex() {
         let success_string = "left 3px rgb(100, 200, 50)";
-        let mut parser_input = cssparser::ParserInput::new(success_string);
-        let mut parser = cssparser::Parser::new(&mut parser_input);
+        let mut parser = Parser::new(success_string);
         let _result = CustomProperty::parse(CowRcStr::from("custom"), &mut parser);
         // assert_eq!(result, Ok($value));
     }

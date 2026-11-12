@@ -1,3 +1,4 @@
+use crate::ParserErrorExt;
 use crate::{CustomParseError, LengthOrPercentage, Parse, define_enum};
 use bitflags::bitflags;
 use cssparser::*;
@@ -12,7 +13,7 @@ pub struct TextDecoration {
 }
 
 impl<'i> Parse<'i> for TextDecoration {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let mut line = None;
         let mut style = None;
         let mut thickness = None;
@@ -78,12 +79,12 @@ impl Default for TextDecorationLine {
 }
 
 impl<'i> Parse<'i> for TextDecorationLine {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let mut value = TextDecorationLine::empty();
         let mut any = false;
 
         loop {
-            let flag: Result<_, ParseError<'i, CustomParseError<'i>>> = input.try_parse(|input| {
+            let flag: Result<_, ParseError<CustomParseError<'i>>> = input.try_parse(|input| {
                 let location = input.current_source_location();
                 let ident = input.expect_ident()?;
                 Ok(match_ignore_ascii_case! { &ident,

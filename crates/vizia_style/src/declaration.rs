@@ -10,9 +10,9 @@ pub struct DeclarationBlock<'i> {
 
 impl<'i> DeclarationBlock<'i> {
     pub fn parse<'a, 't>(
-        input: &mut Parser<'i, 't>,
+        input: &mut Parser<'i>,
         options: &'a ParserOptions<'i>,
-    ) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    ) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let mut important_declarations = DeclarationList::new();
         let mut declarations = DeclarationList::new();
         let mut decl_parser = PropertyDeclarationParser {
@@ -22,9 +22,9 @@ impl<'i> DeclarationBlock<'i> {
         };
         let parser = RuleBodyParser::new(input, &mut decl_parser);
         for res in parser {
-            if let Err((err, _)) = res {
+            if let Err((err, _, location)) = res {
                 if options.error_recovery {
-                    options.warn(err);
+                    options.warn(err, location);
                     continue;
                 }
                 return Err(err);
@@ -48,20 +48,20 @@ impl<'i> DeclarationParser<'i> for PropertyDeclarationParser<'_, 'i> {
     fn parse_value<'t>(
         &mut self,
         name: CowRcStr<'i>,
-        input: &mut Parser<'i, 't>,
+        input: &mut Parser<'i>,
         _state: &ParserState,
-    ) -> Result<Self::Declaration, ParseError<'i, Self::Error>> {
+    ) -> Result<Self::Declaration, ParseError<Self::Error>> {
         parse_declaration(name, input, self.declarations, self.important_declarations, self.options)
     }
 }
 
 pub(crate) fn parse_declaration<'i>(
     name: CowRcStr<'i>,
-    input: &mut cssparser::Parser<'i, '_>,
+    input: &mut cssparser::Parser<'i>,
     declarations: &mut DeclarationList<'i>,
     important_declarations: &mut DeclarationList<'i>,
     _options: &ParserOptions,
-) -> Result<(), ParseError<'i, CustomParseError<'i>>> {
+) -> Result<(), ParseError<CustomParseError<'i>>> {
     let property =
         input.parse_until_before(Delimiter::Bang, |input| Property::parse_value(name, input))?;
 

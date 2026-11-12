@@ -23,8 +23,7 @@ impl<'i, T> Parse<'i> for Matrix<T>
 where
     T: Parse<'i> + Clone,
 {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let location = input.current_source_location();
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let fields = input.parse_comma_separated(T::parse)?;
 
         if fields.len() == 6 {
@@ -37,10 +36,7 @@ where
 
             Ok(Self::new(a, b, c, d, e, f))
         } else {
-            Err(cssparser::ParseError {
-                kind: cssparser::ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),
-                location,
-            })
+            Err(ParseError::custom(CustomParseError::InvalidDeclaration))
         }
     }
 }

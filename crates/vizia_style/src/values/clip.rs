@@ -1,3 +1,4 @@
+use crate::ParserErrorExt;
 use crate::{AutoKeyword, Length, LengthOrPercentage, Parse, Rect};
 use cssparser::*;
 
@@ -33,8 +34,8 @@ impl From<Length> for ClipPath {
 
 impl<'i> Parse<'i> for ClipPath {
     fn parse<'t>(
-        input: &mut cssparser::Parser<'i, 't>,
-    ) -> Result<Self, cssparser::ParseError<'i, crate::CustomParseError<'i>>> {
+        input: &mut cssparser::Parser<'i>,
+    ) -> Result<Self, cssparser::ParseError<crate::CustomParseError<'i>>> {
         if input.try_parse(AutoKeyword::parse).is_ok() {
             Ok(ClipPath::Auto)
         } else {

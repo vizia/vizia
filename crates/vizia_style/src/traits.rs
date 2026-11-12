@@ -2,7 +2,7 @@ use crate::CustomParseError;
 use cssparser::*;
 
 pub trait Parse<'i>: Sized {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>>;
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>>;
 }
 
 pub trait TryAdd<T> {

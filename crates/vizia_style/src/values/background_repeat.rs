@@ -1,3 +1,4 @@
+use crate::ParserErrorExt;
 use crate::{CustomParseError, Parse};
 use cssparser::*;
 
@@ -11,7 +12,7 @@ pub enum BackgroundRepeat {
 }
 
 impl<'i> Parse<'i> for BackgroundRepeat {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let location = input.current_source_location();
         let ident = input.expect_ident()?;
         Ok(match_ignore_ascii_case! { ident,
@@ -25,7 +26,7 @@ impl<'i> Parse<'i> for BackgroundRepeat {
 }
 
 impl<'i> Parse<'i> for Vec<BackgroundRepeat> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         input.parse_comma_separated(BackgroundRepeat::parse)
     }
 }

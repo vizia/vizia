@@ -25,8 +25,7 @@ impl Border {
 }
 
 impl<'i> Parse<'i> for Border {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let location = input.current_source_location();
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let mut width = None;
         let mut style = None;
         let mut color = None;
@@ -64,10 +63,7 @@ impl<'i> Parse<'i> for Border {
         if any && input.is_exhausted() {
             Ok(Border { width, style, color })
         } else {
-            Err(cssparser::ParseError {
-                kind: cssparser::ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),
-                location,
-            })
+            Err(ParseError::custom(CustomParseError::InvalidDeclaration))
         }
     }
 }

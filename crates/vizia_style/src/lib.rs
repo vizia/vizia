@@ -1,5 +1,8 @@
 #![allow(clippy::uninlined_format_args)]
 
+mod parser_errors;
+pub(crate) use parser_errors::ParserErrorExt;
+
 mod values;
 pub use values::*;
 

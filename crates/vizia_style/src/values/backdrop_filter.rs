@@ -1,3 +1,4 @@
+use crate::ParserErrorExt;
 use crate::{CustomParseError, Length, Parse};
 use cssparser::*;
 
@@ -13,7 +14,7 @@ impl Default for Filter {
 }
 
 impl<'i> Parse<'i> for Filter {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let function = input.expect_function()?.clone();
 
         input.parse_nested_block(|input| {

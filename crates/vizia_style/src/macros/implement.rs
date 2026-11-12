@@ -46,11 +46,9 @@ macro_rules! impl_parse {
         )?
     ) => {
         impl<'i> Parse<'i> for $name {
-            fn parse<'t>(input: &mut cssparser::Parser<'i, 't>) -> Result<Self, cssparser::ParseError<'i, $crate::CustomParseError<'i>>> {
+            fn parse<'t>(input: &mut cssparser::Parser<'i>) -> Result<Self, cssparser::ParseError<$crate::CustomParseError<'i>>> {
                 // Parse tokens using input.next()?
                 $(
-                    let location = input.current_source_location();
-
                     Ok(match input.next()? {
                         $(
                             $(
@@ -69,27 +67,19 @@ macro_rules! impl_parse {
                                 $custom_branches
                             )+
                         )?
-                        _ => return Err(cssparser::ParseError {
-                            kind: cssparser::ParseErrorKind::Custom($crate::CustomParseError::InvalidDeclaration),
-                            location,
-                        }),
+                        _ => return Err(cssparser::ParseError::custom($crate::CustomParseError::InvalidDeclaration)),
                     })
                 )?
 
                 // Parse using input.try_parse(...)
                 $(
-                    let location = input.current_source_location();
-
                     $(
                         if let Ok(x) = input.try_parse(<$try_parse_type>::parse) {
                             return Ok(x.into());
                         }
                     )+
 
-                    Err(cssparser::ParseError {
-                        kind: cssparser::ParseErrorKind::Custom($crate::CustomParseError::InvalidDeclaration),
-                        location,
-                    })
+                    Err(cssparser::ParseError::custom($crate::CustomParseError::InvalidDeclaration))
                 )?
 
                 // Parse using a closure

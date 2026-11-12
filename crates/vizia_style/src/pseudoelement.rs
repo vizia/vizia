@@ -1,7 +1,5 @@
 use cssparser::*;
 
-use crate::Selectors;
-
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum PseudoElement {
     After,
@@ -25,8 +23,6 @@ impl ToCss for PseudoElement {
 }
 
 impl selectors::parser::PseudoElement for PseudoElement {
-    type Impl = Selectors;
-
     fn accepts_state_pseudo_classes(&self) -> bool {
         true
     }

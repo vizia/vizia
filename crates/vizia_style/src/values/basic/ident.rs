@@ -1,3 +1,4 @@
+use crate::ParserErrorExt;
 use crate::{CustomParseError, Parse};
 
 use cssparser::*;
@@ -7,7 +8,7 @@ use cssparser::*;
 pub struct Ident<'i>(pub CowRcStr<'i>);
 
 impl<'i> Parse<'i> for Ident<'i> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let ident = input.expect_ident()?;
         Ok(Ident(ident.clone()))
     }
@@ -33,7 +34,7 @@ impl<'i> From<Ident<'i>> for String {
 pub struct DashedIdent<'i>(pub CowRcStr<'i>);
 
 impl<'i> Parse<'i> for DashedIdent<'i> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let location = input.current_source_location();
         let ident = input.expect_ident()?;
         if !ident.starts_with("--") {

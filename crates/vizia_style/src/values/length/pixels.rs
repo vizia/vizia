@@ -1,5 +1,5 @@
 use crate::{CustomParseError, Length, Parse, impl_parse};
-use cssparser::{ParseError, ParseErrorKind};
+use cssparser::ParseError;
 
 /// A length value in pixels.
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -10,16 +10,12 @@ impl_parse! {
 
     custom {
         |input| {
-            let location = input.current_source_location();
 
             if let Some(pixels) = input.try_parse(Length::parse)?.to_px() {
                 return Ok(Self(pixels));
             }
 
-            Err(ParseError {
-                kind: ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),
-                location,
-            })
+            Err(ParseError::custom(CustomParseError::InvalidDeclaration))
         }
     }
 }

@@ -3,7 +3,7 @@ use std::{
     sync::{Arc, RwLock},
 };
 
-use cssparser::ParseError;
+use cssparser::{ParseError, SourceLocation};
 
 use crate::{CustomParseError, Error};
 
@@ -26,10 +26,10 @@ impl<'i> ParserOptions<'i> {
     }
 
     #[inline]
-    pub(crate) fn warn(&self, warning: ParseError<'i, CustomParseError<'i>>) {
+    pub(crate) fn warn(&self, warning: ParseError<CustomParseError<'i>>, location: SourceLocation) {
         if let Some(warnings) = &self.warnings {
             if let Ok(mut warnings) = warnings.write() {
-                warnings.push(Error::from(warning, self.filename.clone()));
+                warnings.push(Error::from_at(warning, self.filename.clone(), Some(location)));
             }
         }
     }

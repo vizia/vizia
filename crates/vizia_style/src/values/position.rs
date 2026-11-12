@@ -51,7 +51,7 @@ where
 }
 
 impl<'i> Parse<'i> for Position {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         if let Ok(x) = input.try_parse(HorizontalPosition::parse) {
             // Try parsing a vertical position next.
             if let Ok(y) = input.try_parse(VerticalPosition::parse) {
@@ -79,7 +79,7 @@ impl<'i> Parse<'i> for Position {
 }
 
 impl<'i> Parse<'i> for Vec<Position> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         input.skip_whitespace();
         if input.is_exhausted() {
             return Err(input.new_error_for_next_token());
@@ -118,7 +118,7 @@ impl<S: Copy + Into<LengthOrPercentage>> PositionComponent<S> {
 }
 
 impl<'i, S: Parse<'i> + Copy + Into<LengthOrPercentage>> Parse<'i> for PositionComponent<S> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         if input.try_parse(|i| i.expect_ident_matching("center")).is_ok() {
             return Ok(PositionComponent::Center);
         }

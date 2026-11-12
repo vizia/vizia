@@ -758,7 +758,10 @@ impl Context {
     /// Loads a font into the application from in-memory bytes.
     pub fn load_font_mem(&mut self, data: impl AsRef<[u8]>) {
         self.text_context.asset_provider.register_typeface(
-            self.text_context.default_font_manager.new_from_data(data.as_ref(), None).unwrap(),
+            self.text_context
+                .default_font_manager
+                .new_from_data(skia_safe::Data::new_copy(data.as_ref()), None)
+                .unwrap(),
             None,
         );
     }

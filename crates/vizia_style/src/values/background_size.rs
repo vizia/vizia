@@ -1,3 +1,4 @@
+use crate::ParserErrorExt;
 use crate::{CustomParseError, LengthPercentageOrAuto, Parse};
 use cssparser::*;
 
@@ -20,7 +21,7 @@ impl Default for BackgroundSize {
 }
 
 impl<'i> Parse<'i> for BackgroundSize {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         if let Ok(width) = input.try_parse(LengthPercentageOrAuto::parse) {
             let height = input
                 .try_parse(LengthPercentageOrAuto::parse)
@@ -41,7 +42,7 @@ impl<'i> Parse<'i> for BackgroundSize {
 }
 
 impl<'i> Parse<'i> for Vec<BackgroundSize> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         input.parse_comma_separated(BackgroundSize::parse)
     }
 }

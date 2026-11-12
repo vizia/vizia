@@ -17,8 +17,8 @@ impl BackgroundImage<'_> {
 
 impl<'i> Parse<'i> for BackgroundImage<'i> {
     fn parse<'t>(
-        input: &mut cssparser::Parser<'i, 't>,
-    ) -> Result<Self, cssparser::ParseError<'i, crate::CustomParseError<'i>>> {
+        input: &mut cssparser::Parser<'i>,
+    ) -> Result<Self, cssparser::ParseError<crate::CustomParseError<'i>>> {
         if input.try_parse(|i| i.expect_ident_matching("none")).is_ok() {
             return Ok(BackgroundImage::None);
         }
@@ -43,14 +43,13 @@ impl From<Gradient> for BackgroundImage<'_> {
 
 impl<'i> From<&'i str> for BackgroundImage<'i> {
     fn from(s: &'i str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         BackgroundImage::parse(&mut parser).expect("Failed to parse background-image")
     }
 }
 
 impl<'i> Parse<'i> for Vec<BackgroundImage<'i>> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         input.parse_comma_separated(BackgroundImage::parse)
     }
 }

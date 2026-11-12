@@ -1,4 +1,4 @@
-use cssparser::{ParseError, ParseErrorKind, Parser, ParserInput};
+use cssparser::{ParseError, Parser};
 
 use crate::{CustomParseError, Length, Parse, Percentage, define_enum};
 
@@ -20,19 +20,14 @@ pub enum LineHeight {
 }
 
 impl<'i> Parse<'i> for LineHeight {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let location = input.current_source_location();
-
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         if let Ok(keyword) = input.try_parse(LineHeightKeyword::parse) {
             return Ok(keyword.into());
         }
 
         if let Ok(percentage) = input.try_parse(Percentage::parse) {
             if percentage.0 < 0.0 {
-                return Err(ParseError {
-                    kind: ParseErrorKind::Custom(CustomParseError::InvalidValue),
-                    location,
-                });
+                return Err(ParseError::custom(CustomParseError::InvalidValue));
             }
 
             return Ok(LineHeight::Percentage(percentage.0));
@@ -40,10 +35,7 @@ impl<'i> Parse<'i> for LineHeight {
 
         if let Ok(number) = input.try_parse(f32::parse) {
             if number < 0.0 {
-                return Err(ParseError {
-                    kind: ParseErrorKind::Custom(CustomParseError::InvalidValue),
-                    location,
-                });
+                return Err(ParseError::custom(CustomParseError::InvalidValue));
             }
 
             return Ok(LineHeight::Number(number));
@@ -53,10 +45,7 @@ impl<'i> Parse<'i> for LineHeight {
         if let Length::Value(length_value) = &length {
             let (value, _) = length_value.to_unit_value();
             if value < 0.0 {
-                return Err(ParseError {
-                    kind: ParseErrorKind::Custom(CustomParseError::InvalidValue),
-                    location,
-                });
+                return Err(ParseError::custom(CustomParseError::InvalidValue));
             }
         }
 
@@ -98,8 +87,7 @@ impl From<Length> for LineHeight {
 
 impl From<&str> for LineHeight {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         LineHeight::parse(&mut parser).unwrap_or_default()
     }
 }
