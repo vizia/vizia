@@ -126,7 +126,8 @@ impl WinState {
             })
         };
 
-        let (width, height): (u32, u32) = window.inner_size().into();
+        let inner_size = window.inner_size();
+        let (width, height): (u32, u32) = inner_size.into();
 
         let attrs = SurfaceAttributesBuilder::<WindowSurface>::new().with_srgb(Some(true)).build(
             raw_window_handle,
@@ -181,9 +182,7 @@ impl WinState {
         let stencil_size = gl_config.stencil_size() as usize;
 
         let mut surface =
-            create_surface(&window, fb_info, &mut gr_context, num_samples, stencil_size);
-
-        let inner_size = window.inner_size();
+            create_surface(inner_size, fb_info, &mut gr_context, num_samples, stencil_size);
 
         let dirty_surface = surface
             .new_surface_with_dimensions((inner_size.width as i32, inner_size.height as i32))
@@ -215,49 +214,74 @@ impl WinState {
         self.gl_context.make_current(&self.gl_surface).unwrap();
     }
 
-    pub fn resize(&mut self, size: PhysicalSize<u32>) {
+    /// Resizes the GL surface and rebuilds both Skia targets at `size`.
+    ///
+    /// Returns `false` and leaves every existing target untouched when either extent is zero
+    /// (a minimized window), so callers only publish confirmed, non-zero sizes.
+    pub fn resize(&mut self, size: PhysicalSize<u32>) -> bool {
         self.gl_context.make_current(&self.gl_surface).unwrap();
-        let (width, height): (u32, u32) = size.into();
 
-        if width == 0 || height == 0 {
-            return;
-        }
+        let targets = resize_targets(
+            size,
+            |width, height| self.gl_surface.resize(&self.gl_context, width, height),
+            |size| {
+                let fb_info = {
+                    let mut fboid: GLint = 0;
+                    unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
 
-        let fb_info = {
-            let mut fboid: GLint = 0;
-            unsafe { gl::GetIntegerv(gl::FRAMEBUFFER_BINDING, &mut fboid) };
+                    FramebufferInfo {
+                        fboid: fboid.try_into().unwrap(),
+                        format: skia_safe::gpu::gl::Format::RGBA8.into(),
+                        ..Default::default()
+                    }
+                };
 
-            FramebufferInfo {
-                fboid: fboid.try_into().unwrap(),
-                format: skia_safe::gpu::gl::Format::RGBA8.into(),
-                ..Default::default()
+                let mut surface = create_surface(
+                    size,
+                    fb_info,
+                    &mut self.gr_context,
+                    self.gl_config.num_samples() as usize,
+                    self.gl_config.stencil_size() as usize,
+                );
+
+                let dirty_surface = surface
+                    .new_surface_with_dimensions((size.width as i32, size.height as i32))
+                    .unwrap();
+
+                (surface, dirty_surface)
+            },
+        );
+
+        match targets {
+            Some((surface, dirty_surface)) => {
+                self.surface = surface;
+                self.dirty_surface = dirty_surface;
+                true
             }
-        };
-
-        self.surface = create_surface(
-            &self.window,
-            fb_info,
-            &mut self.gr_context,
-            self.gl_config.num_samples() as usize,
-            self.gl_config.stencil_size() as usize,
-        );
-
-        self.dirty_surface = self
-            .surface
-            .new_surface_with_dimensions((width.max(1) as i32, height.max(1) as i32))
-            .unwrap();
-
-        self.gl_surface.resize(
-            &self.gl_context,
-            NonZeroU32::new(width.max(1)).unwrap(),
-            NonZeroU32::new(height.max(1)).unwrap(),
-        );
+            None => false,
+        }
     }
 
     pub fn swap_buffers(&mut self) {
         self.gr_context.flush_and_submit();
         self.gl_surface.swap_buffers(&self.gl_context).expect("Failed to swap buffers");
     }
+}
+
+/// Applies one confirmed physical extent to every resize target.
+///
+/// `construct_targets` builds the Skia surfaces at `size` and `resize_gl` resizes the GL surface to
+/// the same extent. A zero extent invokes neither and returns `None`.
+fn resize_targets<T>(
+    size: PhysicalSize<u32>,
+    resize_gl: impl FnOnce(NonZeroU32, NonZeroU32),
+    construct_targets: impl FnOnce(PhysicalSize<u32>) -> T,
+) -> Option<T> {
+    let width = NonZeroU32::new(size.width)?;
+    let height = NonZeroU32::new(size.height)?;
+    let targets = construct_targets(size);
+    resize_gl(width, height);
+    Some(targets)
 }
 
 fn build_window(
@@ -320,13 +344,12 @@ pub fn set_cloak(window: &winit::window::Window, state: bool) -> bool {
 }
 
 pub fn create_surface(
-    window: &winit::window::Window,
+    size: PhysicalSize<u32>,
     fb_info: FramebufferInfo,
     gr_context: &mut skia_safe::gpu::DirectContext,
     num_samples: usize,
     stencil_size: usize,
 ) -> Surface {
-    let size = window.inner_size();
     let size = (
         size.width.try_into().expect("Could not convert width"),
         size.height.try_into().expect("Could not convert height"),
@@ -799,5 +822,48 @@ impl WindowModifiers for Handle<'_, Window> {
         }
 
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn resize_uses_confirmed_extent_for_gl_and_targets() {
+        for (width, height) in [(2320, 1480), (1450, 925), (1080, 700), (1, 1)] {
+            let extent = PhysicalSize::new(width, height);
+            let operations = std::cell::RefCell::new(Vec::new());
+            let targets = resize_targets(
+                extent,
+                |width, height| operations.borrow_mut().push(("gl", width.get(), height.get())),
+                |size| {
+                    operations.borrow_mut().push(("targets", size.width, size.height));
+                    size
+                },
+            );
+            assert_eq!(targets, Some(extent));
+            let mut operations = operations.into_inner();
+            operations.sort();
+            assert_eq!(operations, vec![("gl", width, height), ("targets", width, height)]);
+        }
+    }
+
+    #[test]
+    fn resize_retains_targets_for_zero_extent() {
+        for extent in
+            [PhysicalSize::new(0, 1480), PhysicalSize::new(2320, 0), PhysicalSize::new(0, 0)]
+        {
+            let operations = std::cell::Cell::new(0);
+            let targets = resize_targets(
+                extent,
+                |_, _| operations.set(operations.get() + 1),
+                |_| {
+                    operations.set(operations.get() + 1);
+                },
+            );
+            assert_eq!(targets, None);
+            assert_eq!(operations.get(), 0);
+        }
     }
 }

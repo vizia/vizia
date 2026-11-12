@@ -709,9 +709,10 @@ impl ApplicationHandler<UserEvent> for Application {
 
         match event {
             winit::event::WindowEvent::Resized(size) => {
-                window.resize(size);
-                self.cx.set_window_size(window.entity, size.width as f32, size.height as f32);
-                self.cx.needs_resize_redraw(window.entity);
+                if window.resize(size) {
+                    self.cx.set_window_size(window.entity, size.width as f32, size.height as f32);
+                    self.cx.needs_resize_redraw(window.entity);
+                }
                 window.window().request_redraw();
 
                 #[cfg(target_os = "windows")]
