@@ -16,7 +16,7 @@ impl_parse! {
 }
 
 impl<'i> Parse<'i> for Vec<Units> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let mut values = Vec::default();
         while let Ok(val) = input.try_parse(Units::parse) {
             values.push(val);

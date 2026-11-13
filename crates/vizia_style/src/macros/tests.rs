@@ -25,8 +25,7 @@ macro_rules! assert_parse {
                 fn test_success() {
                     $({
                         let success_string = $success_string;
-                        let mut parser_input = cssparser::ParserInput::new(success_string);
-                        let mut parser = cssparser::Parser::new(&mut parser_input);
+                        let mut parser = cssparser::Parser::new(success_string);
                         let result = <$parse_type>::parse(&mut parser);
                         assert_eq!(result, Ok($value));
                     })+
@@ -38,8 +37,7 @@ macro_rules! assert_parse {
                 fn test_failure() {
                     $({
                         let failure_string = $failure_string;
-                        let mut parser_input = cssparser::ParserInput::new(failure_string);
-                        let mut parser = cssparser::Parser::new(&mut parser_input);
+                        let mut parser = cssparser::Parser::new(failure_string);
                         let result = <$parse_type>::parse(&mut parser);
                         assert!(result.is_err());
                     })+

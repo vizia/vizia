@@ -530,10 +530,11 @@ where
                     attempt + 1 < max_attempts
                 };
 
-                if should_retry && !worker_cancelled.load(Ordering::Acquire) {
-                    if let Some(delay) = options.retry_delay {
-                        tokio::time::sleep(delay).await;
-                    }
+                if should_retry
+                    && !worker_cancelled.load(Ordering::Acquire)
+                    && let Some(delay) = options.retry_delay
+                {
+                    tokio::time::sleep(delay).await;
                 }
             }
 
@@ -590,10 +591,10 @@ fn clear_named_task(
 ) {
     if let Some(key) = key {
         let mut map = named_tasks.lock().unwrap();
-        if let Some(current) = map.get(&key) {
-            if Arc::ptr_eq(current, cancelled) {
-                map.remove(&key);
-            }
+        if let Some(current) = map.get(&key)
+            && Arc::ptr_eq(current, cancelled)
+        {
+            map.remove(&key);
         }
     }
 }

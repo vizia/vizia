@@ -467,10 +467,10 @@ impl View for TabList {
             }
 
             TabListEvent::CloseFocused => {
-                if let Some(index) = self.selected_index.get() {
-                    if let Some(callback) = &self.on_close {
-                        (callback)(cx, index);
-                    }
+                if let Some(index) = self.selected_index.get()
+                    && let Some(callback) = &self.on_close
+                {
+                    (callback)(cx, index);
                 }
                 meta.consume();
             }

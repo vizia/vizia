@@ -81,32 +81,32 @@ impl AccessNode {
 
     /// Sets the value of a node.
     pub fn set_value(&mut self, value: impl Into<Box<str>>) {
-        self.node_builder.set_value(value);
+        self.node_builder.set_value(String::from(value.into()));
     }
 
     /// Sets the array of character lengths for a text node.
     pub fn set_character_lengths(&mut self, character_lengths: impl Into<Box<[u8]>>) {
-        self.node_builder.set_character_lengths(character_lengths);
+        self.node_builder.set_character_lengths(Vec::from(character_lengths.into()));
     }
 
     /// Sets the array of character positions for a text node.
     pub fn set_character_positions(&mut self, character_positions: impl Into<Box<[f32]>>) {
-        self.node_builder.set_character_positions(character_positions);
+        self.node_builder.set_character_positions(Vec::from(character_positions.into()));
     }
 
     /// Sets the array of character widths for a text node.
     pub fn set_character_widths(&mut self, character_widths: impl Into<Box<[f32]>>) {
-        self.node_builder.set_character_widths(character_widths);
+        self.node_builder.set_character_widths(Vec::from(character_widths.into()));
     }
 
     /// Sets the array of word start character positions for a text node.
     pub fn set_word_starts(&mut self, word_starts: impl Into<Box<[u8]>>) {
-        self.node_builder.set_word_starts(word_starts);
+        self.node_builder.set_word_starts(Vec::from(word_starts.into()));
     }
 
     /// Sets the placeholder of a text input node.
     pub fn set_placeholder(&mut self, placeholder: impl Into<Box<str>>) {
-        self.node_builder.set_placeholder(placeholder);
+        self.node_builder.set_placeholder(String::from(placeholder.into()));
     }
 
     /// Sets the step for a numerical node.

@@ -430,23 +430,39 @@ impl ResourceManager {
     }
 
     pub fn renegotiate_language(&mut self) {
-        let available = self
+        let available_native = self
             .translations
             .keys()
             .filter(|&x| x != &LanguageIdentifier::default())
             .collect::<Vec<_>>();
-        let locale = sys_locale::get_locale()
+        let locale_native = sys_locale::get_locale()
             .and_then(|l| l.parse().ok())
-            .unwrap_or_else(|| available.first().copied().cloned().unwrap_or_default());
-        let default = LanguageIdentifier::default();
-        let default_ref = &default; // ???
+            .unwrap_or_else(|| available_native.first().copied().cloned().unwrap_or_default());
+        let available = available_native
+            .iter()
+            .map(|locale| locale.to_string().parse::<fluent_langneg::LanguageIdentifier>())
+            .collect::<Result<Vec<_>, _>>()
+            .expect("unic-langid identifiers must parse as ICU locale identifiers");
+        let locale = locale_native
+            .to_string()
+            .parse::<fluent_langneg::LanguageIdentifier>()
+            .expect("unic-langid identifiers must parse as ICU locale identifiers");
+        let default = LanguageIdentifier::default()
+            .to_string()
+            .parse::<fluent_langneg::LanguageIdentifier>()
+            .expect("default locale must parse as an ICU locale identifier");
         let langs = fluent_langneg::negotiate::negotiate_languages(
             &[locale],
             &available,
-            Some(&default_ref),
+            Some(&default),
             fluent_langneg::NegotiationStrategy::Filtering,
         );
-        self.language = (**langs.first().unwrap()).clone();
+        self.language = langs
+            .first()
+            .expect("language negotiation must return its default locale")
+            .to_string()
+            .parse()
+            .expect("negotiated ICU locale must parse as a unic-langid identifier");
     }
 
     fn negotiate_translation_locale(&self, locale: &LanguageIdentifier) -> LanguageIdentifier {
@@ -468,16 +484,36 @@ impl ResourceManager {
         // is one of them, otherwise the first registered translation. `available` is
         // non-empty here (checked above), so `available.first()` is always `Some`.
         let first_available = *available.first().expect("non-empty checked above");
-        let fallback =
+        let fallback_native =
             if available.contains(&&self.language) { &self.language } else { first_available };
+        let available_icu = available
+            .iter()
+            .map(|locale| locale.to_string().parse::<fluent_langneg::LanguageIdentifier>())
+            .collect::<Result<Vec<_>, _>>()
+            .expect("unic-langid identifiers must parse as ICU locale identifiers");
+        let locale_icu = locale
+            .to_string()
+            .parse::<fluent_langneg::LanguageIdentifier>()
+            .expect("unic-langid identifier must parse as an ICU locale identifier");
+        let fallback_icu = fallback_native
+            .to_string()
+            .parse::<fluent_langneg::LanguageIdentifier>()
+            .expect("unic-langid identifier must parse as an ICU locale identifier");
         let langs = fluent_langneg::negotiate::negotiate_languages(
-            &[locale],
-            &available,
-            Some(&fallback),
+            &[locale_icu],
+            &available_icu,
+            Some(&fallback_icu),
             fluent_langneg::NegotiationStrategy::Filtering,
         );
 
-        langs.first().map(|lang| (**lang).clone()).unwrap_or_else(|| fallback.clone())
+        langs
+            .first()
+            .map(|lang| {
+                lang.to_string()
+                    .parse()
+                    .expect("negotiated ICU locale must parse as a unic-langid identifier")
+            })
+            .unwrap_or_else(|| fallback_native.clone())
     }
 
     pub fn translation_locales(&self, locale: &LanguageIdentifier) -> Vec<LanguageIdentifier> {

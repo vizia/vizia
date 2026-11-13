@@ -198,11 +198,11 @@ impl<T: PartialEq + Clone + 'static> ListItemsBinding<T> {
     }
 
     fn update_list_metadata(&self, cx: &mut Context, len: usize) {
-        if let Some(view) = cx.views.get_mut(&self.list_entity) {
-            if let Some(list) = view.downcast_mut::<List>() {
-                list.num_items = len;
-                list.normalize_selection_state();
-            }
+        if let Some(view) = cx.views.get_mut(&self.list_entity)
+            && let Some(list) = view.downcast_mut::<List>()
+        {
+            list.num_items = len;
+            list.normalize_selection_state();
         }
     }
 
@@ -329,11 +329,11 @@ impl<T: PartialEq + Clone + 'static> CustomListItemsBinding<T> {
     }
 
     fn update_list_metadata(&self, cx: &mut Context, len: usize) {
-        if let Some(view) = cx.views.get_mut(&self.list_entity) {
-            if let Some(list) = view.downcast_mut::<List>() {
-                list.num_items = len;
-                list.normalize_selection_state();
-            }
+        if let Some(view) = cx.views.get_mut(&self.list_entity)
+            && let Some(list) = view.downcast_mut::<List>()
+        {
+            list.num_items = len;
+            list.normalize_selection_state();
         }
     }
 
@@ -401,10 +401,10 @@ impl List {
         let previous = self.focused.get();
         self.focused.set(focused);
 
-        if previous != focused {
-            if let (Some(index), Some(callback)) = (focused, self.on_focus.as_ref()) {
-                callback(cx, index);
-            }
+        if previous != focused
+            && let (Some(index), Some(callback)) = (focused, self.on_focus.as_ref())
+        {
+            callback(cx, index);
         }
     }
 

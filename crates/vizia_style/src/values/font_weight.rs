@@ -66,8 +66,7 @@ impl From<i32> for FontWeight {
 
 impl From<&str> for FontWeight {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         FontWeight::parse(&mut parser).unwrap_or_default()
     }
 }

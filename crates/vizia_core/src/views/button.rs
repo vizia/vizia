@@ -99,10 +99,10 @@ impl View for Button {
             }
 
             WindowEvent::Press { .. } => {
-                if meta.target == cx.current {
-                    if let Some(action) = &self.action {
-                        (action)(cx);
-                    }
+                if meta.target == cx.current
+                    && let Some(action) = &self.action
+                {
+                    (action)(cx);
                 }
             }
 

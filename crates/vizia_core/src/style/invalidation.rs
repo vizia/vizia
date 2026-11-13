@@ -103,16 +103,17 @@ impl CompoundFilter {
     /// Like [`matches`](Self::matches), but ignores the requirement on the attribute affected by
     /// `change`, since the entity may have matched it before the change or may match it after.
     fn matches_except(&self, style: &Style, entity: Entity, change: Option<Change>) -> bool {
-        if let Some(element) = self.element {
-            if style.element.get(entity) != Some(&element) {
-                return false;
-            }
+        if let Some(element) = self.element
+            && style.element.get(entity) != Some(&element)
+        {
+            return false;
         }
 
-        if let Some(id) = &self.id {
-            if !matches!(change, Some(Change::Id(_))) && style.ids.get(entity) != Some(id) {
-                return false;
-            }
+        if let Some(id) = &self.id
+            && !matches!(change, Some(Change::Id(_)))
+            && style.ids.get(entity) != Some(id)
+        {
+            return false;
         }
 
         let classes = style.classes.get(entity);

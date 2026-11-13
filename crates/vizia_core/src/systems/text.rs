@@ -25,15 +25,13 @@ pub(crate) fn text_system(cx: &mut Context) {
 
         if cx.style.text.contains(entity)
             && cx.style.display.get(entity).copied().unwrap_or_default() != Display::None
-        {
-            if let Some(paragraph) =
+            && let Some(paragraph) =
                 build_paragraph(entity, &mut cx.style, &cx.tree, cx.text_context.font_collection())
-            {
-                cx.text_context.text_paragraphs.insert(entity, paragraph);
-                // Only this entity's text was (re)built; relayout incrementally from it.
-                cx.style.needs_relayout(entity);
-                cx.style.needs_text_layout(entity);
-            }
+        {
+            cx.text_context.text_paragraphs.insert(entity, paragraph);
+            // Only this entity's text was (re)built; relayout incrementally from it.
+            cx.style.needs_relayout(entity);
+            cx.style.needs_text_layout(entity);
         }
     }
 
@@ -153,21 +151,21 @@ pub fn layout_span(
     paragraph_bounds: BoundingBox,
 ) -> BoundingBox {
     let mut bounds = BoundingBox::default();
-    if style.text_span.get(entity).copied().unwrap_or_default() {
-        if let Some(range) = style.text_range.get(entity) {
-            let rects = paragraph.get_rects_for_range(
-                range.clone(),
-                RectHeightStyle::Tight,
-                RectWidthStyle::Tight,
-            );
+    if style.text_span.get(entity).copied().unwrap_or_default()
+        && let Some(range) = style.text_range.get(entity)
+    {
+        let rects = paragraph.get_rects_for_range(
+            range.clone(),
+            RectHeightStyle::Tight,
+            RectWidthStyle::Tight,
+        );
 
-            let min_x = rects.iter().fold(1000000.0f32, |min, item| min.min(item.rect.x()));
-            let min_y = rects.iter().fold(1000000.0f32, |min, item| min.min(item.rect.y()));
-            let max_x = rects.iter().fold(0.0f32, |max, item| max.max(item.rect.right()));
-            let max_y = rects.iter().fold(0.0f32, |max, item| max.max(item.rect.bottom()));
+        let min_x = rects.iter().fold(1000000.0f32, |min, item| min.min(item.rect.x()));
+        let min_y = rects.iter().fold(1000000.0f32, |min, item| min.min(item.rect.y()));
+        let max_x = rects.iter().fold(0.0f32, |max, item| max.max(item.rect.right()));
+        let max_y = rects.iter().fold(0.0f32, |max, item| max.max(item.rect.bottom()));
 
-            bounds = BoundingBox::from_min_max(min_x, min_y, max_x, max_y);
-        }
+        bounds = BoundingBox::from_min_max(min_x, min_y, max_x, max_y);
     }
 
     let iter = LayoutChildIterator::new(tree, entity);
@@ -207,19 +205,17 @@ pub fn build_paragraph(
     // For fixed line-height lengths, use paragraph struts to enforce absolute line height.
     if let Some(LineHeight::Length(length)) =
         style.line_height.get_resolved(entity, &style.custom_line_height_props)
+        && let Some(line_height_px) = length.to_px()
+        && line_height_px > 0.0
     {
-        if let Some(line_height_px) = length.to_px() {
-            if line_height_px > 0.0 {
-                let mut strut_style = skia_safe::textlayout::StrutStyle::new();
-                strut_style
-                    .set_strut_enabled(true)
-                    .set_force_strut_height(true)
-                    .set_height_override(true)
-                    .set_height(1.0)
-                    .set_font_size(line_height_px * style.scale_factor());
-                paragraph_style.set_strut_style(strut_style);
-            }
-        }
+        let mut strut_style = skia_safe::textlayout::StrutStyle::new();
+        strut_style
+            .set_strut_enabled(true)
+            .set_force_strut_height(true)
+            .set_height_override(true)
+            .set_height(1.0)
+            .set_font_size(line_height_px * style.scale_factor());
+        paragraph_style.set_strut_style(strut_style);
     }
 
     // Overflow
@@ -318,141 +314,134 @@ fn add_block(
 ) {
     // let mut new_current = current;
 
-    if let Some(text) = style.text.get(entity) {
-        if !text.is_empty() {
-            // Text Style
+    if let Some(text) = style.text.get(entity)
+        && !text.is_empty()
+    {
+        // Text Style
 
-            let mut text_style = TextStyle::new();
+        let mut text_style = TextStyle::new();
 
-            let font_color = style
-                .font_color
-                .get_resolved(entity, &style.custom_color_props)
-                .unwrap_or_default();
+        let font_color =
+            style.font_color.get_resolved(entity, &style.custom_color_props).unwrap_or_default();
 
-            if let Some(text_decoration_line) = style.text_decoration_line.get(entity).copied() {
-                text_style.set_decoration_type(text_decoration_line.into());
+        if let Some(text_decoration_line) = style.text_decoration_line.get(entity).copied() {
+            text_style.set_decoration_type(text_decoration_line.into());
 
-                if let Some(text_decoration_style) =
-                    style.text_decoration_style.get(entity).copied()
-                {
-                    text_style.set_decoration_style(text_decoration_style.into());
-                }
+            if let Some(text_decoration_style) = style.text_decoration_style.get(entity).copied() {
+                text_style.set_decoration_style(text_decoration_style.into());
+            }
 
-                let text_decoration_color = match style
-                    .text_decoration_color
-                    .get_resolved(entity, &style.custom_color_props)
-                {
+            let text_decoration_color =
+                match style.text_decoration_color.get_resolved(entity, &style.custom_color_props) {
                     Some(Color::CurrentColor) | None => font_color,
                     Some(color) => color,
                 };
 
-                text_style.set_decoration_color(text_decoration_color);
-            }
+            text_style.set_decoration_color(text_decoration_color);
+        }
 
-            // Font Families
-            text_style.set_font_families(
-                style
-                    .font_family
-                    .get(entity)
-                    .map(Vec::as_slice)
-                    .unwrap_or(&[FamilyOwned::Generic(GenericFontFamily::SansSerif)]),
+        // Font Families
+        text_style.set_font_families(
+            style
+                .font_family
+                .get(entity)
+                .map(Vec::as_slice)
+                .unwrap_or(&[FamilyOwned::Generic(GenericFontFamily::SansSerif)]),
+        );
+
+        let mut paint = Paint::default();
+        // Font Color
+        if let Some(font_color) = style.font_color.get_resolved(entity, &style.custom_color_props) {
+            paint.set_color(font_color);
+            paint.set_anti_alias(false);
+            paint.set_blend_mode(BlendMode::SrcOver);
+        }
+
+        if let Some(text_stroke) = style.text_stroke_width.get(entity) {
+            paint.set_stroke_width(text_stroke.to_px().unwrap_or(0.0));
+            paint.set_style(
+                (*style.text_stroke_style.get(entity).unwrap_or(&TextStrokeStyle::default()))
+                    .into(),
             );
+        }
 
+        text_style.set_foreground_paint(&paint);
+
+        if let Some(background_color) = style.background_color.get(entity)
+            && style.text_span.get(entity).is_some()
+        {
             let mut paint = Paint::default();
-            // Font Color
-            if let Some(font_color) =
-                style.font_color.get_resolved(entity, &style.custom_color_props)
-            {
-                paint.set_color(font_color);
-                paint.set_anti_alias(false);
-                paint.set_blend_mode(BlendMode::SrcOver);
+            paint.set_color(*background_color);
+            paint.set_anti_alias(false);
+            paint.set_blend_mode(BlendMode::SrcOver);
+            text_style.set_background_paint(&paint);
+        }
+
+        // Font Size
+        let font_size = style
+            .font_size
+            .get_resolved(entity, &style.custom_font_size_props)
+            .and_then(|f| f.0.to_px())
+            .unwrap_or(16.0);
+        text_style.set_font_size(font_size * style.scale_factor());
+
+        if let Some(letter_spacing) =
+            style.letter_spacing.get_resolved(entity, &style.custom_letter_spacing_props)
+        {
+            let spacing = match letter_spacing {
+                LetterSpacing::Normal => 0.0,
+                LetterSpacing::Length(length) => length.to_px().unwrap_or(0.0),
+            };
+            text_style.set_letter_spacing(spacing * style.scale_factor());
+        }
+
+        if let Some(line_height) =
+            style.line_height.get_resolved(entity, &style.custom_line_height_props)
+        {
+            let height = match line_height {
+                LineHeight::Normal => None,
+                LineHeight::Number(number) => Some(number),
+                LineHeight::Percentage(percentage) => Some(percentage / 100.0),
+                LineHeight::Length(length) => length
+                    .to_px()
+                    .and_then(|pixels| (font_size > 0.0).then_some(pixels / font_size)),
+            };
+
+            if let Some(height) = height {
+                text_style.set_height_override(true);
+                text_style.set_height(height);
             }
+        }
 
-            if let Some(text_stroke) = style.text_stroke_width.get(entity) {
-                paint.set_stroke_width(text_stroke.to_px().unwrap_or(0.0));
-                paint.set_style(
-                    (*style.text_stroke_style.get(entity).unwrap_or(&TextStrokeStyle::default()))
-                        .into(),
-                );
-            }
-
-            text_style.set_foreground_paint(&paint);
-
-            if let Some(background_color) = style.background_color.get(entity) {
-                if style.text_span.get(entity).is_some() {
-                    let mut paint = Paint::default();
-                    paint.set_color(*background_color);
-                    paint.set_anti_alias(false);
-                    paint.set_blend_mode(BlendMode::SrcOver);
-                    text_style.set_background_paint(&paint);
-                }
-            }
-
-            // Font Size
-            let font_size = style
-                .font_size
-                .get_resolved(entity, &style.custom_font_size_props)
-                .and_then(|f| f.0.to_px())
-                .unwrap_or(16.0);
-            text_style.set_font_size(font_size * style.scale_factor());
-
-            if let Some(letter_spacing) =
-                style.letter_spacing.get_resolved(entity, &style.custom_letter_spacing_props)
-            {
-                let spacing = match letter_spacing {
-                    LetterSpacing::Normal => 0.0,
-                    LetterSpacing::Length(length) => length.to_px().unwrap_or(0.0),
-                };
-                text_style.set_letter_spacing(spacing * style.scale_factor());
-            }
-
-            if let Some(line_height) =
-                style.line_height.get_resolved(entity, &style.custom_line_height_props)
-            {
-                let height = match line_height {
-                    LineHeight::Normal => None,
-                    LineHeight::Number(number) => Some(number),
-                    LineHeight::Percentage(percentage) => Some(percentage / 100.0),
-                    LineHeight::Length(length) => length
-                        .to_px()
-                        .and_then(|pixels| (font_size > 0.0).then_some(pixels / font_size)),
-                };
-
-                if let Some(height) = height {
-                    text_style.set_height_override(true);
-                    text_style.set_height(height);
-                }
-            }
-
-            // Font Style
-            match (
-                style.font_weight.get(entity),
-                style.font_width.get(entity),
-                style.font_slant.get(entity),
-            ) {
-                (None, None, None) => {}
-                (weight, width, slant) => {
-                    text_style.set_font_style(FontStyle::new(
-                        weight.copied().unwrap_or_default().into(),
-                        width.copied().unwrap_or_default().into(),
-                        slant.copied().unwrap_or_default().into(),
-                    ));
-                }
-            }
-
-            // Font Variations
-            if let Some(coordinates) = style.font_variation_settings.get(entity) {
-                let coordinates = coordinates.iter().map(|c| c.0).collect::<Vec<_>>();
-                text_style.set_font_arguments(&FontArguments::new().set_variation_design_position(
-                    VariationPosition { coordinates: &coordinates },
+        // Font Style
+        match (
+            style.font_weight.get(entity),
+            style.font_width.get(entity),
+            style.font_slant.get(entity),
+        ) {
+            (None, None, None) => {}
+            (weight, width, slant) => {
+                text_style.set_font_style(FontStyle::new(
+                    weight.copied().unwrap_or_default().into(),
+                    width.copied().unwrap_or_default().into(),
+                    slant.copied().unwrap_or_default().into(),
                 ));
             }
-
-            paragraph_builder.push_style(&text_style);
-            style.text_range.insert(entity, *current..*current + text.len());
-            paragraph_builder.add_text(text.as_str());
-            *current += text.len();
         }
+
+        // Font Variations
+        if let Some(coordinates) = style.font_variation_settings.get(entity) {
+            let coordinates = coordinates.iter().map(|c| c.0).collect::<Vec<_>>();
+            text_style
+                .set_font_arguments(&FontArguments::new().set_variation_design_position(
+                    VariationPosition { coordinates: &coordinates },
+                ));
+        }
+
+        paragraph_builder.push_style(&text_style);
+        style.text_range.insert(entity, *current..*current + text.len());
+        paragraph_builder.add_text(text.as_str());
+        *current += text.len();
     }
 
     let iter = LayoutChildIterator::new(tree, entity);

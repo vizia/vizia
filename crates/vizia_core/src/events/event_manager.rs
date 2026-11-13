@@ -97,10 +97,10 @@ impl EventManager {
                 // Send events to any local listeners.
                 let listeners = cx.listeners.keys().copied().collect::<Vec<Entity>>();
                 for entity in listeners {
-                    if let Some(lock_root) = keyboard_lock_root {
-                        if !entity.is_descendant_of(&cx.tree, lock_root) {
-                            continue;
-                        }
+                    if let Some(lock_root) = keyboard_lock_root
+                        && !entity.is_descendant_of(&cx.tree, lock_root)
+                    {
+                        continue;
                     }
 
                     if let Some(listener) = cx.listeners.remove(&entity) {
@@ -163,10 +163,10 @@ impl EventManager {
                     let iter = target.parent_iter(cx.tree).skip(1);
 
                     for entity in iter {
-                        if let Some(lock_root) = keyboard_lock_root {
-                            if !entity.is_descendant_of(cx.tree, lock_root) {
-                                break;
-                            }
+                        if let Some(lock_root) = keyboard_lock_root
+                            && !entity.is_descendant_of(cx.tree, lock_root)
+                        {
+                            break;
                         }
 
                         // Send event to all ancestors of the target.
@@ -343,11 +343,11 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
 
                     let disabled = cx.style.disabled.get(cx.hovered).copied().unwrap_or_default();
 
-                    if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.triggered) {
-                        if !disabled {
-                            pseudo_classes.set(PseudoClassFlags::ACTIVE, true);
-                            cx.needs_restyle(cx.triggered);
-                        }
+                    if let Some(pseudo_classes) = cx.style.pseudo_classes.get_mut(cx.triggered)
+                        && !disabled
+                    {
+                        pseudo_classes.set(PseudoClassFlags::ACTIVE, true);
+                        cx.needs_restyle(cx.triggered);
                     }
                     let focusable = cx
                         .style
@@ -499,12 +499,12 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
             #[cfg(debug_assertions)]
             if *code == Code::KeyP && cx.modifiers.ctrl() {
                 for entity in TreeIterator::full(&cx.tree) {
-                    if let Some(models) = cx.models.get(&entity) {
-                        if !models.is_empty() {
-                            debug!("Models for {}", entity);
-                            for (_, model) in models.iter() {
-                                debug!("M: {:?}", model.name())
-                            }
+                    if let Some(models) = cx.models.get(&entity)
+                        && !models.is_empty()
+                    {
+                        debug!("Models for {}", entity);
+                        for (_, model) in models.iter() {
+                            debug!("M: {:?}", model.name())
                         }
                     }
                 }

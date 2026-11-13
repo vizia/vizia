@@ -357,12 +357,12 @@ where
                 }
 
                 Code::Enter => {
-                    if self.is_open.get() {
-                        if let Some(index) = self.highlighted.get() {
-                            cx.emit(ComboBoxEvent::SetOption(index));
-                            self.is_open.set(false);
-                            meta.consume();
-                        }
+                    if self.is_open.get()
+                        && let Some(index) = self.highlighted.get()
+                    {
+                        cx.emit(ComboBoxEvent::SetOption(index));
+                        self.is_open.set(false);
+                        meta.consume();
                     }
                 }
 

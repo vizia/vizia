@@ -702,11 +702,11 @@ impl Context {
         }
 
         // Releasing the lock of a removed view refreshes the cursor icon as an unlock does.
-        if let Some(window) = cursor_icon_lock_window {
-            if self.windows.contains_key(&window) {
-                let cursor = self.style.cursor.get(self.hovered).cloned().unwrap_or_default();
-                self.with_current(window, |cx| cx.emit(WindowEvent::SetCursor(cursor)));
-            }
+        if let Some(window) = cursor_icon_lock_window
+            && self.windows.contains_key(&window)
+        {
+            let cursor = self.style.cursor.get(self.hovered).cloned().unwrap_or_default();
+            self.with_current(window, |cx| cx.emit(WindowEvent::SetCursor(cursor)));
         }
     }
 
@@ -758,7 +758,10 @@ impl Context {
     /// Loads a font into the application from in-memory bytes.
     pub fn load_font_mem(&mut self, data: impl AsRef<[u8]>) {
         self.text_context.asset_provider.register_typeface(
-            self.text_context.default_font_manager.new_from_data(data.as_ref(), None).unwrap(),
+            self.text_context
+                .default_font_manager
+                .new_from_data(skia_safe::Data::new_copy(data.as_ref()), None)
+                .unwrap(),
             None,
         );
     }
@@ -1480,17 +1483,17 @@ impl DataContext for Context {
 
         for entity in self.current.parent_iter(&self.tree) {
             // Return any model data.
-            if let Some(models) = self.models.get(&entity) {
-                if let Some(model) = models.get(&TypeId::of::<T>()) {
-                    return model.downcast_ref::<T>();
-                }
+            if let Some(models) = self.models.get(&entity)
+                && let Some(model) = models.get(&TypeId::of::<T>())
+            {
+                return model.downcast_ref::<T>();
             }
 
             // Return any view data.
-            if let Some(view_handler) = self.views.get(&entity) {
-                if let Some(data) = view_handler.downcast_ref::<T>() {
-                    return Some(data);
-                }
+            if let Some(view_handler) = self.views.get(&entity)
+                && let Some(data) = view_handler.downcast_ref::<T>()
+            {
+                return Some(data);
             }
         }
 
@@ -1511,17 +1514,17 @@ impl DataContext for LocalizationContext<'_> {
 
         for entity in self.current.parent_iter(self.tree) {
             // Return any model data.
-            if let Some(models) = self.models.get(&entity) {
-                if let Some(model) = models.get(&TypeId::of::<T>()) {
-                    return model.downcast_ref::<T>();
-                }
+            if let Some(models) = self.models.get(&entity)
+                && let Some(model) = models.get(&TypeId::of::<T>())
+            {
+                return model.downcast_ref::<T>();
             }
 
             // Return any view data.
-            if let Some(view_handler) = self.views.get(&entity) {
-                if let Some(data) = view_handler.downcast_ref::<T>() {
-                    return Some(data);
-                }
+            if let Some(view_handler) = self.views.get(&entity)
+                && let Some(data) = view_handler.downcast_ref::<T>()
+            {
+                return Some(data);
             }
         }
 

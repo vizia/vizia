@@ -70,8 +70,7 @@ impl From<f64> for FontSize {
 
 impl From<&str> for FontSize {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         FontSize::parse(&mut parser).unwrap_or_default()
     }
 }

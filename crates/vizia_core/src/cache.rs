@@ -98,10 +98,10 @@ impl CachedData {
         let mut transform: Option<Matrix> = None;
         let mut current = Some(entity);
         while let Some(entity) = current {
-            if let Some(local) = self.local_transform.get(entity) {
-                if !is_identity(local) {
-                    transform = Some(transform.map_or(*local, |transform| *local * transform));
-                }
+            if let Some(local) = self.local_transform.get(entity)
+                && !is_identity(local)
+            {
+                transform = Some(transform.map_or(*local, |transform| *local * transform));
             }
 
             if tree.is_window(entity) {

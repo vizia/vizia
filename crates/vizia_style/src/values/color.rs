@@ -1,5 +1,5 @@
 use crate::{Parse, macros::impl_parse};
-use cssparser::{Parser, ParserInput};
+use cssparser::Parser;
 
 /// A color value.
 #[derive(Debug, Copy, Clone, PartialEq, Default)]
@@ -970,8 +970,7 @@ impl From<RGBA> for skia_safe::Color {
 
 impl From<&str> for Color {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         Color::parse(&mut parser).unwrap_or_default()
     }
 }

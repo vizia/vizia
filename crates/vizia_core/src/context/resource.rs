@@ -252,7 +252,11 @@ impl<'a> ResourceContext<'a> {
 
     /// Loads a font from bytes, making it available to text layout.
     pub fn load_font(&mut self, path: String, data: &[u8]) -> bool {
-        if let Some(typeface) = self.text_context.default_font_manager.new_from_data(data, None) {
+        if let Some(typeface) = self
+            .text_context
+            .default_font_manager
+            .new_from_data(skia_safe::Data::new_copy(data), None)
+        {
             self.text_context.asset_provider.register_typeface(typeface, None);
 
             // Rebuild text for all entities so newly available fonts can be selected immediately.

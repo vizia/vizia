@@ -23,7 +23,7 @@ impl<
         + std::fmt::Debug,
 > Parse<'i> for DimensionPercentage<D>
 {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         match input.try_parse(Calc::parse) {
             Ok(Calc::Value(v)) => return Ok(*v),
             Ok(calc) => return Ok(DimensionPercentage::Calc(Box::new(calc))),

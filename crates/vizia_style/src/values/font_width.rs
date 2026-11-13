@@ -19,9 +19,8 @@ pub enum FontWidth {
 
 impl<'i> Parse<'i> for FontWidth {
     fn parse<'t>(
-        input: &mut cssparser::Parser<'i, 't>,
-    ) -> Result<Self, cssparser::ParseError<'i, crate::CustomParseError<'i>>> {
-        let location = input.current_source_location();
+        input: &mut cssparser::Parser<'i>,
+    ) -> Result<Self, cssparser::ParseError<crate::CustomParseError<'i>>> {
         match input.try_parse(Ident::parse) {
             Ok(ident) => match ident.0.as_ref() {
                 "ultra-condensed" => Ok(FontWidth::UltraCondensed),
@@ -33,10 +32,7 @@ impl<'i> Parse<'i> for FontWidth {
                 "expanded" => Ok(FontWidth::Expanded),
                 "extra-expanded" => Ok(FontWidth::ExtraExpanded),
                 "ultra-expanded" => Ok(FontWidth::UltraExpanded),
-                _ => Err(cssparser::ParseError {
-                    kind: cssparser::ParseErrorKind::Custom(CustomParseError::InvalidValue),
-                    location,
-                }),
+                _ => Err(cssparser::ParseError::custom(CustomParseError::InvalidValue)),
             },
 
             Err(_) => input.try_parse(Percentage::parse).map(|val| val.into()),

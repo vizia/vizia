@@ -20,8 +20,7 @@ impl<'i, T> Parse<'i> for Rect<T>
 where
     T: Parse<'i> + Clone,
 {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let location = input.current_source_location();
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let first = T::parse(input)?;
 
         let second = if let Ok(second) = input.try_parse(T::parse) {
@@ -45,10 +44,7 @@ where
         if input.is_exhausted() {
             Ok(Self(first, second, third, fourth))
         } else {
-            Err(cssparser::ParseError {
-                kind: cssparser::ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),
-                location,
-            })
+            Err(ParseError::custom(CustomParseError::InvalidDeclaration))
         }
     }
 }
@@ -64,8 +60,7 @@ where
     for<'i> T: Parse<'i>,
 {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         Rect::parse(&mut parser).unwrap_or_default()
     }
 }

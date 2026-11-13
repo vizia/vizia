@@ -1,3 +1,4 @@
+use crate::ParserErrorExt;
 use cssparser::*;
 
 use crate::{
@@ -20,7 +21,7 @@ impl KeyframesName<'_> {
 }
 
 impl<'i> Parse<'i> for KeyframesName<'i> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         match input.next()?.clone() {
             Token::Ident(ref s) => {
                 // CSS-wide keywords without quotes throws an error.
@@ -61,7 +62,7 @@ pub struct Keyframe<'i> {
 }
 
 impl<'i> Parse<'i> for KeyframeSelector {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         if let Ok(val) = input.try_parse(Percentage::parse) {
             return Ok(KeyframeSelector::Percentage(val));
         }
@@ -93,8 +94,8 @@ impl<'i> QualifiedRuleParser<'i> for KeyframeListParser {
 
     fn parse_prelude<'t>(
         &mut self,
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self::Prelude, ParseError<'i, CustomParseError<'i>>> {
+        input: &mut Parser<'i>,
+    ) -> Result<Self::Prelude, ParseError<CustomParseError<'i>>> {
         input.parse_comma_separated(KeyframeSelector::parse)
     }
 
@@ -102,8 +103,8 @@ impl<'i> QualifiedRuleParser<'i> for KeyframeListParser {
         &mut self,
         selectors: Self::Prelude,
         _: &ParserState,
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self::QualifiedRule, ParseError<'i, CustomParseError<'i>>> {
+        input: &mut Parser<'i>,
+    ) -> Result<Self::QualifiedRule, ParseError<CustomParseError<'i>>> {
         // For now there are no options that apply within @keyframes
         let options = ParserOptions::default();
         Ok(Keyframe { selectors, declarations: DeclarationBlock::parse(input, &options)? })

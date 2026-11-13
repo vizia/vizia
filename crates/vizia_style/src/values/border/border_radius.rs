@@ -74,7 +74,7 @@ impl From<Rect<LengthOrPercentage>> for CornerRadius {
 
 // impl From<&str> for CornerRadius {
 //     fn from(s: &str) -> Self {
-//         let mut input = ParserInput::new(&s);
+//         let mut input = crate::ParserInput::new(&s);
 //         let mut parser = Parser::new(&mut input);
 //         CornerRadius::parse(&mut parser).unwrap_or_default()
 //     }

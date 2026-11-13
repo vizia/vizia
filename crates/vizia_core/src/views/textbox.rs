@@ -449,35 +449,32 @@ where
     }
 
     fn clear_preedit(&mut self, cx: &mut EventContext) {
-        if let Some(text) = cx.style.text.get_mut(cx.current) {
-            if let Some(preedit_backup) = self.preedit_backup.as_ref() {
-                let old_display = text.clone();
-                let original_selection = preedit_backup.original_selection;
-                let prev_preedit_text = preedit_backup.prev_preedit.clone();
+        if let Some(text) = cx.style.text.get_mut(cx.current)
+            && let Some(preedit_backup) = self.preedit_backup.as_ref()
+        {
+            let old_display = text.clone();
+            let original_selection = preedit_backup.original_selection;
+            let prev_preedit_text = preedit_backup.prev_preedit.clone();
 
-                let start = original_selection.min();
-                let end = start + prev_preedit_text.chars().map(|c| c.len_utf8()).sum::<usize>();
+            let start = original_selection.min();
+            let end = start + prev_preedit_text.chars().map(|c| c.len_utf8()).sum::<usize>();
 
-                text.replace_range(start..end, "");
+            text.replace_range(start..end, "");
 
-                let original_real_selection = Self::selection_display_to_real(
-                    &old_display,
-                    &self.real_text,
-                    original_selection,
-                );
-                let real_start = original_real_selection.min();
-                let real_end =
-                    real_start + prev_preedit_text.chars().map(|c| c.len_utf8()).sum::<usize>();
-                if real_end <= self.real_text.len() {
-                    self.real_text.replace_range(real_start..real_end, "");
-                }
-
-                self.selection = original_selection;
-
-                self.preedit_backup = None;
-                self.show_placeholder.set(self.real_text.is_empty());
-                self.sync_display_text(cx);
+            let original_real_selection =
+                Self::selection_display_to_real(&old_display, &self.real_text, original_selection);
+            let real_start = original_real_selection.min();
+            let real_end =
+                real_start + prev_preedit_text.chars().map(|c| c.len_utf8()).sum::<usize>();
+            if real_end <= self.real_text.len() {
+                self.real_text.replace_range(real_start..real_end, "");
             }
+
+            self.selection = original_selection;
+
+            self.preedit_backup = None;
+            self.show_placeholder.set(self.real_text.is_empty());
+            self.sync_display_text(cx);
         }
     }
 
@@ -514,22 +511,22 @@ where
                     self.sync_display_text(cx);
                     cx.style.needs_access_update(cx.current);
                 }
-            } else if let Some(text) = cx.style.text.get_mut(cx.current) {
-                if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-                    let old_display = text.clone();
-                    let to_delete = apply_movement(movement, self.selection, text, paragraph, true);
-                    let real_to_delete =
-                        Self::selection_display_to_real(&old_display, &self.real_text, to_delete);
-                    self.selection = to_delete;
-                    let new_cursor_pos = self.selection.min();
+            } else if let Some(text) = cx.style.text.get_mut(cx.current)
+                && let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current)
+            {
+                let old_display = text.clone();
+                let to_delete = apply_movement(movement, self.selection, text, paragraph, true);
+                let real_to_delete =
+                    Self::selection_display_to_real(&old_display, &self.real_text, to_delete);
+                self.selection = to_delete;
+                let new_cursor_pos = self.selection.min();
 
-                    text.edit(to_delete.range(), "");
-                    self.real_text.edit(real_to_delete.range(), "");
-                    self.selection = Selection::caret(new_cursor_pos);
+                text.edit(to_delete.range(), "");
+                self.real_text.edit(real_to_delete.range(), "");
+                self.selection = Selection::caret(new_cursor_pos);
 
-                    self.sync_display_text(cx);
-                    cx.style.needs_access_update(cx.current);
-                }
+                self.sync_display_text(cx);
+                cx.style.needs_access_update(cx.current);
             }
         } else if let Some(text) = cx.style.text.get_mut(cx.current) {
             let old_display = text.clone();
@@ -565,14 +562,14 @@ where
     ///
     /// [`update_preedit`]: Textbox::update_preedit
     fn move_cursor(&mut self, cx: &mut EventContext, movement: Movement, selection: bool) {
-        if let Some(text) = cx.style.text.get_mut(cx.current) {
-            if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-                let new_selection =
-                    apply_movement(movement, self.selection, text, paragraph, selection);
-                self.selection = new_selection;
-                cx.needs_redraw();
-                cx.style.needs_access_update(cx.current);
-            }
+        if let Some(text) = cx.style.text.get_mut(cx.current)
+            && let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current)
+        {
+            let new_selection =
+                apply_movement(movement, self.selection, text, paragraph, selection);
+            self.selection = new_selection;
+            cx.needs_redraw();
+            cx.style.needs_access_update(cx.current);
         }
     }
 
@@ -678,76 +675,76 @@ where
 
     /// This function takes window-global physical coordinates.
     fn hit(&mut self, cx: &mut EventContext, x: f32, y: f32, selection: bool) {
-        if let Some(text) = cx.style.text.get(cx.current) {
-            if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-                let (mut x, mut y) = (x, y);
+        if let Some(text) = cx.style.text.get(cx.current)
+            && let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current)
+        {
+            let (mut x, mut y) = (x, y);
 
-                if let Some(inv_transform) = cx.transform().invert() {
-                    let point = inv_transform.map_point(Point::new(x, y));
-                    x = point.x;
-                    y = point.y;
-                }
-
-                x -= self.transform.borrow().0;
-                y -= self.transform.borrow().1;
-
-                let gp = paragraph
-                    .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
-                let num_graphemes = text.graphemes(true).count();
-                let pos = (gp.position as usize).min(num_graphemes);
-                let mut cursor = text.len();
-                for (i, (j, _)) in text.grapheme_indices(true).enumerate() {
-                    if pos == i {
-                        cursor = j;
-                        break;
-                    }
-                }
-
-                if selection {
-                    self.selection.active = cursor;
-                } else {
-                    self.selection = Selection::caret(cursor);
-                }
-
-                cx.needs_redraw();
-                cx.style.needs_access_update(cx.current);
+            if let Some(inv_transform) = cx.transform().invert() {
+                let point = inv_transform.map_point(Point::new(x, y));
+                x = point.x;
+                y = point.y;
             }
+
+            x -= self.transform.borrow().0;
+            y -= self.transform.borrow().1;
+
+            let gp = paragraph
+                .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
+            let num_graphemes = text.graphemes(true).count();
+            let pos = (gp.position as usize).min(num_graphemes);
+            let mut cursor = text.len();
+            for (i, (j, _)) in text.grapheme_indices(true).enumerate() {
+                if pos == i {
+                    cursor = j;
+                    break;
+                }
+            }
+
+            if selection {
+                self.selection.active = cursor;
+            } else {
+                self.selection = Selection::caret(cursor);
+            }
+
+            cx.needs_redraw();
+            cx.style.needs_access_update(cx.current);
         }
     }
 
     /// This function takes window-global physical coordinates.
     fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {
-        if let Some(text) = cx.style.text.get(cx.current) {
-            if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-                let (mut x, mut y) = (x, y);
+        if let Some(text) = cx.style.text.get(cx.current)
+            && let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current)
+        {
+            let (mut x, mut y) = (x, y);
 
-                if let Some(inv_transform) = cx.transform().invert() {
-                    let point = inv_transform.map_point(Point::new(x, y));
-                    x = point.x;
-                    y = point.y;
-                }
-
-                x -= self.transform.borrow().0;
-                y -= self.transform.borrow().1;
-
-                let gp = paragraph
-                    .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
-                let num_graphemes = text.graphemes(true).count();
-                let pos = (gp.position as usize).min(num_graphemes);
-
-                let mut cursor = text.len();
-                for (i, (j, _)) in text.grapheme_indices(true).enumerate() {
-                    if pos == i {
-                        cursor = j;
-                        break;
-                    }
-                }
-
-                self.selection.active = cursor;
-
-                cx.needs_redraw();
-                cx.style.needs_access_update(cx.current);
+            if let Some(inv_transform) = cx.transform().invert() {
+                let point = inv_transform.map_point(Point::new(x, y));
+                x = point.x;
+                y = point.y;
             }
+
+            x -= self.transform.borrow().0;
+            y -= self.transform.borrow().1;
+
+            let gp = paragraph
+                .get_glyph_position_at_coordinate(self.coordinates_global_to_text(cx, x, y));
+            let num_graphemes = text.graphemes(true).count();
+            let pos = (gp.position as usize).min(num_graphemes);
+
+            let mut cursor = text.len();
+            for (i, (j, _)) in text.grapheme_indices(true).enumerate() {
+                if pos == i {
+                    cursor = j;
+                    break;
+                }
+            }
+
+            self.selection.active = cursor;
+
+            cx.needs_redraw();
+            cx.style.needs_access_update(cx.current);
         }
     }
 
@@ -819,113 +816,25 @@ where
     }
 
     fn draw_selection(&self, cx: &mut DrawContext, canvas: &Canvas) {
-        if !self.selection.is_caret() {
-            if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-                if let Some(text) = cx.style.text.get(cx.current) {
-                    let min = text.current_grapheme_offset(self.selection.min());
-                    let max = text.current_grapheme_offset(self.selection.max());
+        if !self.selection.is_caret()
+            && let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current)
+            && let Some(text) = cx.style.text.get(cx.current)
+        {
+            let min = text.current_grapheme_offset(self.selection.min());
+            let max = text.current_grapheme_offset(self.selection.max());
 
-                    let cursor_rects = paragraph.get_rects_for_range(
-                        min..max,
-                        RectHeightStyle::Tight,
-                        RectWidthStyle::Tight,
-                    );
+            let cursor_rects = paragraph.get_rects_for_range(
+                min..max,
+                RectHeightStyle::Tight,
+                RectWidthStyle::Tight,
+            );
 
-                    for cursor_rect in cursor_rects {
-                        let bounds = cx.bounds();
-
-                        let alignment = cx.alignment();
-
-                        let (mut top, left) = match alignment {
-                            Alignment::TopLeft => (0.0, 0.0),
-                            Alignment::TopCenter => (0.0, 0.5),
-                            Alignment::TopRight => (0.0, 1.0),
-                            Alignment::Left => (0.5, 0.0),
-                            Alignment::Center => (0.5, 0.5),
-                            Alignment::Right => (0.5, 1.0),
-                            Alignment::BottomLeft => (1.0, 0.0),
-                            Alignment::BottomCenter => (1.0, 0.5),
-                            Alignment::BottomRight => (1.0, 1.0),
-                        };
-
-                        let padding_top = match cx.padding_top() {
-                            Units::Pixels(val) => val,
-                            _ => 0.0,
-                        };
-
-                        let padding_bottom = match cx.padding_bottom() {
-                            Units::Pixels(val) => val,
-                            _ => 0.0,
-                        };
-
-                        top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
-
-                        let mut padding_left = match cx.padding_left() {
-                            Units::Pixels(val) => val,
-                            _ => 0.0,
-                        };
-
-                        let mut padding_right = match cx.padding_right() {
-                            Units::Pixels(val) => val,
-                            _ => 0.0,
-                        };
-
-                        if resolved_text_direction(cx.style, cx.current)
-                            == crate::style::Direction::RightToLeft
-                        {
-                            std::mem::swap(&mut padding_left, &mut padding_right);
-                        }
-
-                        let x = bounds.x + padding_left + cursor_rect.rect.left + left;
-                        let y = bounds.y + padding_top + cursor_rect.rect.top + top;
-
-                        let x2 = x + (cursor_rect.rect.right - cursor_rect.rect.left);
-                        let y2 = y + (cursor_rect.rect.bottom - cursor_rect.rect.top);
-
-                        let mut paint = Paint::default();
-                        paint.set_anti_alias(true);
-                        paint.set_style(PaintStyle::Fill);
-                        paint.set_color(cx.selection_color());
-
-                        canvas.draw_rect(Rect::new(x, y, x2, y2), &paint);
-                    }
-                }
-            }
-        }
-    }
-
-    /// Draw text caret for the current view.
-    pub fn draw_text_caret(&self, cx: &mut DrawContext, canvas: &Canvas) {
-        if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current) {
-            if let Some(text) = cx.style.text.get(cx.current) {
+            for cursor_rect in cursor_rects {
                 let bounds = cx.bounds();
-
-                let current = text.current_grapheme_offset(self.selection.active);
-
-                let grapheme_count = text.graphemes(true).count();
-                let (range_start, range_end, use_trailing_edge) = if current < grapheme_count {
-                    (current, current + 1, false)
-                } else if current > 0 {
-                    // At end-of-text, use the previous grapheme box and place the caret on its trailing edge.
-                    (current - 1, current, true)
-                } else {
-                    // Empty text: anchor caret to the paragraph's first position.
-                    (0, 1, false)
-                };
-
-                let rects = paragraph.get_rects_for_range(
-                    range_start..range_end,
-                    RectHeightStyle::Tight,
-                    RectWidthStyle::Tight,
-                );
-
-                let Some(cursor_rect) = rects.first() else {
-                    return;
-                };
 
                 let alignment = cx.alignment();
 
-                let (mut top, _) = match alignment {
+                let (mut top, left) = match alignment {
                     Alignment::TopLeft => (0.0, 0.0),
                     Alignment::TopCenter => (0.0, 0.5),
                     Alignment::TopRight => (0.0, 1.0),
@@ -965,47 +874,131 @@ where
                     std::mem::swap(&mut padding_left, &mut padding_right);
                 }
 
-                let caret_x =
-                    if use_trailing_edge { cursor_rect.rect.right } else { cursor_rect.rect.left };
+                let x = bounds.x + padding_left + cursor_rect.rect.left + left;
+                let y = bounds.y + padding_top + cursor_rect.rect.top + top;
 
-                let x = (bounds.x + padding_left + caret_x).round();
-                let y = (bounds.y + padding_top + cursor_rect.rect.top + top).round();
-
-                let x2 = x + 1.0;
+                let x2 = x + (cursor_rect.rect.right - cursor_rect.rect.left);
                 let y2 = y + (cursor_rect.rect.bottom - cursor_rect.rect.top);
 
                 let mut paint = Paint::default();
                 paint.set_anti_alias(true);
                 paint.set_style(PaintStyle::Fill);
-                paint.set_color(cx.caret_color());
+                paint.set_color(cx.selection_color());
 
                 canvas.draw_rect(Rect::new(x, y, x2, y2), &paint);
+            }
+        }
+    }
 
-                let mut transform = self.transform.borrow_mut();
+    /// Draw text caret for the current view.
+    pub fn draw_text_caret(&self, cx: &mut DrawContext, canvas: &Canvas) {
+        if let Some(paragraph) = cx.text_context.text_paragraphs.get(cx.current)
+            && let Some(text) = cx.style.text.get(cx.current)
+        {
+            let bounds = cx.bounds();
 
-                let text_bounds = BoundingBox::from_min_max(
-                    bounds.x + padding_left,
-                    bounds.y + padding_top + top,
-                    bounds.x + padding_left + paragraph.max_intrinsic_width(),
-                    bounds.y + padding_top + top + paragraph.height(),
-                );
+            let current = text.current_grapheme_offset(self.selection.active);
 
-                let mut bounds = bounds;
+            let grapheme_count = text.graphemes(true).count();
+            let (range_start, range_end, use_trailing_edge) = if current < grapheme_count {
+                (current, current + 1, false)
+            } else if current > 0 {
+                // At end-of-text, use the previous grapheme box and place the caret on its trailing edge.
+                (current - 1, current, true)
+            } else {
+                // Empty text: anchor caret to the paragraph's first position.
+                (0, 1, false)
+            };
 
-                bounds =
-                    bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
+            let rects = paragraph.get_rects_for_range(
+                range_start..range_end,
+                RectHeightStyle::Tight,
+                RectWidthStyle::Tight,
+            );
 
-                let (tx, ty) =
-                    enforce_text_bounds(&text_bounds, &bounds, (transform.0, transform.1));
+            let Some(cursor_rect) = rects.first() else {
+                return;
+            };
 
-                let caret_box = BoundingBox::from_min_max(x, y, x2, y2);
+            let alignment = cx.alignment();
 
-                let (new_tx, new_ty) = ensure_visible(&caret_box, &bounds, (tx, ty));
+            let (mut top, _) = match alignment {
+                Alignment::TopLeft => (0.0, 0.0),
+                Alignment::TopCenter => (0.0, 0.5),
+                Alignment::TopRight => (0.0, 1.0),
+                Alignment::Left => (0.5, 0.0),
+                Alignment::Center => (0.5, 0.5),
+                Alignment::Right => (0.5, 1.0),
+                Alignment::BottomLeft => (1.0, 0.0),
+                Alignment::BottomCenter => (1.0, 0.5),
+                Alignment::BottomRight => (1.0, 1.0),
+            };
 
-                if new_tx != transform.0 || new_ty != transform.1 {
-                    *transform = (new_tx, new_ty);
-                    cx.needs_redraw();
-                }
+            let padding_top = match cx.padding_top() {
+                Units::Pixels(val) => val,
+                _ => 0.0,
+            };
+
+            let padding_bottom = match cx.padding_bottom() {
+                Units::Pixels(val) => val,
+                _ => 0.0,
+            };
+
+            top *= bounds.height() - padding_top - padding_bottom - paragraph.height();
+
+            let mut padding_left = match cx.padding_left() {
+                Units::Pixels(val) => val,
+                _ => 0.0,
+            };
+
+            let mut padding_right = match cx.padding_right() {
+                Units::Pixels(val) => val,
+                _ => 0.0,
+            };
+
+            if resolved_text_direction(cx.style, cx.current) == crate::style::Direction::RightToLeft
+            {
+                std::mem::swap(&mut padding_left, &mut padding_right);
+            }
+
+            let caret_x =
+                if use_trailing_edge { cursor_rect.rect.right } else { cursor_rect.rect.left };
+
+            let x = (bounds.x + padding_left + caret_x).round();
+            let y = (bounds.y + padding_top + cursor_rect.rect.top + top).round();
+
+            let x2 = x + 1.0;
+            let y2 = y + (cursor_rect.rect.bottom - cursor_rect.rect.top);
+
+            let mut paint = Paint::default();
+            paint.set_anti_alias(true);
+            paint.set_style(PaintStyle::Fill);
+            paint.set_color(cx.caret_color());
+
+            canvas.draw_rect(Rect::new(x, y, x2, y2), &paint);
+
+            let mut transform = self.transform.borrow_mut();
+
+            let text_bounds = BoundingBox::from_min_max(
+                bounds.x + padding_left,
+                bounds.y + padding_top + top,
+                bounds.x + padding_left + paragraph.max_intrinsic_width(),
+                bounds.y + padding_top + top + paragraph.height(),
+            );
+
+            let mut bounds = bounds;
+
+            bounds = bounds.shrink_sides(padding_left, padding_top, padding_right, padding_bottom);
+
+            let (tx, ty) = enforce_text_bounds(&text_bounds, &bounds, (transform.0, transform.1));
+
+            let caret_box = BoundingBox::from_min_max(x, y, x2, y2);
+
+            let (new_tx, new_ty) = ensure_visible(&caret_box, &bounds, (tx, ty));
+
+            if new_tx != transform.0 || new_ty != transform.1 {
+                *transform = (new_tx, new_ty);
+                cx.needs_redraw();
             }
         }
     }
@@ -1705,10 +1698,10 @@ where
 
                 cx.set_valid(self.is_text_valid(&text));
 
-                if self.edit {
-                    if let Some(callback) = &self.on_edit {
-                        (callback)(cx, text);
-                    }
+                if self.edit
+                    && let Some(callback) = &self.on_edit
+                {
+                    (callback)(cx, text);
                 }
             }
 
@@ -1898,49 +1891,44 @@ where
                 //self.scroll(cx, *x, *y);
             }
 
-            TextEvent::Copy =>
-            {
+            TextEvent::Copy => {
                 #[cfg(feature = "clipboard")]
-                if self.edit && self.can_copy.get() {
-                    if let Some(selected_text) = self.clone_selected(cx) {
-                        if !selected_text.is_empty() {
-                            cx.set_clipboard(selected_text)
-                                .expect("Failed to add text to clipboard");
-                        }
-                    }
+                if self.edit
+                    && self.can_copy.get()
+                    && let Some(selected_text) = self.clone_selected(cx)
+                    && !selected_text.is_empty()
+                {
+                    cx.set_clipboard(selected_text).expect("Failed to add text to clipboard");
                 }
             }
 
-            TextEvent::Paste =>
-            {
+            TextEvent::Paste => {
                 #[cfg(feature = "clipboard")]
-                if self.edit && self.can_paste.get() {
-                    if let Ok(text) = cx.get_clipboard() {
-                        cx.emit(TextEvent::InsertText(text));
-                    }
+                if self.edit
+                    && self.can_paste.get()
+                    && let Ok(text) = cx.get_clipboard()
+                {
+                    cx.emit(TextEvent::InsertText(text));
                 }
             }
 
-            TextEvent::Cut =>
-            {
+            TextEvent::Cut => {
                 #[cfg(feature = "clipboard")]
-                if self.edit {
-                    if let Some(selected_text) = self.clone_selected(cx) {
-                        if !selected_text.is_empty() {
-                            self.edited_since_focus = true;
-                            self.edited_once = true;
-                            cx.set_clipboard(selected_text)
-                                .expect("Failed to add text to clipboard");
-                            self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
+                if self.edit
+                    && let Some(selected_text) = self.clone_selected(cx)
+                    && !selected_text.is_empty()
+                {
+                    self.edited_since_focus = true;
+                    self.edited_once = true;
+                    cx.set_clipboard(selected_text).expect("Failed to add text to clipboard");
+                    self.delete_text(cx, Movement::Grapheme(Direction::Upstream));
 
-                            let text = self.clone_text(cx);
+                    let text = self.clone_text(cx);
 
-                            cx.set_valid(self.is_text_valid(&text));
+                    cx.set_valid(self.is_text_valid(&text));
 
-                            if let Some(callback) = &self.on_edit {
-                                (callback)(cx, text);
-                            }
-                        }
+                    if let Some(callback) = &self.on_edit {
+                        (callback)(cx, text);
                     }
                 }
             }

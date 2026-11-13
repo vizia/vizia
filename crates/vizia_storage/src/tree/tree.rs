@@ -241,10 +241,10 @@ where
 
     /// Returns true if the entity is the first child of its parent.
     pub fn is_first_child(&self, entity: I) -> bool {
-        if let Some(parent) = self.get_parent(entity) {
-            if let Some(first_child) = self.get_first_child(parent) {
-                return first_child == entity;
-            }
+        if let Some(parent) = self.get_parent(entity)
+            && let Some(first_child) = self.get_first_child(parent)
+        {
+            return first_child == entity;
         }
 
         false
@@ -252,15 +252,15 @@ where
 
     /// Returns true if the entity is the last child of its parent.
     pub fn is_last_child(&self, entity: I) -> bool {
-        if let Some(parent) = self.get_parent(entity) {
-            if let Some(mut temp) = self.get_first_child(parent) {
-                while let Some(next_sibling) = self.get_next_sibling(temp) {
-                    temp = next_sibling;
-                }
+        if let Some(parent) = self.get_parent(entity)
+            && let Some(mut temp) = self.get_first_child(parent)
+        {
+            while let Some(next_sibling) = self.get_next_sibling(temp) {
+                temp = next_sibling;
+            }
 
-                if temp == entity {
-                    return true;
-                }
+            if temp == entity {
+                return true;
             }
         }
 
@@ -269,10 +269,10 @@ where
 
     // Checks if entity1 is the sibling of entity2.
     pub fn is_sibling(&self, entity1: I, entity2: I) -> bool {
-        if let Some(parent1) = self.get_parent(entity1) {
-            if let Some(parent2) = self.get_parent(entity2) {
-                return parent1 == parent2;
-            }
+        if let Some(parent1) = self.get_parent(entity1)
+            && let Some(parent2) = self.get_parent(entity2)
+        {
+            return parent1 == parent2;
         }
 
         false
@@ -300,10 +300,10 @@ where
         }
 
         // If the entity was is the first child of its parent then set its next sibling to be the new first child.
-        if let Some(parent) = self.get_parent(entity) {
-            if self.is_first_child(entity) {
-                self.first_child[parent.index()] = self.get_next_sibling(entity);
-            }
+        if let Some(parent) = self.get_parent(entity)
+            && self.is_first_child(entity)
+        {
+            self.first_child[parent.index()] = self.get_next_sibling(entity);
         }
 
         // Set the next sibling of the previous sibling of the entity to the next sibling of the entity.
@@ -346,10 +346,10 @@ where
         }
 
         // Check if the parent is in the tree
-        if let Some(parent) = self.get_parent(entity) {
-            if parent.index() >= self.parent.len() {
-                return Err(TreeError::InvalidParent);
-            }
+        if let Some(parent) = self.get_parent(entity)
+            && parent.index() >= self.parent.len()
+        {
+            return Err(TreeError::InvalidParent);
         }
 
         let parent = self.get_parent(entity).unwrap();
@@ -399,10 +399,10 @@ where
 
         // Check if sibling has the same parent
         if let Some(parent) = self.get_parent(entity) {
-            if let Some(sibling_parent) = self.get_parent(entity) {
-                if parent != sibling_parent {
-                    return Err(TreeError::InvalidSibling);
-                }
+            if let Some(sibling_parent) = self.get_parent(entity)
+                && parent != sibling_parent
+            {
+                return Err(TreeError::InvalidSibling);
             }
         } else {
             return Err(TreeError::InvalidParent);
@@ -456,10 +456,10 @@ where
 
         // Check if sibling has the same parent
         if let Some(parent) = self.get_parent(entity) {
-            if let Some(sibling_parent) = self.get_parent(entity) {
-                if parent != sibling_parent {
-                    return Err(TreeError::InvalidSibling);
-                }
+            if let Some(sibling_parent) = self.get_parent(entity)
+                && parent != sibling_parent
+            {
+                return Err(TreeError::InvalidSibling);
             }
         } else {
             return Err(TreeError::InvalidParent);
@@ -506,10 +506,10 @@ where
     }
 
     pub fn set_parent(&mut self, entity: I, parent: I) {
-        if let Some(old_parent) = self.get_parent(entity) {
-            if self.is_first_child(entity) {
-                self.first_child[old_parent.index()] = self.get_next_sibling(entity);
-            }
+        if let Some(old_parent) = self.get_parent(entity)
+            && self.is_first_child(entity)
+        {
+            self.first_child[old_parent.index()] = self.get_next_sibling(entity);
         }
 
         if let Some(prev_sibling) = self.get_prev_sibling(entity) {
@@ -545,21 +545,21 @@ where
     }
 
     pub fn set_ignored(&mut self, entity: I, flag: bool) {
-        if let Some(ignored) = self.ignored.get_mut(entity.index()) {
-            if *ignored != flag {
-                *ignored = flag;
-                // Ignoring an entity changes the layout parent of its children.
-                self.generation = self.generation.wrapping_add(1);
-            }
+        if let Some(ignored) = self.ignored.get_mut(entity.index())
+            && *ignored != flag
+        {
+            *ignored = flag;
+            // Ignoring an entity changes the layout parent of its children.
+            self.generation = self.generation.wrapping_add(1);
         }
     }
 
     pub fn set_window(&mut self, entity: I, flag: bool) {
-        if let Some(window) = self.window.get_mut(entity.index()) {
-            if *window != flag {
-                *window = flag;
-                self.generation = self.generation.wrapping_add(1);
-            }
+        if let Some(window) = self.window.get_mut(entity.index())
+            && *window != flag
+        {
+            *window = flag;
+            self.generation = self.generation.wrapping_add(1);
         };
     }
 

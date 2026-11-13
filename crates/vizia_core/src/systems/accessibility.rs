@@ -1,5 +1,7 @@
 use crate::{accessibility::IntoNode, events::ViewHandler, prelude::*};
-use accesskit::{Node, NodeId, Orientation as AccessOrientation, Rect, Toggled, Tree, TreeUpdate};
+use accesskit::{
+    Node, NodeId, Orientation as AccessOrientation, Rect, Toggled, TreeInfo, TreeUpdate,
+};
 use hashbrown::HashMap;
 use vizia_storage::LayoutTreeIterator;
 
@@ -104,7 +106,7 @@ pub fn initial_accessibility_system(cx: &mut Context) -> TreeUpdate {
 
     TreeUpdate {
         nodes,
-        tree: Some(Tree::new(Entity::root().accesskit_id())),
+        tree: Some(TreeInfo::new(Entity::root().accesskit_id())),
         tree_id: accesskit::TreeId::ROOT,
         focus: Entity::root().accesskit_id(),
     }
@@ -230,28 +232,28 @@ pub(crate) fn get_access_node(
     //     node_builder.set_default_action_verb(*default_action_verb);
     // }
 
-    if let Some(labelled_by_id) = cx.style.labelled_by.get(entity) {
-        if let Some(labelled_by) = cx.resolve_entity_identifier(labelled_by_id) {
-            node_builder.set_labelled_by(vec![labelled_by.accesskit_id()]);
-        }
+    if let Some(labelled_by_id) = cx.style.labelled_by.get(entity)
+        && let Some(labelled_by) = cx.resolve_entity_identifier(labelled_by_id)
+    {
+        node_builder.set_labelled_by(vec![labelled_by.accesskit_id()]);
     }
 
-    if let Some(described_by_id) = cx.style.described_by.get(entity) {
-        if let Some(described_by) = cx.resolve_entity_identifier(described_by_id) {
-            node_builder.set_described_by(vec![described_by.accesskit_id()]);
-        }
+    if let Some(described_by_id) = cx.style.described_by.get(entity)
+        && let Some(described_by) = cx.resolve_entity_identifier(described_by_id)
+    {
+        node_builder.set_described_by(vec![described_by.accesskit_id()]);
     }
 
-    if let Some(controlled_id) = cx.style.controls.get(entity) {
-        if let Some(controlled) = cx.resolve_entity_identifier(controlled_id) {
-            node_builder.set_controls(vec![controlled.accesskit_id()]);
-        }
+    if let Some(controlled_id) = cx.style.controls.get(entity)
+        && let Some(controlled) = cx.resolve_entity_identifier(controlled_id)
+    {
+        node_builder.set_controls(vec![controlled.accesskit_id()]);
     }
 
-    if let Some(active_descendant_id) = cx.style.active_descendant.get(entity) {
-        if let Some(active_descendant) = cx.resolve_entity_identifier(active_descendant_id) {
-            node_builder.set_active_descendant(active_descendant.accesskit_id());
-        }
+    if let Some(active_descendant_id) = cx.style.active_descendant.get(entity)
+        && let Some(active_descendant) = cx.resolve_entity_identifier(active_descendant_id)
+    {
+        node_builder.set_active_descendant(active_descendant.accesskit_id());
     }
 
     let checkable = cx
@@ -261,18 +263,17 @@ pub(crate) fn get_access_node(
         .map(|abilities| abilities.contains(Abilities::CHECKABLE))
         .unwrap_or_default();
 
-    if checkable {
-        if let Some(checked) = cx
+    if checkable
+        && let Some(checked) = cx
             .style
             .pseudo_classes
             .get(entity)
             .map(|pseudoclass| pseudoclass.contains(PseudoClassFlags::CHECKED))
-        {
-            if checked {
-                node_builder.set_toggled(Toggled::True);
-            } else {
-                node_builder.set_toggled(Toggled::False);
-            }
+    {
+        if checked {
+            node_builder.set_toggled(Toggled::True);
+        } else {
+            node_builder.set_toggled(Toggled::False);
         }
     }
 

@@ -71,10 +71,10 @@ where
                     } else {
                         self.direction = TourDirection::Leaving;
                         self.current = tree.parent[current.index()].as_ref();
-                        if let Some(start) = self.start {
-                            if self.current == tree.parent[start.index()].as_ref() {
-                                self.current = None;
-                            }
+                        if let Some(start) = self.start
+                            && self.current == tree.parent[start.index()].as_ref()
+                        {
+                            self.current = None;
                         }
                     }
                 }

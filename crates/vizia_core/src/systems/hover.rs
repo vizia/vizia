@@ -165,12 +165,13 @@ fn hover_entity(
     // Skip the whole subtree if the cursor is outside the bounds of everything drawn within it.
     // Subtree draw bounds include z-indexed and clip-escaping descendants and contain the
     // (clipped) bounds of every descendant.
-    if prune && !cx.tree.is_window(cx.current) {
-        if let Some(bounds) = cx.cache.draw_bounds.get(cx.current) {
-            let subtree_bounds = subtree_to_screen(bounds, &parent.transform, parent.clip);
-            if !subtree_bounds.contains_point(cursor_x, cursor_y) {
-                return;
-            }
+    if prune
+        && !cx.tree.is_window(cx.current)
+        && let Some(bounds) = cx.cache.draw_bounds.get(cx.current)
+    {
+        let subtree_bounds = subtree_to_screen(bounds, &parent.transform, parent.clip);
+        if !subtree_bounds.contains_point(cursor_x, cursor_y) {
+            return;
         }
     }
 

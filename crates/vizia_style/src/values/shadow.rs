@@ -1,5 +1,5 @@
 use crate::{Color, CustomParseError, InsetKeyword, Length, Parse};
-use cssparser::{ParseError, Parser, ParserInput};
+use cssparser::{ParseError, Parser};
 
 /// A box shadow adding a shadow effect around an element's frame.
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -40,8 +40,7 @@ impl Shadow {
 }
 
 impl<'i> Parse<'i> for Shadow {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let location = input.current_source_location();
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let x_offset = Length::parse(input)?;
         let y_offset = Length::parse(input)?;
         let blur_radius = input.try_parse(Length::parse).ok();
@@ -52,24 +51,20 @@ impl<'i> Parse<'i> for Shadow {
         if input.is_exhausted() {
             Ok(Shadow::new(x_offset, y_offset, blur_radius, spread_radius, color, inset))
         } else {
-            Err(cssparser::ParseError {
-                kind: cssparser::ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),
-                location,
-            })
+            Err(ParseError::custom(CustomParseError::InvalidDeclaration))
         }
     }
 }
 
 impl<'i> Parse<'i> for Vec<Shadow> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         input.parse_comma_separated(Shadow::parse)
     }
 }
 
 impl From<&str> for Shadow {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         Shadow::parse(&mut parser).unwrap_or_default()
     }
 }

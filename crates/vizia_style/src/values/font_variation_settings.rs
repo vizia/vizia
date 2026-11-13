@@ -7,41 +7,31 @@ use crate::{CustomParseError, Parse};
 pub struct FontVariation(pub Coordinate);
 
 impl<'i> Parse<'i> for FontVariation {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let location = input.current_source_location();
-
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let axis = FourByteTag::parse(input)?;
         let value = f32::parse(input)?;
 
         if input.is_exhausted() {
             Ok(Self(Coordinate { axis, value }))
         } else {
-            Err(ParseError {
-                kind: ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),
-                location,
-            })
+            Err(ParseError::custom(CustomParseError::InvalidDeclaration))
         }
     }
 }
 
 impl<'i> Parse<'i> for Vec<FontVariation> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         input.parse_comma_separated(FontVariation::parse)
     }
 }
 
 impl<'i> Parse<'i> for FourByteTag {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let location = input.current_source_location();
-
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let name = input.expect_string()?;
         let bytes = name.as_bytes();
 
         if bytes.len() != 4 {
-            return Err(ParseError {
-                kind: ParseErrorKind::Custom(CustomParseError::InvalidValue),
-                location,
-            });
+            return Err(ParseError::custom(CustomParseError::InvalidValue));
         }
 
         let bytes = std::array::from_fn(|i| bytes[i]);
@@ -52,8 +42,7 @@ impl<'i> Parse<'i> for FourByteTag {
 
 impl From<&str> for FontVariation {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         FontVariation::parse(&mut parser).unwrap_or_default()
     }
 }

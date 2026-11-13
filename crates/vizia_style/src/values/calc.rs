@@ -1,3 +1,4 @@
+use crate::ParserErrorExt;
 use crate::{CustomParseError, Parse};
 use cssparser::*;
 
@@ -29,7 +30,7 @@ impl<
         + std::fmt::Debug,
 > Parse<'i> for Calc<V>
 {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let location = input.current_source_location();
         let f = input.expect_function()?;
         match_ignore_ascii_case! { f,
@@ -127,9 +128,7 @@ impl<
         + std::fmt::Debug,
 > Calc<V>
 {
-    fn parse_sum<'t>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse_sum(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let mut cur: Calc<V> = Calc::parse_product(input)?;
         loop {
             let start = input.state();
@@ -163,9 +162,7 @@ impl<
         Ok(cur)
     }
 
-    fn parse_product<'t>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse_product(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let mut node = Calc::parse_value(input)?;
         loop {
             let start = input.state();
@@ -184,11 +181,11 @@ impl<
                 }
                 Ok(&Token::Delim('/')) => {
                     let rhs = Self::parse_value(input)?;
-                    if let Calc::Number(val) = rhs {
-                        if val != 0.0 {
-                            node = node * (1.0 / val);
-                            continue;
-                        }
+                    if let Calc::Number(val) = rhs
+                        && val != 0.0
+                    {
+                        node = node * (1.0 / val);
+                        continue;
                     }
                     return Err(input.new_custom_error(CustomParseError::InvalidValue));
                 }
@@ -201,9 +198,7 @@ impl<
         Ok(node)
     }
 
-    fn parse_value<'t>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse_value(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         // Parse nested calc() and other math functions.
         if let Ok(calc) = input.try_parse(Self::parse) {
             match calc {

@@ -20,7 +20,7 @@ use vizia_style::{
 };
 
 /// A node used for style matching.
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub(crate) struct Node<'s, 't> {
     entity: Entity,
     store: &'s Style,
@@ -51,7 +51,7 @@ impl Element for Node<'_, '_> {
     type Impl = Selectors;
 
     fn opaque(&self) -> OpaqueElement {
-        OpaqueElement::new(self)
+        OpaqueElement::new(&self.tree.parent[self.entity.index()])
     }
 
     fn is_html_slot_element(&self) -> bool {
@@ -130,10 +130,10 @@ impl Element for Node<'_, '_> {
     }
 
     fn is_same_type(&self, other: &Self) -> bool {
-        if let Some(element) = self.store.element.get(self.entity) {
-            if let Some(other_element) = self.store.element.get(other.entity) {
-                return element == other_element;
-            }
+        if let Some(element) = self.store.element.get(self.entity)
+            && let Some(other_element) = self.store.element.get(other.entity)
+        {
+            return element == other_element;
         }
 
         false
@@ -340,24 +340,23 @@ impl Node<'_, '_> {
             let leading = selector.combinator_at_parse_order(1);
             match leading {
                 // > — only direct children
-                Combinator::Child => {
-                    self.any_child(|n| vizia_style::matches_selector(selector, 0, None, n, context))
-                }
+                Combinator::Child => self
+                    .any_child(|n| vizia_style::matches_selector(selector, 0, None, *n, context)),
                 // space — all descendants
                 Combinator::Descendant => self.any_descendant(|n| {
-                    vizia_style::matches_selector(selector, 0, None, n, context)
+                    vizia_style::matches_selector(selector, 0, None, *n, context)
                 }),
                 // + — next sibling only
                 Combinator::NextSibling => self
                     .next_sibling_element()
-                    .is_some_and(|n| vizia_style::matches_selector(selector, 0, None, &n, context)),
+                    .is_some_and(|n| vizia_style::matches_selector(selector, 0, None, n, context)),
                 // ~ — any following sibling
                 Combinator::LaterSibling => self.any_following_sibling(|n| {
-                    vizia_style::matches_selector(selector, 0, None, n, context)
+                    vizia_style::matches_selector(selector, 0, None, *n, context)
                 }),
                 // Unexpected in :has() context — fall back to descendants
                 _ => self.any_descendant(|n| {
-                    vizia_style::matches_selector(selector, 0, None, n, context)
+                    vizia_style::matches_selector(selector, 0, None, *n, context)
                 }),
             }
         })
@@ -1240,7 +1239,7 @@ fn compute_matched_direction_rules(
             continue;
         }
 
-        let matches = matches_selector(&rule.selector, 0, Some(&rule.hashes), &node, &mut context);
+        let matches = matches_selector(&rule.selector, 0, Some(&rule.hashes), node, &mut context);
 
         if matches {
             matched_rules.push((*rule_id, rule.selector.specificity()));
@@ -1279,7 +1278,7 @@ pub(crate) fn compute_matched_rules(
     let node = Node { entity, store, tree };
 
     for (rule_id, rule) in store.rules.iter() {
-        let matches = matches_selector(&rule.selector, 0, Some(&rule.hashes), &node, &mut context);
+        let matches = matches_selector(&rule.selector, 0, Some(&rule.hashes), node, &mut context);
 
         if matches {
             matched_rules.push((*rule_id, rule.selector.specificity()));
@@ -1411,13 +1410,14 @@ impl MatchedRules {
 
         let mut matched_index = None;
 
-        if !tree.is_first_child(entity) && !tree.is_last_child(entity) {
-            if let Some(cache) = rule_cache.get(&parent) {
-                matched_index = cache.iter().position(|entry| {
-                    has_same_selector(style, entry.entity, entity)
-                        && !has_nth_child_rule(style, &entry.rules)
-                });
-            }
+        if !tree.is_first_child(entity)
+            && !tree.is_last_child(entity)
+            && let Some(cache) = rule_cache.get(&parent)
+        {
+            matched_index = cache.iter().position(|entry| {
+                has_same_selector(style, entry.entity, entity)
+                    && !has_nth_child_rule(style, &entry.rules)
+            });
         }
 
         if matched_index.is_none() {

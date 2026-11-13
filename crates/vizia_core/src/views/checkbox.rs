@@ -292,10 +292,10 @@ impl View for Checkbox {
             }
 
             WindowEvent::Press { mouse: _ } => {
-                if meta.target == cx.current {
-                    if let Some(callback) = &self.on_toggle {
-                        (callback)(cx);
-                    }
+                if meta.target == cx.current
+                    && let Some(callback) = &self.on_toggle
+                {
+                    (callback)(cx);
                 }
             }
 

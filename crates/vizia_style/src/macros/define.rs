@@ -64,7 +64,7 @@ macro_rules! define_property {
         }
 
         impl<'i> $name<'i> {
-            pub fn parse_value<'t>(name: cssparser::CowRcStr<'i>, input: &mut Parser<'i, 't>) -> Result<Self, cssparser::ParseError<'i, CustomParseError<'i>>> {
+            pub fn parse_value(name: cssparser::CowRcStr<'i>, input: &mut Parser<'i>) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
 
                 let state = input.state();
                 let name_ref = name.as_ref();

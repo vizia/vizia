@@ -66,10 +66,12 @@ impl View for ToggleButton {
 
             WindowEvent::Press { mouse } => {
                 let over = if *mouse { cx.mouse().left.pressed } else { cx.focused() };
-                if over == cx.current() && meta.target == cx.current() && !cx.is_disabled() {
-                    if let Some(callback) = &self.on_toggle {
-                        (callback)(cx);
-                    }
+                if over == cx.current()
+                    && meta.target == cx.current()
+                    && !cx.is_disabled()
+                    && let Some(callback) = &self.on_toggle
+                {
+                    (callback)(cx);
                 }
             }
 

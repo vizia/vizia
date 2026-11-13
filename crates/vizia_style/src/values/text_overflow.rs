@@ -1,4 +1,4 @@
-use cssparser::{Parser, ParserInput};
+use cssparser::Parser;
 
 use crate::{Parse, define_enum, impl_parse};
 
@@ -32,8 +32,7 @@ impl_parse! {
 
 impl From<&str> for LineClamp {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         LineClamp::parse(&mut parser).unwrap_or_default()
     }
 }

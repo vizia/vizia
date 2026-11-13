@@ -28,9 +28,8 @@ mod test {
         CustomParseError, Direction, ParserOptions, SelectorIdent, SelectorParser, Selectors,
     };
 
-    fn parse(input: &str) -> Result<SelectorList<Selectors>, ParseError<'_, CustomParseError<'_>>> {
-        let mut parser_input = ParserInput::new(input);
-        let mut parser = Parser::new(&mut parser_input);
+    fn parse(input: &str) -> Result<SelectorList<Selectors>, ParseError<CustomParseError<'_>>> {
+        let mut parser = Parser::new(input);
         let options = ParserOptions::default();
         SelectorList::parse(
             &SelectorParser { options: &options },
@@ -65,7 +64,7 @@ mod test {
         direction: HashMap<Entity, Direction>,
     }
 
-    #[derive(Debug, Clone)]
+    #[derive(Debug, Clone, Copy)]
     pub struct Node<'s> {
         entity: Entity,
         store: &'s Store,
@@ -285,7 +284,7 @@ mod test {
                 MatchingForInvalidation::No,
             );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, root_node, &mut context);
         }
     }
 
@@ -319,11 +318,11 @@ mod test {
                 MatchingForInvalidation::No,
             );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, root_node, &mut context);
 
             assert!(result);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context);
+            let result = matches_selector_list(&selector_list, child_node, &mut context);
 
             assert!(!result);
         }
@@ -369,10 +368,10 @@ mod test {
                 MatchingForInvalidation::No,
             );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, root_node, &mut context);
             assert!(result);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context);
+            let result = matches_selector_list(&selector_list, child_node, &mut context);
             assert!(!result);
         }
 
@@ -387,10 +386,10 @@ mod test {
                 MatchingForInvalidation::No,
             );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, root_node, &mut context);
             assert!(result);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context);
+            let result = matches_selector_list(&selector_list, child_node, &mut context);
             assert!(result);
         }
 
@@ -405,10 +404,10 @@ mod test {
                 MatchingForInvalidation::No,
             );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, root_node, &mut context);
             assert!(result);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context);
+            let result = matches_selector_list(&selector_list, child_node, &mut context);
             assert!(!result);
         }
 
@@ -423,10 +422,10 @@ mod test {
                 MatchingForInvalidation::No,
             );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, root_node, &mut context);
             assert!(result);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context);
+            let result = matches_selector_list(&selector_list, child_node, &mut context);
             assert!(result);
         }
     }
@@ -467,10 +466,10 @@ mod test {
                 MatchingForInvalidation::No,
             );
 
-            let result = matches_selector_list(&selector_list, &root_node, &mut context);
+            let result = matches_selector_list(&selector_list, root_node, &mut context);
             assert!(result);
 
-            let result = matches_selector_list(&selector_list, &child_node, &mut context);
+            let result = matches_selector_list(&selector_list, child_node, &mut context);
             assert!(!result);
         }
     }
@@ -501,7 +500,7 @@ mod test {
                 MatchingForInvalidation::No,
             );
 
-            let result = matches_selector_list(&selector_list, &node, &mut context);
+            let result = matches_selector_list(&selector_list, node, &mut context);
             assert!(result);
         }
     }

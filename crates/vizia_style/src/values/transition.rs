@@ -1,5 +1,5 @@
 use crate::{CustomParseError, EasingFunction, Ident, Parse, duration::Duration};
-use cssparser::{ParseError, ParseErrorKind, Parser};
+use cssparser::{ParseError, Parser};
 
 /// Defines a transition that allows to change property values smoothly, over a given duration.
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -27,9 +27,7 @@ impl Transition {
 }
 
 impl<'i> Parse<'i> for Transition {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let location = input.current_source_location();
-
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let property = Ident::parse(input)?.into();
         let duration = Duration::parse(input)?;
         let delay = input.try_parse(Duration::parse).ok();
@@ -38,16 +36,13 @@ impl<'i> Parse<'i> for Transition {
         if input.is_exhausted() {
             Ok(Self { property, duration, delay, timing_function })
         } else {
-            Err(ParseError {
-                kind: ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),
-                location,
-            })
+            Err(ParseError::custom(CustomParseError::InvalidDeclaration))
         }
     }
 }
 
 impl<'i> Parse<'i> for Vec<Transition> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         input.parse_comma_separated(Transition::parse)
     }
 }

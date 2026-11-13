@@ -1,4 +1,4 @@
-use cssparser::{ParseError, ParseErrorKind, Parser, ParserInput};
+use cssparser::{ParseError, Parser};
 
 use crate::{CustomParseError, Parse};
 
@@ -24,17 +24,13 @@ impl AspectRatio {
 }
 
 impl<'i> Parse<'i> for AspectRatio {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let location = input.current_source_location();
-
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let has_auto = input.try_parse(|parser| parser.expect_ident_matching("auto")).is_ok();
 
         // CSS allows either `auto`, `<number>`, `<number>/<number>`, or `auto <ratio>`.
         let ratio = input.try_parse(|parser| {
-            let error_at = |location| ParseError {
-                kind: ParseErrorKind::Custom(CustomParseError::InvalidValue),
-                location,
-            };
+            let error_at =
+                |_| ParseError::<CustomParseError<'i>>::custom(CustomParseError::InvalidValue);
 
             let numerator = parser.expect_number()?;
             if numerator <= 0.0 || !numerator.is_finite() {
@@ -66,18 +62,12 @@ impl<'i> Parse<'i> for AspectRatio {
             (true, Err(_)) if input.is_exhausted() => AspectRatio::Auto,
             (false, Ok(ratio)) => AspectRatio::Ratio(ratio),
             _ => {
-                return Err(ParseError {
-                    kind: ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),
-                    location,
-                });
+                return Err(ParseError::custom(CustomParseError::InvalidDeclaration));
             }
         };
 
         if !input.is_exhausted() {
-            return Err(ParseError {
-                kind: ParseErrorKind::Custom(CustomParseError::InvalidDeclaration),
-                location,
-            });
+            return Err(ParseError::custom(CustomParseError::InvalidDeclaration));
         }
 
         Ok(parsed)
@@ -98,8 +88,7 @@ impl From<f64> for AspectRatio {
 
 impl From<&str> for AspectRatio {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         AspectRatio::parse(&mut parser).unwrap_or_default()
     }
 }

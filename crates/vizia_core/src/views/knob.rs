@@ -131,10 +131,10 @@ impl<T: Res<f32> + 'static> Handle<'_, Knob<T>> {
     where
         F: 'static + Fn(&mut EventContext, f32),
     {
-        if let Some(view) = self.cx.views.get_mut(&self.entity) {
-            if let Some(knob) = view.downcast_mut::<Knob<T>>() {
-                knob.on_changing = Some(Box::new(callback));
-            }
+        if let Some(view) = self.cx.views.get_mut(&self.entity)
+            && let Some(knob) = view.downcast_mut::<Knob<T>>()
+        {
+            knob.on_changing = Some(Box::new(callback));
         }
 
         self
@@ -371,11 +371,11 @@ impl Handle<'_, ArcTrack> {
         let entity = self.entity;
         value.set_or_bind(self.cx, move |cx, value| {
             let value = Res::get_value(&value, cx);
-            if let Some(view) = cx.views.get_mut(&entity) {
-                if let Some(knob) = view.downcast_mut::<ArcTrack>() {
-                    knob.normalized_value = value;
-                    cx.needs_redraw(entity);
-                }
+            if let Some(view) = cx.views.get_mut(&entity)
+                && let Some(knob) = view.downcast_mut::<ArcTrack>()
+            {
+                knob.normalized_value = value;
+                cx.needs_redraw(entity);
             }
         });
 
@@ -578,11 +578,11 @@ impl Handle<'_, TickKnob> {
         let entity = self.entity;
         value.set_or_bind(self.cx, move |cx, value| {
             let value = Res::get_value(&value, cx);
-            if let Some(view) = cx.views.get_mut(&entity) {
-                if let Some(knob) = view.downcast_mut::<TickKnob>() {
-                    knob.normalized_value = value;
-                    cx.needs_redraw(entity);
-                }
+            if let Some(view) = cx.views.get_mut(&entity)
+                && let Some(knob) = view.downcast_mut::<TickKnob>()
+            {
+                knob.normalized_value = value;
+                cx.needs_redraw(entity);
             }
         });
         self

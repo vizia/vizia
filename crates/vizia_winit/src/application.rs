@@ -682,14 +682,14 @@ impl ApplicationHandler<UserEvent> for Application {
                         ));
                     }
                 });
-                if self.windows.len() == 1 {
-                    if let Some(theme) = window.theme() {
-                        let theme = match theme {
-                            winit::window::Theme::Light => ThemeMode::LightMode,
-                            winit::window::Theme::Dark => ThemeMode::DarkMode,
-                        };
-                        self.cx.emit_origin(WindowEvent::ThemeChanged(theme));
-                    }
+                if self.windows.len() == 1
+                    && let Some(theme) = window.theme()
+                {
+                    let theme = match theme {
+                        winit::window::Theme::Light => ThemeMode::LightMode,
+                        winit::window::Theme::Dark => ThemeMode::DarkMode,
+                    };
+                    self.cx.emit_origin(WindowEvent::ThemeChanged(theme));
                 }
                 self.cx.needs_refresh(window_entity);
             }

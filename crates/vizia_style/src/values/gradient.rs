@@ -1,3 +1,4 @@
+use crate::ParserErrorExt;
 use crate::{
     Angle, Color, CustomParseError, HorizontalPositionKeyword, LengthOrPercentage, Parse, Position,
     VerticalPositionKeyword,
@@ -19,7 +20,7 @@ impl From<LinearGradient> for Gradient {
 }
 
 impl<'i> Parse<'i> for Gradient {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let location = input.current_source_location();
         let func = input.expect_function()?.clone();
         input.parse_nested_block(|input| {
@@ -34,8 +35,7 @@ impl<'i> Parse<'i> for Gradient {
 
 impl From<&str> for Gradient {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         Gradient::parse(&mut parser).unwrap_or_default()
     }
 }
@@ -55,7 +55,7 @@ impl Default for LineDirection {
 }
 
 impl<'i> Parse<'i> for LineDirection {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         if let Ok(angle) = input.try_parse(Angle::parse) {
             return Ok(LineDirection::Angle(angle));
         }
@@ -79,8 +79,7 @@ impl<'i> Parse<'i> for LineDirection {
 
 impl From<&str> for LineDirection {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         LineDirection::parse(&mut parser).unwrap_or_default()
     }
 }
@@ -116,9 +115,8 @@ pub struct LinearGradient {
 }
 
 impl<'i> Parse<'i> for LinearGradient {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
-        let direction = if let Ok(direction) = input.try_parse(|input| LineDirection::parse(input))
-        {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
+        let direction = if let Ok(direction) = input.try_parse(LineDirection::parse) {
             input.expect_comma()?;
             direction
         } else {
@@ -130,8 +128,8 @@ impl<'i> Parse<'i> for LinearGradient {
 }
 
 fn parse_items<'i, 't, D: Parse<'i>>(
-    input: &mut Parser<'i, 't>,
-) -> Result<Vec<ColorStop<D>>, ParseError<'i, CustomParseError<'i>>> {
+    input: &mut Parser<'i>,
+) -> Result<Vec<ColorStop<D>>, ParseError<CustomParseError<'i>>> {
     let mut items = Vec::new();
     let mut seen_stop = false;
 
@@ -177,9 +175,7 @@ pub struct RadialGradient {
 }
 
 impl<'i> RadialGradient {
-    fn parse<'t>(
-        input: &mut Parser<'i, 't>,
-    ) -> Result<RadialGradient, ParseError<'i, CustomParseError<'i>>> {
+    fn parse(input: &mut Parser<'i>) -> Result<RadialGradient, ParseError<CustomParseError<'i>>> {
         // let shape = input.try_parse(EndingShape::parse).ok();
         let position = input
             .try_parse(|input| {
@@ -208,7 +204,7 @@ pub struct ColorStop<D> {
 }
 
 impl<'i, D: Parse<'i>> Parse<'i> for ColorStop<D> {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let color = Color::parse(input)?;
         let position = input.try_parse(D::parse).ok();
         Ok(ColorStop { color, position })

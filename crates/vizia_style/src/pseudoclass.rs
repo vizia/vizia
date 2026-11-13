@@ -74,8 +74,6 @@ impl ToCss for PseudoClass {
 }
 
 impl selectors::parser::NonTSPseudoClass for PseudoClass {
-    type Impl = Selectors;
-
     fn is_active_or_hover(&self) -> bool {
         matches!(*self, PseudoClass::Active | PseudoClass::Hover)
     }

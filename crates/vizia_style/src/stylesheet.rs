@@ -18,8 +18,7 @@ impl<'i> StyleSheet<'i> {
         code: &'i str,
         options: ParserOptions<'i>,
     ) -> Result<Self, Error<CustomParseError<'i>>> {
-        let mut input = ParserInput::new(code);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(code);
 
         let mut rules = CssRuleList(vec![]);
         let mut rule_parser = TopLevelRuleParser::new(&options, &mut rules);
@@ -28,14 +27,14 @@ impl<'i> StyleSheet<'i> {
         while let Some(rule) = rule_list_parser.next() {
             match rule {
                 Ok(_) => {}
-                Err((e, _)) => {
+                Err((e, _, location)) => {
                     let options = &mut rule_list_parser.parser.options;
                     if options.error_recovery {
-                        options.warn(e);
+                        options.warn(e, location);
                         continue;
                     }
 
-                    return Err(Error::from(e, options.filename.clone()));
+                    return Err(Error::from_at(e, options.filename.clone(), Some(location)));
                 }
             }
         }
@@ -127,6 +126,18 @@ test {
         let style_sheet = StyleSheet::parse(CSS_EXAMPLE, ParserOptions::default());
         println!("{:#?}", style_sheet);
     }
+
+    #[test]
+    fn strict_declaration_errors_preserve_declaration_location() {
+        let css = "button {\n    color: red;\n    width nope;\n}";
+
+        let mut options = ParserOptions::new();
+        options.error_recovery = false;
+        let strict_error = StyleSheet::parse(css, options).unwrap_err();
+        let location = strict_error.location.unwrap();
+        assert_eq!(location.line, 2);
+        assert_eq!(location.column, 5);
+    }
 }
 
 // use cssparser::*;
@@ -154,7 +165,7 @@ test {
 //         code: &'i str,
 //         options: ParserOptions,
 //     ) -> Result<StyleSheet<'i>, Error<ParserError<'i>>> {
-//         let mut input = ParserInput::new(&code);
+//         let mut input = crate::ParserInput::new(&code);
 //         let mut parser = Parser::new(&mut input);
 //         let rule_list_parser =
 //             RuleListParser::new_for_stylesheet(&mut parser, TopLevelRuleParser::new(&options));

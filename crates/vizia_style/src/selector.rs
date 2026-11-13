@@ -1,3 +1,4 @@
+use crate::ParserErrorExt;
 use std::hash::Hash;
 
 use cssparser::*;
@@ -88,9 +89,8 @@ impl<'i> selectors::parser::Parser<'i> for SelectorParser<'_, 'i> {
 
     fn parse_non_ts_pseudo_class(
         &self,
-        _: SourceLocation,
-        name: CowRcStr<'i>,
-    ) -> Result<PseudoClass, ParseError<'i, Self::Error>> {
+        name: &str,
+    ) -> Result<PseudoClass, ParseError<Self::Error>> {
         use PseudoClass::*;
         let pseudo_class = match_ignore_ascii_case! { &name,
             "hover" => Hover,
@@ -124,12 +124,12 @@ impl<'i> selectors::parser::Parser<'i> for SelectorParser<'_, 'i> {
         Ok(pseudo_class)
     }
 
-    fn parse_non_ts_functional_pseudo_class<'t>(
+    fn parse_non_ts_functional_pseudo_class(
         &self,
-        name: CowRcStr<'i>,
-        parser: &mut Parser<'i, 't>,
+        name: &str,
+        parser: &mut Parser<'i>,
         _after_part: bool,
-    ) -> Result<<Self::Impl as SelectorImpl>::NonTSPseudoClass, ParseError<'i, Self::Error>> {
+    ) -> Result<<Self::Impl as SelectorImpl>::NonTSPseudoClass, ParseError<Self::Error>> {
         use PseudoClass::*;
         let pseudo_class = match_ignore_ascii_case! { &name,
             "lang" => {
@@ -154,7 +154,7 @@ impl<'i> selectors::parser::Parser<'i> for SelectorParser<'_, 'i> {
                 Has(Box::new(selector_list))
             },
 
-            _=> return Err(parser.new_custom_error(selectors::parser::SelectorParseErrorKind::UnexpectedIdent(name.clone()))),
+            _=> return Err(parser.new_custom_error(selectors::parser::SelectorParseErrorKind::UnexpectedIdent)),
         };
 
         Ok(pseudo_class)
@@ -162,9 +162,8 @@ impl<'i> selectors::parser::Parser<'i> for SelectorParser<'_, 'i> {
 
     fn parse_pseudo_element(
         &self,
-        _location: SourceLocation,
-        name: CowRcStr<'i>,
-    ) -> Result<<Self::Impl as SelectorImpl>::PseudoElement, ParseError<'i, Self::Error>> {
+        name: &str,
+    ) -> Result<<Self::Impl as SelectorImpl>::PseudoElement, ParseError<Self::Error>> {
         use PseudoElement::*;
         let pseudo_element = match_ignore_ascii_case! { &name,
             "before" => Before,
@@ -186,8 +185,8 @@ impl<'i> selectors::parser::Parser<'i> for SelectorParser<'_, 'i> {
 
 //     use super::*;
 
-//     fn parse(input: &str) -> Result<SelectorList<Selectors>, ParseError<'_, CustomParseError<'_>>> {
-//         let mut parser_input = ParserInput::new(input);
+//     fn parse(input: &str) -> Result<SelectorList<Selectors>, ParseError<CustomParseError<'_>>> {
+//         let mut parser_input = crate::ParserInput::new(input);
 //         let mut parser = Parser::new(&mut parser_input);
 //         let options = ParserOptions::default();
 //         SelectorList::parse(&SelectorParser { options: &options }, &mut parser, ParseRelative::No)
@@ -199,7 +198,7 @@ impl<'i> selectors::parser::Parser<'i> for SelectorParser<'_, 'i> {
 
 //     #[test]
 //     fn parse_empty() {
-//         let mut parser_input = ParserInput::new(":empty");
+//         let mut parser_input = crate::ParserInput::new(":empty");
 //         let mut parser = Parser::new(&mut parser_input);
 //         let options = ParserOptions::default();
 //         let result = SelectorList::parse(

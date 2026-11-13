@@ -1,4 +1,4 @@
-use cssparser::{ParseError, ParseErrorKind, Parser, ParserInput};
+use cssparser::{ParseError, Parser};
 
 use crate::{CustomParseError, Length, Parse, define_enum};
 
@@ -18,12 +18,11 @@ pub enum LetterSpacing {
 }
 
 impl<'i> Parse<'i> for LetterSpacing {
-    fn parse<'t>(input: &mut Parser<'i, 't>) -> Result<Self, ParseError<'i, CustomParseError<'i>>> {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         if let Ok(keyword) = input.try_parse(LetterSpacingKeyword::parse) {
             return Ok(keyword.into());
         }
 
-        let location = input.current_source_location();
         let length = input.try_parse(Length::parse)?;
         if let Length::Value(length_value) = &length {
             let (value, _) = length_value.to_unit_value();
@@ -34,10 +33,7 @@ impl<'i> Parse<'i> for LetterSpacing {
 
         match length {
             Length::Value(_) => Ok(LetterSpacing::Length(length)),
-            _ => Err(ParseError {
-                kind: ParseErrorKind::Custom(CustomParseError::InvalidValue),
-                location,
-            }),
+            _ => Err(ParseError::custom(CustomParseError::InvalidValue)),
         }
     }
 }
@@ -58,8 +54,7 @@ impl From<Length> for LetterSpacing {
 
 impl From<&str> for LetterSpacing {
     fn from(s: &str) -> Self {
-        let mut input = ParserInput::new(s);
-        let mut parser = Parser::new(&mut input);
+        let mut parser = Parser::new(s);
         LetterSpacing::parse(&mut parser).unwrap_or_default()
     }
 }

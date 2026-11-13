@@ -113,15 +113,15 @@ fn local_transform(cx: &Context, entity: Entity) -> Option<skia_safe::Matrix> {
         // Get the animation state
         // Manually interpolate the value to get the overall transform for the current frame
         if let Some(animation_state) = style.transform.get_active_animation(entity) {
-            if let Some(start) = animation_state.keyframes.first() {
-                if let Some(end) = animation_state.keyframes.last() {
-                    let start_transform = start.value.as_transform(bounds, scale_factor);
-                    let end_transform = end.value.as_transform(bounds, scale_factor);
-                    let t = animation_state.t;
-                    let animated_transform =
-                        skia_safe::Matrix::interpolate(&start_transform, &end_transform, t);
-                    transform = transform * animated_transform;
-                }
+            if let Some(start) = animation_state.keyframes.first()
+                && let Some(end) = animation_state.keyframes.last()
+            {
+                let start_transform = start.value.as_transform(bounds, scale_factor);
+                let end_transform = end.value.as_transform(bounds, scale_factor);
+                let t = animation_state.t;
+                let animated_transform =
+                    skia_safe::Matrix::interpolate(&start_transform, &end_transform, t);
+                transform = transform * animated_transform;
             }
         } else {
             transform = transform * transforms.as_transform(bounds, scale_factor);

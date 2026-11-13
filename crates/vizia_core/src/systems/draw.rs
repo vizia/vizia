@@ -291,10 +291,10 @@ fn draw_entity(
     // include z-indexed and clip-escaping descendants, so it is safe to cull before they would be
     // deferred to the z-order queue.
     let draw_bounds = dirty_rect.map(|_| cached_bounds(cx.style, cx.cache, cx.tree, current));
-    if let (Some(dirty_rect), Some(bounds)) = (dirty_rect, &draw_bounds) {
-        if !parent.intersects_dirty(bounds, dirty_rect) {
-            return;
-        }
+    if let (Some(dirty_rect), Some(bounds)) = (dirty_rect, &draw_bounds)
+        && !parent.intersects_dirty(bounds, dirty_rect)
+    {
+        return;
     }
 
     match Stacking::of(cx.style, current, current_z, ancestor_backdrop_clip) {
@@ -405,10 +405,10 @@ fn draw_entity(
     // only needs to be configured when this view actually paints.
     if should_draw {
         canvas.save();
-        if backdrop_clip_count.is_none() {
-            if let Some(Some(clip_path)) = cx.cache.clip_path.get(current) {
-                canvas.clip_path(clip_path, ClipOp::Intersect, true);
-            }
+        if backdrop_clip_count.is_none()
+            && let Some(Some(clip_path)) = cx.cache.clip_path.get(current)
+        {
+            canvas.clip_path(clip_path, ClipOp::Intersect, true);
         }
         canvas.set_matrix(&(transform.into()));
 
@@ -662,10 +662,10 @@ fn draw_bounds(
         escaped = union_non_empty(escaped, child_bounds.escaped);
     }
 
-    if is_non_empty(&clipped) {
-        if let Some(clip) = own_clip_bounds(style, cache, tree, entity) {
-            clipped = clipped.intersection(&clip);
-        }
+    if is_non_empty(&clipped)
+        && let Some(clip) = own_clip_bounds(style, cache, tree, entity)
+    {
+        clipped = clipped.intersection(&clip);
     }
     let mut clipped = union_non_empty(own, clipped);
 
