@@ -702,11 +702,11 @@ impl Context {
         }
 
         // Releasing the lock of a removed view refreshes the cursor icon as an unlock does.
-        if let Some(window) = cursor_icon_lock_window {
-            if self.windows.contains_key(&window) {
-                let cursor = self.style.cursor.get(self.hovered).cloned().unwrap_or_default();
-                self.with_current(window, |cx| cx.emit(WindowEvent::SetCursor(cursor)));
-            }
+        if let Some(window) = cursor_icon_lock_window
+            && self.windows.contains_key(&window)
+        {
+            let cursor = self.style.cursor.get(self.hovered).cloned().unwrap_or_default();
+            self.with_current(window, |cx| cx.emit(WindowEvent::SetCursor(cursor)));
         }
     }
 

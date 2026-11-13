@@ -130,10 +130,10 @@ impl Element for Node<'_, '_> {
     }
 
     fn is_same_type(&self, other: &Self) -> bool {
-        if let Some(element) = self.store.element.get(self.entity) {
-            if let Some(other_element) = self.store.element.get(other.entity) {
-                return element == other_element;
-            }
+        if let Some(element) = self.store.element.get(self.entity)
+            && let Some(other_element) = self.store.element.get(other.entity)
+        {
+            return element == other_element;
         }
 
         false
@@ -1410,13 +1410,14 @@ impl MatchedRules {
 
         let mut matched_index = None;
 
-        if !tree.is_first_child(entity) && !tree.is_last_child(entity) {
-            if let Some(cache) = rule_cache.get(&parent) {
-                matched_index = cache.iter().position(|entry| {
-                    has_same_selector(style, entry.entity, entity)
-                        && !has_nth_child_rule(style, &entry.rules)
-                });
-            }
+        if !tree.is_first_child(entity)
+            && !tree.is_last_child(entity)
+            && let Some(cache) = rule_cache.get(&parent)
+        {
+            matched_index = cache.iter().position(|entry| {
+                has_same_selector(style, entry.entity, entity)
+                    && !has_nth_child_rule(style, &entry.rules)
+            });
         }
 
         if matched_index.is_none() {

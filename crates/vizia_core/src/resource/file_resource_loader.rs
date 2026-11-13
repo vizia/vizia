@@ -160,12 +160,12 @@ impl ResourceLoader for FileResourceLoader {
                                 .set_resource_status(req_path, LoadingStatus::Loaded);
                             return true;
                         }
-                        if is_likely_svg(&req_path, &data) {
-                            if cx.load_svg(req_name, &data, policy).is_some() {
-                                cx.resource_manager
-                                    .set_resource_status(req_path, LoadingStatus::Loaded);
-                                return true;
-                            }
+                        if is_likely_svg(&req_path, &data)
+                            && cx.load_svg(req_name, &data, policy).is_some()
+                        {
+                            cx.resource_manager
+                                .set_resource_status(req_path, LoadingStatus::Loaded);
+                            return true;
                         }
                     }
 
@@ -280,11 +280,11 @@ impl ResourceLoader for FileResourceLoader {
                     cx.resource_manager
                         .set_resource_status(req_path.clone(), LoadingStatus::Loading);
 
-                    if let Ok(data) = std::fs::read(&path) {
-                        if let Ok(ftl) = String::from_utf8(data) {
-                            cx.load_translation(lang, req_path, &ftl);
-                            return true;
-                        }
+                    if let Ok(data) = std::fs::read(&path)
+                        && let Ok(ftl) = String::from_utf8(data)
+                    {
+                        cx.load_translation(lang, req_path, &ftl);
+                        return true;
                     }
 
                     cx.resource_manager.set_resource_status(req_path, LoadingStatus::Error);
