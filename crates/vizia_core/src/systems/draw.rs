@@ -150,6 +150,7 @@ pub(crate) fn draw_system(
         raised: &mut raised,
         clipping_escapes: &mut clipping_escapes,
         next_order: &mut next_order,
+        escape_opacity: 1.0,
     };
     // With no dirty area nothing visible has changed, so the retained dirty surface is still
     // valid and only needs compositing. Surface recreation (e.g. on resize) always dirties the
@@ -168,14 +169,7 @@ pub(crate) fn draw_system(
         queue.raised.append(queue.clipping_escapes);
         queue.raised.pop()
     } {
-        canvas.save();
-        // A queued view is drawn from the top level, outside its ancestors' opacity layers, so
-        // it re-enters their product here, as CSS applies an ancestor's opacity to every descendant.
-        let ancestor_layer = (zentity.ancestor_opacity != 1.0).then(|| {
-            let mut paint = Paint::default();
-            paint.set_alpha_f(zentity.ancestor_opacity);
-            canvas.save_layer(&SaveLayerRec::default().paint(&paint))
-        });
+        let count = save_ancestor_opacity(canvas, zentity.ancestor_opacity);
         draw_entity(
             &mut DrawContext {
                 current: zentity.entity,
@@ -199,10 +193,7 @@ pub(crate) fn draw_system(
             zentity.ancestor_opacity,
             &zentity.parent,
         );
-        if let Some(count) = ancestor_layer {
-            canvas.restore_to_count(count);
-        }
-        canvas.restore();
+        canvas.restore_to_count(count);
     }
 
     canvas.restore();
@@ -257,6 +248,19 @@ pub(crate) fn draw_system(
     true
 }
 
+/// Saves the canvas and, for a queued view drawn outside some of its ancestors' opacity layers,
+/// re-enters the product of their opacities, as CSS applies an ancestor's opacity to every
+/// descendant. Returns the count to restore to once the view is drawn.
+fn save_ancestor_opacity(canvas: &Canvas, ancestor_opacity: f32) -> usize {
+    let count = canvas.save();
+    if ancestor_opacity != 1.0 {
+        let mut paint = Paint::default();
+        paint.set_alpha_f(ancestor_opacity);
+        canvas.save_layer(&SaveLayerRec::default().paint(&paint));
+    }
+    count
+}
+
 fn union_dirty_rect(dirty_rect: &mut Option<BoundingBox>, bounds: BoundingBox) {
     if bounds.w <= 0.0 || bounds.h <= 0.0 {
         return;
@@ -304,11 +308,12 @@ fn draw_entity(
     // explicitly escape ancestor clipping so a backdrop clip higher in the recursive draw cannot
     // accidentally constrain popovers and other overlays.
     if ancestor_backdrop_clip && !should_apply_entity_clip(cx.style, current) {
+        // Clip escapes drain with their owner, outside the layers opened below it.
         queue.defer_clipping_escape(
             current_z.max(z_index),
             current,
             visible,
-            ancestor_opacity,
+            queue.escape_opacity * ancestor_opacity,
             *parent,
         );
         return;
@@ -425,15 +430,29 @@ fn draw_entity(
     let child_iter = DrawChildIterator::new(cx.tree, cx.current);
     let descendants_are_backdrop_clipped = ancestor_backdrop_clip || backdrop_clip_count.is_some();
     let child_space = ParentSpace::new(transform, clip_bounds(cx.cache, current), dirty_rect);
-    let descendants_ancestor_opacity = ancestor_opacity * cx.opacity();
+    let opacity = ancestor_opacity * cx.opacity();
 
-    // An opacity group composites its complete image once, including raised descendants. Clip
-    // escapes have separate window-level ownership: a local drain cannot expand an active clip.
+    // An opacity group composites its complete image once, including raised descendants. A Skia
+    // clip cannot be widened while it is active, so only a group outside every backdrop clip also
+    // owns the clip escapes below it; a group inside one leaves them to an outer owner.
+    let owns_escapes = owns_opacity_queue && !ancestor_backdrop_clip;
     let mut group_raised = BinaryHeap::new();
+    let mut group_escapes = BinaryHeap::new();
+    let (raised, descendants_ancestor_opacity, escape_opacity) = if owns_opacity_queue {
+        let escape_opacity = if owns_escapes { 1.0 } else { queue.escape_opacity * opacity };
+        (&mut group_raised, 1.0, escape_opacity)
+    } else {
+        (&mut *queue.raised, opacity, queue.escape_opacity)
+    };
     let mut child_queue = DrawQueue {
-        raised: if owns_opacity_queue { &mut group_raised } else { queue.raised },
-        clipping_escapes: queue.clipping_escapes,
+        raised,
+        clipping_escapes: if owns_escapes {
+            &mut group_escapes
+        } else {
+            &mut *queue.clipping_escapes
+        },
         next_order: queue.next_order,
+        escape_opacity,
     };
 
     for child in child_iter {
@@ -453,9 +472,15 @@ fn draw_entity(
     }
 
     if owns_opacity_queue {
-        while let Some(zentity) = child_queue.raised.pop() {
+        while let Some(zentity) = {
+            if owns_escapes {
+                child_queue.raised.append(child_queue.clipping_escapes);
+            }
+            child_queue.raised.pop()
+        } {
             cx.current = zentity.entity;
-            canvas.save();
+            // This group's layer is still open, but layers between it and the view have closed.
+            let count = save_ancestor_opacity(canvas, zentity.ancestor_opacity);
             draw_entity(
                 cx,
                 dirty_rect,
@@ -467,7 +492,7 @@ fn draw_entity(
                 zentity.ancestor_opacity,
                 &zentity.parent,
             );
-            canvas.restore();
+            canvas.restore_to_count(count);
         }
     }
 
@@ -814,7 +839,7 @@ struct ZEntity {
     pub visible: bool,
     parent: ParentSpace,
     pub order: usize,
-    /// Ancestor alpha restored only by window-level replay; local drains retain their layers.
+    /// Ancestor alpha not supplied by the layers still open when the queue drains this view.
     pub ancestor_opacity: f32,
 }
 
@@ -822,6 +847,9 @@ struct DrawQueue<'a> {
     raised: &'a mut BinaryHeap<ZEntity>,
     clipping_escapes: &'a mut BinaryHeap<ZEntity>,
     next_order: &'a mut usize,
+    /// Alpha of the layers open between the owners of `clipping_escapes` and `raised`, which
+    /// escapes drain outside of.
+    escape_opacity: f32,
 }
 
 impl DrawQueue<'_> {
@@ -1254,6 +1282,100 @@ mod tests {
                 skia_safe::Color::from_argb(red_alpha, 255, 0, 0)
             );
         }
+    }
+
+    // A group outside a backdrop clip composites an escape from it once and keeps it beneath raised content.
+    #[test]
+    fn renderer_group_opacity_owns_clipping_escape_from_inner_backdrop() {
+        let mut cx = Context::new();
+        let group = renderer_rect(&mut cx, 0.0, 32.0, Color::transparent());
+        cx.style.opacity.insert(group, 0.5.into());
+        let backdrop =
+            cx.with_current(group, |cx| renderer_rect(cx, 0.0, 16.0, Color::transparent()));
+        cx.style.backdrop_filter.insert(backdrop, Filter::Blur(Length::px(0.0)));
+        cx.style.overflowx.insert(backdrop, Overflow::Hidden);
+        cx.style.overflowy.insert(backdrop, Overflow::Hidden);
+        cx.with_current(backdrop, |cx| {
+            let raised = renderer_rect(cx, 0.0, 24.0, Color::blue());
+            cx.style.z_index.insert(raised, 5);
+            let escape = renderer_rect(cx, 8.0, 16.0, Color::red());
+            cx.style.ignore_clipping.insert(escape, true);
+        });
+        let mut backend = renderer_backend(cx);
+        let (mut surface, mut dirty) = renderer_surfaces();
+        assert!(backend.draw(Entity::root(), &mut surface, &mut dirty));
+        let pixels = surface.peek_pixels().unwrap();
+        assert_eq!(pixels.get_color((4, 8)), skia_safe::Color::from_argb(128, 0, 0, 255));
+        assert_eq!(pixels.get_color((12, 8)), skia_safe::Color::from_argb(128, 0, 0, 255));
+        assert_eq!(pixels.get_color((20, 8)), skia_safe::Color::from_argb(128, 255, 0, 0));
+        assert_eq!(pixels.get_color((28, 8)), skia_safe::Color::TRANSPARENT);
+    }
+
+    // A raised child inherits the opacity of every ancestor between it and the group draining it.
+    #[test]
+    fn renderer_group_opacity_restores_closed_intermediate_opacity() {
+        for intermediate in ["filter", "backdrop", "blend"] {
+            let mut cx = Context::new();
+            let outer = renderer_rect(&mut cx, 0.0, 24.0, Color::transparent());
+            cx.style.opacity.insert(outer, 0.5.into());
+            let inner =
+                cx.with_current(outer, |cx| renderer_rect(cx, 0.0, 24.0, Color::transparent()));
+            cx.style.opacity.insert(inner, 0.5.into());
+            match intermediate {
+                "filter" => cx.style.filter.insert(inner, Filter::Blur(Length::px(0.0))),
+                "backdrop" => cx.style.backdrop_filter.insert(inner, Filter::Blur(Length::px(0.0))),
+                _ => cx.style.blend_mode.insert(inner, BlendMode::Multiply),
+            }
+            cx.with_current(inner, |cx| {
+                renderer_rect(cx, 0.0, 8.0, Color::red());
+                let raised = renderer_rect(cx, 8.0, 16.0, Color::blue());
+                cx.style.z_index.insert(raised, 5);
+            });
+            let mut backend = renderer_backend(cx);
+            let (mut surface, mut dirty) = renderer_surfaces();
+            assert!(backend.draw(Entity::root(), &mut surface, &mut dirty));
+            let pixels = surface.peek_pixels().unwrap();
+            assert_eq!(
+                pixels.get_color((4, 8)),
+                skia_safe::Color::from_argb(64, 255, 0, 0),
+                "{intermediate}"
+            );
+            assert_eq!(
+                pixels.get_color((12, 8)),
+                skia_safe::Color::from_argb(64, 0, 0, 255),
+                "{intermediate}"
+            );
+        }
+    }
+
+    // A clip escape below nested opacity groups inherits the opacity of each group once.
+    #[test]
+    fn renderer_group_opacity_applies_nested_group_opacity_to_clipping_escape() {
+        let mut cx = Context::new();
+        let outer = renderer_rect(&mut cx, 0.0, 32.0, Color::transparent());
+        cx.style.opacity.insert(outer, 0.5.into());
+        let backdrop =
+            cx.with_current(outer, |cx| renderer_rect(cx, 0.0, 16.0, Color::transparent()));
+        cx.style.backdrop_filter.insert(backdrop, Filter::Blur(Length::px(0.0)));
+        cx.style.overflowx.insert(backdrop, Overflow::Hidden);
+        cx.style.overflowy.insert(backdrop, Overflow::Hidden);
+        let inner =
+            cx.with_current(backdrop, |cx| renderer_rect(cx, 0.0, 32.0, Color::transparent()));
+        cx.style.opacity.insert(inner, 0.5.into());
+        let innermost =
+            cx.with_current(inner, |cx| renderer_rect(cx, 0.0, 32.0, Color::transparent()));
+        cx.style.opacity.insert(innermost, 0.5.into());
+        cx.with_current(innermost, |cx| {
+            renderer_rect(cx, 0.0, 8.0, Color::blue());
+            let escape = renderer_rect(cx, 24.0, 8.0, Color::red());
+            cx.style.ignore_clipping.insert(escape, true);
+        });
+        let mut backend = renderer_backend(cx);
+        let (mut surface, mut dirty) = renderer_surfaces();
+        assert!(backend.draw(Entity::root(), &mut surface, &mut dirty));
+        let pixels = surface.peek_pixels().unwrap();
+        assert_eq!(pixels.get_color((4, 8)), skia_safe::Color::from_argb(32, 0, 0, 255));
+        assert_eq!(pixels.get_color((28, 8)), skia_safe::Color::from_argb(32, 255, 0, 0));
     }
 
     // A z-lifted child under a half-opaque parent dims with it, as an un-lifted sibling does.
