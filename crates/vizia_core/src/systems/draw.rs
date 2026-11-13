@@ -143,15 +143,9 @@ pub(crate) fn draw_system(
 
     cx.resource_manager.mark_images_unused();
 
-    let mut raised = BinaryHeap::new();
-    let mut clipping_escapes = BinaryHeap::new();
-    let mut next_order = 0;
-    let mut queue = DrawQueue {
-        raised: &mut raised,
-        clipping_escapes: &mut clipping_escapes,
-        next_order: &mut next_order,
-        escape_opacity: 1.0,
-    };
+    let mut heaps = ZHeaps::default();
+    let mut order = ZOrder::default();
+    let mut queue = ZQueue::new(&mut heaps, &mut order);
     // With no dirty area nothing visible has changed, so the retained dirty surface is still
     // valid and only needs compositing. Surface recreation (e.g. on resize) always dirties the
     // whole window via `needs_refresh` or `needs_resize_redraw`.
@@ -159,17 +153,16 @@ pub(crate) fn draw_system(
         queue.defer_raised(
             0,
             window_entity,
-            true,
-            1.0,
-            ParentSpace::new(Matrix::new_identity(), None, &dirty_rect),
+            DeferredDraw {
+                visible: true,
+                ancestor_opacity: 1.0,
+                parent: ParentSpace::new(Matrix::new_identity(), None, &dirty_rect),
+            },
         );
     }
 
-    while let Some(zentity) = {
-        queue.raised.append(queue.clipping_escapes);
-        queue.raised.pop()
-    } {
-        let count = save_ancestor_opacity(canvas, zentity.ancestor_opacity);
+    while let Some(zentity) = queue.pop(true) {
+        let count = save_ancestor_opacity(canvas, zentity.state.ancestor_opacity);
         draw_entity(
             &mut DrawContext {
                 current: zentity.entity,
@@ -188,10 +181,11 @@ pub(crate) fn draw_system(
             canvas,
             zentity.index,
             &mut queue,
-            zentity.visible,
+            zentity.state.visible,
             false,
-            zentity.ancestor_opacity,
-            &zentity.parent,
+            zentity.state.ancestor_opacity,
+            1.0,
+            &zentity.state.parent,
         );
         canvas.restore_to_count(count);
     }
@@ -279,10 +273,11 @@ fn draw_entity(
     dirty_rect: &Option<BoundingBox>,
     canvas: &Canvas,
     current_z: i32,
-    queue: &mut DrawQueue<'_>,
+    queue: &mut ZQueue<'_, DeferredDraw>,
     visible: bool,
     ancestor_backdrop_clip: bool,
     ancestor_opacity: f32,
+    escape_opacity: f32,
     parent: &ParentSpace,
 ) {
     let current = cx.current;
@@ -302,26 +297,26 @@ fn draw_entity(
         }
     }
 
-    let z_index = cx.z_index();
-
-    // A Skia clip cannot be expanded until its saved canvas state is restored. Defer views which
-    // explicitly escape ancestor clipping so a backdrop clip higher in the recursive draw cannot
-    // accidentally constrain popovers and other overlays.
-    if ancestor_backdrop_clip && !should_apply_entity_clip(cx.style, current) {
-        // Clip escapes drain with their owner, outside the layers opened below it.
-        queue.defer_clipping_escape(
-            current_z.max(z_index),
-            current,
-            visible,
-            queue.escape_opacity * ancestor_opacity,
-            *parent,
-        );
-        return;
-    }
-
-    if z_index > current_z {
-        queue.defer_raised(z_index, current, visible, ancestor_opacity, *parent);
-        return;
+    match Stacking::of(cx.style, current, current_z, ancestor_backdrop_clip) {
+        Stacking::Inline => {}
+        Stacking::Raised(index) => {
+            queue.defer_raised(
+                index,
+                current,
+                DeferredDraw { visible, ancestor_opacity, parent: *parent },
+            );
+            return;
+        }
+        Stacking::ClippingEscape(index) => {
+            // Clip escapes drain with their owner, outside the layers opened below it.
+            let ancestor_opacity = escape_opacity * ancestor_opacity;
+            queue.defer_clipping_escape(
+                index,
+                current,
+                DeferredDraw { visible, ancestor_opacity, parent: *parent },
+            );
+            return;
+        }
     }
 
     let transform = match cx.cache.local_transform.get(current) {
@@ -332,10 +327,6 @@ fn draw_entity(
     let filter = cx.filter();
     let backdrop_filter = cx.backdrop_filter();
     let blend_mode = cx.style.blend_mode.get(current).copied().unwrap_or_default();
-    let owns_opacity_queue = cx.opacity() != 1.0
-        && filter.is_none()
-        && backdrop_filter.is_none()
-        && blend_mode == BlendMode::Normal;
 
     // Backdrop layers must be created inside the entity clip. Creating the
     // layer first allows image-filter output to bleed past rounded clips.
@@ -428,32 +419,19 @@ fn draw_entity(
         canvas.restore();
     }
     let child_iter = DrawChildIterator::new(cx.tree, cx.current);
-    let descendants_are_backdrop_clipped = ancestor_backdrop_clip || backdrop_clip_count.is_some();
     let child_space = ParentSpace::new(transform, clip_bounds(cx.cache, current), dirty_rect);
     let opacity = ancestor_opacity * cx.opacity();
 
-    // An opacity group composites its complete image once, including raised descendants. A Skia
-    // clip cannot be widened while it is active, so only a group outside every backdrop clip also
-    // owns the clip escapes below it; a group inside one leaves them to an outer owner.
-    let owns_escapes = owns_opacity_queue && !ancestor_backdrop_clip;
-    let mut group_raised = BinaryHeap::new();
-    let mut group_escapes = BinaryHeap::new();
-    let (raised, descendants_ancestor_opacity, escape_opacity) = if owns_opacity_queue {
-        let escape_opacity = if owns_escapes { 1.0 } else { queue.escape_opacity * opacity };
-        (&mut group_raised, 1.0, escape_opacity)
+    // An opacity group composites its complete image once, including raised descendants and the
+    // clip escapes it owns, so they inherit its opacity from its open layer.
+    let group = StackingGroup::of(cx.style, current, ancestor_backdrop_clip);
+    let (descendants_ancestor_opacity, descendants_escape_opacity) = if group.owns_raised {
+        (1.0, if group.owns_escapes { 1.0 } else { escape_opacity * opacity })
     } else {
-        (&mut *queue.raised, opacity, queue.escape_opacity)
+        (opacity, escape_opacity)
     };
-    let mut child_queue = DrawQueue {
-        raised,
-        clipping_escapes: if owns_escapes {
-            &mut group_escapes
-        } else {
-            &mut *queue.clipping_escapes
-        },
-        next_order: queue.next_order,
-        escape_opacity,
-    };
+    let mut group_heaps = queue.group_heaps(group);
+    let mut child_queue = queue.descend(group, &mut group_heaps);
 
     for child in child_iter {
         cx.current = child;
@@ -465,36 +443,34 @@ fn draw_entity(
             current_z,
             &mut child_queue,
             is_visible,
-            descendants_are_backdrop_clipped,
+            group.backdrop_clipped,
             descendants_ancestor_opacity,
+            descendants_escape_opacity,
             &child_space,
         );
     }
 
-    if owns_opacity_queue {
-        while let Some(zentity) = {
-            if owns_escapes {
-                child_queue.raised.append(child_queue.clipping_escapes);
-            }
-            child_queue.raised.pop()
-        } {
+    if group.owns_raised {
+        while let Some(zentity) = child_queue.pop(group.owns_escapes) {
             cx.current = zentity.entity;
             // This group's layer is still open, but layers between it and the view have closed.
-            let count = save_ancestor_opacity(canvas, zentity.ancestor_opacity);
+            let count = save_ancestor_opacity(canvas, zentity.state.ancestor_opacity);
             draw_entity(
                 cx,
                 dirty_rect,
                 canvas,
                 zentity.index,
                 &mut child_queue,
-                zentity.visible,
-                descendants_are_backdrop_clipped,
-                zentity.ancestor_opacity,
-                &zentity.parent,
+                zentity.state.visible,
+                group.backdrop_clipped,
+                zentity.state.ancestor_opacity,
+                descendants_escape_opacity,
+                &zentity.state.parent,
             );
             canvas.restore_to_count(count);
         }
     }
+    queue.recycle(group_heaps);
 
     cx.current = current;
 
@@ -833,81 +809,206 @@ impl ParentSpace {
     }
 }
 
-struct ZEntity {
+/// The state the draw of a deferred view resumes from.
+struct DeferredDraw {
+    visible: bool,
+    /// Ancestor alpha not supplied by the layers still open when the queue drains this view.
+    ancestor_opacity: f32,
+    parent: ParentSpace,
+}
+
+/// Where the stacking order places a view reached at `current_z`. Drawing and hit testing both
+/// follow it, so the topmost view hit is the topmost view painted.
+pub(crate) enum Stacking {
+    /// The view is visited with its parent, in tree order.
+    Inline,
+    /// The view is deferred to the raised queue at its z-index.
+    Raised(i32),
+    /// The view is deferred to the clip escape queue, which its owner drains outside the backdrop
+    /// clips between them.
+    ClippingEscape(i32),
+}
+
+impl Stacking {
+    pub(crate) fn of(
+        style: &Style,
+        entity: Entity,
+        current_z: i32,
+        ancestor_backdrop_clip: bool,
+    ) -> Self {
+        let z_index = style.z_index.get(entity).copied().unwrap_or_default();
+
+        // A Skia clip cannot be expanded until its saved canvas state is restored. Defer views
+        // which explicitly escape ancestor clipping so a backdrop clip higher in the recursive draw
+        // cannot accidentally constrain popovers and other overlays.
+        if ancestor_backdrop_clip && !should_apply_entity_clip(style, entity) {
+            Stacking::ClippingEscape(current_z.max(z_index))
+        } else if z_index > current_z {
+            Stacking::Raised(z_index)
+        } else {
+            Stacking::Inline
+        }
+    }
+}
+
+/// The queues the descendants of a view visited inline are deferred to.
+#[derive(Clone, Copy)]
+pub(crate) struct StackingGroup {
+    /// The view is an opacity group, which composites its raised descendants itself.
+    pub owns_raised: bool,
+    /// The view also owns the clip escapes below it. A Skia clip cannot be widened while it is
+    /// active, so only a group outside every backdrop clip owns them; a group inside one leaves
+    /// them to an outer owner.
+    pub owns_escapes: bool,
+    /// The descendants are drawn inside a backdrop clip.
+    pub backdrop_clipped: bool,
+}
+
+impl StackingGroup {
+    pub(crate) fn of(style: &Style, entity: Entity, ancestor_backdrop_clip: bool) -> Self {
+        let opacity = style
+            .opacity
+            .get_resolved(entity, &style.custom_opacity_props)
+            .unwrap_or(Opacity(1.0))
+            .0;
+        let backdrop_filter = style.backdrop_filter.get(entity).is_some();
+        let owns_raised = opacity != 1.0
+            && style.filter.get(entity).is_none()
+            && !backdrop_filter
+            && style.blend_mode.get(entity).copied().unwrap_or_default() == BlendMode::Normal;
+
+        StackingGroup {
+            owns_raised,
+            owns_escapes: owns_raised && !ancestor_backdrop_clip,
+            backdrop_clipped: ancestor_backdrop_clip || backdrop_filter,
+        }
+    }
+}
+
+/// A view deferred to a z-order queue, with the state its traversal resumes from.
+pub(crate) struct ZEntity<T> {
     pub index: i32,
     pub entity: Entity,
-    pub visible: bool,
-    parent: ParentSpace,
-    pub order: usize,
-    /// Ancestor alpha not supplied by the layers still open when the queue drains this view.
-    pub ancestor_opacity: f32,
+    order: usize,
+    pub state: T,
 }
 
-struct DrawQueue<'a> {
-    raised: &'a mut BinaryHeap<ZEntity>,
-    clipping_escapes: &'a mut BinaryHeap<ZEntity>,
-    next_order: &'a mut usize,
-    /// Alpha of the layers open between the owners of `clipping_escapes` and `raised`, which
-    /// escapes drain outside of.
-    escape_opacity: f32,
+/// The heaps of the z-order queues owned by a window or an opacity group.
+pub(crate) struct ZHeaps<T> {
+    raised: BinaryHeap<ZEntity<T>>,
+    clipping_escapes: BinaryHeap<ZEntity<T>>,
 }
 
-impl DrawQueue<'_> {
-    fn entry(
-        &mut self,
-        index: i32,
-        entity: Entity,
-        visible: bool,
-        ancestor_opacity: f32,
-        parent: ParentSpace,
-    ) -> ZEntity {
-        let order = *self.next_order;
-        *self.next_order += 1;
-        ZEntity { index, entity, visible, parent, order, ancestor_opacity }
+impl<T> Default for ZHeaps<T> {
+    fn default() -> Self {
+        Self { raised: BinaryHeap::new(), clipping_escapes: BinaryHeap::new() }
+    }
+}
+
+/// The state shared by every z-order queue of one traversal.
+pub(crate) struct ZOrder<T> {
+    /// The tree order of the next deferred view, which orders views with equal z-indices.
+    next_order: usize,
+    /// Drained group heaps, which later groups reuse instead of allocating their own.
+    spare: Vec<ZHeaps<T>>,
+}
+
+impl<T> Default for ZOrder<T> {
+    fn default() -> Self {
+        Self { next_order: 0, spare: Vec::new() }
+    }
+}
+
+/// The z-order queues a view defers its raised descendants and clip escapes to.
+pub(crate) struct ZQueue<'a, T> {
+    raised: &'a mut BinaryHeap<ZEntity<T>>,
+    clipping_escapes: &'a mut BinaryHeap<ZEntity<T>>,
+    order: &'a mut ZOrder<T>,
+}
+
+impl<'a, T> ZQueue<'a, T> {
+    pub(crate) fn new(heaps: &'a mut ZHeaps<T>, order: &'a mut ZOrder<T>) -> Self {
+        Self { raised: &mut heaps.raised, clipping_escapes: &mut heaps.clipping_escapes, order }
     }
 
-    fn defer_raised(
-        &mut self,
-        index: i32,
-        entity: Entity,
-        visible: bool,
-        ancestor_opacity: f32,
-        parent: ParentSpace,
-    ) {
-        let entry = self.entry(index, entity, visible, ancestor_opacity, parent);
+    fn entry(&mut self, index: i32, entity: Entity, state: T) -> ZEntity<T> {
+        let order = self.order.next_order;
+        self.order.next_order += 1;
+        ZEntity { index, entity, order, state }
+    }
+
+    /// Returns the heaps for the queues a view in `group` owns, reusing those of a drained group.
+    pub(crate) fn group_heaps(&mut self, group: StackingGroup) -> ZHeaps<T> {
+        if group.owns_raised {
+            self.order.spare.pop().unwrap_or_default()
+        } else {
+            ZHeaps::default()
+        }
+    }
+
+    /// Keeps the heaps of a drained group for reuse.
+    pub(crate) fn recycle(&mut self, heaps: ZHeaps<T>) {
+        debug_assert!(heaps.raised.is_empty() && heaps.clipping_escapes.is_empty());
+        if heaps.raised.capacity() > 0 || heaps.clipping_escapes.capacity() > 0 {
+            self.order.spare.push(heaps);
+        }
+    }
+
+    pub(crate) fn defer_raised(&mut self, index: i32, entity: Entity, state: T) {
+        let entry = self.entry(index, entity, state);
         self.raised.push(entry);
     }
 
-    fn defer_clipping_escape(
-        &mut self,
-        index: i32,
-        entity: Entity,
-        visible: bool,
-        ancestor_opacity: f32,
-        parent: ParentSpace,
-    ) {
-        let entry = self.entry(index, entity, visible, ancestor_opacity, parent);
+    pub(crate) fn defer_clipping_escape(&mut self, index: i32, entity: Entity, state: T) {
+        let entry = self.entry(index, entity, state);
         self.clipping_escapes.push(entry);
+    }
+
+    /// Returns the queues the descendants of a view in `group` are deferred to, taking those the
+    /// view owns from `heaps`.
+    pub(crate) fn descend<'b>(
+        &'b mut self,
+        group: StackingGroup,
+        heaps: &'b mut ZHeaps<T>,
+    ) -> ZQueue<'b, T> {
+        ZQueue {
+            raised: if group.owns_raised { &mut heaps.raised } else { &mut *self.raised },
+            clipping_escapes: if group.owns_escapes {
+                &mut heaps.clipping_escapes
+            } else {
+                &mut *self.clipping_escapes
+            },
+            order: &mut *self.order,
+        }
+    }
+
+    /// Pops the next view for the owner of the raised queue to visit, including the clip escapes
+    /// if it owns them too.
+    pub(crate) fn pop(&mut self, owns_escapes: bool) -> Option<ZEntity<T>> {
+        if owns_escapes {
+            self.raised.append(self.clipping_escapes);
+        }
+        self.raised.pop()
     }
 }
 
-impl Ord for ZEntity {
+impl<T> Ord for ZEntity<T> {
     fn cmp(&self, other: &Self) -> Ordering {
         other.index.cmp(&self.index).then_with(|| other.order.cmp(&self.order))
     }
 }
-impl PartialOrd for ZEntity {
+impl<T> PartialOrd for ZEntity<T> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
-impl PartialEq for ZEntity {
+impl<T> PartialEq for ZEntity<T> {
     fn eq(&self, other: &Self) -> bool {
         self.index == other.index && self.order == other.order
     }
 }
 
-impl Eq for ZEntity {}
+impl<T> Eq for ZEntity<T> {}
 
 #[cfg(test)]
 mod tests {
