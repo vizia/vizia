@@ -259,6 +259,39 @@ pub struct ArcTrack {
     mode: KnobMode,
 }
 
+/// The angle a centred arc is anchored at: twelve o'clock.
+const CENTER_ANGLE: f32 = -90.0;
+
+/// The start angle and the sweep of the active (filled) arc, in degrees.
+///
+/// `PathBuilder::arc_to` takes a *sweep* — a signed delta from the start angle — not an absolute
+/// end angle.
+///
+/// A centred arc is bipolar: the fill grows outwards from [`CENTER_ANGLE`] in the direction of the
+/// value. The upper half therefore runs from the centre to the value's angle, and the lower half
+/// runs from the value's angle up to the centre, so both halves meet at the centre with no fill
+/// when the value is 0.5.
+///
+/// Passing an absolute angle where a sweep is expected draws a wildly wrong arc: the lower half of
+/// a centred track used to be drawn with the value's own angle as its sweep, and from the track's
+/// start angle, so a quarter of the way along the track drew a sweep of the value's absolute angle
+/// instead of the distance from the value's angle to the centre.
+fn active_arc(center: bool, angle_start: f32, angle_end: f32, value: f32) -> (f32, f32) {
+    if center {
+        if value <= 0.5 {
+            // The value's own angle on the lower half, and the sweep from it up to the centre.
+            let current = value * 2.0 * (CENTER_ANGLE - angle_start) + angle_start;
+            (current, CENTER_ANGLE - current)
+        } else {
+            let current = (value * 2.0 - 1.0) * (angle_end - CENTER_ANGLE);
+            (CENTER_ANGLE, current)
+        }
+    } else {
+        let current = value * (angle_end - angle_start) + angle_start;
+        (angle_start, current - angle_start)
+    }
+}
+
 impl ArcTrack {
     /// Creates a new [ArcTrack] view.
     pub fn new(
@@ -335,20 +368,7 @@ impl View for ArcTrack {
             }
         };
 
-        let (active_start, active_sweep) = if self.center {
-            let center = -90.0;
-
-            if value <= 0.5 {
-                let current = value * 2.0 * (center - start) + start;
-                (start, current)
-            } else {
-                let current = (value * 2.0 - 1.0) * (end - center);
-                (center, current)
-            }
-        } else {
-            let current = value * (end - start) + start;
-            (start, current - start)
-        };
+        let (active_start, active_sweep) = active_arc(self.center, start, end, value);
 
         let mut paint = vg::Paint::default();
         paint.set_color(foreground_color);
@@ -586,5 +606,63 @@ impl Handle<'_, TickKnob> {
             }
         });
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{CENTER_ANGLE, active_arc};
+
+    /// A 300 degree track centred on twelve o'clock, as a bipolar dial uses.
+    const START: f32 = -240.0;
+    const END: f32 = 60.0;
+
+    #[test]
+    fn the_lower_half_of_a_centred_arc_sweeps_up_to_the_centre() {
+        // A quarter of the way along the lower half sits 165 degrees round, and the fill runs
+        // from there up to the centre: 75 degrees of the 150 degree half.
+        let (start, sweep) = active_arc(true, START, END, 0.25);
+        assert!((start - (-165.0)).abs() < 1e-3, "start was {start}");
+        assert!((sweep - 75.0).abs() < 1e-3, "sweep was {sweep}");
+    }
+
+    #[test]
+    fn the_upper_half_of_a_centred_arc_sweeps_from_the_centre() {
+        let (start, sweep) = active_arc(true, START, END, 0.75);
+        assert_eq!(start, CENTER_ANGLE);
+        assert!((sweep - 75.0).abs() < 1e-3, "sweep was {sweep}");
+    }
+
+    #[test]
+    fn a_centred_arc_is_symmetric_about_the_centre() {
+        let (_, lower) = active_arc(true, START, END, 0.25);
+        let (_, upper) = active_arc(true, START, END, 0.75);
+        assert!(
+            (lower - upper).abs() < 1e-3,
+            "lower half swept {lower} but upper half swept {upper}"
+        );
+    }
+
+    #[test]
+    fn the_centre_of_a_centred_arc_draws_nothing() {
+        let (_, sweep) = active_arc(true, START, END, 0.5);
+        assert!(sweep.abs() < 1e-3, "sweep was {sweep}");
+    }
+
+    #[test]
+    fn a_centred_arc_reaches_both_ends_of_the_track() {
+        // At the low end the whole lower half is filled, from the track's start to the centre.
+        let (start, lower) = active_arc(true, START, END, 0.0);
+        assert!((start - START).abs() < 1e-3, "start was {start}");
+        assert!((lower - 150.0).abs() < 1e-3, "sweep was {lower}");
+        let (_, upper) = active_arc(true, START, END, 1.0);
+        assert!((upper - 150.0).abs() < 1e-3, "sweep was {upper}");
+    }
+
+    #[test]
+    fn a_track_that_is_not_centred_sweeps_from_its_start() {
+        let (start, sweep) = active_arc(false, START, END, 0.5);
+        assert_eq!(start, START);
+        assert!((sweep - 150.0).abs() < 1e-3, "sweep was {sweep}");
     }
 }
