@@ -86,7 +86,7 @@ pub struct EventContext<'a> {
     pub(crate) next_event_id: &'a mut usize,
     pub(crate) timers: &'a mut Vec<TimerState>,
     pub(crate) running_timers: &'a mut BinaryHeap<TimerState>,
-    cursor_icon_locked: &'a mut bool,
+    cursor_icon_locked_by: &'a mut Option<Entity>,
     #[cfg(feature = "clipboard")]
     clipboards: &'a mut HashMap<Entity, Box<dyn ClipboardProvider>>,
     pub(crate) event_proxy: &'a mut Option<Box<dyn crate::context::EventProxy>>,
@@ -124,7 +124,7 @@ impl<'a> EventContext<'a> {
             next_event_id: &mut cx.next_event_id,
             timers: &mut cx.timers,
             running_timers: &mut cx.running_timers,
-            cursor_icon_locked: &mut cx.cursor_icon_locked,
+            cursor_icon_locked_by: &mut cx.cursor_icon_locked_by,
             #[cfg(feature = "clipboard")]
             clipboards: &mut cx.clipboards,
             event_proxy: &mut cx.event_proxy,
@@ -162,7 +162,7 @@ impl<'a> EventContext<'a> {
             next_event_id: &mut cx.next_event_id,
             timers: &mut cx.timers,
             running_timers: &mut cx.running_timers,
-            cursor_icon_locked: &mut cx.cursor_icon_locked,
+            cursor_icon_locked_by: &mut cx.cursor_icon_locked_by,
             #[cfg(feature = "clipboard")]
             clipboards: &mut cx.clipboards,
             event_proxy: &mut cx.event_proxy,
@@ -706,13 +706,21 @@ impl<'a> EventContext<'a> {
     //
 
     /// Prevents the cursor icon from changing until the lock is released.
+    ///
+    /// The current view holds the lock until it calls [`unlock_cursor_icon`](Self::unlock_cursor_icon)
+    /// or is removed.
     pub fn lock_cursor_icon(&mut self) {
-        *self.cursor_icon_locked = true;
+        *self.cursor_icon_locked_by = Some(self.current);
     }
 
-    /// Releases any cursor icon lock, allowing the cursor icon to be changed.
+    /// Releases the cursor icon lock held by the current view, allowing the cursor icon to be changed.
+    ///
+    /// Does nothing while a different view holds the lock.
     pub fn unlock_cursor_icon(&mut self) {
-        *self.cursor_icon_locked = false;
+        if self.cursor_icon_locked_by.is_some_and(|holder| holder != self.current) {
+            return;
+        }
+        *self.cursor_icon_locked_by = None;
         let hovered = *self.hovered;
         let cursor = self.style.cursor.get(hovered).cloned().unwrap_or_default();
         self.emit(WindowEvent::SetCursor(cursor));
@@ -720,7 +728,7 @@ impl<'a> EventContext<'a> {
 
     /// Returns true if the cursor icon is locked.
     pub fn is_cursor_icon_locked(&self) -> bool {
-        *self.cursor_icon_locked
+        self.cursor_icon_locked_by.is_some()
     }
 
     /// Sets the drop data of the current view.

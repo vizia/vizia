@@ -178,7 +178,7 @@ pub struct Context {
     pub(crate) drag_hovered: Entity,
     pub(crate) focused: Entity,
     pub(crate) focus_stack: Vec<Entity>,
-    pub(crate) cursor_icon_locked: bool,
+    pub(crate) cursor_icon_locked_by: Option<Entity>,
 
     pub(crate) resource_manager: ResourceManager,
 
@@ -250,7 +250,7 @@ impl Context {
             drag_hovered: Entity::null(),
             focused: Entity::root(),
             focus_stack: Vec::new(),
-            cursor_icon_locked: false,
+            cursor_icon_locked_by: None,
             resource_manager: ResourceManager::new(),
             text_context: {
                 let mut font_collection = FontCollection::new();
@@ -591,6 +591,8 @@ impl Context {
             }
         }
 
+        let mut cursor_icon_lock_window = None;
+
         for entity in delete_list.iter().rev() {
             if let Some(mut view) = self.views.remove(entity) {
                 view.event(
@@ -675,6 +677,11 @@ impl Context {
                 ws.redraw_list.remove(entity);
             }
 
+            if self.cursor_icon_locked_by == Some(*entity) {
+                self.cursor_icon_locked_by = None;
+                cursor_icon_lock_window = Some(window_entity);
+            }
+
             self.cache.invalidate_draw_bounds(&self.tree, *entity);
 
             if self.windows.contains_key(entity) {
@@ -692,6 +699,14 @@ impl Context {
             self.text_context.text_bounds.remove(*entity);
             self.text_context.text_paragraphs.remove(*entity);
             self.entity_manager.destroy(*entity);
+        }
+
+        // Releasing the lock of a removed view refreshes the cursor icon as an unlock does.
+        if let Some(window) = cursor_icon_lock_window {
+            if self.windows.contains_key(&window) {
+                let cursor = self.style.cursor.get(self.hovered).cloned().unwrap_or_default();
+                self.with_current(window, |cx| cx.emit(WindowEvent::SetCursor(cursor)));
+            }
         }
     }
 
@@ -1648,5 +1663,82 @@ mod tests {
         assert_eq!(cx.listeners.len(), baseline + 1);
         cx.remove(replacement);
         assert_eq!(cx.listeners.len(), baseline);
+    }
+
+    fn lock_cursor_icon(cx: &mut Context, holder: Entity) {
+        EventContext::new_with_current(cx, holder).lock_cursor_icon();
+    }
+
+    fn unlock_cursor_icon(cx: &mut Context, caller: Entity) {
+        EventContext::new_with_current(cx, caller).unlock_cursor_icon();
+    }
+
+    fn is_cursor_icon_locked(cx: &mut Context) -> bool {
+        EventContext::new(cx).is_cursor_icon_locked()
+    }
+
+    fn flush_cursor_updates(cx: &mut Context) -> Vec<CursorIcon> {
+        let mut cursors = Vec::new();
+        EventManager::new().flush_events(cx, |window_event| {
+            if let WindowEvent::SetCursor(cursor) = window_event {
+                cursors.push(*cursor);
+            }
+        });
+        cursors
+    }
+
+    #[test]
+    fn removed_subtrees_release_their_cursor_icon_lock() {
+        let mut cx = context();
+        let hovered = Element::new(&mut cx).entity();
+        cx.style.cursor.insert(hovered, CursorIcon::Move);
+        cx.hovered = hovered;
+        for cycle in 0..4 {
+            let parent = Element::new(&mut cx).entity();
+            let holder = cx.with_current(parent, |cx| Element::new(cx).entity());
+            lock_cursor_icon(&mut cx, holder);
+            assert!(is_cursor_icon_locked(&mut cx));
+            assert!(flush_cursor_updates(&mut cx).is_empty());
+            cx.remove(parent);
+            assert!(
+                !is_cursor_icon_locked(&mut cx),
+                "cycle {cycle} releases the removed holder's lock"
+            );
+            assert_eq!(flush_cursor_updates(&mut cx), vec![CursorIcon::Move]);
+        }
+    }
+
+    #[test]
+    fn cursor_icon_lock_belongs_to_its_living_holder() {
+        let mut cx = context();
+        let holder = Element::new(&mut cx).entity();
+        let bystander = Element::new(&mut cx).entity();
+        let removed = Element::new(&mut cx).entity();
+        cx.with_current(removed, |cx| Element::new(cx).entity());
+        lock_cursor_icon(&mut cx, holder);
+        cx.remove(removed);
+        assert!(is_cursor_icon_locked(&mut cx), "removing an unrelated subtree keeps the lock");
+        assert!(flush_cursor_updates(&mut cx).is_empty());
+        unlock_cursor_icon(&mut cx, bystander);
+        assert!(is_cursor_icon_locked(&mut cx), "only the holder releases its lock");
+        assert!(flush_cursor_updates(&mut cx).is_empty());
+        unlock_cursor_icon(&mut cx, holder);
+        assert!(!is_cursor_icon_locked(&mut cx));
+        assert_eq!(flush_cursor_updates(&mut cx), vec![CursorIcon::Default]);
+        cx.remove(holder);
+        assert!(flush_cursor_updates(&mut cx).is_empty());
+    }
+
+    #[test]
+    fn removed_windows_release_their_cursor_icon_lock_without_a_cursor_update() {
+        let mut cx = context();
+        let window = Element::new(&mut cx).entity();
+        cx.tree.set_window(window, true);
+        cx.windows.insert(window, WindowState::default());
+        let holder = cx.with_current(window, |cx| Element::new(cx).entity());
+        lock_cursor_icon(&mut cx, holder);
+        cx.remove(window);
+        assert!(!is_cursor_icon_locked(&mut cx));
+        assert!(flush_cursor_updates(&mut cx).is_empty(), "a removed window gets no cursor update");
     }
 }

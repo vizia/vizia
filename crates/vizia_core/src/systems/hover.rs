@@ -100,7 +100,7 @@ pub fn hover_system(cx: &mut Context, window_entity: Entity) {
 
         let cursor = cx.style.cursor.get(hovered).cloned().unwrap_or_default();
 
-        if !cx.cursor_icon_locked {
+        if cx.cursor_icon_locked_by.is_none() {
             cx.emit(WindowEvent::SetCursor(cursor));
         }
 
