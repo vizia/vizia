@@ -926,7 +926,7 @@ impl View for VirtualList {
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
-                } else {
+                } else if num_items > 0 {
                     focused = Some(0);
                     moved_focus = true;
                     if self.selection_follows_focus.get() {
@@ -955,7 +955,7 @@ impl View for VirtualList {
                             cx.emit(ListEvent::SelectFocused);
                         }
                     }
-                } else {
+                } else if num_items > 0 {
                     focused = Some(num_items.saturating_sub(1));
                     moved_focus = true;
                     if self.selection_follows_focus.get() {
@@ -1346,5 +1346,63 @@ mod tests {
         let selection = BTreeSet::new();
 
         assert_eq!(focus_index_on_focus_in(&selection, 5, true), Some(0));
+    }
+
+    /// Sends `events` to a fresh list of `num_items` items and returns the indices passed to
+    /// `on_focus` and `on_select`, in order.
+    fn focus_and_select_callbacks(
+        num_items: u32,
+        events: impl IntoIterator<Item = ListEvent>,
+    ) -> (Vec<usize>, Vec<usize>) {
+        use crate::context::WindowState;
+        use crate::events::EventManager;
+        use std::{cell::RefCell, rc::Rc};
+
+        let mut cx = Context::default();
+        cx.windows.insert(Entity::root(), WindowState::default());
+        let focused = Rc::new(RefCell::new(Vec::new()));
+        let selected = Rc::new(RefCell::new(Vec::new()));
+        let (focused_in, selected_in) = (focused.clone(), selected.clone());
+
+        let list = Signal::new((0..num_items).collect::<Vec<_>>());
+        let list_entity = VirtualList::new(&mut cx, list, 24.0, |cx, _, item| Label::new(cx, item))
+            .on_focus(move |_, index| focused_in.borrow_mut().push(index))
+            .on_select(move |_, index| selected_in.borrow_mut().push(index))
+            .selectable(Selectable::Single)
+            .selection_follows_focus(true)
+            .entity();
+
+        for event in events {
+            cx.emit_to(list_entity, event);
+            EventManager::new().flush_events(&mut cx, |_| {});
+        }
+
+        (focused.take(), selected.take())
+    }
+
+    #[test]
+    fn focus_next_on_an_empty_list_focuses_nothing() {
+        assert_eq!(focus_and_select_callbacks(0, [ListEvent::FocusNext]), (vec![], vec![]));
+    }
+
+    #[test]
+    fn focus_prev_on_an_empty_list_focuses_nothing() {
+        assert_eq!(focus_and_select_callbacks(0, [ListEvent::FocusPrev]), (vec![], vec![]));
+    }
+
+    #[test]
+    fn focus_next_without_focus_starts_at_the_first_item() {
+        assert_eq!(
+            focus_and_select_callbacks(3, [ListEvent::FocusNext, ListEvent::FocusNext]),
+            (vec![0, 1], vec![0, 1])
+        );
+    }
+
+    #[test]
+    fn focus_prev_without_focus_starts_at_the_last_item() {
+        assert_eq!(
+            focus_and_select_callbacks(3, [ListEvent::FocusPrev, ListEvent::FocusPrev]),
+            (vec![2, 1], vec![2, 1])
+        );
     }
 }
