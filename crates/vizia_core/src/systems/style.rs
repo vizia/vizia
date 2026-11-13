@@ -1289,39 +1289,19 @@ pub(crate) fn compute_matched_rules(
     matched_rules
 }
 
+// Two siblings can share matched rules only if every local input to selector matching is equal.
+// A missing element, class set or pseudo-class set is a value of its own: an entity without an
+// element does not match type selectors, and an entity without style data (such as a binding)
+// must not take on the rules matched by a sibling that has some.
 fn has_same_selector(style: &Style, entity1: Entity, entity2: Entity) -> bool {
-    if let Some(element1) = style.element.get(entity1) {
-        if let Some(element2) = style.element.get(entity2) {
-            if element1 != element2 {
-                return false;
-            };
-        }
-    }
-
     let id1 = if let Some(id) = style.ids.get(entity1) { id } else { "" };
     let id2 = if let Some(id) = style.ids.get(entity2) { id } else { "" };
 
-    if id1 != id2 {
-        return false;
-    }
-
-    if let Some(classes1) = style.classes.get(entity1) {
-        if let Some(classes2) = style.classes.get(entity2) {
-            if !classes2.is_subset(classes1) || !classes1.is_subset(classes2) {
-                return false;
-            }
-        }
-    }
-
-    if let Some(psudeo_class_flag1) = style.pseudo_classes.get(entity1) {
-        if let Some(psudeo_class_flag2) = style.pseudo_classes.get(entity2) {
-            if psudeo_class_flag2.bits() != psudeo_class_flag1.bits() {
-                return false;
-            }
-        }
-    }
-
-    true
+    style.element.get(entity1) == style.element.get(entity2)
+        && id1 == id2
+        && style.classes.get(entity1) == style.classes.get(entity2)
+        && style.pseudo_classes.get(entity1).map(|flags| flags.bits())
+            == style.pseudo_classes.get(entity2).map(|flags| flags.bits())
 }
 
 fn has_nth_child_rule(style: &Style, rules: &[(Rule, u32)]) -> bool {
@@ -1998,5 +1978,71 @@ mod tests {
         assert!(cx.style.restyle.is_empty());
         style_system(&mut cx);
         assert_eq!(cx.style.direction.get(entity).copied(), direction);
+    }
+
+    #[test]
+    fn binding_does_not_share_the_matched_rules_of_a_classed_sibling() {
+        let mut cx = Context::default();
+        // A positional rule (the default theme has several) restyles the siblings of new
+        // entities, which brings the binding itself into rule matching.
+        cx.add_stylesheet(
+            ".icon { opacity: 0.82; }
+             .icon:hover { opacity: 1; }
+             .unused:first-child { width: 1px; }",
+        )
+        .unwrap();
+        let signal = Signal::new(0);
+        let parent = Element::new(&mut cx).entity();
+        let mut icon = Entity::null();
+        cx.with_current(parent, |cx| {
+            icon = Element::new(cx).class("icon").entity();
+            Binding::new(cx, signal, |cx| {
+                Label::new(cx, "content");
+            });
+            Element::new(cx);
+        });
+        let binding = cx.tree.get_child(parent, 1).unwrap();
+        assert!(cx.tree.is_ignored(binding));
+
+        style_system(&mut cx);
+        assert_eq!(cx.style.opacity.get(icon), Some(&Opacity(0.82)));
+        assert_eq!(cx.style.opacity.get(binding), None);
+
+        cx.set_pseudo_class(icon, PseudoClassFlags::HOVER, true);
+        style_system(&mut cx);
+        assert_eq!(cx.style.opacity.get(icon), Some(&Opacity(1.0)));
+        assert_eq!(cx.style.opacity.get(binding), None);
+    }
+
+    #[test]
+    fn view_without_an_element_does_not_share_an_element_selector_of_its_sibling() {
+        let mut cx = Context::default();
+        cx.add_stylesheet("label.icon { opacity: 0.5; }").unwrap();
+        let parent = Element::new(&mut cx).entity();
+        let mut unnamed = Entity::null();
+        cx.with_current(parent, |cx| {
+            Label::new(cx, "icon").class("icon");
+            unnamed = Unnamed.build(cx, |_| {}).class("icon").entity();
+            Element::new(cx);
+        });
+
+        style_system(&mut cx);
+        assert_eq!(cx.style.opacity.get(unnamed), None);
+    }
+
+    #[test]
+    fn element_selector_applies_to_a_view_after_a_sibling_without_an_element() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".icon { width: 10px; } label.icon { opacity: 0.5; }").unwrap();
+        let parent = Element::new(&mut cx).entity();
+        let mut label = Entity::null();
+        cx.with_current(parent, |cx| {
+            Unnamed.build(cx, |_| {}).class("icon");
+            label = Label::new(cx, "icon").class("icon").entity();
+            Element::new(cx);
+        });
+
+        style_system(&mut cx);
+        assert_eq!(cx.style.opacity.get(label), Some(&Opacity(0.5)));
     }
 }
