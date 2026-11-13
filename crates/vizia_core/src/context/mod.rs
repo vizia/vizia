@@ -688,6 +688,7 @@ impl Context {
             self.style.remove(*entity);
             self.models.remove(entity);
             self.views.remove(entity);
+            self.listeners.remove(entity);
             self.text_context.text_bounds.remove(*entity);
             self.text_context.text_paragraphs.remove(*entity);
             self.entity_manager.destroy(*entity);
@@ -1565,5 +1566,87 @@ impl EmitContext for Context {
     fn cancel_scheduled(&mut self, handle: TimedEventHandle) {
         self.event_schedule =
             self.event_schedule.drain().filter(|item| item.ident != handle).collect();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::events::EventManager;
+
+    fn context() -> Context {
+        let mut cx = Context::new();
+        cx.windows.insert(Entity::root(), WindowState::default());
+        cx.cache.set_bounds(Entity::root(), BoundingBox { x: 0.0, y: 0.0, w: 400.0, h: 400.0 });
+        cx
+    }
+
+    #[test]
+    fn removed_subtrees_release_typed_listeners_and_preserve_survivors() {
+        let mut cx = context();
+        let deliveries = Rc::new(std::cell::Cell::new(0));
+        let survivor = Element::new(&mut cx).entity();
+        cx.with_current(survivor, |cx| {
+            let deliveries = deliveries.clone();
+            cx.add_listener(move |_: &mut Element, _, event| {
+                event.map(|_: &u32, _| deliveries.set(deliveries.get() + 1));
+            });
+        });
+        let baseline = cx.listeners.len();
+        for cycle in 0..16 {
+            let parent = Element::new(&mut cx).entity();
+            let child = cx.with_current(parent, |cx| Element::new(cx).entity());
+            for owner in [parent, child] {
+                cx.with_current(owner, |cx| cx.add_listener(|_: &mut Element, _, _| {}));
+            }
+            assert_eq!(cx.listeners.len(), baseline + 2);
+            cx.remove(parent);
+            assert_eq!(cx.listeners.len(), baseline, "cycle {cycle} retains only living owners");
+            assert!(!cx.listeners.contains_key(&parent));
+            assert!(!cx.listeners.contains_key(&child));
+            cx.emit_to(Entity::root(), cycle as u32);
+            EventManager::new().flush_events(&mut cx, |_| {});
+            assert_eq!(deliveries.get(), cycle + 1);
+            assert!(cx.listeners.contains_key(&survivor));
+        }
+    }
+
+    #[test]
+    fn recycled_entities_own_only_their_current_typed_listener() {
+        let mut cx = context();
+        let baseline = cx.listeners.len();
+        let removed_deliveries = Rc::new(std::cell::Cell::new(0));
+        let removed = Element::new(&mut cx).entity();
+        cx.with_current(removed, |cx| {
+            let deliveries = removed_deliveries.clone();
+            cx.add_listener(move |_: &mut Element, _, event| {
+                event.map(|_: &u32, _| deliveries.set(deliveries.get() + 1));
+            });
+        });
+        cx.remove(removed);
+        let replacement = loop {
+            let candidate = Element::new(&mut cx).entity();
+            if candidate.index() == removed.index() {
+                break candidate;
+            }
+            cx.remove(candidate);
+        };
+        assert_ne!(replacement.generation(), removed.generation());
+        let deliveries = Rc::new(std::cell::Cell::new(0));
+        cx.with_current(replacement, |cx| {
+            let deliveries = deliveries.clone();
+            cx.add_listener(move |_: &mut Element, _, event| {
+                event.map(|_: &u32, _| deliveries.set(deliveries.get() + 1));
+            });
+        });
+        cx.emit_to(Entity::root(), 7_u32);
+        EventManager::new().flush_events(&mut cx, |_| {});
+        assert_eq!(deliveries.get(), 1);
+        assert_eq!(removed_deliveries.get(), 0);
+        assert!(!cx.listeners.contains_key(&removed), "destroyed generation releases its listener");
+        assert!(cx.listeners.contains_key(&replacement));
+        assert_eq!(cx.listeners.len(), baseline + 1);
+        cx.remove(replacement);
+        assert_eq!(cx.listeners.len(), baseline);
     }
 }
