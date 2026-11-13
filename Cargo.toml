@@ -41,7 +41,7 @@ serde.workspace = true
 serde_json = "1"
 
 [workspace]
-members = ["crates/*"]
+members = ["crates/*", "examples/todo", "examples/widget_gallery", "examples/gallery"]
 
 [workspace.package]
 version = "0.5.0"
