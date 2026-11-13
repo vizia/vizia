@@ -4,7 +4,7 @@ use dashmap::{DashMap, ReadOnlyView};
 use hashbrown::{HashMap, HashSet};
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
-use vizia_storage::{LayoutChildIterator, LayoutParentIterator, TreeIterator};
+use vizia_storage::{LayoutChildIterator, LayoutParentIterator, LayoutTreeIterator, TreeIterator};
 use vizia_style::{
     Element, MatchingContext, MatchingMode, PseudoClass, QuirksMode, SelectorIdent, Selectors,
     matches_selector,
@@ -421,9 +421,10 @@ impl Node<'_, '_> {
     }
 }
 
-/// Iterates the entities in the subtrees of the given roots, parents before children.
+/// Iterates the entities in the subtrees of the given roots, parents before children, skipping
+/// ignored entities such as bindings.
 fn subtrees<'a>(tree: &'a Tree<Entity>, roots: &'a [Entity]) -> impl Iterator<Item = Entity> + 'a {
-    roots.iter().flat_map(move |root| TreeIterator::subtree(tree, *root))
+    roots.iter().flat_map(move |root| LayoutTreeIterator::subtree(tree, *root))
 }
 
 fn inheritance_roots(
@@ -1291,8 +1292,8 @@ pub(crate) fn compute_matched_rules(
 
 // Two siblings can share matched rules only if every local input to selector matching is equal.
 // A missing element, class set or pseudo-class set is a value of its own: an entity without an
-// element does not match type selectors, and an entity without style data (such as a binding)
-// must not take on the rules matched by a sibling that has some.
+// element does not match type selectors, and an entity without style data must not take on the
+// rules matched by a sibling that has some.
 fn has_same_selector(style: &Style, entity1: Entity, entity2: Entity) -> bool {
     let id1 = if let Some(id) = style.ids.get(entity1) { id } else { "" };
     let id2 = if let Some(id) = style.ids.get(entity2) { id } else { "" };
@@ -1477,9 +1478,12 @@ pub(crate) fn style_system(cx: &mut Context) {
 
     let root = Entity::root();
     let mut restyle = cx.style.take_restyle();
+    // Ignored entities, such as bindings, are skipped by styling as they are by layout. Selector
+    // matching and inheritance already look through them to layout parents and siblings.
     restyle.retain(|entity| {
         cx.entity_manager.is_alive(*entity)
             && (*entity == root || cx.tree.get_parent(*entity).is_some())
+            && !cx.tree.is_ignored(*entity)
     });
 
     // Positional selectors (e.g. `:first-child`) of the siblings of new entities may have changed.
@@ -1491,7 +1495,7 @@ pub(crate) fn style_system(cx: &mut Context) {
             .collect::<HashSet<_>>();
         for parent in parents {
             for sibling in LayoutChildIterator::new(&cx.tree, parent) {
-                restyle.extend(TreeIterator::subtree(&cx.tree, sibling));
+                restyle.extend(LayoutTreeIterator::subtree(&cx.tree, sibling));
             }
         }
     }
@@ -1983,8 +1987,8 @@ mod tests {
     #[test]
     fn binding_does_not_share_the_matched_rules_of_a_classed_sibling() {
         let mut cx = Context::default();
-        // A positional rule (the default theme has several) restyles the siblings of new
-        // entities, which brings the binding itself into rule matching.
+        // A positional rule (the default theme has several) restyles the subtrees of the
+        // siblings of new entities, which contain the binding.
         cx.add_stylesheet(
             ".icon { opacity: 0.82; }
              .icon:hover { opacity: 1; }
@@ -2044,5 +2048,62 @@ mod tests {
 
         style_system(&mut cx);
         assert_eq!(cx.style.opacity.get(label), Some(&Opacity(0.5)));
+    }
+
+    #[test]
+    fn bindings_are_skipped_by_styling() {
+        let mut cx = Context::default();
+        let signal = Signal::new(0);
+        let parent = Element::new(&mut cx).class("parent").entity();
+        cx.with_current(parent, |cx| {
+            Binding::new(cx, signal, |cx| {
+                Label::new(cx, "content");
+            });
+        });
+        let binding = cx.tree.get_child(parent, 0).unwrap();
+        let label = cx.tree.get_child(binding, 0).unwrap();
+        assert!(cx.tree.is_ignored(binding));
+
+        // Adding a stylesheet restyles every entity in the tree, including the binding.
+        cx.add_stylesheet(
+            "* { opacity: 0.5; }
+             .parent { font-size: 30px; direction: rtl; }",
+        )
+        .unwrap();
+        style_system(&mut cx);
+
+        assert_eq!(cx.style.opacity.get(label), Some(&Opacity(0.5)));
+        assert_eq!(cx.style.font_size.get(label), Some(&FontSize::from(30.0)));
+        assert_eq!(cx.style.direction.get(label), Some(&Direction::RightToLeft));
+        assert!(cx.style.matched_rules.get(&binding).is_none());
+        assert_eq!(cx.style.opacity.get(binding), None);
+        assert_eq!(cx.style.font_size.get(binding), None);
+        assert_eq!(cx.style.direction.get(binding), None);
+    }
+
+    #[test]
+    fn restyling_the_siblings_of_new_entities_skips_bindings() {
+        let mut cx = Context::default();
+        // A positional rule restyles the subtrees of the siblings of new entities.
+        cx.add_stylesheet(
+            "* { opacity: 0.5; }
+             .unused:first-child { width: 1px; }",
+        )
+        .unwrap();
+        let signal = Signal::new(0);
+        let parent = Element::new(&mut cx).entity();
+        cx.with_current(parent, |cx| {
+            Binding::new(cx, signal, |cx| {
+                Label::new(cx, "content");
+            });
+        });
+        let binding = cx.tree.get_child(parent, 0).unwrap();
+        let label = cx.tree.get_child(binding, 0).unwrap();
+
+        style_system(&mut cx);
+
+        assert_eq!(cx.style.opacity.get(label), Some(&Opacity(0.5)));
+        assert!(cx.style.matched_rules.get(&binding).is_none());
+        assert_eq!(cx.style.opacity.get(binding), None);
     }
 }
