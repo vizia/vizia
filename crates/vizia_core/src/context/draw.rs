@@ -420,14 +420,14 @@ impl DrawContext<'_> {
         self.style.alignment.get(self.current).copied().unwrap_or_default()
     }
 
-    /// Returns the background color of the current view.
+    /// Returns the background color of the current view, with `currentcolor` resolved to the
+    /// font color.
     pub fn background_color(&self) -> Color {
-        if let Some(col) =
-            self.style.background_color.get_resolved(self.current, &self.style.custom_color_props)
+        match self.style.background_color.get_resolved(self.current, &self.style.custom_color_props)
         {
-            Color::rgba(col.r(), col.g(), col.b(), col.a())
-        } else {
-            Color::rgba(0, 0, 0, 0)
+            Some(Color::CurrentColor) => self.font_color(),
+            Some(col) => Color::rgba(col.r(), col.g(), col.b(), col.a()),
+            None => Color::rgba(0, 0, 0, 0),
         }
     }
 
@@ -1331,9 +1331,14 @@ impl DrawContext<'_> {
             let bounds = self.bounds();
 
             let rrect = self.rrect(bounds, (0.0, 0.0));
+            let current_color = self.font_color();
 
             for shadow in shadows.iter().rev() {
-                let shadow_color = shadow.color.unwrap_or_default();
+                // As in CSS, a shadow without a color uses `currentcolor`.
+                let shadow_color = match shadow.color {
+                    Some(Color::CurrentColor) | None => current_color,
+                    Some(color) => color,
+                };
 
                 let shadow_x_offset = shadow.x_offset.to_px().unwrap_or(0.0) * self.scale_factor();
                 let shadow_y_offset = shadow.y_offset.to_px().unwrap_or(0.0) * self.scale_factor();

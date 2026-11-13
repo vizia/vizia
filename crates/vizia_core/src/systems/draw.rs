@@ -897,4 +897,96 @@ mod tests {
         let after = screen_bounds(&cx.style, &mut cx.cache, &cx.tree, clipper);
         assert!(after.contains_point(10.0, 130.0), "{after:?}");
     }
+
+    const RED: [u8; 4] = [255, 0, 0, 255];
+
+    /// Styles a `.probe` view, a child of a `.parent` view, with `css`, paints the probe's shadows
+    /// and background with its bounds at (10, 10, 20, 20) on a 60x40 surface, and returns a lookup
+    /// of the painted pixel at (x, y).
+    fn paint_probe(css: &'static str) -> impl Fn(usize, usize) -> [u8; 4] {
+        use skia_safe::{AlphaType, ColorType, ImageInfo};
+
+        let mut cx = Context::default();
+        cx.add_stylesheet(css).unwrap();
+        let parent = Element::new(&mut cx).class("parent").entity();
+        let probe = cx.with_current(parent, |cx| Element::new(cx).class("probe").entity());
+        crate::systems::style_system(&mut cx);
+        cx.cache.set_bounds(probe, BoundingBox { x: 10.0, y: 10.0, w: 20.0, h: 20.0 });
+
+        let info = ImageInfo::new((60, 40), ColorType::RGBA8888, AlphaType::Premul, None);
+        let mut surface = skia_safe::surfaces::raster(&info, None, None).unwrap();
+        let mut draw_cx = DrawContext {
+            current: probe,
+            style: &cx.style,
+            cache: &mut cx.cache,
+            tree: &cx.tree,
+            models: &cx.models,
+            views: &mut cx.views,
+            resource_manager: &cx.resource_manager,
+            text_context: &mut cx.text_context,
+            modifiers: &cx.modifiers,
+            mouse: &cx.mouse,
+            windows: &mut cx.windows,
+        };
+        draw_cx.draw_shadows(surface.canvas());
+        draw_cx.draw_background(surface.canvas());
+
+        let mut pixels = vec![0u8; 60 * 40 * 4];
+        assert!(surface.read_pixels(&info, &mut pixels, 60 * 4, (0, 0)));
+        move |x, y| {
+            let i = (y * 60 + x) * 4;
+            [pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]]
+        }
+    }
+
+    #[test]
+    fn currentcolor_background_follows_the_font_color() {
+        let pixel = paint_probe(".probe { color: red; background-color: currentcolor; }");
+        assert_eq!(pixel(20, 20), RED);
+    }
+
+    #[test]
+    fn currentcolor_shadow_follows_the_font_color() {
+        let pixel = paint_probe(".probe { color: red; shadow: 20px 0px currentcolor; }");
+        assert_eq!(pixel(40, 20), RED);
+    }
+
+    #[test]
+    fn shadow_without_a_color_follows_the_font_color() {
+        let pixel = paint_probe(".probe { color: red; shadow: 20px 0px; }");
+        assert_eq!(pixel(40, 20), RED);
+    }
+
+    #[test]
+    fn currentcolor_follows_an_inherited_font_color() {
+        let pixel = paint_probe(
+            ".parent { color: red; }
+            .probe { background-color: currentcolor; shadow: 20px 0px currentcolor; }",
+        );
+        assert_eq!(pixel(20, 20), RED);
+        assert_eq!(pixel(40, 20), RED);
+    }
+
+    #[test]
+    fn each_shadow_in_a_list_resolves_its_own_color() {
+        // A 2px spread ring without a color around the box, over an explicit offset shadow.
+        let pixel =
+            paint_probe(".probe { color: red; shadow: 0px 0px 0px 2px, 20px 0px rgb(0, 255, 0); }");
+        // Inside the ring on the left, where the offset shadow does not reach.
+        assert_eq!(pixel(9, 20), RED);
+        // Inside the offset shadow, beyond the ring on the right.
+        assert_eq!(pixel(40, 20), [0, 255, 0, 255]);
+    }
+
+    #[test]
+    fn explicit_background_and_shadow_colors_ignore_the_font_color() {
+        let pixel = paint_probe(
+            ".probe { color: red; background-color: blue; shadow: 20px 0px rgb(0, 255, 0); }",
+        );
+        assert_eq!(pixel(20, 20), [0, 0, 255, 255]);
+        assert_eq!(pixel(40, 20), [0, 255, 0, 255]);
+
+        let pixel = paint_probe(".probe { color: red; shadow: 20px 0px transparent; }");
+        assert_eq!(pixel(40, 20), [0, 0, 0, 0]);
+    }
 }
