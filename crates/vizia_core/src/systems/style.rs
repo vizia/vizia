@@ -51,7 +51,7 @@ impl Element for Node<'_, '_> {
     type Impl = Selectors;
 
     fn opaque(&self) -> OpaqueElement {
-        OpaqueElement::new(self)
+        OpaqueElement::new(&self.tree.parent[self.entity.index()])
     }
 
     fn is_html_slot_element(&self) -> bool {

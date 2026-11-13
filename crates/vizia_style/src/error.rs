@@ -56,6 +56,8 @@ pub enum CustomParseError<'i> {
     AtRuleInvalid(Option<CowRcStr<'i>>),
     AtRuleBodyInvalid,
     QualifiedRuleInvalid,
+    #[doc(hidden)]
+    Located(SourceLocation, Box<ParseError<CustomParseError<'i>>>),
 }
 
 impl From<SelectorParseErrorKind> for CustomParseError<'_> {
@@ -153,16 +155,38 @@ impl<'i> Error<CustomParseError<'i>> {
         filename: String,
         source_location: Option<SourceLocation>,
     ) -> Error<CustomParseError<'i>> {
-        let kind = match err.kind {
-            ParseErrorKind::Basic(b) => match b {
-                BasicParseErrorKind::UnexpectedToken => CustomParseError::UnexpectedToken(None),
-                BasicParseErrorKind::EndOfInput => CustomParseError::EndOfInput,
-                BasicParseErrorKind::AtRuleInvalid => CustomParseError::AtRuleInvalid(None),
-                BasicParseErrorKind::AtRuleBodyInvalid => CustomParseError::AtRuleBodyInvalid,
-                BasicParseErrorKind::QualifiedRuleInvalid => CustomParseError::QualifiedRuleInvalid,
-                BasicParseErrorKind::TooManyNestedBlocks => CustomParseError::InvalidNesting,
-            },
-            ParseErrorKind::Custom(c) => c,
+        let mut parse_kind = err.kind;
+        let mut source_location = source_location;
+        let kind = loop {
+            match parse_kind {
+                ParseErrorKind::Custom(CustomParseError::Located(location, inner)) => {
+                    source_location = Some(location);
+                    parse_kind = inner.kind;
+                }
+                kind => {
+                    break match kind {
+                        ParseErrorKind::Basic(b) => match b {
+                            BasicParseErrorKind::UnexpectedToken => {
+                                CustomParseError::UnexpectedToken(None)
+                            }
+                            BasicParseErrorKind::EndOfInput => CustomParseError::EndOfInput,
+                            BasicParseErrorKind::AtRuleInvalid => {
+                                CustomParseError::AtRuleInvalid(None)
+                            }
+                            BasicParseErrorKind::AtRuleBodyInvalid => {
+                                CustomParseError::AtRuleBodyInvalid
+                            }
+                            BasicParseErrorKind::QualifiedRuleInvalid => {
+                                CustomParseError::QualifiedRuleInvalid
+                            }
+                            BasicParseErrorKind::TooManyNestedBlocks => {
+                                CustomParseError::InvalidNesting
+                            }
+                        },
+                        ParseErrorKind::Custom(custom) => custom,
+                    };
+                }
+            }
         };
 
         Error {

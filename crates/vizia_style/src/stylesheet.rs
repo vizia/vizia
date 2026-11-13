@@ -126,6 +126,18 @@ test {
         let style_sheet = StyleSheet::parse(CSS_EXAMPLE, ParserOptions::default());
         println!("{:#?}", style_sheet);
     }
+
+    #[test]
+    fn strict_declaration_errors_preserve_declaration_location() {
+        let css = "button {\n    color: red;\n    width nope;\n}";
+
+        let mut options = ParserOptions::new();
+        options.error_recovery = false;
+        let strict_error = StyleSheet::parse(css, options).unwrap_err();
+        let location = strict_error.location.unwrap();
+        assert_eq!(location.line, 2);
+        assert_eq!(location.column, 5);
+    }
 }
 
 // use cssparser::*;

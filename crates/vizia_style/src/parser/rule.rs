@@ -144,7 +144,11 @@ impl<'i> NestedRuleParser<'_, 'i> {
                     self.options.warn(err, location);
                 }
             } else {
-                return Err(errors.remove(0).0);
+                let (error, location) = errors.remove(0);
+                return Err(ParseError::custom(CustomParseError::Located(
+                    location,
+                    Box::new(error),
+                )));
             }
         }
 
