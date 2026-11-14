@@ -488,6 +488,31 @@ pub(crate) fn inline_inheritance_system(
     }
 }
 
+/// Carries each entity's text invalidation down to its descendants. An inline text value can change
+/// without changing the inherited storage index, so the inheritance walk does not see the change.
+fn text_invalidation_system(cx: &mut Context) {
+    let root = Entity::root();
+    let invalidated = cx
+        .style
+        .text_construction
+        .iter()
+        .copied()
+        .filter(|entity| {
+            cx.entity_manager.is_alive(*entity)
+                && (*entity == root || cx.tree.get_parent(*entity).is_some())
+        })
+        .collect::<Vec<_>>();
+    let roots = inheritance_roots(&cx.tree, &invalidated, &cx.style.text_construction);
+    for entity in subtrees(&cx.tree, &roots) {
+        if let Some(parent) = cx.tree.get_layout_parent(entity)
+            && cx.style.text_construction.contains(&parent)
+        {
+            // The text system relayouts every paragraph it rebuilds, so no relayout is needed here.
+            cx.style.needs_text_update(entity);
+        }
+    }
+}
+
 /// Link inheritable shared properties to their parent within the subtrees of the given roots.
 pub(crate) fn shared_inheritance_system(
     cx: &mut Context,
@@ -1454,6 +1479,10 @@ impl MatchedRules {
 pub(crate) fn style_system(cx: &mut Context) {
     let _scope = crate::profiling::scope("style_system");
     let mut redraw_entities = Vec::new();
+
+    if !cx.style.text_construction.is_empty() {
+        text_invalidation_system(cx);
+    }
 
     // Inline inheritance links the inline data of entities to the inline data of their parent, so
     // it only needs to rerun when the tree or which entities have inline data changes.

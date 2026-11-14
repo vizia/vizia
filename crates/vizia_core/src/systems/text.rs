@@ -455,6 +455,58 @@ fn add_block(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::context::backend::BackendContext;
+    use crate::systems::{binding_system, style_system};
+
+    fn paragraph_font_sizes(cx: &mut Context, entity: Entity) -> Vec<f32> {
+        let paragraph =
+            cx.text_context.text_paragraphs.get_mut(entity).expect("paragraph is built");
+        paragraph.layout(400.0);
+        let sizes =
+            paragraph.get_fonts().into_iter().map(|info| info.font.size()).collect::<Vec<_>>();
+        assert!(!sizes.is_empty(), "the paragraph must contain shaped font runs");
+        sizes
+    }
+
+    #[test]
+    fn parent_font_size_changes_reach_inherited_paragraph_fonts() {
+        let mut cx = Context::default();
+        let size = Signal::new(16.0f32);
+        let mut inherited = Entity::null();
+        let mut overridden = Entity::null();
+        HStack::new(&mut cx, |cx| {
+            HStack::new(cx, |cx| {
+                inherited = Label::new(cx, "inherited").entity();
+                overridden = Label::new(cx, "explicit").font_size(7.0).entity();
+            });
+        })
+        .font_size(size);
+        let sibling = Label::new(&mut cx, "sibling").font_size(9.0).entity();
+        let mut backend = BackendContext::new(cx);
+        backend.set_scale_factor(2.0);
+
+        for logical_size in [16.0, 10.0, 16.0] {
+            size.set(logical_size);
+            binding_system(&mut backend.0);
+            style_system(&mut backend.0);
+            if logical_size == 10.0 {
+                assert!(!backend.0.style.text_construction.contains(&sibling));
+            }
+            text_system(&mut backend.0);
+            for actual in paragraph_font_sizes(&mut backend.0, inherited) {
+                assert_eq!(actual, logical_size * 2.0, "inherited label at {logical_size}");
+            }
+            for actual in paragraph_font_sizes(&mut backend.0, overridden) {
+                assert_eq!(actual, 14.0, "explicit font size at {logical_size}");
+            }
+            for actual in paragraph_font_sizes(&mut backend.0, sibling) {
+                assert_eq!(actual, 18.0, "sibling font size at {logical_size}");
+            }
+            // An unchanged pass schedules no further text construction.
+            style_system(&mut backend.0);
+            assert!(backend.0.style.text_construction.is_empty());
+        }
+    }
 
     #[test]
     fn rtl_flips_explicit_left_right_text_align() {
