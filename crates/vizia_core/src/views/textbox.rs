@@ -806,7 +806,7 @@ where
 
     fn reset_ime_position(&mut self, cx: &mut EventContext) {
         // TODO: Make the position of IME follow the cursor.
-        cx.event_queue.push_back(
+        cx.send_event(
             Event::new(WindowEvent::SetImeCursorArea(
                 (cx.bounds().x as u32, cx.bounds().y as u32),
                 ((cx.bounds().width()) as u32, cx.bounds().height() as u32),
@@ -1374,10 +1374,10 @@ where
                     cx.release();
 
                     // Forward event to hovered
-                    cx.event_queue.push_back(
+                    cx.send_event(
                         Event::new(WindowEvent::MouseDown(MouseButton::Left)).target(cx.hovered()),
                     );
-                    cx.event_queue.push_back(
+                    cx.send_event(
                         Event::new(WindowEvent::PressDown { mouse: true }).target(cx.hovered()),
                     );
                 }

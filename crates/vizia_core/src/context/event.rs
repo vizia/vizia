@@ -83,7 +83,7 @@ pub struct EventContext<'a> {
     pub(crate) named_tasks: &'a super::NamedTaskMap,
     pub(crate) modifiers: &'a Modifiers,
     pub(crate) mouse: &'a MouseState<Entity>,
-    pub(crate) event_queue: &'a mut VecDeque<Event>,
+    event_queue: &'a mut VecDeque<Event>,
     pub(crate) event_schedule: &'a mut BinaryHeap<TimedEvent>,
     pub(crate) next_event_id: &'a mut usize,
     pub(crate) timers: &'a mut Vec<TimerState>,
@@ -98,6 +98,11 @@ pub struct EventContext<'a> {
 }
 
 impl<'a> EventContext<'a> {
+    /// Queue a same-thread emission with its current UI modifier context.
+    pub(crate) fn send_event(&mut self, event: Event) {
+        self.event_queue.push_back(event.inherit_ui_modifiers(*self.modifiers));
+    }
+
     /// Creates a new [EventContext].
     pub fn new(cx: &'a mut Context) -> Self {
         Self {
@@ -591,10 +596,10 @@ impl<'a> EventContext<'a> {
         };
 
         if next_focused != *self.focused {
-            self.event_queue.push_back(
+            self.send_event(
                 Event::new(WindowEvent::FocusOut).target(*self.focused).origin(Entity::root()),
             );
-            self.event_queue.push_back(
+            self.send_event(
                 Event::new(WindowEvent::FocusIn).target(next_focused).origin(Entity::root()),
             );
 
@@ -620,10 +625,10 @@ impl<'a> EventContext<'a> {
         };
 
         if prev_focused != *self.focused {
-            self.event_queue.push_back(
+            self.send_event(
                 Event::new(WindowEvent::FocusOut).target(*self.focused).origin(Entity::root()),
             );
-            self.event_queue.push_back(
+            self.send_event(
                 Event::new(WindowEvent::FocusIn).target(prev_focused).origin(Entity::root()),
             );
 
@@ -1498,7 +1503,7 @@ impl DataContext for EventContext<'_> {
 
 impl EmitContext for EventContext<'_> {
     fn emit<M: Any>(&mut self, message: M) {
-        self.event_queue.push_back(
+        self.send_event(
             Event::new(message)
                 .target(self.current)
                 .origin(self.current)
@@ -1507,13 +1512,13 @@ impl EmitContext for EventContext<'_> {
     }
 
     fn emit_to<M: Any>(&mut self, target: Entity, message: M) {
-        self.event_queue.push_back(
+        self.send_event(
             Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
         );
     }
 
     fn emit_custom(&mut self, event: Event) {
-        self.event_queue.push_back(event);
+        self.send_event(event);
     }
 
     fn schedule_emit<M: Any>(&mut self, message: M, at: Instant) -> TimedEventHandle {
@@ -1538,7 +1543,11 @@ impl EmitContext for EventContext<'_> {
     }
     fn schedule_emit_custom(&mut self, event: Event, at: Instant) -> TimedEventHandle {
         let handle = TimedEventHandle(*self.next_event_id);
-        self.event_schedule.push(TimedEvent { event, time: at, ident: handle });
+        self.event_schedule.push(TimedEvent {
+            event: event.inherit_ui_modifiers(*self.modifiers),
+            time: at,
+            ident: handle,
+        });
         *self.next_event_id += 1;
         handle
     }
