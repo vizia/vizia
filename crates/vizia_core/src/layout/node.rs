@@ -105,7 +105,7 @@ impl Node for Entity {
         width: Option<f32>,
         height: Option<f32>,
     ) -> Option<(f32, f32)> {
-        if let Some(paragraph) = sublayout.text_context.text_paragraphs.get_mut(*self) {
+        if let Some(shaped) = sublayout.text_context.text_shaped.get_mut(*self) {
             // // If the width is known use that, else use 0 for wrapping text or 999999 for non-wrapping text.
             // let max_width = if let Some(width) = width {
             //     let padding_left =
@@ -126,7 +126,7 @@ impl Node for Entity {
             //     f32::MAX
             // };
 
-            paragraph.layout(f32::MAX);
+            shaped.layout(f32::MAX);
 
             let padding_left = store
                 .padding_left
@@ -193,22 +193,22 @@ impl Node for Entity {
                     if let Some(width) = width {
                         width - child_space_x
                     } else {
-                        paragraph.min_intrinsic_width().ceil()
+                        shaped.min_intrinsic_width().ceil()
                     }
                 }
                 (false, Some(TextOverflow::Ellipsis)) => {
                     if let Some(width) = width {
                         width - child_space_x
                     } else {
-                        paragraph.max_intrinsic_width().ceil()
+                        shaped.max_intrinsic_width().ceil()
                     }
                 }
 
                 _ => {
                     if let Some(width) = width {
-                        (width - child_space_x).max(paragraph.min_intrinsic_width().ceil())
+                        (width - child_space_x).max(shaped.min_intrinsic_width().ceil())
                     } else {
-                        paragraph.max_intrinsic_width().ceil()
+                        shaped.max_intrinsic_width().ceil()
                     }
                 }
             };
@@ -219,9 +219,9 @@ impl Node for Entity {
                 text_width
             };
 
-            paragraph.layout(text_width);
+            shaped.layout(text_width);
 
-            let text_height = if let Some(height) = height { height } else { paragraph.height() };
+            let text_height = if let Some(height) = height { height } else { shaped.height() };
 
             let width =
                 if let Some(width) = width { width } else { text_width.round() + child_space_x };
