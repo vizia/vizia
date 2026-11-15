@@ -352,8 +352,8 @@ fn rrect_contains(rrect: &RRect, point: Point) -> bool {
 
 /// Returns true if `outer` does not cut into what the given corner of `inner` keeps, where that
 /// corner sits on a corner of the intersection. That holds if the corner's square meets no rounded
-/// corner of `outer`, or meets only the same corner of `outer` and its arc lies inside that
-/// corner's arc.
+/// corner of `outer`, or meets only the same corner of `outer` and either its arc lies inside that
+/// corner's arc or its corner point lies inside `outer`.
 fn corner_arc_inside(inner: &RRect, outer: &RRect, corner: usize) -> bool {
     let radius = inner.radii_ref()[corner].x;
     let square = corner_square(inner.rect(), radius, corner);
@@ -387,7 +387,10 @@ fn corner_arc_inside(inner: &RRect, outer: &RRect, corner: usize) -> bool {
         let moved_inward = (point.x - other_point.x) * inward.x >= 0.0
             && (point.y - other_point.y) * inward.y >= 0.0;
 
-        nested || (radius == other_radius && moved_inward)
+        // What the inner corner keeps lies inward of its corner point along both axes, so it is no
+        // farther from the centre of the outer arc than that point is. An outer shape that
+        // contains the corner point therefore cuts nothing off the inner corner.
+        nested || (radius == other_radius && moved_inward) || rrect_contains(outer, point)
     })
 }
 
@@ -695,6 +698,43 @@ mod tests {
             clip(&cx, larger).is_rrect(),
             Some(rrect(Rect::new(20.0, 20.0, 120.0, 100.0), [6.0; 4]))
         );
+    }
+
+    #[test]
+    fn rounded_well_with_a_smaller_radius_inside_a_larger_panel_radius_stays_rounded() {
+        // The well's corners are not nested in the panel's corner circles, but the panel's corners
+        // cut away nothing the well keeps.
+        let mut cx = Context::default();
+        cx.cache.set_bounds(Entity::root(), BoundingBox { x: 0.0, y: 0.0, w: 1000.0, h: 1000.0 });
+        let panel = rounded(
+            &mut cx,
+            Entity::root(),
+            BoundingBox { x: 0.0, y: 0.0, w: 100.0, h: 100.0 },
+            12.0,
+        );
+        let well = rounded(&mut cx, panel, BoundingBox { x: 8.0, y: 8.0, w: 84.0, h: 84.0 }, 8.0);
+        cx.style.needs_reclip(Entity::root());
+        clipping_system(&mut cx);
+
+        assert_eq!(
+            clip(&cx, well).is_rrect(),
+            Some(rrect(Rect::new(8.0, 8.0, 92.0, 92.0), [8.0; 4]))
+        );
+    }
+
+    #[test]
+    fn rounded_corner_crossing_a_larger_corner_arc_is_intersected_exactly() {
+        let panel = rrect_path(Rect::new(0.0, 0.0, 100.0, 100.0), [12.0; 4]);
+        // The corner of this rect lies outside the panel, and its arc crosses the panel's.
+        let crossing = rrect_path(Rect::new(0.5, 1.5, 99.5, 98.5), [8.0; 4]);
+        let exact = panel.op(&crossing, PathOp::Intersect).unwrap();
+        let actual = intersect_clip_paths(&crossing, &panel).unwrap();
+
+        assert!(!is_shape(&actual));
+        assert_eq!(actual.bounds(), exact.bounds());
+        assert!(actual.contains((5.0, 5.0)));
+        assert!(!actual.contains((3.0, 4.0)));
+        assert!(!exact.contains((3.0, 4.0)));
     }
 
     #[test]
