@@ -644,6 +644,10 @@ fn cached_bounds(
     bounds
 }
 
+/// How far a blur reaches past an edge, as a multiple of its radius. A blur radius is twice the
+/// Gaussian's sigma, and the Gaussian is negligible beyond three sigma.
+const BLUR_SUPPORT: f32 = 1.5;
+
 /// Computes the draw bounds of an entity in the coordinate space of its parent.
 // Must be called after the layout and transform systems to be valid.
 fn draw_bounds(
@@ -670,7 +674,7 @@ fn draw_bounds(
     let mut clipped = union_non_empty(own, clipped);
 
     if let Some(Filter::Blur(radius)) = style.filter.get(entity) {
-        let radius = radius.to_px().unwrap() * style.scale_factor();
+        let radius = radius.to_px().unwrap() * style.scale_factor() * BLUR_SUPPORT;
         own = own.expand(radius);
         clipped = clipped.expand(radius);
         if is_non_empty(&escaped) {
@@ -718,7 +722,7 @@ fn decorated_bounds(style: &Style, cache: &CachedData, entity: Entity) -> Boundi
             shadow_bounds = shadow_bounds.offset(x, y);
 
             if let Some(blur_radius) = shadow.blur_radius.as_ref().and_then(Length::to_px) {
-                shadow_bounds = shadow_bounds.expand(blur_radius * scale_factor);
+                shadow_bounds = shadow_bounds.expand(blur_radius * scale_factor * BLUR_SUPPORT);
             }
 
             if let Some(spread_radius) = shadow.spread_radius.as_ref().and_then(Length::to_px) {
@@ -1504,5 +1508,222 @@ mod tests {
         let (plain_a, lifted_a) = (pixels.get_color((4, 8)).a(), pixels.get_color((12, 8)).a());
         assert!((126..=129).contains(&plain_a), "un-lifted sibling alpha {plain_a}");
         assert!((126..=129).contains(&lifted_a), "z-lifted child alpha {lifted_a}");
+    }
+
+    fn blur_backend(cx: Context, scale: f64, width: f32, height: f32) -> BackendContext {
+        let mut backend = BackendContext::new(cx);
+        backend.0.windows.insert(Entity::root(), WindowState::default());
+        backend.set_scale_factor(scale);
+        backend.set_window_size(Entity::root(), width * scale as f32, height * scale as f32);
+        backend.process_visual_updates();
+        backend
+    }
+
+    fn blur_surface(width: f32, height: f32, scale: f64) -> skia_safe::Surface {
+        skia_safe::surfaces::raster_n32_premul((
+            (width * scale as f32) as i32,
+            (height * scale as f32) as i32,
+        ))
+        .unwrap()
+    }
+
+    fn blur_box(cx: &mut Context, left: f32, top: f32, size: f32) -> Handle<'_, Element> {
+        Element::new(cx)
+            .position_type(PositionType::Absolute)
+            .left(Pixels(left))
+            .top(Pixels(top))
+            .width(Pixels(size))
+            .height(Pixels(size))
+            .background_color(Color::white())
+    }
+
+    /// Adds a transparent view over the whole window, which makes the first draw repaint all of it
+    /// without painting anything itself.
+    fn cover_window(cx: &mut Context) {
+        Element::new(cx).position_type(PositionType::Absolute).size(Stretch(1.0));
+    }
+
+    /// Whether `inner` lies within `outer`, edges included.
+    fn covers(outer: &BoundingBox, inner: &BoundingBox) -> bool {
+        outer.x <= inner.x
+            && outer.y <= inner.y
+            && inner.x + inner.w <= outer.x + outer.w
+            && inner.y + inner.h <= outer.y + outer.h
+    }
+
+    /// The smallest rectangle, in device pixels, holding every pixel with some alpha.
+    fn painted_extent(surface: &mut skia_safe::Surface) -> BoundingBox {
+        let (width, height) = (surface.width(), surface.height());
+        let pixels = surface.peek_pixels().unwrap();
+        let (mut min_x, mut min_y, mut max_x, mut max_y) = (i32::MAX, i32::MAX, -1, -1);
+        for y in 0..height {
+            for x in 0..width {
+                if pixels.get_color((x, y)).a() != 0 {
+                    min_x = min_x.min(x);
+                    min_y = min_y.min(y);
+                    max_x = max_x.max(x);
+                    max_y = max_y.max(y);
+                }
+            }
+        }
+        BoundingBox::from_min_max(
+            min_x as f32,
+            min_y as f32,
+            (max_x + 1) as f32,
+            (max_y + 1) as f32,
+        )
+    }
+
+    // A narrow view just inside a glow repaints without wiping the glow beneath it.
+    #[test]
+    fn repainting_inside_a_glow_keeps_the_glow() {
+        let mut cx = Context::new();
+        let neighbour = Element::new(&mut cx)
+            .position_type(PositionType::Absolute)
+            .left(Pixels(72.0))
+            .top(Pixels(70.0))
+            .width(Pixels(6.0))
+            .height(Pixels(20.0))
+            .entity();
+        blur_box(&mut cx, 100.0, 60.0, 40.0).shadow(Shadow::from("0px 0px 20px rgb(0, 0, 0)"));
+        let mut backend = blur_backend(cx, 1.0, 200.0, 160.0);
+        let mut surface = blur_surface(200.0, 160.0, 1.0);
+        let mut dirty = blur_surface(200.0, 160.0, 1.0);
+        let alpha = |surface: &mut skia_safe::Surface| {
+            let pixels = surface.peek_pixels().unwrap();
+            (72..78).map(|x| pixels.get_color((x, 80)).a()).collect::<Vec<_>>()
+        };
+
+        backend.draw(Entity::root(), &mut surface, &mut dirty);
+        let full = alpha(&mut surface);
+        assert!(full.iter().any(|&a| a != 0), "the glow reaches the neighbour: {full:?}");
+        backend.context().needs_redraw(neighbour);
+        backend.draw(Entity::root(), &mut surface, &mut dirty);
+        assert_eq!(alpha(&mut surface), full);
+    }
+
+    // A glow that moves away leaves none of its old blur behind.
+    #[test]
+    fn a_moving_glow_leaves_nothing_behind() {
+        let mut cx = Context::new();
+        Element::new(&mut cx)
+            .position_type(PositionType::Absolute)
+            .size(Stretch(1.0))
+            .background_color(Color::black());
+        let glow = blur_box(&mut cx, 80.0, 100.0, 40.0)
+            .shadow(Shadow::from("0px 0px 40px rgb(255, 255, 255)"))
+            .entity();
+        let mut backend = blur_backend(cx, 1.0, 400.0, 240.0);
+        let mut surface = blur_surface(400.0, 240.0, 1.0);
+        let mut dirty = blur_surface(400.0, 240.0, 1.0);
+        backend.draw(Entity::root(), &mut surface, &mut dirty);
+
+        let cx = backend.context();
+        cx.style.left.insert(glow, Pixels(180.0));
+        cx.style.needs_relayout(glow);
+        cx.needs_redraw(glow);
+        backend.process_visual_updates();
+        backend.draw(Entity::root(), &mut surface, &mut dirty);
+
+        // 40-50px left of where the box used to be.
+        let pixels = surface.peek_pixels().unwrap();
+        let ring: Vec<u8> = (30..40).map(|x| pixels.get_color((x, 120)).r()).collect();
+        assert!(ring.iter().all(|&r| r == 0), "{ring:?}");
+    }
+
+    // A shadow reaches the same logical distance at every scale factor, and its draw bounds
+    // cover everything it paints.
+    #[test]
+    fn shadow_reach_is_scale_independent_and_covered_by_its_bounds() {
+        let mut reaches = Vec::new();
+        for scale in [1.0, 1.25, 1.5, 2.0] {
+            let mut cx = Context::new();
+            let glow = blur_box(&mut cx, 100.0, 60.0, 40.0)
+                .shadow(Shadow::from("0px 0px 20px rgb(0, 0, 0)"))
+                .entity();
+            cover_window(&mut cx);
+            let mut backend = blur_backend(cx, scale, 300.0, 200.0);
+            let mut surface = blur_surface(300.0, 200.0, scale);
+            let mut dirty = blur_surface(300.0, 200.0, scale);
+            backend.draw(Entity::root(), &mut surface, &mut dirty);
+
+            let painted = painted_extent(&mut surface);
+            let cx = backend.context();
+            let bounds = screen_bounds(&cx.style, &mut cx.cache, &cx.tree, glow);
+            assert!(
+                covers(&bounds, &painted),
+                "scale {scale}: bounds {bounds:?} painted {painted:?}"
+            );
+            reaches.push((scale, (100.0 * scale as f32 - painted.x) / scale as f32));
+        }
+        let (_, base) = reaches[0];
+        for (scale, reach) in reaches {
+            assert!((reach - base).abs() <= 1.0, "scale {scale}: reach {reach} vs {base}");
+        }
+    }
+
+    // A shadow follows the transform of its view, and the view's draw bounds cover it.
+    #[test]
+    fn shadow_follows_the_transform_of_its_view() {
+        let draw = |scale: f64, transform: Option<Transform>| {
+            let mut cx = Context::new();
+            let mut glow = blur_box(&mut cx, 100.0, 60.0, 40.0)
+                .shadow(Shadow::from("0px 0px 10px rgb(0, 0, 0)"));
+            if let Some(transform) = transform {
+                glow = glow.transform(vec![transform]);
+            }
+            let glow = glow.entity();
+            cover_window(&mut cx);
+            let mut backend = blur_backend(cx, scale, 300.0, 200.0);
+            let mut surface = blur_surface(300.0, 200.0, scale);
+            let mut dirty = blur_surface(300.0, 200.0, scale);
+            backend.draw(Entity::root(), &mut surface, &mut dirty);
+            let painted = painted_extent(&mut surface);
+            let cx = backend.context();
+            let bounds = screen_bounds(&cx.style, &mut cx.cache, &cx.tree, glow);
+            assert!(covers(&bounds, &painted), "bounds {bounds:?} painted {painted:?}");
+            painted
+        };
+
+        for scale in [1.0, 2.0] {
+            let factor = scale as f32;
+            // The view is 40px wide and centred on x = 120, so doubling it moves its left edge
+            // from 100 to 80.
+            let plain = 100.0 * factor - draw(scale, None).x;
+            let doubled = draw(
+                scale,
+                Some(Transform::Scale((
+                    vizia_style::PercentageOrNumber::Number(2.0),
+                    vizia_style::PercentageOrNumber::Number(2.0),
+                ))),
+            );
+            let doubled = 80.0 * factor - doubled.x;
+            assert!(
+                (doubled / (2.0 * plain) - 1.0).abs() < 0.15,
+                "scale {scale}: reach {doubled} when scaled, {plain} when not"
+            );
+            draw(scale, Some(Transform::Rotate(Angle::Deg(45.0))));
+        }
+    }
+
+    // A blurred view repainted on its own bounds paints the same pixels as a full repaint.
+    #[test]
+    fn filter_blur_is_not_cut_at_its_draw_bounds() {
+        for scale in [1.0, 2.0] {
+            let mut results = Vec::new();
+            for covered in [false, true] {
+                let mut cx = Context::new();
+                blur_box(&mut cx, 100.0, 60.0, 40.0).filter(Filter::Blur(Length::px(20.0)));
+                if covered {
+                    cover_window(&mut cx);
+                }
+                let mut backend = blur_backend(cx, scale, 300.0, 200.0);
+                let mut surface = blur_surface(300.0, 200.0, scale);
+                let mut dirty = blur_surface(300.0, 200.0, scale);
+                backend.draw(Entity::root(), &mut surface, &mut dirty);
+                results.push(painted_extent(&mut surface));
+            }
+            assert_eq!(results[0], results[1], "scale {scale}");
+        }
     }
 }
