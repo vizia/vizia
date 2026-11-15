@@ -2,7 +2,7 @@
 use crate::window::set_cloak;
 use crate::{
     convert::{winit_key_code_to_code, winit_key_to_key},
-    window::{WinState, Window},
+    window::{WinState, Window, requested_pixel_geometry},
 };
 #[cfg(feature = "accesskit")]
 use accesskit_winit::Adapter;
@@ -245,6 +245,7 @@ impl Application {
             window_attributes,
             window_description.skia_resource_cache_limit,
             owner,
+            requested_pixel_geometry(self.cx.0.windows.get(&window_entity)),
         )?;
         let window = window_state.window.clone();
 
@@ -979,6 +980,15 @@ impl ApplicationHandler<UserEvent> for Application {
         Runtime::drain_pending_work();
 
         self.event_manager.flush_events(self.cx.context(), |_| {});
+
+        // A window's pixel geometry can change in any update: recreate the surfaces that use another one.
+        for window in self.windows.values_mut() {
+            let geometry = requested_pixel_geometry(self.cx.0.windows.get(&window.entity));
+            if window.set_pixel_geometry(geometry) {
+                self.cx.needs_resize_redraw(window.entity);
+                window.window().request_redraw();
+            }
+        }
 
         self.cx.process_style_updates();
 

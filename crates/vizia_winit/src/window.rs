@@ -54,6 +54,7 @@ pub struct WinState {
     pub should_close: bool,
     #[cfg(target_os = "windows")]
     pub is_initially_cloaked: bool,
+    pixel_geometry: PixelGeometry,
 }
 
 impl Drop for WinState {
@@ -69,6 +70,7 @@ impl WinState {
         #[allow(unused_mut)] mut window_attributes: WindowAttributes,
         skia_resource_cache_limit: usize,
         #[allow(unused_variables)] owner: Option<Arc<winit::window::Window>>,
+        pixel_geometry: PixelGeometry,
     ) -> Result<Self, Box<dyn Error>> {
         #[cfg(target_os = "windows")]
         let (window, gl_config) = {
@@ -181,8 +183,14 @@ impl WinState {
         let num_samples = gl_config.num_samples() as usize;
         let stencil_size = gl_config.stencil_size() as usize;
 
-        let mut surface =
-            create_surface(inner_size, fb_info, &mut gr_context, num_samples, stencil_size);
+        let mut surface = create_surface(
+            inner_size,
+            fb_info,
+            &mut gr_context,
+            num_samples,
+            stencil_size,
+            pixel_geometry,
+        );
 
         let dirty_surface = surface
             .new_surface_with_dimensions((inner_size.width as i32, inner_size.height as i32))
@@ -202,6 +210,7 @@ impl WinState {
             should_close: false,
             #[cfg(target_os = "windows")]
             is_initially_cloaked: true,
+            pixel_geometry,
         })
     }
 
@@ -212,6 +221,20 @@ impl WinState {
 
     pub fn make_current(&mut self) {
         self.gl_context.make_current(&self.gl_surface).unwrap();
+    }
+
+    /// Makes the surfaces use `pixel_geometry`, recreating them at the current size the way a resize does.
+    ///
+    /// Returns `true` when the surfaces were recreated. Nothing happens when the geometry is unchanged.
+    /// A minimized window keeps its surfaces until its next confirmed resize, which creates them with
+    /// the new geometry.
+    pub(crate) fn set_pixel_geometry(&mut self, pixel_geometry: PixelGeometry) -> bool {
+        let Some(pixel_geometry) = pixel_geometry_change(self.pixel_geometry, pixel_geometry)
+        else {
+            return false;
+        };
+        self.pixel_geometry = pixel_geometry;
+        self.resize(self.window.inner_size())
     }
 
     /// Resizes the GL surface and rebuilds both Skia targets at `size`.
@@ -242,6 +265,7 @@ impl WinState {
                     &mut self.gr_context,
                     self.gl_config.num_samples() as usize,
                     self.gl_config.stencil_size() as usize,
+                    self.pixel_geometry,
                 );
 
                 let dirty_surface = surface
@@ -282,6 +306,19 @@ pub(crate) fn resize_targets<T>(
     let targets = construct_targets(size);
     resize_gl(width, height);
     Some(targets)
+}
+
+/// The pixel geometry a window's surface is created with: the window's setting, or Skia's `Unknown`.
+pub(crate) fn requested_pixel_geometry(window: Option<&WindowState>) -> PixelGeometry {
+    window.and_then(|window| window.text_rendering.pixel_geometry).unwrap_or_default()
+}
+
+/// The geometry to recreate the surfaces with, or `None` when `requested` is what they already use.
+fn pixel_geometry_change(
+    current: PixelGeometry,
+    requested: PixelGeometry,
+) -> Option<PixelGeometry> {
+    (requested != current).then_some(requested)
 }
 
 fn build_window(
@@ -349,6 +386,7 @@ pub fn create_surface(
     gr_context: &mut skia_safe::gpu::DirectContext,
     num_samples: usize,
     stencil_size: usize,
+    pixel_geometry: PixelGeometry,
 ) -> Surface {
     let size = (
         size.width.try_into().expect("Could not convert width"),
@@ -358,12 +396,7 @@ pub fn create_surface(
     let backend_render_target =
         backend_render_targets::make_gl(size, num_samples, stencil_size, fb_info);
 
-    let surface_props = SurfaceProps::new_with_text_properties(
-        SurfacePropsFlags::default(),
-        PixelGeometry::default(),
-        0.5,
-        0.0,
-    );
+    let surface_props = surface_props(pixel_geometry);
 
     gpu::surfaces::wrap_backend_render_target(
         gr_context,
@@ -375,6 +408,11 @@ pub fn create_surface(
         // None,
     )
     .expect("Could not create skia surface")
+}
+
+/// The surface properties for `pixel_geometry`. Text contrast and gamma do not depend on it.
+fn surface_props(pixel_geometry: PixelGeometry) -> SurfaceProps {
+    SurfaceProps::new_with_text_properties(SurfacePropsFlags::default(), pixel_geometry, 0.5, 0.0)
 }
 
 type WindowCallback = Option<Box<dyn Fn(&mut EventContext)>>;
@@ -636,6 +674,19 @@ impl WindowModifiers for Handle<'_, Window> {
         self
     }
 
+    fn text_rendering(mut self, text_rendering: impl Res<TextRendering> + 'static) -> Self {
+        let entity = self.entity();
+
+        self.context().with_current(entity, |cx| {
+            text_rendering.set_or_bind(cx, move |cx, text_rendering| {
+                let text_rendering = text_rendering.get_value(cx);
+                cx.set_window_text_rendering(entity, text_rendering);
+            });
+        });
+
+        self
+    }
+
     fn inner_size<S: Into<WindowSize>>(mut self, size: impl Res<S>) -> Self {
         let entity = self.entity();
         let size = size.get_value(&self).into();
@@ -828,6 +879,84 @@ impl WindowModifiers for Handle<'_, Window> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use skia_safe::font::Edging;
+    use vizia_core::events::EventManager;
+
+    const GEOMETRIES: [PixelGeometry; 5] = [
+        PixelGeometry::Unknown,
+        PixelGeometry::RGBH,
+        PixelGeometry::BGRH,
+        PixelGeometry::RGBV,
+        PixelGeometry::BGRV,
+    ];
+
+    #[test]
+    fn surface_props_use_the_requested_pixel_geometry() {
+        for geometry in GEOMETRIES {
+            let props = surface_props(geometry);
+            assert_eq!(props.pixel_geometry(), geometry);
+            assert_eq!(props.flags(), SurfacePropsFlags::default());
+            assert_eq!(props.text_contrast(), 0.5);
+            assert_eq!(props.text_gamma(), 0.0);
+        }
+    }
+
+    #[test]
+    fn a_window_without_a_setting_keeps_unknown_pixel_geometry() {
+        assert_eq!(requested_pixel_geometry(None), PixelGeometry::Unknown);
+        assert_eq!(requested_pixel_geometry(Some(&WindowState::default())), PixelGeometry::Unknown);
+        for geometry in GEOMETRIES {
+            let window = WindowState {
+                text_rendering: TextRendering {
+                    edging: Some(Edging::SubpixelAntiAlias),
+                    pixel_geometry: Some(geometry),
+                },
+                ..Default::default()
+            };
+            assert_eq!(requested_pixel_geometry(Some(&window)), geometry);
+        }
+    }
+
+    #[test]
+    fn surfaces_are_recreated_only_when_the_pixel_geometry_changes() {
+        for current in GEOMETRIES {
+            for requested in GEOMETRIES {
+                let expected = (current != requested).then_some(requested);
+                assert_eq!(pixel_geometry_change(current, requested), expected);
+            }
+        }
+    }
+
+    #[test]
+    fn the_text_rendering_modifier_sets_a_value_on_the_window() {
+        let mut cx = Context::new();
+        let text_rendering = TextRendering {
+            edging: Some(Edging::SubpixelAntiAlias),
+            pixel_geometry: Some(PixelGeometry::BGRH),
+        };
+
+        let window = Window::new(&mut cx, |_| {}).text_rendering(text_rendering).entity();
+
+        assert_eq!(cx.windows[&window].text_rendering, text_rendering);
+    }
+
+    #[test]
+    fn the_text_rendering_modifier_follows_a_signal() {
+        let mut cx = Context::new();
+        let initial = TextRendering {
+            edging: Some(Edging::SubpixelAntiAlias),
+            pixel_geometry: Some(PixelGeometry::RGBH),
+        };
+        let text_rendering = Signal::new(initial);
+        let window = Window::new(&mut cx, |_| {}).text_rendering(text_rendering).entity();
+        assert_eq!(cx.windows[&window].text_rendering, initial);
+
+        let moved = TextRendering { edging: None, pixel_geometry: Some(PixelGeometry::BGRH) };
+        text_rendering.set(moved);
+        EventManager::new().flush_events(&mut cx, |_| {});
+
+        assert_eq!(cx.windows[&window].text_rendering, moved);
+    }
 
     #[test]
     fn resize_uses_confirmed_extent_for_gl_and_targets() {

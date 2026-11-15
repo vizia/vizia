@@ -1,5 +1,6 @@
 use skia_safe::{
     BlendMode, FontArguments, FontStyle, Paint,
+    font::Edging,
     font_arguments::VariationPosition,
     textlayout::{
         FontCollection, Paragraph, ParagraphBuilder, ParagraphStyle, RectHeightStyle,
@@ -8,6 +9,7 @@ use skia_safe::{
 };
 use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
 
+use crate::context::window_of;
 use crate::text::resolved_text_direction;
 use crate::{cache::CachedData, prelude::*};
 
@@ -25,13 +27,23 @@ pub(crate) fn text_system(cx: &mut Context) {
 
         if cx.style.text.contains(entity)
             && cx.style.display.get(entity).copied().unwrap_or_default() != Display::None
-            && let Some(paragraph) =
-                build_paragraph(entity, &mut cx.style, &cx.tree, cx.text_context.font_collection())
         {
-            cx.text_context.text_paragraphs.insert(entity, paragraph);
-            // Only this entity's text was (re)built; relayout incrementally from it.
-            cx.style.needs_relayout(entity);
-            cx.style.needs_text_layout(entity);
+            let edging = cx
+                .windows
+                .get(&window_of(&cx.tree, entity))
+                .and_then(|window| window.text_rendering.edging);
+            if let Some(paragraph) = build_paragraph(
+                entity,
+                &mut cx.style,
+                &cx.tree,
+                cx.text_context.font_collection(),
+                edging,
+            ) {
+                cx.text_context.text_paragraphs.insert(entity, paragraph);
+                // Only this entity's text was (re)built; relayout incrementally from it.
+                cx.style.needs_relayout(entity);
+                cx.style.needs_text_layout(entity);
+            }
         }
     }
 
@@ -198,6 +210,7 @@ pub fn build_paragraph(
     style: &mut Style,
     tree: &Tree<Entity>,
     font_collection: &FontCollection,
+    edging: Option<Edging>,
 ) -> Option<Paragraph> {
     let mut paragraph_style = ParagraphStyle::default();
     // paragraph_style.turn_hinting_off();
@@ -252,7 +265,7 @@ pub fn build_paragraph(
 
     let mut paragraph_builder = ParagraphBuilder::new(&paragraph_style, font_collection);
 
-    add_block(style, tree, entity, &mut paragraph_builder, &mut 0);
+    add_block(style, tree, entity, &mut paragraph_builder, &mut 0, edging);
 
     paragraph_builder.add_text("\u{200B}");
     paragraph_builder.build().into()
@@ -311,6 +324,7 @@ fn add_block(
     entity: Entity,
     paragraph_builder: &mut ParagraphBuilder,
     current: &mut usize,
+    edging: Option<Edging>,
 ) {
     // let mut new_current = current;
 
@@ -320,6 +334,9 @@ fn add_block(
         // Text Style
 
         let mut text_style = TextStyle::new();
+        if let Some(edging) = edging {
+            text_style.set_font_edging(edging);
+        }
 
         let font_color =
             style.font_color.get_resolved(entity, &style.custom_color_props).unwrap_or_default();
@@ -447,7 +464,7 @@ fn add_block(
     let iter = LayoutChildIterator::new(tree, entity);
     for child in iter {
         if style.text_span.get(child).copied().unwrap_or_default() {
-            add_block(style, tree, child, paragraph_builder, current);
+            add_block(style, tree, child, paragraph_builder, current, edging);
         }
     }
 }
@@ -455,6 +472,71 @@ fn add_block(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use skia_safe::PixelGeometry;
+
+    const SUBPIXEL: TextRendering =
+        TextRendering { edging: Some(Edging::SubpixelAntiAlias), pixel_geometry: None };
+
+    /// The root window and a window nested in it, each holding a label and a label made only of a nested
+    /// text span. Skia merges adjacent runs of one font, so a span next to its label's text would hide
+    /// the span's own edging.
+    struct Windows {
+        cx: Context,
+        opaque_window: Entity,
+        transparent_window: Entity,
+        opaque: Entity,
+        opaque_spans: Entity,
+        transparent: Entity,
+        transparent_spans: Entity,
+    }
+
+    fn windows() -> Windows {
+        let mut cx = Context::new();
+        cx.windows.insert(Entity::root(), WindowState::default());
+        let opaque = Label::new(&mut cx, "Some text").entity();
+        let opaque_spans = label_of_spans(&mut cx);
+
+        let transparent_window = Element::new(&mut cx).entity();
+        cx.tree.set_window(transparent_window, true);
+        cx.windows.insert(transparent_window, WindowState::default());
+        let (transparent, transparent_spans) = cx.with_current(transparent_window, |cx| {
+            (Label::new(cx, "Some text").entity(), label_of_spans(cx))
+        });
+
+        crate::systems::style_system(&mut cx);
+        text_system(&mut cx);
+        Windows {
+            cx,
+            opaque_window: Entity::root(),
+            transparent_window,
+            opaque,
+            opaque_spans,
+            transparent,
+            transparent_spans,
+        }
+    }
+
+    /// A label without text of its own, whose paragraph is its nested text span.
+    fn label_of_spans(cx: &mut Context) -> Entity {
+        let label = Label::new(cx, "").entity();
+        let span = cx.with_current(label, |cx| Element::new(cx).entity());
+        cx.style.text.insert(span, "Some span".to_owned());
+        cx.style.text_span.insert(span, true);
+        label
+    }
+
+    /// The edging of every font run in the entity's paragraph.
+    fn edgings(cx: &mut Context, entity: Entity) -> Vec<Edging> {
+        let paragraph = cx.text_context.text_paragraphs.get_mut(entity).expect("a paragraph");
+        paragraph.layout(240.0);
+        paragraph.get_fonts().iter().map(|info| info.font.edging()).collect()
+    }
+
+    fn assert_edging(cx: &mut Context, entity: Entity, expected: Edging) {
+        let edgings = edgings(cx, entity);
+        assert!(!edgings.is_empty(), "the paragraph has shaped font runs");
+        assert!(edgings.iter().all(|edging| *edging == expected), "{edgings:?}, not {expected:?}");
+    }
 
     #[test]
     fn rtl_flips_explicit_left_right_text_align() {
@@ -472,5 +554,113 @@ mod tests {
         assert_eq!(flip_alignment_for_rtl(Alignment::Right, true), Alignment::Left);
         assert_eq!(flip_alignment_for_rtl(Alignment::BottomRight, true), Alignment::BottomLeft);
         assert_eq!(flip_alignment_for_rtl(Alignment::Center, true), Alignment::Center);
+    }
+
+    #[test]
+    fn each_window_can_choose_its_label_edging() {
+        let mut w = windows();
+        assert!(w.cx.set_window_text_rendering(w.opaque_window, SUBPIXEL));
+        text_system(&mut w.cx);
+
+        assert_edging(&mut w.cx, w.opaque, Edging::SubpixelAntiAlias);
+        assert_edging(&mut w.cx, w.transparent, Edging::AntiAlias);
+    }
+
+    #[test]
+    fn a_nested_window_chooses_its_edging_apart_from_its_owner() {
+        let mut w = windows();
+        assert!(w.cx.set_window_text_rendering(w.transparent_window, SUBPIXEL));
+        text_system(&mut w.cx);
+
+        assert_edging(&mut w.cx, w.opaque, Edging::AntiAlias);
+        assert_edging(&mut w.cx, w.transparent, Edging::SubpixelAntiAlias);
+    }
+
+    #[test]
+    fn nested_text_spans_follow_their_window() {
+        let mut w = windows();
+        assert!(w.cx.set_window_text_rendering(w.opaque_window, SUBPIXEL));
+        text_system(&mut w.cx);
+
+        assert_edging(&mut w.cx, w.opaque_spans, Edging::SubpixelAntiAlias);
+        assert_edging(&mut w.cx, w.transparent_spans, Edging::AntiAlias);
+    }
+
+    #[test]
+    fn a_window_without_a_setting_keeps_the_default_edging() {
+        let mut w = windows();
+        let default = TextStyle::new().font_edging();
+        assert_eq!(default, Edging::AntiAlias);
+        assert_edging(&mut w.cx, w.opaque, default);
+        assert_edging(&mut w.cx, w.transparent, default);
+
+        assert!(w.cx.set_window_text_rendering(w.opaque_window, SUBPIXEL));
+        text_system(&mut w.cx);
+        assert_edging(&mut w.cx, w.opaque, Edging::SubpixelAntiAlias);
+
+        assert!(w.cx.set_window_text_rendering(w.opaque_window, TextRendering::default()));
+        text_system(&mut w.cx);
+        assert_edging(&mut w.cx, w.opaque, default);
+    }
+
+    #[test]
+    fn setting_the_same_text_rendering_again_rebuilds_nothing() {
+        let mut w = windows();
+        assert!(w.cx.set_window_text_rendering(w.opaque_window, SUBPIXEL));
+        text_system(&mut w.cx);
+        assert!(w.cx.style.text_construction.is_empty());
+        w.cx.windows.get_mut(&w.opaque_window).unwrap().redraw_list.clear();
+
+        assert!(!w.cx.set_window_text_rendering(w.opaque_window, SUBPIXEL));
+
+        assert!(w.cx.style.text_construction.is_empty());
+        assert!(w.cx.windows[&w.opaque_window].redraw_list.is_empty());
+    }
+
+    #[test]
+    fn a_change_rebuilds_only_that_windows_text() {
+        let mut w = windows();
+        assert!(w.cx.style.text_construction.is_empty());
+
+        assert!(w.cx.set_window_text_rendering(w.opaque_window, SUBPIXEL));
+
+        let rebuilt = &w.cx.style.text_construction;
+        assert!(rebuilt.contains(&w.opaque));
+        assert!(rebuilt.contains(&w.opaque_spans));
+        assert!(!rebuilt.contains(&w.transparent));
+        assert!(!rebuilt.contains(&w.transparent_spans));
+    }
+
+    #[test]
+    fn a_pixel_geometry_change_rebuilds_no_text() {
+        let mut w = windows();
+        let geometry = TextRendering { edging: None, pixel_geometry: Some(PixelGeometry::RGBH) };
+
+        assert!(w.cx.set_window_text_rendering(w.opaque_window, geometry));
+
+        assert_eq!(w.cx.windows[&w.opaque_window].text_rendering, geometry);
+        assert!(w.cx.style.text_construction.is_empty());
+    }
+
+    #[test]
+    fn a_view_that_is_not_a_window_has_no_text_rendering() {
+        let mut w = windows();
+
+        assert!(!w.cx.set_window_text_rendering(w.opaque, SUBPIXEL));
+
+        assert!(w.cx.style.text_construction.is_empty());
+    }
+
+    #[test]
+    fn the_backend_context_reports_whether_the_text_rendering_changed() {
+        let w = windows();
+        let (opaque_window, opaque) = (w.opaque_window, w.opaque);
+        let mut backend = crate::backend::BackendContext::new(w.cx);
+
+        assert!(backend.set_window_text_rendering(opaque_window, SUBPIXEL));
+        assert!(!backend.set_window_text_rendering(opaque_window, SUBPIXEL));
+
+        text_system(&mut backend.0);
+        assert_edging(&mut backend.0, opaque, Edging::SubpixelAntiAlias);
     }
 }

@@ -66,7 +66,7 @@ use crate::prelude::*;
 use crate::resource::ResourceManager;
 use crate::text::TextContext;
 use vizia_input::{ImeState, MouseState};
-use vizia_storage::{ChildIterator, LayoutParentIterator};
+use vizia_storage::{ChildIterator, LayoutParentIterator, LayoutTreeIterator};
 
 #[cfg(feature = "tokio")]
 pub(crate) type TaskRuntime = Arc<tokio::runtime::Runtime>;
@@ -130,6 +130,27 @@ thread_local! {
     pub(crate) static SIGNAL_REBUILDS: RefCell<HashSet<SignalRebuild>> = RefCell::new(HashSet::new());
 }
 
+/// How a window renders the text of its views.
+///
+/// Both fields default to `None`, which keeps Skia's defaults: [`Edging::AntiAlias`](skia_safe::font::Edging::AntiAlias)
+/// for text and [`PixelGeometry::Unknown`](skia_safe::PixelGeometry::Unknown) for the surface. Subpixel text needs
+/// both fields to agree, since Skia draws grayscale text whatever the edging says while the pixel geometry is
+/// `Unknown`.
+///
+/// Vizia does not query the platform. Whether subpixel text is correct for a window (an opaque window on a monitor
+/// whose subpixel layout is known) is up to the application, which sets the result on the window.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct TextRendering {
+    /// Edging for every text view in the window. `None` keeps Skia's default.
+    pub edging: Option<skia_safe::font::Edging>,
+    /// Pixel geometry of the window's surface. `None` keeps `PixelGeometry::Unknown`.
+    ///
+    /// Only backends that create their own surface use this.
+    pub pixel_geometry: Option<skia_safe::PixelGeometry>,
+}
+
+impl_res_simple!(TextRendering);
+
 #[derive(Default, Clone)]
 pub struct WindowState {
     pub window_description: WindowDescription,
@@ -142,6 +163,13 @@ pub struct WindowState {
     pub is_modal: bool,
     pub should_close: bool,
     pub content: Option<Arc<dyn Fn(&mut Context)>>,
+    /// How the window renders text. Change it with [`Context::set_window_text_rendering`].
+    pub text_rendering: TextRendering,
+}
+
+/// The window whose settings apply to `entity`: its nearest window ancestor, or the root.
+pub(crate) fn window_of(tree: &Tree<Entity>, entity: Entity) -> Entity {
+    tree.get_parent_window(entity).unwrap_or(Entity::root())
 }
 
 /// The main storage and control object for a Vizia application.
@@ -394,6 +422,36 @@ impl Context {
 
     pub fn needs_reclip(&mut self, entity: Entity) {
         self.style.needs_reclip(entity);
+    }
+
+    /// Sets how the window renders text and returns whether anything changed.
+    ///
+    /// A new edging rebuilds the text of that window's views and no others. A window nested in `window`
+    /// keeps its own setting. Setting the value the window already has does nothing.
+    pub fn set_window_text_rendering(
+        &mut self,
+        window: Entity,
+        text_rendering: TextRendering,
+    ) -> bool {
+        let Some(window_state) = self.windows.get_mut(&window) else {
+            return false;
+        };
+        if window_state.text_rendering == text_rendering {
+            return false;
+        }
+        let edging_changed = window_state.text_rendering.edging != text_rendering.edging;
+        window_state.text_rendering = text_rendering;
+
+        if edging_changed {
+            for entity in LayoutTreeIterator::subtree(&self.tree, window) {
+                if window_of(&self.tree, entity) == window && self.style.text.contains(entity) {
+                    self.style.needs_text_update(entity);
+                }
+            }
+            self.needs_redraw(window);
+        }
+
+        true
     }
 
     /// Mark the application as needing to rerun layout computations

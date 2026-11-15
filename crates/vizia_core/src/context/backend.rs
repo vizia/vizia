@@ -302,6 +302,18 @@ impl BackendContext {
         }
     }
 
+    /// Sets how the window renders text and returns whether anything changed.
+    ///
+    /// Backends that create their own surface read [`TextRendering::pixel_geometry`] from the window's
+    /// state when the surface is created and again after this call.
+    pub fn set_window_text_rendering(
+        &mut self,
+        window_entity: Entity,
+        text_rendering: TextRendering,
+    ) -> bool {
+        self.0.set_window_text_rendering(window_entity, text_rendering)
+    }
+
     pub fn process_timers(&mut self) {
         self.0.tick_timers();
     }

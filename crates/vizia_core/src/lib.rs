@@ -77,7 +77,7 @@ pub mod prelude {
     pub use super::animation::{Animation, AnimationBuilder, KeyframeBuilder};
     pub use super::context::{
         AccessContext, AccessNode, Context, ContextProxy, DataContext, DrawContext, EmitContext,
-        EventContext, ProxyEmitError, WindowState,
+        EventContext, ProxyEmitError, TextRendering, WindowState,
     };
     #[cfg(feature = "tokio")]
     pub use super::context::{Task, TaskBuilder, TaskCancellation, TaskHandle, TaskResult};

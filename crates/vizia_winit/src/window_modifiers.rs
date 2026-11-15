@@ -1,4 +1,8 @@
-use vizia_core::{binding::Res, context::EventContext, localization::ToStringLocalized};
+use vizia_core::{
+    binding::Res,
+    context::{EventContext, TextRendering},
+    localization::ToStringLocalized,
+};
 use vizia_window::{Anchor, AnchorTarget, WindowButtons, WindowPosition, WindowSize};
 
 /// Modifiers for setting the properties of a window.
@@ -23,6 +27,34 @@ pub trait WindowModifiers {
     /// .run();
     /// ```
     fn title<T: ToStringLocalized>(self, title: impl Res<T> + Clone + 'static) -> Self;
+    /// Sets how the window renders text. Accepts a value or signal of [`TextRendering`].
+    ///
+    /// The edging applies to every text view in the window. The pixel geometry applies to the window's
+    /// surface, which is recreated when it changes. Use a signal to update both when the window moves to
+    /// another monitor or the user's display settings change. Vizia does not query the platform, so
+    /// choosing the settings is up to the application.
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use vizia_core::prelude::*;
+    /// # use vizia_core::vg::{PixelGeometry, font::Edging};
+    /// # use vizia_winit::application::Application;
+    /// # use vizia_winit::window::Window;
+    /// # use vizia_winit::window_modifiers::WindowModifiers;
+    /// Application::new(|cx| {
+    ///     let text_rendering = Signal::new(TextRendering {
+    ///         edging: Some(Edging::SubpixelAntiAlias),
+    ///         pixel_geometry: Some(PixelGeometry::RGBH),
+    ///     });
+    ///
+    ///     Window::new(cx, |cx| {
+    ///         // Content here
+    ///     })
+    ///     .text_rendering(text_rendering);
+    /// })
+    /// .run();
+    /// ```
+    fn text_rendering(self, text_rendering: impl Res<TextRendering> + 'static) -> Self;
     /// Sets the inner size of the window to the given value. Accepts a value or signal that can be converted to a [`WindowSize`].
     ///
     /// The inner size is the window area excluding the window borders.
