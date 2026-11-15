@@ -220,7 +220,8 @@ impl BackendContext {
         self.0.clipboards.insert(window, clipboard);
     }
 
-    /// Send an event with custom origin and propagation information.
+    /// Transport an event without changing its emission context. Proxy payloads have no UI
+    /// snapshot; forwarded UI events retain the snapshot their original emitter supplied.
     pub fn send_event(&mut self, event: Event) {
         self.0.event_queue.push_back(event);
     }
@@ -259,7 +260,7 @@ impl BackendContext {
     }
 
     pub fn emit_origin<M: Any>(&mut self, message: M) {
-        self.0.event_queue.push_back(
+        self.0.send_event(
             Event::new(message)
                 .target(self.0.current)
                 .origin(Entity::root())
@@ -268,7 +269,7 @@ impl BackendContext {
     }
 
     pub fn emit_window_event<M: Any>(&mut self, window_entity: Entity, message: M) {
-        self.0.event_queue.push_back(
+        self.0.send_event(
             Event::new(message)
                 .target(window_entity)
                 .origin(window_entity)
@@ -321,7 +322,8 @@ impl BackendContext {
         let now = Instant::now();
         while let Some(timed_event) = self.0.event_schedule.peek() {
             if timed_event.time <= now {
-                self.0.event_queue.push_back(self.0.event_schedule.pop().unwrap().event);
+                let event = self.0.event_schedule.pop().unwrap().event;
+                self.send_event(event);
             } else {
                 break;
             }

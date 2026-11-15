@@ -106,12 +106,12 @@ pub fn hover_system(cx: &mut Context, window_entity: Entity) {
         }
 
         // Send mouse enter/leave events directly to entity.
-        cx.event_queue.push_back(Event::new(WindowEvent::MouseEnter).direct(hovered));
-        cx.event_queue.push_back(Event::new(WindowEvent::MouseLeave).direct(cx.hovered));
+        cx.send_event(Event::new(WindowEvent::MouseEnter).direct(hovered));
+        cx.send_event(Event::new(WindowEvent::MouseLeave).direct(cx.hovered));
 
         // Send mouse over/out events to entity and ancestors.
-        cx.event_queue.push_back(Event::new(WindowEvent::MouseOver).target(hovered));
-        cx.event_queue.push_back(Event::new(WindowEvent::MouseOut).target(cx.hovered));
+        cx.send_event(Event::new(WindowEvent::MouseOver).target(hovered));
+        cx.send_event(Event::new(WindowEvent::MouseOut).target(cx.hovered));
 
         cx.hovered = hovered;
     }

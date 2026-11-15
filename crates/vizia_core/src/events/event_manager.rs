@@ -48,10 +48,12 @@ impl EventManager {
 
             // Move events from cx to event manager. This is so the cx can be passed
             // mutably to the view when handling events.
-            self.event_queue.extend(cx.event_queue.drain(0..));
+            self.event_queue.extend(cx.drain_events());
 
             // Loop over the events in the event queue.
             'events: for event in self.event_queue.iter_mut() {
+                let mut modifier_scope = ModifierScope::new(cx, event.meta.modifiers);
+                let cx = modifier_scope.context();
                 let keyboard_lock_root = keyboard_event_lock_root(cx, event);
                 let mut is_drop_event = false;
                 event.map(|window_event: &WindowEvent, _| {
@@ -212,8 +214,32 @@ impl EventManager {
             binding_system(cx);
 
             // Return true if there are new events in the queue.
-            !cx.event_queue.is_empty()
+            cx.has_queued_events()
         } {}
+    }
+}
+
+/// One dispatch borrows the application and restores its ambient native flags on every exit.
+struct ModifierScope<'a> {
+    cx: &'a mut Context,
+    previous: Modifiers,
+}
+
+impl<'a> ModifierScope<'a> {
+    fn new(cx: &'a mut Context, snapshot: Option<Modifiers>) -> Self {
+        let previous = cx.modifiers;
+        cx.modifiers = snapshot.unwrap_or(previous);
+        Self { cx, previous }
+    }
+
+    fn context(&mut self) -> &mut Context {
+        self.cx
+    }
+}
+
+impl Drop for ModifierScope<'_> {
+    fn drop(&mut self) {
+        self.cx.modifiers = self.previous;
     }
 }
 
@@ -474,13 +500,11 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 // Dispatch Drop to the hovered drop target.
                 if cx.drag_hovered != Entity::null() {
                     if let Some(data) = drop_data {
-                        cx.event_queue
-                            .push_back(Event::new(WindowEvent::Drop(data)).target(cx.drag_hovered));
+                        cx.send_event(Event::new(WindowEvent::Drop(data)).target(cx.drag_hovered));
                     }
 
                     // Drag is ending, so notify the last hovered drop target that the pointer left.
-                    cx.event_queue
-                        .push_back(Event::new(WindowEvent::DragLeave).target(cx.drag_hovered));
+                    cx.send_event(Event::new(WindowEvent::DragLeave).target(cx.drag_hovered));
                 }
                 cx.drag_hovered = Entity::null();
             }
@@ -647,17 +671,17 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                     if prev_focused != cx.focused {
                         cx.set_focus_pseudo_classes(cx.focused, false, true);
                         cx.set_focus_pseudo_classes(prev_focused, true, true);
-                        cx.event_queue.push_back(
+                        cx.send_event(
                             Event::new(WindowEvent::FocusOut)
                                 .target(cx.focused)
                                 .origin(Entity::root()),
                         );
-                        cx.event_queue.push_back(
+                        cx.send_event(
                             Event::new(WindowEvent::FocusIn)
                                 .target(prev_focused)
                                 .origin(Entity::root()),
                         );
-                        cx.event_queue.push_back(
+                        cx.send_event(
                             Event::new(ScrollEvent::ScrollToView(prev_focused))
                                 .target(prev_focused)
                                 .origin(Entity::root()),
@@ -686,17 +710,17 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                     if next_focused != cx.focused {
                         cx.set_focus_pseudo_classes(cx.focused, false, true);
                         cx.set_focus_pseudo_classes(next_focused, true, true);
-                        cx.event_queue.push_back(
+                        cx.send_event(
                             Event::new(WindowEvent::FocusOut)
                                 .target(cx.focused)
                                 .origin(Entity::root()),
                         );
-                        cx.event_queue.push_back(
+                        cx.send_event(
                             Event::new(WindowEvent::FocusIn)
                                 .target(next_focused)
                                 .origin(Entity::root()),
                         );
-                        cx.event_queue.push_back(
+                        cx.send_event(
                             Event::new(ScrollEvent::ScrollToView(next_focused))
                                 .target(next_focused)
                                 .origin(Entity::root()),
@@ -761,13 +785,13 @@ fn internal_state_updates(cx: &mut Context, window_event: &WindowEvent, meta: &m
                 cx.set_focus_pseudo_classes(cx.focused, false, true);
                 cx.needs_restyle(cx.focused);
 
-                cx.event_queue.push_back(
+                cx.send_event(
                     Event::new(WindowEvent::FocusVisibility(false))
                         .target(cx.focused)
                         .origin(Entity::root()), //.propagate(Propagation::Direct),
                 );
 
-                cx.event_queue.push_back(
+                cx.send_event(
                     Event::new(WindowEvent::MouseOut).target(cx.hovered).origin(Entity::root()), // .propagate(Propagation::Direct),
                 );
             }
@@ -824,22 +848,21 @@ fn dispatch_drag_events(cx: &mut Context, x: f32, y: f32) {
 
         if hovered != cx.drag_hovered {
             if cx.drag_hovered != Entity::null() {
-                cx.event_queue
-                    .push_back(Event::new(WindowEvent::DragLeave).target(cx.drag_hovered));
+                cx.send_event(Event::new(WindowEvent::DragLeave).target(cx.drag_hovered));
             }
 
             if hovered != Entity::null() {
-                cx.event_queue.push_back(Event::new(WindowEvent::DragEnter).target(hovered));
+                cx.send_event(Event::new(WindowEvent::DragEnter).target(hovered));
             }
 
             cx.drag_hovered = hovered;
         }
 
         if hovered != Entity::null() {
-            cx.event_queue.push_back(Event::new(WindowEvent::DragMove(x, y)).target(hovered));
+            cx.send_event(Event::new(WindowEvent::DragMove(x, y)).target(hovered));
         }
     } else if cx.drag_hovered != Entity::null() {
-        cx.event_queue.push_back(Event::new(WindowEvent::DragLeave).target(cx.drag_hovered));
+        cx.send_event(Event::new(WindowEvent::DragLeave).target(cx.drag_hovered));
         cx.drag_hovered = Entity::null();
     }
 }
@@ -864,10 +887,16 @@ fn emit_direct_or_up<M: Any>(cx: &mut Context, message: M, direct: Entity, up: E
 
 #[cfg(test)]
 mod tests {
+    use crate::context::backend::BackendContext;
     use crate::context::{Context, InternalEvent, WindowState};
     use crate::events::{Event, EventManager, Propagation};
-    use crate::prelude::{Entity, WindowEvent};
+    use crate::prelude::*;
+    use std::cell::RefCell;
+    use std::rc::Rc;
     use vizia_id::GenerationalId;
+
+    #[derive(Clone, Copy, Debug)]
+    struct Derived;
 
     #[test]
     fn queued_hover_refresh_preserves_newer_cursor_position() {
@@ -879,13 +908,13 @@ mod tests {
             .target(Entity::root())
             .origin(Entity::root())
             .propagate(Propagation::Up);
-        context.event_queue.push_back(
+        context.send_event(
             Event::new(WindowEvent::MouseMove(542.0, 433.0))
                 .target(Entity::root())
                 .origin(Entity::root())
                 .propagate(Propagation::Up),
         );
-        context.event_queue.push_back(refresh);
+        context.send_event(refresh);
 
         EventManager::new().flush_events(&mut context, |_| {});
 
@@ -893,5 +922,160 @@ mod tests {
         assert_eq!(context.mouse.cursor_y, 433.0);
         assert_eq!(context.mouse.previous_cursor_x, 537.0);
         assert_eq!(context.mouse.previous_cursor_y, 97.0);
+    }
+
+    #[test]
+    fn queued_ui_input_and_derived_events_keep_their_modifier_context() {
+        let seen = Rc::new(RefCell::new(Vec::new()));
+        let record = seen.clone();
+        let mut cx = BackendContext::new(Context::new());
+        cx.0.windows.insert(Entity::root(), Default::default());
+        cx.0.add_global_listener(move |cx, event| {
+            event.map(|event: &WindowEvent, _| {
+                let kind = match event {
+                    WindowEvent::KeyDown(_, _) => Some("key"),
+                    WindowEvent::KeyUp(_, _) => Some("release"),
+                    WindowEvent::MouseDown(_) => Some("click"),
+                    WindowEvent::PressDown { .. } => Some("press-down"),
+                    _ => None,
+                };
+                if let Some(kind) = kind {
+                    record.borrow_mut().push((kind, *cx.modifiers()));
+                }
+                if matches!(event, WindowEvent::KeyDown(_, _)) {
+                    cx.emit(Derived);
+                }
+            });
+            event.map(|_: &Derived, _| record.borrow_mut().push(("derived", *cx.modifiers())));
+        });
+        *cx.modifiers() = Modifiers::CTRL | Modifiers::SHIFT;
+        cx.emit_origin(WindowEvent::KeyDown(Code::ArrowLeft, None));
+        cx.emit_window_event(Entity::root(), WindowEvent::MouseDown(MouseButton::Left));
+        *cx.modifiers() = Modifiers::empty();
+        cx.emit_origin(WindowEvent::KeyUp(Code::ShiftLeft, None));
+        EventManager::new().flush_events(&mut cx.0, |_| {});
+        assert_eq!(
+            *seen.borrow(),
+            [
+                ("key", Modifiers::CTRL | Modifiers::SHIFT),
+                ("click", Modifiers::CTRL | Modifiers::SHIFT),
+                ("release", Modifiers::empty()),
+                ("derived", Modifiers::CTRL | Modifiers::SHIFT),
+                ("press-down", Modifiers::CTRL | Modifiers::SHIFT),
+            ]
+        );
+        assert_eq!(*cx.modifiers(), Modifiers::empty());
+    }
+
+    #[test]
+    fn consumed_input_restores_the_ambient_modifier_context() {
+        let seen = Rc::new(RefCell::new(Vec::new()));
+        let record = seen.clone();
+        let mut cx = Context::new();
+        let entity = Element::new(&mut cx).entity();
+        cx.with_current(entity, |cx| {
+            cx.add_listener(move |_: &mut Element, cx, event| {
+                event.map(|_: &Derived, meta| {
+                    record.borrow_mut().push(*cx.modifiers());
+                    meta.consume();
+                });
+            })
+        });
+        cx.modifiers = Modifiers::CTRL;
+        cx.emit_to(entity, Derived);
+        cx.modifiers = Modifiers::ALT;
+        EventManager::new().flush_events(&mut cx, |_| {});
+        assert_eq!(*seen.borrow(), [Modifiers::CTRL]);
+        assert_eq!(cx.modifiers, Modifiers::ALT);
+    }
+
+    #[test]
+    fn panicking_input_callback_restores_the_ambient_modifier_context() {
+        let mut cx = Context::new();
+        cx.add_global_listener(|cx, event| {
+            event.map(|_: &Derived, _| {
+                assert_eq!(*cx.modifiers(), Modifiers::SHIFT);
+                panic!("modifier callback panic");
+            });
+        });
+        cx.modifiers = Modifiers::SHIFT;
+        cx.emit(Derived);
+        cx.modifiers = Modifiers::ALT;
+        let panic = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            EventManager::new().flush_events(&mut cx, |_| {});
+        }))
+        .expect_err("the callback must panic");
+        assert_eq!(panic.downcast_ref::<&str>(), Some(&"modifier callback panic"));
+        assert_eq!(cx.modifiers, Modifiers::ALT);
+    }
+
+    #[test]
+    fn forwarded_ui_event_preserves_its_snapshot_and_proxy_event_uses_ambient() {
+        let mut source = Context::new();
+        source.drain_events().for_each(drop);
+        source.modifiers = Modifiers::SHIFT;
+        source.emit(Derived);
+        let forwarded = source.drain_events().next().unwrap();
+        let mut cx = BackendContext::new(Context::new());
+        let seen = Rc::new(RefCell::new(Vec::new()));
+        let record = seen.clone();
+        cx.0.add_global_listener(move |cx, event| {
+            event.map(|_: &Derived, _| record.borrow_mut().push(*cx.modifiers()));
+        });
+        *cx.modifiers() = Modifiers::CTRL;
+        cx.0.emit_custom(forwarded);
+        let forwarded = cx.0.drain_events().next().unwrap();
+        EventContext::new(&mut cx.0).emit_custom(forwarded);
+        let forwarded = cx.0.drain_events().next().unwrap();
+        cx.send_event(forwarded);
+        // A proxy has no UI emission context, so its payload arrives with no UI snapshot.
+        cx.send_event(crate::events::ProxyEvent::new(Derived).into_event());
+        *cx.modifiers() = Modifiers::ALT;
+        EventManager::new().flush_events(&mut cx.0, |_| {});
+        assert_eq!(*seen.borrow(), [Modifiers::SHIFT, Modifiers::ALT]);
+        assert_eq!(*cx.modifiers(), Modifiers::ALT);
+    }
+
+    #[test]
+    fn queued_mouse_move_preserves_modifiers_for_every_hover_derivative() {
+        let root = Entity::root();
+        let mut cx = BackendContext::new(Context::new());
+        cx.0.windows.insert(root, Default::default());
+        cx.0.add_built_in_styles();
+        let child = Element::new(&mut cx.0).width(Pixels(50.0)).height(Pixels(50.0)).entity();
+        cx.set_window_size(root, 100.0, 100.0);
+        cx.process_style_updates();
+        cx.process_visual_updates();
+        let seen = Rc::new(RefCell::new(Vec::new()));
+        let record = seen.clone();
+        cx.0.add_global_listener(move |cx, event| {
+            event.map(|event: &WindowEvent, meta| {
+                let kind = match event {
+                    WindowEvent::MouseEnter => Some("enter"),
+                    WindowEvent::MouseLeave => Some("leave"),
+                    WindowEvent::MouseOver => Some("over"),
+                    WindowEvent::MouseOut => Some("out"),
+                    _ => None,
+                };
+                if let Some(kind) = kind {
+                    record.borrow_mut().push((kind, meta.target, *cx.modifiers()));
+                }
+            });
+        });
+        *cx.modifiers() = Modifiers::SHIFT;
+        cx.emit_origin(WindowEvent::MouseMove(25.0, 25.0));
+        *cx.modifiers() = Modifiers::empty();
+        cx.emit_origin(WindowEvent::KeyUp(Code::ShiftLeft, None));
+        EventManager::new().flush_events(&mut cx.0, |_| {});
+        assert_eq!(
+            *seen.borrow(),
+            [
+                ("enter", child, Modifiers::SHIFT),
+                ("leave", root, Modifiers::SHIFT),
+                ("over", child, Modifiers::SHIFT),
+                ("out", root, Modifiers::SHIFT),
+            ]
+        );
+        assert_eq!(*cx.modifiers(), Modifiers::empty());
     }
 }

@@ -1,4 +1,5 @@
 use crate::entity::Entity;
+use crate::prelude::Modifiers;
 use std::time::Instant;
 use std::{any::Any, cmp::Ordering, fmt::Debug};
 use vizia_id::GenerationalId;
@@ -53,6 +54,12 @@ impl Event {
         M: Any,
     {
         Event { meta: Default::default(), message: Some(Box::new(message)) }
+    }
+
+    /// Inherit the emitting UI context once, retaining an earlier snapshot when forwarded.
+    pub(crate) fn inherit_ui_modifiers(mut self, modifiers: Modifiers) -> Self {
+        self.meta.modifiers.get_or_insert(modifiers);
+        self
     }
 
     /// Sets the target of the event.
@@ -216,6 +223,9 @@ pub struct EventMeta {
     pub propagation: Propagation,
     /// Determines whether the event should continue to be propagated.
     pub(crate) consumed: bool,
+    /// UI emission context. None denotes an event, such as a proxy payload, with no UI context;
+    /// dispatch then observes the ambient native modifier state.
+    pub(crate) modifiers: Option<Modifiers>,
 }
 
 impl EventMeta {
@@ -232,6 +242,7 @@ impl Default for EventMeta {
             target: Entity::root(),
             propagation: Propagation::Up,
             consumed: false,
+            modifiers: None,
         }
     }
 }

@@ -154,7 +154,7 @@ pub struct Context {
     pub(crate) views: Views,
     pub(crate) models: Models,
     pub(crate) bindings: Bindings,
-    pub(crate) event_queue: VecDeque<Event>,
+    event_queue: VecDeque<Event>,
     pub(crate) event_schedule: BinaryHeap<TimedEvent>,
     pub(crate) next_event_id: usize,
     pub(crate) timers: Vec<TimerState>,
@@ -216,6 +216,20 @@ impl Default for Context {
 }
 
 impl Context {
+    /// Queue a same-thread emission with its current UI modifier context.
+    pub(crate) fn send_event(&mut self, event: Event) {
+        self.event_queue.push_back(event.inherit_ui_modifiers(self.modifiers));
+    }
+
+    /// Drain queued events for dispatch without exposing an enqueue path outside this module.
+    pub(crate) fn drain_events(&mut self) -> impl Iterator<Item = Event> + '_ {
+        self.event_queue.drain(..)
+    }
+
+    pub(crate) fn has_queued_events(&self) -> bool {
+        !self.event_queue.is_empty()
+    }
+
     /// Creates a new context.
     pub fn new() -> Self {
         let mut cache = CachedData::default();
@@ -1534,7 +1548,7 @@ impl DataContext for LocalizationContext<'_> {
 
 impl EmitContext for Context {
     fn emit<M: Any>(&mut self, message: M) {
-        self.event_queue.push_back(
+        self.send_event(
             Event::new(message)
                 .target(self.current)
                 .origin(self.current)
@@ -1543,13 +1557,13 @@ impl EmitContext for Context {
     }
 
     fn emit_to<M: Any>(&mut self, target: Entity, message: M) {
-        self.event_queue.push_back(
+        self.send_event(
             Event::new(message).target(target).origin(self.current).propagate(Propagation::Direct),
         );
     }
 
     fn emit_custom(&mut self, event: Event) {
-        self.event_queue.push_back(event);
+        self.send_event(event);
     }
 
     fn schedule_emit<M: Any>(&mut self, message: M, at: Instant) -> TimedEventHandle {
@@ -1576,7 +1590,11 @@ impl EmitContext for Context {
 
     fn schedule_emit_custom(&mut self, event: Event, at: Instant) -> TimedEventHandle {
         let handle = TimedEventHandle(self.next_event_id);
-        self.event_schedule.push(TimedEvent { event, time: at, ident: handle });
+        self.event_schedule.push(TimedEvent {
+            event: event.inherit_ui_modifiers(self.modifiers),
+            time: at,
+            ident: handle,
+        });
         self.next_event_id += 1;
         handle
     }
