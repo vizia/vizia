@@ -111,8 +111,17 @@ where
     /// Do **not** use this in the context of audio plugins, unless it is compiled as a
     /// standalone application.
     ///
+    /// Since this is a standalone process, it sets the process DPI awareness on Windows
+    /// (see [`baseview::assume_standalone_in_process`]) before opening the window, so the window
+    /// is rendered at the device DPI rather than bitmap-scaled by the OS. This is a no-op on
+    /// other platforms.
+    ///
     /// * `app` - The Vizia application builder.
     pub fn run(self) -> Result<(), ApplicationError> {
+        // SAFETY: `run` is the standalone entry point, so this process owns its DPI mode. This
+        // must happen before the first native window is created.
+        unsafe { baseview::assume_standalone_in_process() };
+
         ViziaWindow::open_blocking(
             self.window_description,
             self.window_scale_policy,
@@ -129,6 +138,9 @@ where
     ///
     /// This function does **not** block the current thread. This is only to be
     /// used in the context of audio plugins.
+    ///
+    /// This never changes the process DPI mode: the host owns it, and embedded editors must not
+    /// set it.
     ///
     /// * `parent` - The parent window.
     /// * `app` - The Vizia application builder.
