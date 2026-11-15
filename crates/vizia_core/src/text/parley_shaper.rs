@@ -202,12 +202,10 @@ fn typeface_for_font_data(
     }
 
     let data = font_data.data.data();
-    let typeface = text_context
-        .default_font_manager
-        .new_from_data(data, font_data.index as usize)
-        .or_else(|| {
+    let typeface =
+        text_context.default_font_manager.new_from_bytes(data, font_data.index).or_else(|| {
             (font_data.index != 0)
-                .then(|| text_context.default_font_manager.new_from_data(data, 0))
+                .then(|| text_context.default_font_manager.new_from_bytes(data, 0))
                 .flatten()
         })?;
     text_context.typeface_cache.insert(key, typeface.clone());

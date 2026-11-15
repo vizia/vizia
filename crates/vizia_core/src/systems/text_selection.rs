@@ -1,6 +1,5 @@
 use std::ops::Range;
 
-use skia_safe::Matrix;
 use vizia_storage::TreeExt;
 
 use crate::prelude::*;
@@ -26,10 +25,7 @@ fn text_local_point(cx: &EventContext<'_>, entity: Entity, x: f32, y: f32) -> (f
     let bounds = cx.cache.get_bounds(entity);
     let point = cx
         .cache
-        .transform
-        .get(entity)
-        .copied()
-        .unwrap_or_else(Matrix::new_identity)
+        .absolute_transform(cx.tree, entity)
         .invert()
         .map(|inverse| inverse.map_point((x, y)))
         .unwrap_or_else(|| (x, y).into());

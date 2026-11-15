@@ -2078,7 +2078,8 @@ where
                 }
             }
 
-            TextEvent::Cut => {
+            TextEvent::Cut =>
+            {
                 #[cfg(feature = "clipboard")]
                 if self.edit {
                     if let Some(selected_text) = self.clone_selected(cx) {
@@ -2089,12 +2090,14 @@ where
                                 .expect("Failed to add text to clipboard");
                             self.delete_text(cx, DeleteMovement::BackwardGrapheme);
 
-                    let text = self.clone_text(cx);
+                            let text = self.clone_text(cx);
 
-                    cx.set_valid(self.is_text_valid(&text));
+                            cx.set_valid(self.is_text_valid(&text));
 
-                    if let Some(callback) = &self.on_edit {
-                        (callback)(cx, text);
+                            if let Some(callback) = &self.on_edit {
+                                (callback)(cx, text);
+                            }
+                        }
                     }
                 }
             }

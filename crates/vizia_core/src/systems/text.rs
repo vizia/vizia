@@ -7,7 +7,6 @@ use crate::{cache::CachedData, prelude::*};
 pub(crate) fn text_system(cx: &mut Context) {
     let _scope = crate::profiling::scope("text_system");
     if cx.style.text_construction.is_empty() {
-
         return;
     }
 
@@ -42,7 +41,6 @@ pub(crate) fn text_system(cx: &mut Context) {
                 cx.style.needs_relayout(entity);
                 cx.style.needs_text_layout(entity);
             }
-
         }
     }
 }
@@ -154,12 +152,13 @@ pub fn layout_span(
         if let Some(range) = style.text_range.get(entity) {
             let rects = shaped.get_rects_for_range(range.clone());
 
-        let min_x = rects.iter().fold(1000000.0f32, |min, item| min.min(item.rect.x()));
-        let min_y = rects.iter().fold(1000000.0f32, |min, item| min.min(item.rect.y()));
-        let max_x = rects.iter().fold(0.0f32, |max, item| max.max(item.rect.right()));
-        let max_y = rects.iter().fold(0.0f32, |max, item| max.max(item.rect.bottom()));
+            let min_x = rects.iter().fold(1000000.0f32, |min, item| min.min(item.rect.x()));
+            let min_y = rects.iter().fold(1000000.0f32, |min, item| min.min(item.rect.y()));
+            let max_x = rects.iter().fold(0.0f32, |max, item| max.max(item.rect.right()));
+            let max_y = rects.iter().fold(0.0f32, |max, item| max.max(item.rect.bottom()));
 
-        bounds = BoundingBox::from_min_max(min_x, min_y, max_x, max_y);
+            bounds = BoundingBox::from_min_max(min_x, min_y, max_x, max_y);
+        }
     }
 
     let iter = LayoutChildIterator::new(tree, entity);
@@ -186,5 +185,3 @@ pub fn layout_span(
 
     bounds
 }
-
-
