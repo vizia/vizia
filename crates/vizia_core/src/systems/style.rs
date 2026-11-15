@@ -490,7 +490,10 @@ pub(crate) fn inline_inheritance_system(
 
 /// Carries each entity's text invalidation down to its descendants. An inline text value can change
 /// without changing the inherited storage index, so the inheritance walk does not see the change.
-fn text_invalidation_system(cx: &mut Context) {
+///
+/// Runs once per frame at the start of `text_system`, after binding, style and animation updates
+/// have all marked entities, so it sees every invalidation the paragraphs are built from.
+pub(crate) fn text_invalidation_system(cx: &mut Context) {
     let root = Entity::root();
     let invalidated = cx
         .style
@@ -504,13 +507,19 @@ fn text_invalidation_system(cx: &mut Context) {
         .collect::<Vec<_>>();
     let roots = inheritance_roots(&cx.tree, &invalidated, &cx.style.text_construction);
     // A span is shaped as part of its enclosing paragraph, so its change rebuilds that paragraph.
+    // `add_block` includes spans whatever their `display`, so the chain of spans is followed to the
+    // first non-span parent, rebuilding each displayed entity on the way: a displayed span builds its
+    // own paragraph as well.
     for entity in invalidated {
-        if cx.style.text_span.get(entity).copied().unwrap_or_default()
-            && let Some(owner) = LayoutParentIterator::new(&cx.tree, entity).find(|parent| {
-                cx.style.display.get(*parent).copied().unwrap_or_default() != Display::None
-            })
-        {
-            cx.style.needs_text_update(owner);
+        if cx.style.text_span.get(entity).copied().unwrap_or_default() {
+            for current in LayoutParentIterator::new(&cx.tree, entity) {
+                if cx.style.display.get(current).copied().unwrap_or_default() != Display::None {
+                    cx.style.needs_text_update(current);
+                }
+                if !cx.style.text_span.get(current).copied().unwrap_or_default() {
+                    break;
+                }
+            }
         }
     }
     for entity in subtrees(&cx.tree, &roots) {
@@ -1489,11 +1498,6 @@ impl MatchedRules {
 pub(crate) fn style_system(cx: &mut Context) {
     let _scope = crate::profiling::scope("style_system");
     let mut redraw_entities = Vec::new();
-
-    // Without any text there is no paragraph to rebuild, and `text_system` leaves the set alone.
-    if !cx.style.text.is_empty() && !cx.style.text_construction.is_empty() {
-        text_invalidation_system(cx);
-    }
 
     // Inline inheritance links the inline data of entities to the inline data of their parent, so
     // it only needs to rerun when the tree or which entities have inline data changes.
