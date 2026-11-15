@@ -29,6 +29,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libx11-xcb-dev libxcb-dri2-0-dev libgl1-mesa-dev libxcb-icccm4-dev libxcursor-dev libxcb-{render,shape,xfixes}0-dev
+          # fontconfig (needed by yeslogic-fontconfig-sys)
+          sudo apt-get install -y pkg-config libfontconfig1-dev
       - uses: actions/cache@v4
         with:
           path: |

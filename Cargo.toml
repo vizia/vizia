@@ -51,6 +51,7 @@ license = "MIT"
 repository = "https://github.com/vizia/vizia"
 rust-version = "1.95"
 
+
 [workspace.dependencies]
 vizia = { version = "0.5.0", path = "." }
 vizia_core = { version = "0.5.0", path = "crates/vizia_core", default-features = false }
@@ -87,6 +88,9 @@ log = "0.4"
 morphorm = "0.9"
 open = "5.4.5"
 parking_lot = "0.13"
+parley = { version = "0.11", features = ["accesskit", "complex-scripts"] }
+
+
 raw-window-handle = "0.6"
 rayon = "1.12"
 reqwest = { version = "0.13.5" }
@@ -266,6 +270,10 @@ required-features = ["winit"]
 name = "label"
 path = "examples/views/label.rs"
 required-features = ["winit"]
+
+[[example]]
+name = "text_selection"
+path = "examples/text_selection.rs"
 
 [[example]]
 name = "tooltip"
