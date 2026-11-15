@@ -503,6 +503,16 @@ fn text_invalidation_system(cx: &mut Context) {
         })
         .collect::<Vec<_>>();
     let roots = inheritance_roots(&cx.tree, &invalidated, &cx.style.text_construction);
+    // A span is shaped as part of its enclosing paragraph, so its change rebuilds that paragraph.
+    for entity in invalidated {
+        if cx.style.text_span.get(entity).copied().unwrap_or_default()
+            && let Some(owner) = LayoutParentIterator::new(&cx.tree, entity).find(|parent| {
+                cx.style.display.get(*parent).copied().unwrap_or_default() != Display::None
+            })
+        {
+            cx.style.needs_text_update(owner);
+        }
+    }
     for entity in subtrees(&cx.tree, &roots) {
         if let Some(parent) = cx.tree.get_layout_parent(entity)
             && cx.style.text_construction.contains(&parent)
@@ -1480,7 +1490,8 @@ pub(crate) fn style_system(cx: &mut Context) {
     let _scope = crate::profiling::scope("style_system");
     let mut redraw_entities = Vec::new();
 
-    if !cx.style.text_construction.is_empty() {
+    // Without any text there is no paragraph to rebuild, and `text_system` leaves the set alone.
+    if !cx.style.text.is_empty() && !cx.style.text_construction.is_empty() {
         text_invalidation_system(cx);
     }
 

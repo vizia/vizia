@@ -509,6 +509,82 @@ mod tests {
     }
 
     #[test]
+    fn span_font_size_changes_reach_the_enclosing_rich_paragraph() {
+        let mut cx = Context::default();
+        let size = Signal::new(16.0f32);
+        let quiet = std::cell::Cell::new(Entity::null());
+        let flat = Label::rich(&mut cx, "lead", |cx| {
+            TextSpan::new(cx, "span", |_| {}).font_size(size);
+            quiet.set(TextSpan::new(cx, "quiet", |_| {}).entity());
+        })
+        .entity();
+        let nested = Label::rich(&mut cx, "lead", |cx| {
+            TextSpan::new(cx, "outer", |cx| {
+                TextSpan::new(cx, "inner", |_| {});
+            })
+            .font_size(size);
+        })
+        .entity();
+        let mut backend = BackendContext::new(cx);
+        backend.set_scale_factor(2.0);
+        // The first pass links the inline values of the whole tree.
+        binding_system(&mut backend.0);
+        style_system(&mut backend.0);
+        text_system(&mut backend.0);
+
+        for logical_size in [10.0, 16.0] {
+            size.set(logical_size);
+            binding_system(&mut backend.0);
+            style_system(&mut backend.0);
+            assert!(!backend.0.style.text_construction.contains(&quiet.get()));
+            text_system(&mut backend.0);
+            for (name, rich) in [("flat", flat), ("nested", nested)] {
+                let sizes = paragraph_font_sizes(&mut backend.0, rich);
+                assert!(
+                    sizes.contains(&32.0) && sizes.contains(&(logical_size * 2.0)),
+                    "{name} spans at {logical_size}: {sizes:?}"
+                );
+                assert!(
+                    sizes.iter().all(|actual| *actual == 32.0 || *actual == logical_size * 2.0),
+                    "{name} runs at {logical_size}: {sizes:?}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn text_free_trees_skip_the_inherited_text_walk() {
+        let mut cx = Context::default();
+        let size = Signal::new(16.0f32);
+        let mut leaf = Entity::null();
+        let container = HStack::new(&mut cx, |cx| {
+            VStack::new(cx, |cx| {
+                leaf = Element::new(cx).entity();
+            });
+        })
+        .font_size(size)
+        .entity();
+        let mut backend = BackendContext::new(cx);
+        // The first pass links the inline values of the whole tree.
+        binding_system(&mut backend.0);
+        style_system(&mut backend.0);
+        text_system(&mut backend.0);
+        backend.0.style.text_construction.clear();
+
+        for logical_size in [10.0, 16.0, 12.0] {
+            size.set(logical_size);
+            binding_system(&mut backend.0);
+            style_system(&mut backend.0);
+            text_system(&mut backend.0);
+            assert!(backend.0.style.text_construction.contains(&container));
+            assert!(
+                !backend.0.style.text_construction.contains(&leaf),
+                "a text-free tree has no paragraph to rebuild below the container"
+            );
+        }
+    }
+
+    #[test]
     fn rtl_flips_explicit_left_right_text_align() {
         assert_eq!(flip_text_align_for_rtl(TextAlign::Left, true), TextAlign::Right);
         assert_eq!(flip_text_align_for_rtl(TextAlign::Right, true), TextAlign::Left);
