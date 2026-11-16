@@ -1789,6 +1789,11 @@ where
                 Code::Delete => {
                     self.reset_caret_timer(cx);
                     if !cx.is_read_only() {
+                        if cx.modifiers.shift() && !cx.modifiers.ctrl() {
+                            cx.emit(TextEvent::Cut);
+                            return;
+                        }
+
                         #[cfg(target_os = "macos")]
                         let movement = if cx.modifiers.alt() {
                             DeleteMovement::ForwardWord

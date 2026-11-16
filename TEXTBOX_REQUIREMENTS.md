@@ -23,7 +23,7 @@ gap and planned solution documented below.
 | Redo | [ ] No edit history. Restore the next coalesced edit group after undo. | |
 | Ctrl+Shift+Z redo | [ ] No shortcut mapping. Map the Windows chord to redo. | |
 | Alt+Backspace undo | [ ] No shortcut mapping. Map the Windows chord to undo. | |
-| Shift+Delete cut | [ ] No shortcut mapping. Reuse the existing cut and clipboard path. | |
+| Shift+Delete cut | [x] Shift+Delete reuses the existing cut and clipboard event path. | |
 | Korean text input | [x] IME preedit/commit events feed Parley's complex-script-enabled editor. | |
 | Dictionary-based word segmentation | [ ] Parley word boundaries are not guaranteed dictionary-based. Use ICU4X locale-aware segmentation for word movement and selection. | |
 | Korean word selection | [ ] Textbox word selection currently relies on generic editor word movement. Use the same ICU4X segment ranges as other word operations. | |
