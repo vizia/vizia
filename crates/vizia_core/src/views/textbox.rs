@@ -195,6 +195,7 @@ pub struct Textbox<R, T> {
     undo_stack: Vec<TextboxHistoryEntry>,
     redo_stack: Vec<TextboxHistoryEntry>,
     last_history_edit: Option<(HistoryKind, Instant)>,
+    word_selection_active: bool,
 }
 
 #[derive(Clone)]
@@ -330,6 +331,7 @@ where
             undo_stack: Vec::new(),
             redo_stack: Vec::new(),
             last_history_edit: None,
+            word_selection_active: false,
         }
         .build(cx, move |cx| {
             let entity = cx.current();
@@ -2205,6 +2207,18 @@ where
 
             TextEvent::MoveCursor(movement, selection) => {
                 self.last_history_edit = None;
+                let movement = if self.word_selection_active && *selection {
+                    match movement {
+                        TextMovement::Left => TextMovement::WordLeft,
+                        TextMovement::Right => TextMovement::WordRight,
+                        movement => *movement,
+                    }
+                } else {
+                    *movement
+                };
+                if !selection {
+                    self.word_selection_active = false;
+                }
                 let entity = cx.current;
                 let is_composing = cx
                     .text_context
@@ -2213,7 +2227,7 @@ where
                     .map(|e| e.is_composing())
                     .unwrap_or(false);
                 if self.edit && !self.show_placeholder.get() && !is_composing {
-                    self.move_cursor(cx, *movement, *selection);
+                    self.move_cursor(cx, movement, *selection);
                 }
             }
 
@@ -2352,21 +2366,25 @@ where
 
             TextEvent::SelectAll => {
                 self.last_history_edit = None;
+                self.word_selection_active = false;
                 self.select_all(cx);
             }
 
             TextEvent::SelectWord => {
                 self.last_history_edit = None;
                 self.select_word(cx);
+                self.word_selection_active = true;
             }
 
             TextEvent::SelectParagraph => {
                 self.last_history_edit = None;
+                self.word_selection_active = false;
                 self.select_paragraph(cx);
             }
 
             TextEvent::Hit(posx, posy, selection) => {
                 self.last_history_edit = None;
+                self.word_selection_active = false;
                 if !self.show_placeholder.get() {
                     self.hit(cx, *posx, *posy, *selection);
                 }
@@ -2374,6 +2392,7 @@ where
 
             TextEvent::Drag(posx, posy) => {
                 self.last_history_edit = None;
+                self.word_selection_active = false;
                 if !self.show_placeholder.get() {
                     self.drag(cx, *posx, *posy);
                 }

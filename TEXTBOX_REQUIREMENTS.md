@@ -28,7 +28,7 @@ gap and planned solution documented below.
 | Dictionary-based word segmentation | [x] Ctrl+Left/Right and word deletion use ICU4X auto-segmentation, including complex-script dictionary data. | |
 | Korean word selection | [x] Selection uses the ICU4X word-like segment containing the caret; tested against whitespace-separated Korean words. | |
 | Double-click targets the correct character | [x] Double-click first hit-tests its actual pointer coordinates, then selects the ICU4X word range at that caret. | |
-| Selection adjustment after double-click stays word-based | [ ] Subsequent selection extension has no word-selection mode. Retain the selected word's anchor and extend by word boundaries. | |
+| Selection adjustment after double-click stays word-based | [x] Shift+Left/Right continues by ICU word boundaries after double-click; pointer/caret changes leave word-selection mode. | |
 | Text stays inside the textbox | [x] Text drawing is clipped to the textbox shape and padded content bounds. | |
 | IME window positioning | [ ] The current cursor-area update uses textbox bounds and explicitly leaves caret tracking as a TODO. Position it from caret geometry. | |
 | Context menu available | [ ] No textbox context menu. Add a Vizia-styled popup with standard text-edit actions. | |
