@@ -34,6 +34,10 @@ pub enum TextMovement {
     Up,
     /// Move/extend down one visual line.
     Down,
+    /// Move/extend up by one visible page.
+    PageUp,
+    /// Move/extend down by one visible page.
+    PageDown,
     /// Move/extend to the start of the current visual line.
     LineStart,
     /// Move/extend to the end of the current visual line.
@@ -721,6 +725,21 @@ where
     /// [`update_preedit`]: Textbox::update_preedit
     fn move_cursor(&mut self, cx: &mut EventContext, movement: TextMovement, selection: bool) {
         let entity = cx.current;
+        let page_line_count = if matches!(movement, TextMovement::PageUp | TextMovement::PageDown)
+        {
+            let viewport_height = cx.bounds().h;
+            let caret_height = cx
+                .text_context
+                .plain_editors
+                .get(entity)
+                .and_then(|editor| editor.cursor_geometry(1.0))
+                .map(|rect| rect.height() as f32)
+                .unwrap_or(16.0)
+                .max(1.0);
+            (viewport_height / caret_height).floor().max(1.0) as usize
+        } else {
+            1
+        };
         let Some(mut driver) = cx.text_context.editor_driver(entity) else { return };
         match (movement, selection) {
             (TextMovement::Left, false) => driver.move_left(),
@@ -735,6 +754,26 @@ where
             (TextMovement::Up, true) => driver.select_up(),
             (TextMovement::Down, false) => driver.move_down(),
             (TextMovement::Down, true) => driver.select_down(),
+            (TextMovement::PageUp, false) => {
+                for _ in 0..page_line_count {
+                    driver.move_up();
+                }
+            }
+            (TextMovement::PageUp, true) => {
+                for _ in 0..page_line_count {
+                    driver.select_up();
+                }
+            }
+            (TextMovement::PageDown, false) => {
+                for _ in 0..page_line_count {
+                    driver.move_down();
+                }
+            }
+            (TextMovement::PageDown, true) => {
+                for _ in 0..page_line_count {
+                    driver.select_down();
+                }
+            }
             (TextMovement::LineStart, false) => driver.move_to_line_start(),
             (TextMovement::LineStart, true) => driver.select_to_line_start(),
             (TextMovement::LineEnd, false) => driver.move_to_line_end(),
@@ -1705,6 +1744,20 @@ where
                     self.reset_caret_timer(cx);
                     if self.kind != TextboxKind::SingleLine {
                         cx.emit(TextEvent::MoveCursor(TextMovement::Down, cx.modifiers.shift()));
+                    }
+                }
+
+                Code::PageUp => {
+                    self.reset_caret_timer(cx);
+                    if self.kind != TextboxKind::SingleLine {
+                        cx.emit(TextEvent::MoveCursor(TextMovement::PageUp, cx.modifiers.shift()));
+                    }
+                }
+
+                Code::PageDown => {
+                    self.reset_caret_timer(cx);
+                    if self.kind != TextboxKind::SingleLine {
+                        cx.emit(TextEvent::MoveCursor(TextMovement::PageDown, cx.modifiers.shift()));
                     }
                 }
 
