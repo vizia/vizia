@@ -10,6 +10,7 @@ use crate::text::{
     resolve_parley_alignment, resolved_text_direction, shaped_text::ShapedText,
 };
 use accesskit::{ActionData, ActionRequest, TextDirection, TextPosition, TextSelection};
+use icu_segmenter::{WordSegmenter, options::WordBreakInvariantOptions};
 use parley::Affinity as ParleyAffinity;
 use parley::BreakReason;
 use parley::editing::Cursor as ParleyCursor;
@@ -19,6 +20,40 @@ use parley::editing::Selection as ParleySelection;
 use skia_safe::{ClipOp, Paint, PaintStyle, Point, Rect};
 
 use unicode_segmentation::UnicodeSegmentation;
+
+fn word_ranges(text: &str) -> Vec<Range<usize>> {
+    let segmenter = WordSegmenter::new_auto(WordBreakInvariantOptions::default());
+    segmenter
+        .segment_str(text)
+        .iter_with_word_type()
+        .collect::<Vec<_>>()
+        .windows(2)
+        .filter_map(|pair| {
+            let range = pair[0].0..pair[1].0;
+            (pair[1].1.is_word_like() && !range.is_empty()).then_some(range)
+        })
+        .collect()
+}
+
+fn word_target(text: &str, position: usize, forward: bool) -> usize {
+    let position = position.min(text.len());
+    let ranges = word_ranges(text);
+    if forward {
+        ranges.iter().find(|range| range.start > position).map_or(text.len(), |range| range.start)
+    } else {
+        ranges.iter().rev().find(|range| range.start < position).map_or(0, |range| range.start)
+    }
+}
+
+fn word_range_at(text: &str, position: usize) -> Option<Range<usize>> {
+    let position = position.min(text.len());
+    let ranges = word_ranges(text);
+    ranges
+        .iter()
+        .find(|range| range.start <= position && position < range.end)
+        .cloned()
+        .or_else(|| ranges.into_iter().find(|range| range.start >= position))
+}
 
 /// Describes a cursor/selection movement, driving [`parley::editing::PlainEditorDriver`] directly.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -698,7 +733,18 @@ where
         let Some(mut driver) = cx.text_context.editor_driver(entity) else { return };
         match movement {
             DeleteMovement::BackwardGrapheme => driver.backdelete(),
-            DeleteMovement::BackwardWord => driver.backdelete_word(),
+            DeleteMovement::BackwardWord => {
+                let selection = driver.editor.raw_selection();
+                let focus = selection.focus().index();
+                let anchor = selection.anchor().index();
+                let target = if selection.is_collapsed() {
+                    word_target(&old_display, focus, false)
+                } else {
+                    anchor.min(focus)
+                };
+                driver.select_byte_range(target, focus.max(anchor));
+                driver.delete_selection();
+            }
             DeleteMovement::BackwardToLineStart => {
                 if driver.editor.raw_selection().is_collapsed() {
                     driver.select_to_line_start();
@@ -706,7 +752,18 @@ where
                 driver.delete_selection();
             }
             DeleteMovement::ForwardGrapheme => driver.delete(),
-            DeleteMovement::ForwardWord => driver.delete_word(),
+            DeleteMovement::ForwardWord => {
+                let selection = driver.editor.raw_selection();
+                let focus = selection.focus().index();
+                let anchor = selection.anchor().index();
+                let target = if selection.is_collapsed() {
+                    word_target(&old_display, focus, true)
+                } else {
+                    anchor.max(focus)
+                };
+                driver.select_byte_range(anchor.min(focus), target.max(focus));
+                driver.delete_selection();
+            }
         }
         drop(driver);
 
@@ -751,6 +808,29 @@ where
     /// [`update_preedit`]: Textbox::update_preedit
     fn move_cursor(&mut self, cx: &mut EventContext, movement: TextMovement, selection: bool) {
         let entity = cx.current;
+        if matches!(movement, TextMovement::WordLeft | TextMovement::WordRight) {
+            let Some(editor) = cx.text_context.plain_editors.get(entity) else { return };
+            let text = editor.text().to_string();
+            let raw_selection = editor.raw_selection();
+            let anchor = raw_selection.anchor().index();
+            let focus = raw_selection.focus().index();
+            let forward = movement == TextMovement::WordRight;
+            let position = if selection || raw_selection.is_collapsed() {
+                focus
+            } else if forward {
+                anchor.max(focus)
+            } else {
+                anchor.min(focus)
+            };
+            let target = word_target(&text, position, forward);
+            let (anchor, focus) = if selection { (anchor, target) } else { (target, target) };
+            if let Some(mut driver) = cx.text_context.editor_driver(entity) {
+                driver.select_byte_range(anchor, focus);
+            }
+            cx.needs_redraw();
+            cx.style.needs_access_update(entity);
+            return;
+        }
         let page_line_count = if matches!(movement, TextMovement::PageUp | TextMovement::PageDown)
         {
             let viewport_height = cx.bounds().h;
@@ -905,8 +985,16 @@ where
         if self.show_placeholder.get() {
             return;
         }
-        self.move_cursor(cx, TextMovement::WordLeft, false);
-        self.move_cursor(cx, TextMovement::WordRight, true);
+        let entity = cx.current;
+        let Some(editor) = cx.text_context.plain_editors.get(entity) else { return };
+        let text = editor.text().to_string();
+        let position = editor.raw_selection().focus().index();
+        let Some(range) = word_range_at(&text, position) else { return };
+        if let Some(mut driver) = cx.text_context.editor_driver(entity) {
+            driver.select_byte_range(range.start, range.end);
+        }
+        cx.needs_redraw();
+        cx.style.needs_access_update(entity);
     }
 
     fn select_paragraph(&mut self, cx: &mut EventContext) {
@@ -2410,5 +2498,27 @@ where
         }
 
         canvas.restore();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{word_ranges, word_target};
+
+    #[test]
+    fn dictionary_segmentation_splits_japanese_words() {
+        assert_eq!(word_ranges("こんにちは世界"), [0..15, 15..21]);
+    }
+
+    #[test]
+    fn segmentation_keeps_korean_words_separate() {
+        assert_eq!(word_ranges("안녕하세요 세계"), [0..15, 16..22]);
+    }
+
+    #[test]
+    fn word_navigation_skips_interword_spaces() {
+        let text = "one   two";
+        assert_eq!(word_target(text, 0, true), 6);
+        assert_eq!(word_target(text, 6, false), 0);
     }
 }

@@ -82,6 +82,7 @@ gl-rs = { package = "gl", version = "0.14" }
 glutin = { version = "0.32", default-features = false, features = ["egl", "wgl", "glx"] }
 glutin-winit = { version = "0.5", default-features = false, features = ["egl", "wgl", "glx"] }
 hashbrown = "0.17"
+icu_segmenter = "2.4"
 indexmap = "2.14"
 keyboard-types = { version = "0.8", default-features = false }
 log = "0.4"

@@ -41,6 +41,7 @@ unicode-bidi.workspace = true
 copypasta = { workspace = true, optional = true }
 chrono.workspace = true
 hashbrown.workspace = true
+icu_segmenter.workspace = true
 log.workspace = true
 indexmap.workspace = true
 parley.workspace = true
