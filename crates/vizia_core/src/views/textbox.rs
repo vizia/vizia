@@ -1,6 +1,7 @@
 use std::cell::{Cell, RefCell};
 use std::ops::Range;
 use std::rc::Rc;
+use std::time::{Duration, Instant};
 
 use crate::prelude::*;
 
@@ -109,6 +110,8 @@ pub enum TextEvent {
     SetMaskVisible(bool),
     /// Toggle whether masked text should be visible.
     ToggleMaskVisible,
+    /// Undo the most recent text edit.
+    Undo,
     /// Toggle the visibility of the text Caret.
     ToggleCaret,
 }
@@ -152,6 +155,24 @@ pub struct Textbox<R, T> {
     last_scale: Cell<f32>,
     /// Last alignment applied to the `PlainEditor` via `set_alignment`.
     last_align: Cell<Option<parley::Alignment>>,
+    undo_stack: Vec<TextboxHistoryEntry>,
+    redo_stack: Vec<TextboxHistoryEntry>,
+    last_history_edit: Option<(HistoryKind, Instant)>,
+}
+
+#[derive(Clone)]
+struct TextboxHistoryEntry {
+    text: String,
+    anchor: usize,
+    focus: usize,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq)]
+enum HistoryKind {
+    Typing,
+    Backspace,
+    Delete,
+    Other,
 }
 
 // Determines whether the enter key submits the text or inserts a new line.
@@ -269,6 +290,9 @@ where
             last_width: Cell::new(None),
             last_scale: Cell::new(1.0),
             last_align: Cell::new(None),
+            undo_stack: Vec::new(),
+            redo_stack: Vec::new(),
+            last_history_edit: None,
         }
         .build(cx, move |cx| {
             let entity = cx.current();
@@ -786,6 +810,68 @@ where
         drop(driver);
         cx.needs_redraw();
         cx.style.needs_access_update(entity);
+    }
+
+    fn history_entry(&self, cx: &EventContext) -> TextboxHistoryEntry {
+        let Some(editor) = cx.text_context.plain_editors.get(cx.current) else {
+            return TextboxHistoryEntry { text: self.real_text.clone(), anchor: 0, focus: 0 };
+        };
+        let display = editor.text().to_string();
+        let selection = editor.raw_selection();
+        TextboxHistoryEntry {
+            text: self.real_text.clone(),
+            anchor: Self::byte_to_grapheme_index(&display, selection.anchor().index()),
+            focus: Self::byte_to_grapheme_index(&display, selection.focus().index()),
+        }
+    }
+
+    fn record_undo(&mut self, entry: TextboxHistoryEntry, kind: HistoryKind) {
+        let now = Instant::now();
+        let coalesce = matches!(kind, HistoryKind::Typing | HistoryKind::Backspace | HistoryKind::Delete)
+            && self
+                .last_history_edit
+                .is_some_and(|(last_kind, last_time)| {
+                    last_kind == kind && now.duration_since(last_time) <= Duration::from_millis(750)
+                });
+        if !coalesce {
+            if self.undo_stack.len() == 1000 {
+                self.undo_stack.remove(0);
+            }
+            self.undo_stack.push(entry);
+        }
+        self.redo_stack.clear();
+        self.last_history_edit = Some((kind, now));
+    }
+
+    fn restore_history_entry(&mut self, cx: &mut EventContext, entry: TextboxHistoryEntry) {
+        let entity = cx.current;
+        self.real_text = entry.text;
+        self.show_placeholder.set(self.real_text.is_empty());
+        let display = self.display_text_from_real();
+        if let Some(editor) = cx.text_context.plain_editors.get_mut(entity) {
+            editor.set_text(&display);
+        }
+        let anchor = Self::grapheme_index_to_byte(&display, entry.anchor);
+        let focus = Self::grapheme_index_to_byte(&display, entry.focus);
+        if let Some(mut driver) = cx.text_context.editor_driver(entity) {
+            driver.select_byte_range(anchor, focus);
+        }
+        self.last_history_edit = None;
+        cx.style.needs_access_update(entity);
+        self.rebuild_shaped_cache(cx);
+    }
+
+    fn undo(&mut self, cx: &mut EventContext) {
+        let Some(entry) = self.undo_stack.pop() else { return };
+        self.redo_stack.push(self.history_entry(cx));
+        self.restore_history_entry(cx, entry);
+        self.edited_since_focus = true;
+        self.edited_once = true;
+        let text = self.clone_text(cx);
+        cx.set_valid(self.is_text_valid(&text));
+        if let Some(callback) = &self.on_edit {
+            (callback)(cx, text);
+        }
     }
 
     fn select_all(&mut self, cx: &mut EventContext) {
@@ -1883,6 +1969,17 @@ where
                     }
                 }
 
+                Code::KeyZ => {
+                    #[cfg(target_os = "macos")]
+                    let modifier = Modifiers::SUPER;
+                    #[cfg(not(target_os = "macos"))]
+                    let modifier = Modifiers::CTRL;
+
+                    if cx.modifiers == &modifier && !cx.is_read_only() {
+                        cx.emit(TextEvent::Undo);
+                    }
+                }
+
                 _ => {}
             },
 
@@ -1914,12 +2011,21 @@ where
 
                 self.edited_since_focus = true;
                 self.edited_once = true;
+                let before = self.history_entry(cx);
 
                 if self.show_placeholder.get() {
                     self.reset_text(cx);
                 }
 
                 self.insert_text(cx, text);
+                if self.real_text != before.text {
+                    let kind = if text.graphemes(true).count() == 1 && text != "\n" {
+                        HistoryKind::Typing
+                    } else {
+                        HistoryKind::Other
+                    };
+                    self.record_undo(before, kind);
+                }
 
                 let text = self.clone_text(cx);
 
@@ -1947,9 +2053,18 @@ where
 
             TextEvent::DeleteText(movement) => {
                 if self.edit {
+                    let before = self.history_entry(cx);
                     self.edited_since_focus = true;
                     self.edited_once = true;
                     self.delete_text(cx, *movement);
+                    if self.real_text != before.text {
+                        let kind = match movement {
+                            DeleteMovement::BackwardGrapheme => HistoryKind::Backspace,
+                            DeleteMovement::ForwardGrapheme => HistoryKind::Delete,
+                            _ => HistoryKind::Other,
+                        };
+                        self.record_undo(before, kind);
+                    }
 
                     let text = self.clone_text(cx);
 
@@ -1962,6 +2077,7 @@ where
             }
 
             TextEvent::MoveCursor(movement, selection) => {
+                self.last_history_edit = None;
                 let entity = cx.current;
                 let is_composing = cx
                     .text_context
@@ -1981,6 +2097,7 @@ where
 
             TextEvent::StartEdit => {
                 if !cx.is_disabled() && !self.edit {
+                    self.last_history_edit = None;
                     self.edit = true;
                     self.edited_since_focus = false;
                     cx.focus_with_visibility(true);
@@ -2035,6 +2152,7 @@ where
             }
 
             TextEvent::EndEdit => {
+                self.last_history_edit = None;
                 self.edit = false;
                 cx.release();
                 cx.stop_timer(self.caret_timer);
@@ -2106,24 +2224,29 @@ where
             }
 
             TextEvent::SelectAll => {
+                self.last_history_edit = None;
                 self.select_all(cx);
             }
 
             TextEvent::SelectWord => {
+                self.last_history_edit = None;
                 self.select_word(cx);
             }
 
             TextEvent::SelectParagraph => {
+                self.last_history_edit = None;
                 self.select_paragraph(cx);
             }
 
             TextEvent::Hit(posx, posy, selection) => {
+                self.last_history_edit = None;
                 if !self.show_placeholder.get() {
                     self.hit(cx, *posx, *posy, *selection);
                 }
             }
 
             TextEvent::Drag(posx, posy) => {
+                self.last_history_edit = None;
                 if !self.show_placeholder.get() {
                     self.drag(cx, *posx, *posy);
                 }
@@ -2160,11 +2283,13 @@ where
                 if self.edit {
                     if let Some(selected_text) = self.clone_selected(cx) {
                         if !selected_text.is_empty() {
+                            let before = self.history_entry(cx);
                             self.edited_since_focus = true;
                             self.edited_once = true;
                             cx.set_clipboard(selected_text)
                                 .expect("Failed to add text to clipboard");
                             self.delete_text(cx, DeleteMovement::BackwardGrapheme);
+                            self.record_undo(before, HistoryKind::Other);
 
                             let text = self.clone_text(cx);
 
@@ -2180,6 +2305,12 @@ where
 
             TextEvent::ToggleCaret => {
                 self.show_caret ^= true;
+            }
+
+            TextEvent::Undo => {
+                if self.edit && !cx.is_read_only() {
+                    self.undo(cx);
+                }
             }
         });
     }

@@ -19,7 +19,7 @@ gap and planned solution documented below.
 | End reaches the end of the line | [x] End is mapped to Parley's `move_to_line_end`. | |
 | Ctrl+Home / Ctrl+End | [x] Ctrl+Home/End move to document boundaries; unmodified Home/End retain line-boundary behavior. | |
 | Page Up / Page Down | [x] Multiline textboxes move by the visible page height using repeated Parley vertical moves, retaining preferred x. | |
-| Undo | [ ] No edit history. Add textbox-local undo snapshots with consecutive typing coalesced into sensible groups. | |
+| Undo | [x] Textbox-local history restores text and selection; adjacent typing coalesces for 750 ms. Ctrl+Z invokes undo. | |
 | Redo | [ ] No edit history. Restore the next coalesced edit group after undo. | |
 | Ctrl+Shift+Z redo | [ ] No shortcut mapping. Map the Windows chord to redo. | |
 | Alt+Backspace undo | [ ] No shortcut mapping. Map the Windows chord to undo. | |
