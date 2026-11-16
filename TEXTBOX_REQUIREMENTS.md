@@ -22,7 +22,7 @@ gap and planned solution documented below.
 | Undo | [x] Textbox-local history restores text and selection; adjacent typing coalesces for 750 ms. Ctrl+Z invokes undo. | |
 | Redo | [x] Redo restores the text and selection snapshot after undo; Ctrl+Y invokes it on Windows. | |
 | Ctrl+Shift+Z redo | [x] Ctrl+Shift+Z invokes redo on Windows; Cmd+Shift+Z does so on macOS. | |
-| Alt+Backspace undo | [ ] No shortcut mapping. Map the Windows chord to undo. | |
+| Alt+Backspace undo | [x] Alt+Backspace invokes the existing undo history on Windows. | |
 | Shift+Delete cut | [x] Shift+Delete reuses the existing cut and clipboard event path. | |
 | Korean text input | [x] IME preedit/commit events feed Parley's complex-script-enabled editor. | |
 | Dictionary-based word segmentation | [ ] Parley word boundaries are not guaranteed dictionary-based. Use ICU4X locale-aware segmentation for word movement and selection. | |

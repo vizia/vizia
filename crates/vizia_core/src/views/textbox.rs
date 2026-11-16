@@ -1877,12 +1877,18 @@ where
                             DeleteMovement::BackwardGrapheme
                         };
                         #[cfg(not(target_os = "macos"))]
-                        let movement = if cx.modifiers.ctrl() {
-                            DeleteMovement::BackwardWord
+                        if cx.modifiers.alt() && !cx.modifiers.ctrl() {
+                            cx.emit(TextEvent::Undo);
                         } else {
-                            DeleteMovement::BackwardGrapheme
-                        };
+                            let movement = if cx.modifiers.ctrl() {
+                                DeleteMovement::BackwardWord
+                            } else {
+                                DeleteMovement::BackwardGrapheme
+                            };
+                            cx.emit(TextEvent::DeleteText(movement));
+                        }
 
+                        #[cfg(target_os = "macos")]
                         cx.emit(TextEvent::DeleteText(movement));
                     }
                 }
