@@ -66,19 +66,25 @@ impl Popover {
         let arrow_size = Signal::new(Length::Value(LengthValue::Px(8.0)));
         let should_reposition = Signal::new(true);
 
-        Self { placement, caret_anchor: Signal::new(None), show_arrow, arrow_size, should_reposition }
-            .build(cx, |cx| {
-                (content)(cx);
-                Binding::new(cx, show_arrow, move |cx| {
-                    let show_arrow = show_arrow.get();
-                    if show_arrow {
-                        Arrow::new(cx, placement, arrow_size);
-                    }
-                });
-            })
-            .position_type(PositionType::Absolute)
-            .ignore_clipping(true)
-            .space(Pixels(0.0))
+        Self {
+            placement,
+            caret_anchor: Signal::new(None),
+            show_arrow,
+            arrow_size,
+            should_reposition,
+        }
+        .build(cx, |cx| {
+            (content)(cx);
+            Binding::new(cx, show_arrow, move |cx| {
+                let show_arrow = show_arrow.get();
+                if show_arrow {
+                    Arrow::new(cx, placement, arrow_size);
+                }
+            });
+        })
+        .position_type(PositionType::Absolute)
+        .ignore_clipping(true)
+        .space(Pixels(0.0))
     }
 }
 
@@ -307,10 +313,8 @@ impl View for Popover {
                     }
 
                     Placement::Caret => {
-                        let (caret_x, caret_y) = self
-                            .caret_anchor
-                            .get()
-                            .unwrap_or((parent_bounds.x, parent_bounds.y));
+                        let (caret_x, caret_y) =
+                            self.caret_anchor.get().unwrap_or((parent_bounds.x, parent_bounds.y));
                         let max_x = window_bounds.right() - bounds.width();
                         let max_y = window_bounds.bottom() - bounds.height();
                         let clamped_x =

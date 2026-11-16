@@ -891,8 +891,7 @@ where
             cx.style.needs_access_update(entity);
             return;
         }
-        let page_line_count = if matches!(movement, TextMovement::PageUp | TextMovement::PageDown)
-        {
+        let page_line_count = if matches!(movement, TextMovement::PageUp | TextMovement::PageDown) {
             let viewport_height = cx.bounds().h;
             let caret_height = cx
                 .text_context
@@ -969,10 +968,9 @@ where
 
     fn record_undo(&mut self, entry: TextboxHistoryEntry, kind: HistoryKind) {
         let now = Instant::now();
-        let coalesce = matches!(kind, HistoryKind::Typing | HistoryKind::Backspace | HistoryKind::Delete)
-            && self
-                .last_history_edit
-                .is_some_and(|(last_kind, last_time)| {
+        let coalesce =
+            matches!(kind, HistoryKind::Typing | HistoryKind::Backspace | HistoryKind::Delete)
+                && self.last_history_edit.is_some_and(|(last_kind, last_time)| {
                     last_kind == kind && now.duration_since(last_time) <= Duration::from_millis(750)
                 });
         if !coalesce {
@@ -1298,28 +1296,17 @@ where
             Alignment::Left | Alignment::Center | Alignment::Right => 0.5,
             Alignment::BottomLeft | Alignment::BottomCenter | Alignment::BottomRight => 1.0,
         };
-        let text_height = cx
-            .text_context
-            .text_shaped
-            .get(entity)
-            .map(|shaped| shaped.height())
-            .unwrap_or(0.0);
+        let text_height =
+            cx.text_context.text_shaped.get(entity).map(|shaped| shaped.height()).unwrap_or(0.0);
         top *= bounds.h - padding_top - padding_bottom - text_height;
         let transform = *self.transform.borrow();
-        let x = (bounds.x + padding_left + cursor.x0 as f32 + transform.0)
-            .round()
-            .max(0.0) as u32;
-        let y = (bounds.y + padding_top + top + cursor.y0 as f32 + transform.1)
-            .round()
-            .max(0.0) as u32;
+        let x = (bounds.x + padding_left + cursor.x0 as f32 + transform.0).round().max(0.0) as u32;
+        let y =
+            (bounds.y + padding_top + top + cursor.y0 as f32 + transform.1).round().max(0.0) as u32;
         let height = (cursor.height() as u32).max(1);
         self.context_menu_anchor.set(Some((x as f32, y as f32)));
         cx.event_queue.push_back(
-            Event::new(WindowEvent::SetImeCursorArea(
-                (x, y),
-                (1, height),
-            ))
-            .target(entity),
+            Event::new(WindowEvent::SetImeCursorArea((x, y), (1, height))).target(entity),
         );
     }
 
@@ -2085,7 +2072,10 @@ where
                 Code::PageDown => {
                     self.reset_caret_timer(cx);
                     if self.kind != TextboxKind::SingleLine {
-                        cx.emit(TextEvent::MoveCursor(TextMovement::PageDown, cx.modifiers.shift()));
+                        cx.emit(TextEvent::MoveCursor(
+                            TextMovement::PageDown,
+                            cx.modifiers.shift(),
+                        ));
                     }
                 }
 
