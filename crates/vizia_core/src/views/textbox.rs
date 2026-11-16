@@ -1989,9 +1989,15 @@ where
                     let modifier = Modifiers::SUPER;
                     #[cfg(not(target_os = "macos"))]
                     let modifier = Modifiers::CTRL;
+                    #[cfg(target_os = "macos")]
+                    let redo_modifier = Modifiers::SUPER | Modifiers::SHIFT;
+                    #[cfg(not(target_os = "macos"))]
+                    let redo_modifier = Modifiers::CTRL | Modifiers::SHIFT;
 
                     if cx.modifiers == &modifier && !cx.is_read_only() {
                         cx.emit(TextEvent::Undo);
+                    } else if cx.modifiers == &redo_modifier && !cx.is_read_only() {
+                        cx.emit(TextEvent::Redo);
                     }
                 }
 
