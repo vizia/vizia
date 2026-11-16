@@ -112,6 +112,8 @@ pub enum TextEvent {
     ToggleMaskVisible,
     /// Undo the most recent text edit.
     Undo,
+    /// Redo the most recently undone text edit.
+    Redo,
     /// Toggle the visibility of the text Caret.
     ToggleCaret,
 }
@@ -864,6 +866,19 @@ where
     fn undo(&mut self, cx: &mut EventContext) {
         let Some(entry) = self.undo_stack.pop() else { return };
         self.redo_stack.push(self.history_entry(cx));
+        self.restore_history_entry(cx, entry);
+        self.edited_since_focus = true;
+        self.edited_once = true;
+        let text = self.clone_text(cx);
+        cx.set_valid(self.is_text_valid(&text));
+        if let Some(callback) = &self.on_edit {
+            (callback)(cx, text);
+        }
+    }
+
+    fn redo(&mut self, cx: &mut EventContext) {
+        let Some(entry) = self.redo_stack.pop() else { return };
+        self.undo_stack.push(self.history_entry(cx));
         self.restore_history_entry(cx, entry);
         self.edited_since_focus = true;
         self.edited_once = true;
@@ -1980,6 +1995,17 @@ where
                     }
                 }
 
+                Code::KeyY => {
+                    #[cfg(target_os = "macos")]
+                    let modifier = Modifiers::SUPER;
+                    #[cfg(not(target_os = "macos"))]
+                    let modifier = Modifiers::CTRL;
+
+                    if cx.modifiers == &modifier && !cx.is_read_only() {
+                        cx.emit(TextEvent::Redo);
+                    }
+                }
+
                 _ => {}
             },
 
@@ -2310,6 +2336,12 @@ where
             TextEvent::Undo => {
                 if self.edit && !cx.is_read_only() {
                     self.undo(cx);
+                }
+            }
+
+            TextEvent::Redo => {
+                if self.edit && !cx.is_read_only() {
+                    self.redo(cx);
                 }
             }
         });

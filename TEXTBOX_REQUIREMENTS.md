@@ -20,7 +20,7 @@ gap and planned solution documented below.
 | Ctrl+Home / Ctrl+End | [x] Ctrl+Home/End move to document boundaries; unmodified Home/End retain line-boundary behavior. | |
 | Page Up / Page Down | [x] Multiline textboxes move by the visible page height using repeated Parley vertical moves, retaining preferred x. | |
 | Undo | [x] Textbox-local history restores text and selection; adjacent typing coalesces for 750 ms. Ctrl+Z invokes undo. | |
-| Redo | [ ] No edit history. Restore the next coalesced edit group after undo. | |
+| Redo | [x] Redo restores the text and selection snapshot after undo; Ctrl+Y invokes it on Windows. | |
 | Ctrl+Shift+Z redo | [ ] No shortcut mapping. Map the Windows chord to redo. | |
 | Alt+Backspace undo | [ ] No shortcut mapping. Map the Windows chord to undo. | |
 | Shift+Delete cut | [x] Shift+Delete reuses the existing cut and clipboard event path. | |
