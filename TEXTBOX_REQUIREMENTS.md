@@ -30,7 +30,7 @@ gap and planned solution documented below.
 | Double-click targets the correct character | [x] Double-click first hit-tests its actual pointer coordinates, then selects the ICU4X word range at that caret. | |
 | Selection adjustment after double-click stays word-based | [x] Shift+Left/Right continues by ICU word boundaries after double-click; pointer/caret changes leave word-selection mode. | |
 | Text stays inside the textbox | [x] Text drawing is clipped to the textbox shape and padded content bounds. | |
-| IME window positioning | [ ] The current cursor-area update uses textbox bounds and explicitly leaves caret tracking as a TODO. Position it from caret geometry. | |
+| IME window positioning | [x] The platform IME cursor area is computed from Parley caret geometry, textbox padding/alignment, and text scrolling. | |
 | Context menu available | [ ] No textbox context menu. Add a Vizia-styled popup with standard text-edit actions. | |
 | Context menu themed | [x] Not applicable until a context menu exists; the selected implementation will use Vizia popup/menu styling. | |
 | Context menu opens via keyboard | [ ] No keyboard trigger. Support the Context Menu key and Shift+F10. | |

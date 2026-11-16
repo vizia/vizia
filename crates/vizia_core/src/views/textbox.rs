@@ -1189,13 +1189,78 @@ where
     }
 
     fn reset_ime_position(&mut self, cx: &mut EventContext) {
-        // TODO: Make the position of IME follow the cursor.
+        let entity = cx.current;
+        let bounds = cx.bounds();
+        let Some(cursor) = cx
+            .text_context
+            .plain_editors
+            .get(entity)
+            .and_then(|editor| editor.cursor_geometry(1.0))
+        else {
+            return;
+        };
+
+        let logical_width = cx.physical_to_logical(bounds.w);
+        let scale = cx.scale_factor();
+        let mut padding_left = cx
+            .style
+            .padding_left
+            .get_resolved(entity, &cx.style.custom_units_props)
+            .unwrap_or_default()
+            .to_px(logical_width, 0.0)
+            * scale;
+        let mut padding_right = cx
+            .style
+            .padding_right
+            .get_resolved(entity, &cx.style.custom_units_props)
+            .unwrap_or_default()
+            .to_px(logical_width, 0.0)
+            * scale;
+        let padding_top = cx
+            .style
+            .padding_top
+            .get_resolved(entity, &cx.style.custom_units_props)
+            .unwrap_or_default()
+            .to_px(cx.physical_to_logical(bounds.h), 0.0)
+            * scale;
+        let padding_bottom = cx
+            .style
+            .padding_bottom
+            .get_resolved(entity, &cx.style.custom_units_props)
+            .unwrap_or_default()
+            .to_px(cx.physical_to_logical(bounds.h), 0.0)
+            * scale;
+        if resolved_text_direction(cx.style, entity) == crate::style::Direction::RightToLeft {
+            std::mem::swap(&mut padding_left, &mut padding_right);
+        }
+
+        let alignment = cx.style.alignment.get(entity).copied().unwrap_or_default();
+        let mut top = match alignment {
+            Alignment::TopLeft | Alignment::TopCenter | Alignment::TopRight => 0.0,
+            Alignment::Left | Alignment::Center | Alignment::Right => 0.5,
+            Alignment::BottomLeft | Alignment::BottomCenter | Alignment::BottomRight => 1.0,
+        };
+        let text_height = cx
+            .text_context
+            .text_shaped
+            .get(entity)
+            .map(|shaped| shaped.height())
+            .unwrap_or(0.0);
+        top *= bounds.h - padding_top - padding_bottom - text_height;
+        let transform = *self.transform.borrow();
+        let x = (bounds.x + padding_left + cursor.x0 as f32 + transform.0)
+            .round()
+            .max(0.0) as u32;
+        let y = (bounds.y + padding_top + top + cursor.y0 as f32 + transform.1)
+            .round()
+            .max(0.0) as u32;
+        let height = (cursor.height() as u32).max(1);
         cx.event_queue.push_back(
             Event::new(WindowEvent::SetImeCursorArea(
-                (cx.bounds().x as u32, cx.bounds().y as u32),
-                ((cx.bounds().width()) as u32, cx.bounds().height() as u32),
+                (x, y),
+                (1, height),
             ))
-            .target(cx.current),
+            .target(entity),
         );
     }
 
@@ -2165,14 +2230,17 @@ where
                 {
                     (callback)(cx, text);
                 }
+                self.reset_ime_position(cx);
             }
 
             TextEvent::UpdatePreedit(preedit, cursor) => {
                 self.update_preedit(cx, preedit, *cursor);
+                self.reset_ime_position(cx);
             }
 
             TextEvent::ClearPreedit => {
                 self.clear_preedit(cx);
+                self.reset_ime_position(cx);
             }
 
             TextEvent::Clear => {
@@ -2202,6 +2270,7 @@ where
                     if let Some(callback) = &self.on_edit {
                         (callback)(cx, text);
                     }
+                    self.reset_ime_position(cx);
                 }
             }
 
@@ -2229,6 +2298,7 @@ where
                 if self.edit && !self.show_placeholder.get() && !is_composing {
                     self.move_cursor(cx, movement, *selection);
                 }
+                self.reset_ime_position(cx);
             }
 
             TextEvent::SetPlaceholder(text) => {
@@ -2281,6 +2351,7 @@ where
                     } else {
                         self.select_all(cx);
                     }
+                    self.reset_ime_position(cx);
 
                     // Keep textbox pristine only until first user edit; once edited,
                     // preserve validation across blur/focus cycles.
@@ -2368,18 +2439,21 @@ where
                 self.last_history_edit = None;
                 self.word_selection_active = false;
                 self.select_all(cx);
+                self.reset_ime_position(cx);
             }
 
             TextEvent::SelectWord => {
                 self.last_history_edit = None;
                 self.select_word(cx);
                 self.word_selection_active = true;
+                self.reset_ime_position(cx);
             }
 
             TextEvent::SelectParagraph => {
                 self.last_history_edit = None;
                 self.word_selection_active = false;
                 self.select_paragraph(cx);
+                self.reset_ime_position(cx);
             }
 
             TextEvent::Hit(posx, posy, selection) => {
@@ -2388,6 +2462,7 @@ where
                 if !self.show_placeholder.get() {
                     self.hit(cx, *posx, *posy, *selection);
                 }
+                self.reset_ime_position(cx);
             }
 
             TextEvent::Drag(posx, posy) => {
@@ -2396,6 +2471,7 @@ where
                 if !self.show_placeholder.get() {
                     self.drag(cx, *posx, *posy);
                 }
+                self.reset_ime_position(cx);
             }
 
             TextEvent::Scroll(_x, _y) => {
