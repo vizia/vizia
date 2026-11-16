@@ -384,6 +384,56 @@ where
                 push_editor_text_and_rebuild(entity, cx, &display_text);
             });
         })
+        .menu(|cx| {
+            let textbox_entity = cx.current();
+            Menu::new(cx, Placement::Cursor, true, move |cx| {
+                MenuButton::new(
+                    cx,
+                    move |cx| {
+                        cx.emit_custom(
+                            Event::new(TextEvent::Cut)
+                                .target(textbox_entity)
+                                .origin(textbox_entity),
+                        );
+                    },
+                    |cx| Label::new(cx, "Cut"),
+                );
+                MenuButton::new(
+                    cx,
+                    move |cx| {
+                        cx.emit_custom(
+                            Event::new(TextEvent::Copy)
+                                .target(textbox_entity)
+                                .origin(textbox_entity),
+                        );
+                    },
+                    |cx| Label::new(cx, "Copy"),
+                );
+                MenuButton::new(
+                    cx,
+                    move |cx| {
+                        cx.emit_custom(
+                            Event::new(TextEvent::Paste)
+                                .target(textbox_entity)
+                                .origin(textbox_entity),
+                        );
+                    },
+                    |cx| Label::new(cx, "Paste"),
+                );
+                Divider::new(cx);
+                MenuButton::new(
+                    cx,
+                    move |cx| {
+                        cx.emit_custom(
+                            Event::new(TextEvent::SelectAll)
+                                .target(textbox_entity)
+                                .origin(textbox_entity),
+                        );
+                    },
+                    |cx| Label::new(cx, "Select All"),
+                );
+            })
+        })
     }
 
     fn display_text_from_real(&self) -> String {
@@ -1815,6 +1865,17 @@ where
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
         // Window Events
         event.map(|window_event, meta| match window_event {
+            WindowEvent::MouseDown(MouseButton::Right) => {
+                if cx.is_over() && !cx.is_disabled() {
+                    cx.focus_with_visibility(true);
+                    if !self.edit {
+                        cx.emit(TextEvent::StartEdit);
+                    }
+                    self.reset_caret_timer(cx);
+                    cx.emit(TextEvent::Hit(cx.mouse.cursor_x, cx.mouse.cursor_y, false));
+                }
+            }
+
             WindowEvent::MouseDown(MouseButton::Left) => {
                 if meta.origin == cx.current {
                     return;
