@@ -1,0 +1,40 @@
+# Textbox Requirements
+
+Evaluated against this checkout on Windows. The Vizia column in the linked gist
+describes main and was not treated as authoritative for this branch. Checked rows
+are supported by the current implementation; unchecked rows have the branch-local
+gap and planned solution documented below.
+
+| Requirement | Current branch | Solution for gaps |
+|---|---|---|
+| COLRv1 emoji rendering | [x] Shaped through Skia's color-font-capable text path. | |
+| Windows emoji picker | [x] The Windows `Win+.` picker is an OS shortcut; textbox character input accepts its committed text. | |
+| ClearType on Windows | [ ] Skia font edging uses subpixel antialiasing, but the GPU surface does not guarantee Windows LCD ClearType. Keep Skia and document the rendering limitation rather than add a separate Windows text renderer. | |
+| Sharp caret | [x] Caret is drawn as a one-physical-pixel rectangle at a rounded coordinate. | |
+| Up/Down navigation reaches lines correctly | [x] Delegated to Parley's `PlainEditor` cursor driver. | |
+| Vertical navigation preserves the x coordinate | [x] Delegated to Parley's `PlainEditor` cursor driver. | |
+| Vertical navigation remembers mouse-positioned caret x | [x] Point placement and subsequent vertical movement use the same Parley editor state. | |
+| Newline insertion and caret tracking | [x] Multiline insertion goes through `PlainEditorDriver::insert_or_replace_selection`. | |
+| Ctrl+Right skips the following space on Windows | [x] Ctrl+Right uses the editor's word-right movement rather than grapheme movement. | |
+| End reaches the end of the line | [x] End is mapped to Parley's `move_to_line_end`. | |
+| Ctrl+Home / Ctrl+End | [x] Ctrl+Home/End move to document boundaries; unmodified Home/End retain line-boundary behavior. | |
+| Page Up / Page Down | [ ] No page movement is mapped. Move the caret by one visible textbox page while retaining its preferred x coordinate. | |
+| Undo | [ ] No edit history. Add textbox-local undo snapshots with consecutive typing coalesced into sensible groups. | |
+| Redo | [ ] No edit history. Restore the next coalesced edit group after undo. | |
+| Ctrl+Shift+Z redo | [ ] No shortcut mapping. Map the Windows chord to redo. | |
+| Alt+Backspace undo | [ ] No shortcut mapping. Map the Windows chord to undo. | |
+| Shift+Delete cut | [ ] No shortcut mapping. Reuse the existing cut and clipboard path. | |
+| Korean text input | [x] IME preedit/commit events feed Parley's complex-script-enabled editor. | |
+| Dictionary-based word segmentation | [ ] Parley word boundaries are not guaranteed dictionary-based. Use ICU4X locale-aware segmentation for word movement and selection. | |
+| Korean word selection | [ ] Textbox word selection currently relies on generic editor word movement. Use the same ICU4X segment ranges as other word operations. | |
+| Double-click targets the correct character | [ ] Selection is computed from the current caret, not the double-click point. Resolve the word range at the pointer position. | |
+| Selection adjustment after double-click stays word-based | [ ] Subsequent selection extension has no word-selection mode. Retain the selected word's anchor and extend by word boundaries. | |
+| Text stays inside the textbox | [x] Text drawing is clipped to the textbox shape and padded content bounds. | |
+| IME window positioning | [ ] The current cursor-area update uses textbox bounds and explicitly leaves caret tracking as a TODO. Position it from caret geometry. | |
+| Context menu available | [ ] No textbox context menu. Add a Vizia-styled popup with standard text-edit actions. | |
+| Context menu themed | [x] Not applicable until a context menu exists; the selected implementation will use Vizia popup/menu styling. | |
+| Context menu opens via keyboard | [ ] No keyboard trigger. Support the Context Menu key and Shift+F10. | |
+| Keyboard-opened context menu appears at caret | [ ] No keyboard context menu exists. Anchor the popup to the textbox caret when opened from the keyboard. | |
+
+The table records source-level support; IME, emoji picker, rendering quality, and
+input-device behavior still need an interactive Windows run for final confirmation.

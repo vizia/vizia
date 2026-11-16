@@ -38,6 +38,10 @@ pub enum TextMovement {
     LineStart,
     /// Move/extend to the end of the current visual line.
     LineEnd,
+    /// Move/extend to the start of the text.
+    TextStart,
+    /// Move/extend to the end of the text.
+    TextEnd,
 }
 
 /// Describes the direction and granularity of a deletion.
@@ -735,6 +739,10 @@ where
             (TextMovement::LineStart, true) => driver.select_to_line_start(),
             (TextMovement::LineEnd, false) => driver.move_to_line_end(),
             (TextMovement::LineEnd, true) => driver.select_to_line_end(),
+            (TextMovement::TextStart, false) => driver.move_to_text_start(),
+            (TextMovement::TextStart, true) => driver.select_to_text_start(),
+            (TextMovement::TextEnd, false) => driver.move_to_text_end(),
+            (TextMovement::TextEnd, true) => driver.select_to_text_end(),
         }
         drop(driver);
         cx.needs_redraw();
@@ -1755,12 +1763,22 @@ where
 
                 Code::Home => {
                     self.reset_caret_timer(cx);
-                    cx.emit(TextEvent::MoveCursor(TextMovement::LineStart, cx.modifiers.shift()));
+                    let movement = if cx.modifiers.ctrl() || cx.modifiers.logo() {
+                        TextMovement::TextStart
+                    } else {
+                        TextMovement::LineStart
+                    };
+                    cx.emit(TextEvent::MoveCursor(movement, cx.modifiers.shift()));
                 }
 
                 Code::End => {
                     self.reset_caret_timer(cx);
-                    cx.emit(TextEvent::MoveCursor(TextMovement::LineEnd, cx.modifiers.shift()));
+                    let movement = if cx.modifiers.ctrl() || cx.modifiers.logo() {
+                        TextMovement::TextEnd
+                    } else {
+                        TextMovement::LineEnd
+                    };
+                    cx.emit(TextEvent::MoveCursor(movement, cx.modifiers.shift()));
                 }
 
                 Code::KeyA => {
