@@ -56,6 +56,10 @@ fn word_range_at(text: &str, position: usize) -> Option<Range<usize>> {
         .or_else(|| ranges.into_iter().find(|range| range.start >= position))
 }
 
+fn selection_contains_position(range: &Range<usize>, position: usize) -> bool {
+    !range.is_empty() && range.start <= position && position <= range.end
+}
+
 /// Describes a cursor/selection movement, driving [`parley::editing::PlainEditorDriver`] directly.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TextMovement {
@@ -1160,6 +1164,36 @@ where
         cx.style.needs_access_update(entity);
     }
 
+    fn selection_contains_point(&self, cx: &mut EventContext, x: f32, y: f32) -> bool {
+        let entity = cx.current;
+        let Some(range) = cx
+            .text_context
+            .plain_editors
+            .get(entity)
+            .map(|editor| editor.raw_selection().text_range())
+        else {
+            return false;
+        };
+        if range.is_empty() {
+            return false;
+        }
+
+        let (mut x, mut y) = (x, y);
+        if let Some(inv_transform) = cx.transform().invert() {
+            let point = inv_transform.map_point(Point::new(x, y));
+            x = point.x;
+            y = point.y;
+        }
+        let transform = *self.transform.borrow();
+        let (local_x, local_y) =
+            self.coordinates_global_to_text(cx, x - transform.0, y - transform.1);
+
+        let Some(mut driver) = cx.text_context.editor_driver(entity) else { return false };
+        let layout = driver.layout().clone();
+        let position = ParleyCursor::from_point(&layout, local_x, local_y).index();
+        selection_contains_position(&range, position)
+    }
+
     /// This function takes window-global physical coordinates.
     fn drag(&mut self, cx: &mut EventContext, x: f32, y: f32) {
         let entity = cx.current;
@@ -1869,7 +1903,9 @@ where
                         cx.emit(TextEvent::StartEdit);
                     }
                     self.reset_caret_timer(cx);
-                    cx.emit(TextEvent::Hit(cx.mouse.cursor_x, cx.mouse.cursor_y, false));
+                    if !self.selection_contains_point(cx, cx.mouse.cursor_x, cx.mouse.cursor_y) {
+                        cx.emit(TextEvent::Hit(cx.mouse.cursor_x, cx.mouse.cursor_y, false));
+                    }
                 }
             }
 
@@ -2672,7 +2708,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{word_range_at, word_ranges, word_target};
+    use super::{selection_contains_position, word_range_at, word_ranges, word_target};
 
     #[test]
     fn dictionary_segmentation_splits_japanese_words() {
@@ -2699,5 +2735,15 @@ mod tests {
         let text = "one   two";
         assert_eq!(word_target(text, 0, true), 6);
         assert_eq!(word_target(text, 6, false), 0);
+    }
+
+    #[test]
+    fn right_click_preserves_selection_at_both_boundaries() {
+        let selection = 2..5;
+        assert!(selection_contains_position(&selection, 2));
+        assert!(selection_contains_position(&selection, 5));
+        assert!(!selection_contains_position(&selection, 1));
+        assert!(!selection_contains_position(&selection, 6));
+        assert!(!selection_contains_position(&(3..3), 3));
     }
 }
