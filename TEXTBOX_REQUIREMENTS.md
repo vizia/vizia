@@ -26,7 +26,7 @@ gap and planned solution documented below.
 | Shift+Delete cut | [x] Shift+Delete reuses the existing cut and clipboard event path. | |
 | Korean text input | [x] IME preedit/commit events feed Parley's complex-script-enabled editor. | |
 | Dictionary-based word segmentation | [x] Ctrl+Left/Right and word deletion use ICU4X auto-segmentation, including complex-script dictionary data. | |
-| Korean word selection | [ ] Textbox word selection currently relies on generic editor word movement. Use the same ICU4X segment ranges as other word operations. | |
+| Korean word selection | [x] Selection uses the ICU4X word-like segment containing the caret; tested against whitespace-separated Korean words. | |
 | Double-click targets the correct character | [ ] Selection is computed from the current caret, not the double-click point. Resolve the word range at the pointer position. | |
 | Selection adjustment after double-click stays word-based | [ ] Subsequent selection extension has no word-selection mode. Retain the selected word's anchor and extend by word boundaries. | |
 | Text stays inside the textbox | [x] Text drawing is clipped to the textbox shape and padded content bounds. | |

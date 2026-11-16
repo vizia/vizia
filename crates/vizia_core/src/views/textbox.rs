@@ -2503,7 +2503,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{word_ranges, word_target};
+    use super::{word_range_at, word_ranges, word_target};
 
     #[test]
     fn dictionary_segmentation_splits_japanese_words() {
@@ -2513,6 +2513,11 @@ mod tests {
     #[test]
     fn segmentation_keeps_korean_words_separate() {
         assert_eq!(word_ranges("안녕하세요 세계"), [0..15, 16..22]);
+    }
+
+    #[test]
+    fn korean_word_selection_uses_the_word_at_the_caret() {
+        assert_eq!(word_range_at("안녕하세요 세계", 6), Some(0..15));
     }
 
     #[test]
