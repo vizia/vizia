@@ -1799,6 +1799,7 @@ where
             }
 
             WindowEvent::MouseDoubleClick(MouseButton::Left) => {
+                self.hit(cx, cx.mouse.cursor_x, cx.mouse.cursor_y, false);
                 cx.emit(TextEvent::SelectWord);
             }
 
@@ -2518,6 +2519,11 @@ mod tests {
     #[test]
     fn korean_word_selection_uses_the_word_at_the_caret() {
         assert_eq!(word_range_at("안녕하세요 세계", 6), Some(0..15));
+    }
+
+    #[test]
+    fn single_character_word_selection_uses_the_clicked_caret() {
+        assert_eq!(word_range_at("a next", 0), Some(0..1));
     }
 
     #[test]
