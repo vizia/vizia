@@ -52,6 +52,7 @@ pub enum PopupEvent {
 /// A view for displaying popup content.
 pub struct Popover {
     placement: Signal<Placement>,
+    caret_anchor: Signal<Option<(f32, f32)>>,
     show_arrow: Signal<bool>,
     arrow_size: Signal<Length>,
     should_reposition: Signal<bool>,
@@ -65,7 +66,7 @@ impl Popover {
         let arrow_size = Signal::new(Length::Value(LengthValue::Px(8.0)));
         let should_reposition = Signal::new(true);
 
-        Self { placement, show_arrow, arrow_size, should_reposition }
+        Self { placement, caret_anchor: Signal::new(None), show_arrow, arrow_size, should_reposition }
             .build(cx, |cx| {
                 (content)(cx);
                 Binding::new(cx, show_arrow, move |cx| {
@@ -305,6 +306,20 @@ impl View for Popover {
                         ((clamped_x - bounds.x) / scale, (clamped_y - bounds.y) / scale)
                     }
 
+                    Placement::Caret => {
+                        let (caret_x, caret_y) = self
+                            .caret_anchor
+                            .get()
+                            .unwrap_or((parent_bounds.x, parent_bounds.y));
+                        let max_x = window_bounds.right() - bounds.width();
+                        let max_y = window_bounds.bottom() - bounds.height();
+                        let clamped_x =
+                            caret_x.clamp(window_bounds.left(), max_x.max(window_bounds.left()));
+                        let clamped_y =
+                            caret_y.clamp(window_bounds.top(), max_y.max(window_bounds.top()));
+                        ((clamped_x - bounds.x) / scale, (clamped_y - bounds.y) / scale)
+                    }
+
                     _ => (0.0, 0.0),
                 };
                 cx.set_translate((Pixels(translate.0.round()), Pixels(translate.1.round())));
@@ -374,7 +389,7 @@ impl Placement {
     }
 
     pub(crate) fn place(&self, available: AvailablePlacement) -> Placement {
-        if *self == Placement::Over || *self == Placement::Cursor {
+        if *self == Placement::Over || *self == Placement::Cursor || *self == Placement::Caret {
             return *self;
         }
 
@@ -431,6 +446,9 @@ pub trait PopoverModifiers: Sized {
     /// Defaults to `Placement::Bottom`.
     fn placement(self, placement: impl Res<Placement> + 'static) -> Self;
 
+    /// Sets the absolute physical caret anchor used by `Placement::Caret`.
+    fn caret_anchor(self, anchor: impl Res<Option<(f32, f32)>> + 'static) -> Self;
+
     /// Sets whether the popup should include an arrow. Defaults to true.
     fn show_arrow(self, show_arrow: impl Res<bool> + 'static) -> Self;
 
@@ -455,6 +473,14 @@ impl PopoverModifiers for Handle<'_, Popover> {
             handle.modify(|popup| {
                 popup.placement.set(placement);
             });
+        })
+    }
+
+    fn caret_anchor(self, anchor: impl Res<Option<(f32, f32)>> + 'static) -> Self {
+        let anchor = anchor.to_signal(self.cx);
+        self.bind(anchor, move |handle| {
+            let anchor = anchor.get();
+            handle.modify(|popup| popup.caret_anchor.set(anchor));
         })
     }
 

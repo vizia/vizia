@@ -34,7 +34,7 @@ gap and planned solution documented below.
 | Context menu available | [x] Right-click opens a Vizia popup with Cut, Copy, Paste, and Select All. | |
 | Context menu themed | [x] Uses the existing Vizia `Menu` and `MenuButton` styles. | |
 | Context menu opens via keyboard | [x] The Context Menu key and Shift+F10 open the textbox menu. | |
-| Keyboard-opened context menu appears at caret | [ ] No keyboard context menu exists. Anchor the popup to the textbox caret when opened from the keyboard. | |
+| Keyboard-opened context menu appears at caret | [x] Keyboard invocation selects a caret-anchored popover using the textbox's current IME caret coordinates. | |
 
 The table records source-level support; IME, emoji picker, rendering quality, and
 input-device behavior still need an interactive Windows run for final confirmation.

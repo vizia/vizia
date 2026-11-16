@@ -197,6 +197,8 @@ pub struct Textbox<R, T> {
     redo_stack: Vec<TextboxHistoryEntry>,
     last_history_edit: Option<(HistoryKind, Instant)>,
     word_selection_active: bool,
+    context_menu_placement: Signal<Placement>,
+    context_menu_anchor: Signal<Option<(f32, f32)>>,
 }
 
 #[derive(Clone)]
@@ -301,6 +303,8 @@ where
         let can_paste = Signal::new(true);
         let placeholder = Signal::new(String::from(""));
         let show_placeholder = Signal::new(initial_text.is_empty());
+        let context_menu_placement = Signal::new(Placement::Cursor);
+        let context_menu_anchor: Signal<Option<(f32, f32)>> = Signal::new(None);
 
         Self {
             value: value.clone(),
@@ -333,6 +337,8 @@ where
             redo_stack: Vec::new(),
             last_history_edit: None,
             word_selection_active: false,
+            context_menu_placement,
+            context_menu_anchor,
         }
         .build(cx, move |cx| {
             let entity = cx.current();
@@ -385,9 +391,9 @@ where
                 push_editor_text_and_rebuild(entity, cx, &display_text);
             });
         })
-        .menu(|cx| {
+        .menu(move |cx| {
             let textbox_entity = cx.current();
-            Menu::new(cx, Placement::Cursor, true, move |cx| {
+            Menu::new(cx, context_menu_placement, true, move |cx| {
                 MenuButton::new(
                     cx,
                     move |cx| {
@@ -434,6 +440,7 @@ where
                     |cx| Label::new(cx, "Select All"),
                 );
             })
+            .caret_anchor(context_menu_anchor)
         })
     }
 
@@ -1306,6 +1313,7 @@ where
             .round()
             .max(0.0) as u32;
         let height = (cursor.height() as u32).max(1);
+        self.context_menu_anchor.set(Some((x as f32, y as f32)));
         cx.event_queue.push_back(
             Event::new(WindowEvent::SetImeCursorArea(
                 (x, y),
@@ -1868,6 +1876,7 @@ where
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseDown(MouseButton::Right) => {
                 if cx.is_over() && !cx.is_disabled() {
+                    self.context_menu_placement.set(Placement::Cursor);
                     cx.focus_with_visibility(true);
                     if !self.edit {
                         cx.emit(TextEvent::StartEdit);
@@ -2145,10 +2154,14 @@ where
                 }
 
                 Code::ContextMenu => {
+                    self.context_menu_placement.set(Placement::Caret);
+                    self.reset_ime_position(cx);
                     cx.emit(ModalEvent::ShowMenu);
                 }
 
                 Code::F10 if cx.modifiers == &Modifiers::SHIFT => {
+                    self.context_menu_placement.set(Placement::Caret);
+                    self.reset_ime_position(cx);
                     cx.emit(ModalEvent::ShowMenu);
                 }
 

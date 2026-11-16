@@ -140,6 +140,8 @@ pub enum Placement {
     Over,
     /// The view should follow the cursor.
     Cursor,
+    /// The view should follow a caret anchor supplied by its parent.
+    Caret,
 }
 
 impl_res_simple!(Placement);
