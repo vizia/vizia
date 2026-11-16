@@ -33,7 +33,7 @@ gap and planned solution documented below.
 | IME window positioning | [x] The platform IME cursor area is computed from Parley caret geometry, textbox padding/alignment, and text scrolling. | |
 | Context menu available | [x] Right-click opens a Vizia popup with Cut, Copy, Paste, and Select All. | |
 | Context menu themed | [x] Uses the existing Vizia `Menu` and `MenuButton` styles. | |
-| Context menu opens via keyboard | [ ] No keyboard trigger. Support the Context Menu key and Shift+F10. | |
+| Context menu opens via keyboard | [x] The Context Menu key and Shift+F10 open the textbox menu. | |
 | Keyboard-opened context menu appears at caret | [ ] No keyboard context menu exists. Anchor the popup to the textbox caret when opened from the keyboard. | |
 
 The table records source-level support; IME, emoji picker, rendering quality, and

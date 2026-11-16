@@ -3,6 +3,7 @@ use std::ops::Range;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
+use crate::modifiers::ModalEvent;
 use crate::prelude::*;
 
 use crate::text::{
@@ -2141,6 +2142,14 @@ where
                     } else {
                         cx.emit(TextEvent::EndEdit);
                     }
+                }
+
+                Code::ContextMenu => {
+                    cx.emit(ModalEvent::ShowMenu);
+                }
+
+                Code::F10 if cx.modifiers == &Modifiers::SHIFT => {
+                    cx.emit(ModalEvent::ShowMenu);
                 }
 
                 Code::Home => {
