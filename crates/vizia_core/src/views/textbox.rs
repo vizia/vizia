@@ -60,6 +60,12 @@ fn selection_contains_position(range: &Range<usize>, position: usize) -> bool {
     !range.is_empty() && range.start <= position && position <= range.end
 }
 
+// Keyboard-opened menus focus their items, so the textbox must be refocused before acting.
+fn menu_action(cx: &mut EventContext, textbox: Entity, action: TextEvent) {
+    cx.with_current(textbox, |cx| cx.focus_with_visibility(true));
+    cx.emit_custom(Event::new(action).target(textbox).origin(textbox));
+}
+
 /// Describes a cursor/selection movement, driving [`parley::editing::PlainEditorDriver`] directly.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TextMovement {
@@ -203,6 +209,7 @@ pub struct Textbox<R, T> {
     word_selection_active: bool,
     context_menu_placement: Signal<Placement>,
     context_menu_anchor: Signal<Option<(f32, f32)>>,
+    context_menu_focus_on_open: Signal<bool>,
 }
 
 #[derive(Clone)]
@@ -309,8 +316,9 @@ where
         let show_placeholder = Signal::new(initial_text.is_empty());
         let context_menu_placement = Signal::new(Placement::Cursor);
         let context_menu_anchor: Signal<Option<(f32, f32)>> = Signal::new(None);
+        let context_menu_focus_on_open = Signal::new(false);
 
-        Self {
+        let handle = Self {
             value: value.clone(),
             kind,
             edit: false,
@@ -343,6 +351,7 @@ where
             word_selection_active: false,
             context_menu_placement,
             context_menu_anchor,
+            context_menu_focus_on_open,
         }
         .build(cx, move |cx| {
             let entity = cx.current();
@@ -360,7 +369,11 @@ where
                 let flag: bool = textbox.edit;
                 event.map(|window_event, meta| match window_event {
                     WindowEvent::MouseDown(_) => {
-                        if flag && meta.origin != cx.current() && cx.hovered() != cx.current() {
+                        if flag
+                            && meta.origin != cx.current()
+                            && cx.hovered() != cx.current()
+                            && !cx.hovered().is_descendant_of(cx.tree, cx.current())
+                        {
                             cx.emit(TextEvent::Blur);
                         }
                     }
@@ -394,55 +407,35 @@ where
                 let cx = handle.context();
                 push_editor_text_and_rebuild(entity, cx, &display_text);
             });
-        })
-        .menu(move |cx| {
-            let textbox_entity = cx.current();
-            Menu::new(cx, context_menu_placement, true, move |cx| {
+        });
+        let textbox_entity = handle.entity();
+        handle.menu(move |cx| {
+            Menu::new(cx, context_menu_placement, context_menu_focus_on_open, move |cx| {
                 MenuButton::new(
                     cx,
-                    move |cx| {
-                        cx.emit_custom(
-                            Event::new(TextEvent::Cut)
-                                .target(textbox_entity)
-                                .origin(textbox_entity),
-                        );
-                    },
+                    move |cx| menu_action(cx, textbox_entity, TextEvent::Cut),
                     |cx| Label::new(cx, "Cut"),
-                );
+                )
+                .focusable(context_menu_focus_on_open);
                 MenuButton::new(
                     cx,
-                    move |cx| {
-                        cx.emit_custom(
-                            Event::new(TextEvent::Copy)
-                                .target(textbox_entity)
-                                .origin(textbox_entity),
-                        );
-                    },
+                    move |cx| menu_action(cx, textbox_entity, TextEvent::Copy),
                     |cx| Label::new(cx, "Copy"),
-                );
+                )
+                .focusable(context_menu_focus_on_open);
                 MenuButton::new(
                     cx,
-                    move |cx| {
-                        cx.emit_custom(
-                            Event::new(TextEvent::Paste)
-                                .target(textbox_entity)
-                                .origin(textbox_entity),
-                        );
-                    },
+                    move |cx| menu_action(cx, textbox_entity, TextEvent::Paste),
                     |cx| Label::new(cx, "Paste"),
-                );
+                )
+                .focusable(context_menu_focus_on_open);
                 Divider::new(cx);
                 MenuButton::new(
                     cx,
-                    move |cx| {
-                        cx.emit_custom(
-                            Event::new(TextEvent::SelectAll)
-                                .target(textbox_entity)
-                                .origin(textbox_entity),
-                        );
-                    },
+                    move |cx| menu_action(cx, textbox_entity, TextEvent::SelectAll),
                     |cx| Label::new(cx, "Select All"),
-                );
+                )
+                .focusable(context_menu_focus_on_open);
             })
             .caret_anchor(context_menu_anchor)
         })
@@ -1893,11 +1886,22 @@ where
     }
 
     fn event(&mut self, cx: &mut EventContext, event: &mut Event) {
+        // The context menu is a child of the textbox, so its events bubble up to here.
+        let target = event.meta.target;
+        if target != cx.current && target.is_descendant_of(cx.tree, cx.current) {
+            return;
+        }
+
+        // The textbox is captured while editing, so it sees presses meant for the menu on top of it.
+        let over_menu =
+            cx.hovered() != cx.current && cx.hovered().is_descendant_of(cx.tree, cx.current);
+
         // Window Events
         event.map(|window_event, meta| match window_event {
             WindowEvent::MouseDown(MouseButton::Right) => {
-                if cx.is_over() && !cx.is_disabled() {
+                if cx.is_over() && !over_menu && !cx.is_disabled() {
                     self.context_menu_placement.set(Placement::Cursor);
+                    self.context_menu_focus_on_open.set(false);
                     cx.focus_with_visibility(true);
                     if !self.edit {
                         cx.emit(TextEvent::StartEdit);
@@ -1914,7 +1918,7 @@ where
                     return;
                 }
 
-                if cx.is_over() {
+                if cx.is_over() && !over_menu {
                     if !cx.is_disabled() {
                         cx.focus_with_visibility(true);
                         cx.capture();
@@ -1952,7 +1956,9 @@ where
             }
 
             WindowEvent::FocusOut => {
-                cx.emit(TextEvent::EndEdit);
+                if !cx.focused().is_descendant_of(cx.tree, cx.current) {
+                    cx.emit(TextEvent::EndEdit);
+                }
             }
 
             WindowEvent::GeometryChanged(_) => {
@@ -2181,12 +2187,14 @@ where
 
                 Code::ContextMenu => {
                     self.context_menu_placement.set(Placement::Caret);
+                    self.context_menu_focus_on_open.set(true);
                     self.reset_ime_position(cx);
                     cx.emit(ModalEvent::ShowMenu);
                 }
 
                 Code::F10 if cx.modifiers == &Modifiers::SHIFT => {
                     self.context_menu_placement.set(Placement::Caret);
+                    self.context_menu_focus_on_open.set(true);
                     self.reset_ime_position(cx);
                     cx.emit(ModalEvent::ShowMenu);
                 }
