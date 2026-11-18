@@ -3,7 +3,8 @@ use vizia::{
     prelude::*,
 };
 
-use chrono::Utc;
+use jiff::Timestamp;
+use jiff::tz::TimeZone;
 use log::{LevelFilter, debug};
 use vizia::icons::{ICON_BOLD, ICON_ITALIC, ICON_SETTINGS, ICON_UNDERLINE, ICON_USER};
 
@@ -438,7 +439,7 @@ fn render_view_preview(cx: &mut Context, view_name: &'static str) {
             });
         }
         "Calendar" => {
-            let date = Signal::new(Utc::now().date_naive());
+            let date = Signal::new(Timestamp::now().to_zoned_datetime(TimeZone::UTC).date());
             Calendar::new(cx, date).on_select(move |_cx, d| date.set(d));
         }
         "Card" => {

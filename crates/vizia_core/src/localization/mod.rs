@@ -170,18 +170,19 @@
 //!
 //! ## Date Formatting
 //! Dates can be formatted with locale-specific rules using the built-in `DATETIME` function in FTL.
-//! Pass chrono datetime values directly to `arg()` - the conversion to milliseconds is handled automatically:
+//! Pass [`jiff`] datetime values directly to `arg()` - the conversion to milliseconds is handled automatically:
 //! ```ignore
 //! # use vizia_core::prelude::*;
-//! # use chrono::Utc;
+//! # use jiff::Timestamp;
 //! # let mut cx = &mut Context::default();
-//! let now = Utc::now();
+//! let now = Timestamp::now();
 //! Label::new(cx, Localized::new("event-date").arg("date", now));
 //! ```
 //!
-//! Both timezone-aware and naive datetimes are supported:
-//! - Timezone-aware datetimes like `DateTime<Utc>` or `DateTime<Local>` work directly
-//! - Naive datetimes are automatically assumed to be in UTC
+//! Both instants and civil datetimes are supported:
+//! - Instants like [`jiff::Timestamp`] or [`jiff::ZonedDateTime`] work directly; a `ZonedDateTime` is formatted as
+//!   the instant it denotes, in UTC, whatever its time zone
+//! - Civil datetimes like [`jiff::civil::DateTime`] have no time zone and are automatically assumed to be in UTC
 //!
 //! For custom formatting, you can use pre-formatted date strings:
 //! ```ignore
@@ -193,11 +194,13 @@
 use crate::context::LocalizationContext;
 use crate::prelude::*;
 use crate::resource::LocalizationIssue;
-use chrono::{DateTime, NaiveDateTime, Utc};
 use fluent_bundle::FluentArgs;
 use fluent_bundle::FluentValue;
 use fluent_bundle::types::{FluentNumber, FluentNumberOptions};
 use hashbrown::HashMap;
+use jiff::civil;
+use jiff::tz::TimeZone;
+use jiff::{Timestamp, ZonedDateTime};
 use std::marker::PhantomData;
 use std::rc::Rc;
 use std::sync::Arc;
@@ -246,74 +249,91 @@ pub fn percentage(value: f64, fraction_digits: usize) -> FluentNumber {
     )
 }
 
-/// Wrapper for chrono DateTime that automatically converts to Fluent's expected millisecond format.
-///
-/// While this wrapper can be used, chrono DateTime types implement `Res` directly,
-/// so you can pass them to `arg()` without wrapping:
-///
-/// # Example
-/// ```ignore
-/// # use vizia_core::prelude::*;
-/// # use chrono::Utc;
-/// # let mut cx = &mut Context::default();
-/// let now = Utc::now();
-/// // Chrono datetimes work directly with arg()
-/// Label::new(cx, Localized::new("event-date").arg("date", now));
-/// ```
-#[derive(Clone)]
-pub struct FluentDateTime<Tz: chrono::TimeZone + Clone>(pub DateTime<Tz>);
-
-impl<Tz: chrono::TimeZone + Clone> From<FluentDateTime<Tz>> for FluentValue<'static> {
-    fn from(val: FluentDateTime<Tz>) -> Self {
-        let FluentDateTime(datetime) = val;
-        datetime.with_timezone(&Utc).timestamp_millis().into()
-    }
+/// Converts an instant to whole milliseconds since the Unix epoch, rounding toward negative infinity.
+fn timestamp_millis(timestamp: Timestamp) -> i64 {
+    timestamp.as_nanosecond().div_euclid(1_000_000) as i64
 }
 
-impl<Tz: chrono::TimeZone + Clone + 'static> Res<FluentDateTime<Tz>> for FluentDateTime<Tz> {
-    fn get_value(&self, _: &impl DataContext) -> Self {
-        self.clone()
-    }
-}
-
-impl<Tz: chrono::TimeZone + Clone + 'static> Res<FluentDateTime<Tz>> for DateTime<Tz> {
-    fn get_value(&self, _: &impl DataContext) -> FluentDateTime<Tz> {
-        FluentDateTime(self.clone())
-    }
-}
-
-/// Wrapper for chrono NaiveDateTime that automatically converts to Fluent's expected millisecond format.
+/// Wrapper for a jiff [`Timestamp`] that automatically converts to Fluent's expected millisecond format.
 ///
-/// While this wrapper can be used, chrono NaiveDateTime types implement `Res` directly,
-/// so you can pass them to `arg()` without wrapping. Note: assumes UTC timezone for the conversion.
+/// While this wrapper can be used, [`Timestamp`] and [`ZonedDateTime`] implement `Res` directly,
+/// so you can pass them to `arg()` without wrapping. A [`ZonedDateTime`] is converted to the instant it denotes,
+/// so its time zone does not affect the formatted value.
 ///
 /// # Example
 /// ```ignore
 /// # use vizia_core::prelude::*;
-/// # use chrono::Utc;
+/// # use jiff::Timestamp;
 /// # let mut cx = &mut Context::default();
-/// let now = Utc::now().naive_utc();
-/// // Naive datetimes work directly with arg() (assumes UTC)
+/// let now = Timestamp::now();
+/// // Timestamps work directly with arg()
 /// Label::new(cx, Localized::new("event-date").arg("date", now));
 /// ```
-#[derive(Clone)]
-pub struct FluentNaiveDateTime(pub NaiveDateTime);
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct FluentDateTime(pub Timestamp);
 
-impl From<FluentNaiveDateTime> for FluentValue<'static> {
-    fn from(val: FluentNaiveDateTime) -> Self {
-        val.0.and_utc().timestamp_millis().into()
+impl From<FluentDateTime> for FluentValue<'static> {
+    fn from(val: FluentDateTime) -> Self {
+        timestamp_millis(val.0).into()
     }
 }
 
-impl Res<FluentNaiveDateTime> for FluentNaiveDateTime {
+impl Res<FluentDateTime> for FluentDateTime {
     fn get_value(&self, _: &impl DataContext) -> Self {
-        self.clone()
+        *self
     }
 }
 
-impl Res<FluentNaiveDateTime> for NaiveDateTime {
-    fn get_value(&self, _: &impl DataContext) -> FluentNaiveDateTime {
-        FluentNaiveDateTime(*self)
+impl Res<FluentDateTime> for Timestamp {
+    fn get_value(&self, _: &impl DataContext) -> FluentDateTime {
+        FluentDateTime(*self)
+    }
+}
+
+impl Res<FluentDateTime> for ZonedDateTime {
+    fn get_value(&self, _: &impl DataContext) -> FluentDateTime {
+        FluentDateTime(self.timestamp())
+    }
+}
+
+/// Wrapper for a jiff civil [`DateTime`](civil::DateTime) that automatically converts to Fluent's expected
+/// millisecond format.
+///
+/// While this wrapper can be used, [`civil::DateTime`] implements `Res` directly,
+/// so you can pass it to `arg()` without wrapping. Note: assumes UTC timezone for the conversion.
+/// A civil datetime too close to the edge of the supported range to be placed in UTC converts to
+/// a Fluent error value.
+///
+/// # Example
+/// ```ignore
+/// # use vizia_core::prelude::*;
+/// # use jiff::{Timestamp, tz::TimeZone};
+/// # let mut cx = &mut Context::default();
+/// let now = Timestamp::now().to_zoned_datetime(TimeZone::UTC).datetime();
+/// // Civil datetimes work directly with arg() (assumes UTC)
+/// Label::new(cx, Localized::new("event-date").arg("date", now));
+/// ```
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct FluentCivilDateTime(pub civil::DateTime);
+
+impl From<FluentCivilDateTime> for FluentValue<'static> {
+    fn from(val: FluentCivilDateTime) -> Self {
+        match TimeZone::UTC.to_timestamp(val.0) {
+            Ok(timestamp) => timestamp_millis(timestamp).into(),
+            Err(_) => FluentValue::Error,
+        }
+    }
+}
+
+impl Res<FluentCivilDateTime> for FluentCivilDateTime {
+    fn get_value(&self, _: &impl DataContext) -> Self {
+        *self
+    }
+}
+
+impl Res<FluentCivilDateTime> for civil::DateTime {
+    fn get_value(&self, _: &impl DataContext) -> FluentCivilDateTime {
+        FluentCivilDateTime(*self)
     }
 }
 
@@ -591,6 +611,57 @@ impl ToStringLocalized for Localized {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use jiff::ToSpan;
+
+    #[test]
+    fn timestamp_converts_to_epoch_milliseconds() {
+        let timestamp = Timestamp::from_millisecond(1_700_000_000_123).unwrap();
+        let value: FluentValue<'static> = FluentDateTime(timestamp).into();
+        assert_eq!(value, FluentValue::from(1_700_000_000_123_i64));
+    }
+
+    #[test]
+    fn zoned_converts_to_the_same_instant_as_utc() {
+        let timestamp = Timestamp::from_millisecond(1_700_000_000_123).unwrap();
+        let zoned = timestamp.to_zoned_datetime(TimeZone::fixed(jiff::tz::offset(5)));
+        let value: FluentValue<'static> = zoned.get_value(&Context::default()).into();
+        assert_eq!(value, FluentValue::from(1_700_000_000_123_i64));
+    }
+
+    #[test]
+    fn timestamp_milliseconds_round_toward_negative_infinity() {
+        let timestamp = Timestamp::from_nanosecond(-1_000_500).unwrap();
+        let value: FluentValue<'static> = FluentDateTime(timestamp).into();
+        assert_eq!(value, FluentValue::from(-2_i64));
+    }
+
+    #[test]
+    fn civil_datetime_is_treated_as_utc() {
+        let datetime = civil::date(2023, 11, 14).at(22, 13, 20, 456_000_000);
+        let value: FluentValue<'static> = FluentCivilDateTime(datetime).into();
+        assert_eq!(value, FluentValue::from(1_700_000_000_456_i64));
+    }
+
+    #[test]
+    fn civil_datetime_outside_the_utc_range_is_a_fluent_error() {
+        let value: FluentValue<'static> = FluentCivilDateTime(civil::DateTime::MIN).into();
+        assert!(matches!(value, FluentValue::Error));
+        let value: FluentValue<'static> = FluentCivilDateTime(civil::DateTime::MAX).into();
+        assert!(matches!(value, FluentValue::Error));
+    }
+
+    #[test]
+    fn civil_datetime_is_accepted_up_to_the_timestamp_bounds() {
+        let convert = |datetime| -> FluentValue<'static> { FluentCivilDateTime(datetime).into() };
+
+        let latest = civil::date(9999, 12, 30).at(22, 0, 0, 0);
+        assert_eq!(convert(latest), FluentValue::from(253_402_207_200_000_i64));
+        assert!(matches!(convert(latest.saturating_add(1.second())), FluentValue::Error));
+
+        let earliest = civil::date(-9999, 1, 2).at(1, 59, 59, 0);
+        assert_eq!(convert(earliest), FluentValue::from(-377_705_023_201_000_i64));
+        assert!(matches!(convert(earliest.saturating_sub(1.second())), FluentValue::Error));
+    }
 
     #[test]
     fn missing_message_falls_back_to_key() {

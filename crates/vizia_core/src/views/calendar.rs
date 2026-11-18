@@ -1,19 +1,21 @@
-use chrono::{Datelike, Duration, NaiveDate, Weekday};
+use jiff::ToSpan;
+use jiff::civil::{Date, Weekday};
 
 use crate::{
     icons::{ICON_CHEVRON_LEFT, ICON_CHEVRON_RIGHT},
+    localization::FluentCivilDateTime,
     prelude::*,
 };
 
 /// A control used to select a date.
 pub struct Calendar {
-    view_date: Signal<NaiveDate>,
-    focused_date: Signal<NaiveDate>,
+    view_date: Signal<Date>,
+    focused_date: Signal<Date>,
     week_starts_on: Signal<Weekday>,
     keyboard_help: Signal<String>,
     keyboard_help_announced: bool,
     day_cells: Vec<Entity>,
-    on_select: Option<Box<dyn Fn(&mut EventContext, NaiveDate)>>,
+    on_select: Option<Box<dyn Fn(&mut EventContext, Date)>>,
 }
 
 const MONTHS: [&str; 12] =
@@ -41,151 +43,87 @@ pub enum CalendarEvent {
     AnnounceKeyboardHelp,
     RefreshLocalization,
 
-    SelectDate(NaiveDate),
+    SelectDate(Date),
 }
 
 impl Calendar {
     fn weekday_from_monday_index(index: u32) -> Weekday {
-        match index % 7 {
-            0 => Weekday::Mon,
-            1 => Weekday::Tue,
-            2 => Weekday::Wed,
-            3 => Weekday::Thu,
-            4 => Weekday::Fri,
-            5 => Weekday::Sat,
-            _ => Weekday::Sun,
-        }
+        Weekday::from_monday_zero_offset((index % 7) as i8).unwrap()
     }
 
     fn weekday_key(weekday: Weekday) -> &'static str {
         match weekday {
-            Weekday::Mon => "Monday",
-            Weekday::Tue => "Tuesday",
-            Weekday::Wed => "Wednesday",
-            Weekday::Thu => "Thursday",
-            Weekday::Fri => "Friday",
-            Weekday::Sat => "Saturday",
-            Weekday::Sun => "Sunday",
+            Weekday::Monday => "Monday",
+            Weekday::Tuesday => "Tuesday",
+            Weekday::Wednesday => "Wednesday",
+            Weekday::Thursday => "Thursday",
+            Weekday::Friday => "Friday",
+            Weekday::Saturday => "Saturday",
+            Weekday::Sunday => "Sunday",
         }
     }
 
     fn weekday_short_key(weekday: Weekday) -> &'static str {
         match weekday {
-            Weekday::Mon => "Monday-short",
-            Weekday::Tue => "Tuesday-short",
-            Weekday::Wed => "Wednesday-short",
-            Weekday::Thu => "Thursday-short",
-            Weekday::Fri => "Friday-short",
-            Weekday::Sat => "Saturday-short",
-            Weekday::Sun => "Sunday-short",
+            Weekday::Monday => "Monday-short",
+            Weekday::Tuesday => "Tuesday-short",
+            Weekday::Wednesday => "Wednesday-short",
+            Weekday::Thursday => "Thursday-short",
+            Weekday::Friday => "Friday-short",
+            Weekday::Saturday => "Saturday-short",
+            Weekday::Sunday => "Sunday-short",
         }
     }
 
     fn first_day_column(first_day: Weekday, week_starts_on: Weekday) -> u32 {
-        let first = first_day.num_days_from_monday() as i32;
-        let start = week_starts_on.num_days_from_monday() as i32;
+        let first = i32::from(first_day.to_monday_zero_offset());
+        let start = i32::from(week_starts_on.to_monday_zero_offset());
         ((7 + first - start) % 7) as u32
     }
 
     fn weekday_from_token(token: &str) -> Option<Weekday> {
         match token.trim().to_ascii_lowercase().as_str() {
-            "monday" => Some(Weekday::Mon),
-            "tuesday" => Some(Weekday::Tue),
-            "wednesday" => Some(Weekday::Wed),
-            "thursday" => Some(Weekday::Thu),
-            "friday" => Some(Weekday::Fri),
-            "saturday" => Some(Weekday::Sat),
-            "sunday" => Some(Weekday::Sun),
+            "monday" => Some(Weekday::Monday),
+            "tuesday" => Some(Weekday::Tuesday),
+            "wednesday" => Some(Weekday::Wednesday),
+            "thursday" => Some(Weekday::Thursday),
+            "friday" => Some(Weekday::Friday),
+            "saturday" => Some(Weekday::Saturday),
+            "sunday" => Some(Weekday::Sunday),
             _ => None,
         }
     }
 
     fn week_start_from_localization(cx: &impl DataContext) -> Weekday {
         let val = Localized::new("calendar-week-start").to_string_local(cx);
-        Self::weekday_from_token(&val).unwrap_or(Weekday::Mon)
+        Self::weekday_from_token(&val).unwrap_or(Weekday::Monday)
     }
 
-    fn set_view_date(&mut self, year: i32, month: u32, day: u32) {
-        let clamped_day = day.min(Self::last_day_of_month(year, month).unwrap());
-        let date = NaiveDate::from_ymd_opt(year, month, clamped_day).unwrap();
+    fn set_view_date(&mut self, date: Date) {
         self.view_date.set(date);
         self.focused_date.set(date);
     }
 
+    /// Moves the focus by whole months, clamping the day to the length of the new month.
     fn shift_month(&mut self, delta: i32) {
-        let focused_date = self.focused_date.get();
-        let (year, month) =
-            Self::shift_year_month(focused_date.year(), focused_date.month(), delta);
-        self.set_view_date(year, month, focused_date.day());
+        let date = self.focused_date.get().checked_add(delta.months()).unwrap();
+        self.set_view_date(date);
     }
 
+    /// Moves the focus by whole years, clamping the day to the length of the new month.
     fn shift_year(&mut self, delta: i32) {
-        let focused_date = self.focused_date.get();
-        self.set_view_date(focused_date.year() + delta, focused_date.month(), focused_date.day());
-    }
-
-    fn shift_year_month(year: i32, month: u32, delta: i32) -> (i32, u32) {
-        let mut year = year;
-        let mut month = month as i32 + delta;
-
-        while month < 1 {
-            year -= 1;
-            month += 12;
-        }
-
-        while month > 12 {
-            year += 1;
-            month -= 12;
-        }
-
-        (year, month as u32)
-    }
-
-    fn first_day_of_month(year: i32, month: u32) -> Option<Weekday> {
-        NaiveDate::from_ymd_opt(year, month, 1).map(|date| date.weekday())
-    }
-
-    fn last_day_of_month(year: i32, month: u32) -> Option<u32> {
-        if month == 12 {
-            NaiveDate::from_ymd_opt(year + 1, 1, 1)
-        } else {
-            NaiveDate::from_ymd_opt(year, month + 1, 1)
-        }
-        .map(|date| {
-            date.signed_duration_since(NaiveDate::from_ymd_opt(year, month, 1).unwrap()).num_days()
-                as u32
-        })
+        let date = self.focused_date.get().checked_add(delta.years()).unwrap();
+        self.set_view_date(date);
     }
 
     // Given a date and a month offset, returns the first day of the month and the number of days in the month
-    fn view_month_info(view_date: &NaiveDate, month_offset: i32) -> (Weekday, u32) {
-        let month = view_date.month();
-        let mut year = view_date.year();
+    fn view_month_info(view_date: &Date, month_offset: i32) -> (Weekday, u32) {
+        let month = view_date.first_of_month().checked_add(month_offset.months()).unwrap();
 
-        let mut month = month as i32 + month_offset;
-
-        if month < 1 {
-            year -= 1;
-            month += 12;
-        } else if month > 12 {
-            year += 1;
-            month -= 12;
-        }
-
-        let month = month as u32;
-
-        (
-            Self::first_day_of_month(year, month).unwrap(),
-            Self::last_day_of_month(year, month).unwrap(),
-        )
+        (month.weekday(), u32::try_from(month.days_in_month()).unwrap())
     }
 
-    fn get_day_number(
-        y: u32,
-        x: u32,
-        view_date: &NaiveDate,
-        week_starts_on: Weekday,
-    ) -> (u32, bool) {
+    fn get_day_number(y: u32, x: u32, view_date: &Date, week_starts_on: Weekday) -> (u32, bool) {
         let (_, days_prev_month) = Self::view_month_info(view_date, -1);
         let (first_day_this_month, days_this_month) = Self::view_month_info(view_date, 0);
 
@@ -207,28 +145,17 @@ impl Calendar {
         }
     }
 
-    fn get_cell_date(
-        y: u32,
-        x: u32,
-        view_date: &NaiveDate,
-        week_starts_on: Weekday,
-    ) -> (NaiveDate, bool) {
+    fn get_cell_date(y: u32, x: u32, view_date: &Date, week_starts_on: Weekday) -> (Date, bool) {
         let (day_number, disabled) = Self::get_day_number(y, x, view_date, week_starts_on);
 
-        if !disabled {
-            return (
-                NaiveDate::from_ymd_opt(view_date.year(), view_date.month(), day_number).unwrap(),
-                false,
-            );
-        }
+        let month_offset = match (disabled, y) {
+            (false, _) => 0,
+            (true, 0) => -1,
+            (true, _) => 1,
+        };
+        let month = view_date.first_of_month().checked_add(month_offset.months()).unwrap();
 
-        if y == 0 {
-            let (year, month) = Self::shift_year_month(view_date.year(), view_date.month(), -1);
-            (NaiveDate::from_ymd_opt(year, month, day_number).unwrap(), true)
-        } else {
-            let (year, month) = Self::shift_year_month(view_date.year(), view_date.month(), 1);
-            (NaiveDate::from_ymd_opt(year, month, day_number).unwrap(), true)
-        }
+        (month.with().day(i8::try_from(day_number).unwrap()).build().unwrap(), disabled)
     }
 
     fn day_cell_index(y: usize, x: usize) -> usize {
@@ -239,11 +166,11 @@ impl Calendar {
         let focused_date = self.focused_date.get();
         let view_date = self.view_date.get();
 
-        if focused_date.year() != view_date.year() || focused_date.month() != view_date.month() {
+        if focused_date.first_of_month() != view_date.first_of_month() {
             return None;
         }
 
-        let first_day = Self::first_day_of_month(view_date.year(), view_date.month()).unwrap();
+        let first_day = view_date.first_of_month().weekday();
         let first_day_col = Self::first_day_column(first_day, self.week_starts_on.get()) as usize;
         Some(first_day_col + focused_date.day() as usize - 1)
     }
@@ -268,25 +195,29 @@ impl Calendar {
 
     fn move_focused_by_days(&mut self, delta_days: i64) {
         let focused_date = self.focused_date.get();
-        let next_date = focused_date.checked_add_signed(Duration::days(delta_days)).unwrap();
+        let next_date = focused_date.checked_add(delta_days.days()).unwrap();
         self.view_date.set(next_date);
         self.focused_date.set(next_date);
     }
 
     fn move_focused_by_months(&mut self, delta_months: i32) {
-        let focused_date = self.focused_date.get();
-        let (year, month) =
-            Self::shift_year_month(focused_date.year(), focused_date.month(), delta_months);
-        self.set_view_date(year, month, focused_date.day());
+        self.shift_month(delta_months);
     }
 
     fn move_focused_by_years(&mut self, delta_years: i32) {
-        let focused_date = self.focused_date.get();
-        self.set_view_date(
-            focused_date.year() + delta_years,
-            focused_date.month(),
-            focused_date.day(),
-        );
+        self.shift_year(delta_years);
+    }
+
+    /// The signed number of days from `date` to the first day of its week.
+    fn days_to_week_start(date: Date, week_starts_on: Weekday) -> i64 {
+        -((7 + i64::from(date.weekday().to_monday_zero_offset())
+            - i64::from(week_starts_on.to_monday_zero_offset()))
+            % 7)
+    }
+
+    /// The signed number of days from `date` to the last day of its week.
+    fn days_to_week_end(date: Date, week_starts_on: Weekday) -> i64 {
+        6 + Self::days_to_week_start(date, week_starts_on)
     }
 
     fn focus_is_on_calendar_day(&self, cx: &EventContext) -> bool {
@@ -300,34 +231,25 @@ impl Calendar {
     pub fn new<R, D>(cx: &mut Context, date: R) -> Handle<Self>
     where
         R: Res<D> + Clone + 'static,
-        D: Datelike + Clone + 'static,
+        D: Into<Date> + Clone + 'static,
     {
-        let selected_date = date.get_value(cx);
+        let selected_date: Date = date.get_value(cx).into();
         let selected_date_signal = date.to_signal(cx);
-        let initial_view_date =
-            NaiveDate::from_ymd_opt(selected_date.year(), selected_date.month(), 1).unwrap();
-        let view_date = Signal::new(initial_view_date);
-        let focused_date = Signal::new(
-            NaiveDate::from_ymd_opt(
-                selected_date.year(),
-                selected_date.month(),
-                selected_date.day(),
-            )
-            .unwrap(),
-        );
+        let view_date = Signal::new(selected_date.first_of_month());
+        let focused_date = Signal::new(selected_date);
         let month_options =
             Signal::new(MONTHS.iter().map(|m| Localized::new(m)).collect::<Vec<_>>());
         let month_year_heading_date =
-            view_date.map(|date| date.and_hms_opt(0, 0, 0).unwrap().and_utc().timestamp_millis());
+            view_date.map(|date| FluentCivilDateTime(date.at(0, 0, 0, 0)));
         let week_starts_on = Signal::new(Self::week_start_from_localization(cx));
         let keyboard_help = Signal::new(String::new());
         let selected_month = view_date.map(|date| Some(date.month() as usize - 1));
-        let year_start = selected_date.year() - 50;
-        let year_end = selected_date.year() + 50;
+        let year_start = i32::from(selected_date.year()) - 50;
+        let year_end = i32::from(selected_date.year()) + 50;
         let year_options =
             Signal::new((year_start..=year_end).map(|year| year.to_string()).collect::<Vec<_>>());
         let selected_year = view_date.map(move |date| {
-            let index = date.year() - year_start;
+            let index = i32::from(date.year()) - year_start;
             if (0..=(year_end - year_start)).contains(&index) { Some(index as usize) } else { None }
         });
 
@@ -473,7 +395,9 @@ impl Calendar {
                             .bind(week_starts_on, move |handle| {
                                 let week_starts_on = week_starts_on.get();
                                 let weekday = Self::weekday_from_monday_index(
-                                    week_starts_on.num_days_from_monday() + x,
+                                    u32::from(
+                                        week_starts_on.to_monday_zero_offset().unsigned_abs(),
+                                    ) + x,
                                 );
                                 handle
                                     .text(Localized::new(Self::weekday_short_key(weekday)))
@@ -506,7 +430,7 @@ impl Calendar {
                                         let day_number = cell_date.day();
 
                                         handle.bind(selected_date, move |handle| {
-                                            let selected_date = selected_date.get();
+                                            let selected_date: Date = selected_date.get().into();
                                             handle.bind(focused_date, move |handle| {
                                                 let focused_date = focused_date.get();
                                                 let is_focused = focused_date == cell_date;
@@ -519,11 +443,9 @@ impl Calendar {
                                                         Localized::new("calendar-day-cell-name")
                                                             .arg(
                                                                 "date",
-                                                                cell_date
-                                                                    .and_hms_opt(0, 0, 0)
-                                                                    .unwrap()
-                                                                    .and_utc()
-                                                                    .timestamp_millis(),
+                                                                FluentCivilDateTime(
+                                                                    cell_date.at(0, 0, 0, 0),
+                                                                ),
                                                             ),
                                                     )
                                                     .disabled(disabled)
@@ -552,22 +474,10 @@ impl Calendar {
                                                     })
                                                     .toggle_class(
                                                         "calendar-day-selected",
-                                                        !disabled
-                                                            && selected_date.day()
-                                                                == cell_date.day()
-                                                            && selected_date.month()
-                                                                == cell_date.month()
-                                                            && selected_date.year()
-                                                                == cell_date.year(),
+                                                        !disabled && selected_date == cell_date,
                                                     )
                                                     .selected(
-                                                        !disabled
-                                                            && selected_date.day()
-                                                                == cell_date.day()
-                                                            && selected_date.month()
-                                                                == cell_date.month()
-                                                            && selected_date.year()
-                                                                == cell_date.year(),
+                                                        !disabled && selected_date == cell_date,
                                                     );
                                             });
                                         });
@@ -607,8 +517,8 @@ impl View for Calendar {
             }
 
             CalendarEvent::SelectMonth(month) => {
-                let focused_date = self.focused_date.get();
-                self.set_view_date(focused_date.year(), *month as u32 + 1, focused_date.day());
+                let months = *month as i32 + 1 - i32::from(self.focused_date.get().month());
+                self.shift_month(months);
             }
 
             CalendarEvent::IncrementYear => {
@@ -620,8 +530,8 @@ impl View for Calendar {
             }
 
             CalendarEvent::SelectYear(year) => {
-                let focused_date = self.focused_date.get();
-                self.set_view_date(*year, focused_date.month(), focused_date.day());
+                let years = *year - i32::from(self.focused_date.get().year());
+                self.shift_year(years);
             }
 
             CalendarEvent::MoveFocusDays(delta) => {
@@ -665,10 +575,8 @@ impl View for Calendar {
             CalendarEvent::MoveFocusWeekStart => {
                 if self.focus_is_on_calendar_day(cx) {
                     let focused_date = self.focused_date.get();
-                    let offset = (7 + focused_date.weekday().num_days_from_monday() as i64
-                        - self.week_starts_on.get().num_days_from_monday() as i64)
-                        % 7;
-                    self.move_focused_by_days(-offset);
+                    let offset = Self::days_to_week_start(focused_date, self.week_starts_on.get());
+                    self.move_focused_by_days(offset);
                     self.focus_focused_day_with_visibility(cx, true);
                 }
             }
@@ -676,10 +584,7 @@ impl View for Calendar {
             CalendarEvent::MoveFocusWeekEnd => {
                 if self.focus_is_on_calendar_day(cx) {
                     let focused_date = self.focused_date.get();
-                    let offset = 6
-                        - ((7 + focused_date.weekday().num_days_from_monday() as i64
-                            - self.week_starts_on.get().num_days_from_monday() as i64)
-                            % 7);
+                    let offset = Self::days_to_week_end(focused_date, self.week_starts_on.get());
                     self.move_focused_by_days(offset);
                     self.focus_focused_day_with_visibility(cx, true);
                 }
@@ -769,7 +674,227 @@ impl View for Calendar {
 
 impl Handle<'_, Calendar> {
     /// Set the callback triggered when a date is selected from the [Calendar] view.
-    pub fn on_select<F: 'static + Fn(&mut EventContext, NaiveDate)>(self, callback: F) -> Self {
+    pub fn on_select<F: 'static + Fn(&mut EventContext, Date)>(self, callback: F) -> Self {
         self.modify(|calendar: &mut Calendar| calendar.on_select = Some(Box::new(callback)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn date(year: i16, month: i8, day: i8) -> Date {
+        Date::new(year, month, day).unwrap()
+    }
+
+    fn calendar(focused: Date, week_starts_on: Weekday) -> Calendar {
+        Calendar {
+            view_date: Signal::new(focused.first_of_month()),
+            focused_date: Signal::new(focused),
+            week_starts_on: Signal::new(week_starts_on),
+            keyboard_help: Signal::new(String::new()),
+            keyboard_help_announced: false,
+            day_cells: vec![Entity::null(); 42],
+            on_select: None,
+        }
+    }
+
+    #[test]
+    fn month_length_handles_leap_years_and_december() {
+        let days = |year, month| Calendar::view_month_info(&date(year, month, 1), 0).1;
+
+        assert_eq!(days(2024, 2), 29);
+        assert_eq!(days(2023, 2), 28);
+        assert_eq!(days(1900, 2), 28);
+        assert_eq!(days(2000, 2), 29);
+        assert_eq!(days(2023, 12), 31);
+        assert_eq!(days(2023, 4), 30);
+    }
+
+    #[test]
+    fn first_day_of_month_is_the_weekday_of_the_first() {
+        let first_day = |year, month| Calendar::view_month_info(&date(year, month, 1), 0).0;
+
+        assert_eq!(first_day(2024, 2), Weekday::Thursday);
+        assert_eq!(first_day(2023, 12), Weekday::Friday);
+        assert_eq!(first_day(2023, 10), Weekday::Sunday);
+        assert_eq!(Calendar::view_month_info(&date(2024, 2, 17), 0), (Weekday::Thursday, 29));
+    }
+
+    #[test]
+    fn first_day_column_counts_from_the_week_start() {
+        assert_eq!(Calendar::first_day_column(Weekday::Thursday, Weekday::Monday), 3);
+        assert_eq!(Calendar::first_day_column(Weekday::Thursday, Weekday::Sunday), 4);
+        assert_eq!(Calendar::first_day_column(Weekday::Sunday, Weekday::Monday), 6);
+        assert_eq!(Calendar::first_day_column(Weekday::Monday, Weekday::Saturday), 2);
+        assert_eq!(Calendar::first_day_column(Weekday::Wednesday, Weekday::Wednesday), 0);
+    }
+
+    #[test]
+    fn view_month_info_wraps_across_years() {
+        assert_eq!(Calendar::view_month_info(&date(2024, 1, 1), -1), (Weekday::Friday, 31));
+        assert_eq!(Calendar::view_month_info(&date(2023, 12, 1), 1), (Weekday::Monday, 31));
+        assert_eq!(Calendar::view_month_info(&date(2024, 3, 1), -1), (Weekday::Thursday, 29));
+    }
+
+    #[test]
+    fn cell_dates_for_a_leap_february_with_a_monday_start() {
+        let view = date(2024, 2, 1);
+        let cell = |y, x| Calendar::get_cell_date(y, x, &view, Weekday::Monday);
+
+        assert_eq!(cell(0, 0), (date(2024, 1, 29), true));
+        assert_eq!(cell(0, 2), (date(2024, 1, 31), true));
+        assert_eq!(cell(0, 3), (date(2024, 2, 1), false));
+        assert_eq!(cell(4, 3), (date(2024, 2, 29), false));
+        assert_eq!(cell(4, 4), (date(2024, 3, 1), true));
+        assert_eq!(cell(5, 6), (date(2024, 3, 10), true));
+    }
+
+    #[test]
+    fn cell_dates_for_a_leap_february_with_a_sunday_start() {
+        let view = date(2024, 2, 1);
+        let cell = |y, x| Calendar::get_cell_date(y, x, &view, Weekday::Sunday);
+
+        assert_eq!(cell(0, 0), (date(2024, 1, 28), true));
+        assert_eq!(cell(0, 4), (date(2024, 2, 1), false));
+        assert_eq!(cell(4, 4), (date(2024, 2, 29), false));
+        assert_eq!(cell(4, 5), (date(2024, 3, 1), true));
+    }
+
+    #[test]
+    fn cell_dates_roll_over_year_boundaries() {
+        let december = date(2023, 12, 1);
+        assert_eq!(
+            Calendar::get_cell_date(5, 6, &december, Weekday::Monday),
+            (date(2024, 1, 7), true)
+        );
+
+        let january = date(2025, 1, 1);
+        assert_eq!(
+            Calendar::get_cell_date(0, 0, &january, Weekday::Monday),
+            (date(2024, 12, 30), true)
+        );
+        assert_eq!(
+            Calendar::get_cell_date(0, 2, &january, Weekday::Monday),
+            (date(2025, 1, 1), false)
+        );
+    }
+
+    #[test]
+    fn shifting_the_month_clamps_the_day_and_wraps_the_year() {
+        let mut calendar = calendar(date(2024, 1, 31), Weekday::Monday);
+
+        calendar.shift_month(1);
+        assert_eq!(calendar.view_date.get(), date(2024, 2, 29));
+        assert_eq!(calendar.focused_date.get(), date(2024, 2, 29));
+
+        calendar.shift_month(-2);
+        assert_eq!(calendar.focused_date.get(), date(2023, 12, 29));
+
+        calendar.shift_month(1);
+        calendar.shift_month(1);
+        assert_eq!(calendar.focused_date.get(), date(2024, 2, 29));
+    }
+
+    #[test]
+    fn shifting_the_year_clamps_leap_days() {
+        let mut calendar = calendar(date(2024, 2, 29), Weekday::Monday);
+
+        calendar.shift_year(1);
+        assert_eq!(calendar.focused_date.get(), date(2025, 2, 28));
+
+        calendar.shift_year(-1);
+        assert_eq!(calendar.focused_date.get(), date(2024, 2, 28));
+    }
+
+    #[test]
+    fn moving_the_focus_by_days_crosses_month_and_year_boundaries() {
+        let mut calendar = calendar(date(2023, 12, 31), Weekday::Monday);
+
+        calendar.move_focused_by_days(1);
+        assert_eq!(calendar.focused_date.get(), date(2024, 1, 1));
+        assert_eq!(calendar.view_date.get(), date(2024, 1, 1));
+
+        calendar.move_focused_by_days(-1);
+        assert_eq!(calendar.focused_date.get(), date(2023, 12, 31));
+
+        calendar.move_focused_by_days(60);
+        assert_eq!(calendar.focused_date.get(), date(2024, 2, 29));
+
+        calendar.move_focused_by_days(-366);
+        assert_eq!(calendar.focused_date.get(), date(2023, 2, 28));
+    }
+
+    #[test]
+    fn moving_the_focus_by_months_and_years_clamps_the_day() {
+        let mut calendar = calendar(date(2024, 3, 31), Weekday::Monday);
+
+        calendar.move_focused_by_months(-1);
+        assert_eq!(calendar.focused_date.get(), date(2024, 2, 29));
+
+        calendar.move_focused_by_years(-1);
+        assert_eq!(calendar.focused_date.get(), date(2023, 2, 28));
+    }
+
+    #[test]
+    fn the_focused_day_cell_follows_the_week_start() {
+        let calendar = calendar(date(2024, 2, 14), Weekday::Monday);
+        assert_eq!(calendar.focused_day_cell_index(), Some(3 + 13));
+
+        calendar.week_starts_on.set(Weekday::Sunday);
+        assert_eq!(calendar.focused_day_cell_index(), Some(4 + 13));
+
+        calendar.view_date.set(date(2024, 3, 1));
+        assert_eq!(calendar.focused_day_cell_index(), None);
+    }
+
+    #[test]
+    fn week_start_and_end_moves_follow_the_week_start() {
+        let weekdays = [
+            Weekday::Monday,
+            Weekday::Tuesday,
+            Weekday::Wednesday,
+            Weekday::Thursday,
+            Weekday::Friday,
+            Weekday::Saturday,
+            Weekday::Sunday,
+        ];
+
+        // 2024-02-12 is a Monday, so the seven dates cover every weekday.
+        for day in 12..=18 {
+            let focused = date(2024, 2, day);
+
+            for week_starts_on in weekdays {
+                // Walk back to the first day of the week, then forward to the day before the next one.
+                let mut start = focused;
+                while start.weekday() != week_starts_on {
+                    start = start.checked_add((-1).days()).unwrap();
+                }
+                let mut end = focused;
+                while end.checked_add(1.day()).unwrap().weekday() != week_starts_on {
+                    end = end.checked_add(1.day()).unwrap();
+                }
+
+                let mut moved = calendar(focused, week_starts_on);
+                moved.move_focused_by_days(Calendar::days_to_week_start(focused, week_starts_on));
+                assert_eq!(
+                    moved.focused_date.get(),
+                    start,
+                    "{focused} starting {week_starts_on:?}"
+                );
+
+                let mut moved = calendar(focused, week_starts_on);
+                moved.move_focused_by_days(Calendar::days_to_week_end(focused, week_starts_on));
+                assert_eq!(moved.focused_date.get(), end, "{focused} starting {week_starts_on:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn week_start_tokens_match_weekday_names_case_insensitively() {
+        assert_eq!(Calendar::weekday_from_token(" Sunday "), Some(Weekday::Sunday));
+        assert_eq!(Calendar::weekday_from_token("monday"), Some(Weekday::Monday));
+        assert_eq!(Calendar::weekday_from_token("someday"), None);
+        assert_eq!(Calendar::weekday_from_monday_index(8), Weekday::Tuesday);
     }
 }

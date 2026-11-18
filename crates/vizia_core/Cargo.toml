@@ -39,7 +39,7 @@ sys-locale.workspace = true
 unicode-segmentation.workspace = true
 unicode-bidi.workspace = true
 copypasta = { workspace = true, optional = true }
-chrono.workspace = true
+jiff.workspace = true
 hashbrown.workspace = true
 log.workspace = true
 indexmap.workspace = true

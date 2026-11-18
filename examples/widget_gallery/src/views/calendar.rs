@@ -1,13 +1,15 @@
 use crate::components::DemoRegion;
-use chrono::{NaiveDate, Utc};
+use jiff::Timestamp;
+use jiff::civil::Date;
+use jiff::tz::TimeZone;
 use vizia::prelude::*;
 
 struct CalendarState {
-    date: Signal<NaiveDate>,
+    date: Signal<Date>,
 }
 
 pub enum CalendarEvent {
-    SetDate(NaiveDate),
+    SetDate(Date),
 }
 
 impl Model for CalendarState {
@@ -21,7 +23,7 @@ impl Model for CalendarState {
 }
 
 pub fn calendar(cx: &mut Context) {
-    let date = Signal::new(Utc::now().date_naive());
+    let date = Signal::new(Timestamp::now().to_zoned_datetime(TimeZone::UTC).date());
 
     VStack::new(cx, |cx| {
         CalendarState { date }.build(cx);
