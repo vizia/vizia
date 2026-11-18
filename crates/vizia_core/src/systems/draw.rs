@@ -1706,6 +1706,19 @@ mod tests {
         }
     }
 
+    /// Every pixel of the surface as (alpha, red, green, blue), row by row.
+    fn all_pixels(surface: &mut skia_safe::Surface) -> Vec<(u8, u8, u8, u8)> {
+        let (width, height) = (surface.width(), surface.height());
+        let pixels = surface.peek_pixels().unwrap();
+        (0..height)
+            .flat_map(|y| (0..width).map(move |x| (x, y)))
+            .map(|point| {
+                let color = pixels.get_color(point);
+                (color.a(), color.r(), color.g(), color.b())
+            })
+            .collect()
+    }
+
     // A blurred view repainted on its own bounds paints the same pixels as a full repaint.
     #[test]
     fn filter_blur_is_not_cut_at_its_draw_bounds() {
@@ -1721,9 +1734,19 @@ mod tests {
                 let mut surface = blur_surface(300.0, 200.0, scale);
                 let mut dirty = blur_surface(300.0, 200.0, scale);
                 backend.draw(Entity::root(), &mut surface, &mut dirty);
-                results.push(painted_extent(&mut surface));
+                results.push(all_pixels(&mut surface));
             }
-            assert_eq!(results[0], results[1], "scale {scale}");
+            assert!(results[0].iter().any(|pixel| pixel.0 != 0), "scale {scale}: nothing painted");
+            if let Some(index) = (0..results[0].len()).find(|&i| results[0][i] != results[1][i]) {
+                let width = (300.0 * scale) as usize;
+                panic!(
+                    "scale {scale}: bounded and full draws differ at ({}, {}): {:?} vs {:?}",
+                    index % width,
+                    index / width,
+                    results[0][index],
+                    results[1][index]
+                );
+            }
         }
     }
 }
