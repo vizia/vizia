@@ -8,6 +8,7 @@ use skia_safe::{
 };
 use vizia_storage::{LayoutChildIterator, LayoutTreeIterator};
 
+use crate::systems::text_invalidation_system;
 use crate::text::resolved_text_direction;
 use crate::{cache::CachedData, prelude::*};
 
@@ -16,6 +17,8 @@ pub(crate) fn text_system(cx: &mut Context) {
     if cx.style.text.is_empty() || cx.style.text_construction.is_empty() {
         return;
     }
+
+    text_invalidation_system(cx);
 
     let iterator = LayoutTreeIterator::full(&cx.tree);
     for entity in iterator {
@@ -455,6 +458,227 @@ fn add_block(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::context::backend::BackendContext;
+    use crate::systems::{animation_system, binding_system, style_system};
+
+    fn paragraph_font_sizes(cx: &mut Context, entity: Entity) -> Vec<f32> {
+        let paragraph =
+            cx.text_context.text_paragraphs.get_mut(entity).expect("paragraph is built");
+        paragraph.layout(400.0);
+        let sizes =
+            paragraph.get_fonts().into_iter().map(|info| info.font.size()).collect::<Vec<_>>();
+        assert!(!sizes.is_empty(), "the paragraph must contain shaped font runs");
+        sizes
+    }
+
+    /// A rich label whose lead text stays at 32 device pixels and whose changing span is at
+    /// `logical_size` at a scale factor of 2.
+    fn assert_span_runs(cx: &mut Context, name: &str, rich: Entity, logical_size: f32) {
+        let sizes = paragraph_font_sizes(cx, rich);
+        assert!(
+            sizes.contains(&32.0) && sizes.contains(&(logical_size * 2.0)),
+            "{name} spans at {logical_size}: {sizes:?}"
+        );
+        assert!(
+            sizes.iter().all(|actual| *actual == 32.0 || *actual == logical_size * 2.0),
+            "{name} runs at {logical_size}: {sizes:?}"
+        );
+    }
+
+    #[test]
+    fn parent_font_size_changes_reach_inherited_paragraph_fonts() {
+        let mut cx = Context::default();
+        let size = Signal::new(16.0f32);
+        let mut inherited = Entity::null();
+        let mut overridden = Entity::null();
+        HStack::new(&mut cx, |cx| {
+            HStack::new(cx, |cx| {
+                inherited = Label::new(cx, "inherited").entity();
+                overridden = Label::new(cx, "explicit").font_size(7.0).entity();
+            });
+        })
+        .font_size(size);
+        let sibling = Label::new(&mut cx, "sibling").font_size(9.0).entity();
+        let mut backend = BackendContext::new(cx);
+        backend.set_scale_factor(2.0);
+
+        for logical_size in [16.0, 10.0, 16.0] {
+            size.set(logical_size);
+            binding_system(&mut backend.0);
+            style_system(&mut backend.0);
+            // `text_system` runs the walk itself; this one only exposes the set before it is consumed.
+            text_invalidation_system(&mut backend.0);
+            if logical_size == 10.0 {
+                assert!(!backend.0.style.text_construction.contains(&sibling));
+            }
+            text_system(&mut backend.0);
+            for actual in paragraph_font_sizes(&mut backend.0, inherited) {
+                assert_eq!(actual, logical_size * 2.0, "inherited label at {logical_size}");
+            }
+            for actual in paragraph_font_sizes(&mut backend.0, overridden) {
+                assert_eq!(actual, 14.0, "explicit font size at {logical_size}");
+            }
+            for actual in paragraph_font_sizes(&mut backend.0, sibling) {
+                assert_eq!(actual, 18.0, "sibling font size at {logical_size}");
+            }
+            // An unchanged pass schedules no further text construction.
+            style_system(&mut backend.0);
+            assert!(backend.0.style.text_construction.is_empty());
+        }
+    }
+
+    #[test]
+    fn span_font_size_changes_reach_the_enclosing_rich_paragraph() {
+        let mut cx = Context::default();
+        let size = Signal::new(16.0f32);
+        let quiet = std::cell::Cell::new(Entity::null());
+        let flat = Label::rich(&mut cx, "lead", |cx| {
+            TextSpan::new(cx, "span", |_| {}).font_size(size);
+            quiet.set(TextSpan::new(cx, "quiet", |_| {}).entity());
+        })
+        .entity();
+        let nested = Label::rich(&mut cx, "lead", |cx| {
+            TextSpan::new(cx, "outer", |cx| {
+                TextSpan::new(cx, "inner", |_| {});
+            })
+            .font_size(size);
+        })
+        .entity();
+        let mut backend = BackendContext::new(cx);
+        backend.set_scale_factor(2.0);
+        // The first pass links the inline values of the whole tree.
+        binding_system(&mut backend.0);
+        style_system(&mut backend.0);
+        text_system(&mut backend.0);
+
+        for logical_size in [10.0, 16.0] {
+            size.set(logical_size);
+            binding_system(&mut backend.0);
+            style_system(&mut backend.0);
+            // `text_system` runs the walk itself; this one only exposes the set before it is consumed.
+            text_invalidation_system(&mut backend.0);
+            assert!(!backend.0.style.text_construction.contains(&quiet.get()));
+            text_system(&mut backend.0);
+            for (name, rich) in [("flat", flat), ("nested", nested)] {
+                assert_span_runs(&mut backend.0, name, rich, logical_size);
+            }
+        }
+    }
+
+    #[test]
+    fn displayed_spans_do_not_stop_the_paragraph_owner_lookup() {
+        let mut cx = Context::default();
+        let size = Signal::new(16.0f32);
+        let own = std::cell::Cell::new(Entity::null());
+        let intermediate = std::cell::Cell::new(Entity::null());
+        let container = VStack::new(&mut cx, |cx| {
+            own.set(
+                Label::rich(cx, "lead", |cx| {
+                    TextSpan::new(cx, "span", |_| {}).display(Display::Flex).font_size(size);
+                })
+                .entity(),
+            );
+            intermediate.set(
+                Label::rich(cx, "lead", |cx| {
+                    TextSpan::new(cx, "outer", |cx| {
+                        TextSpan::new(cx, "inner", |_| {}).font_size(size);
+                    })
+                    .display(Display::Flex);
+                })
+                .entity(),
+            );
+        })
+        .entity();
+        let (own, intermediate) = (own.get(), intermediate.get());
+        let mut backend = BackendContext::new(cx);
+        backend.set_scale_factor(2.0);
+        // The first pass links the inline values of the whole tree.
+        binding_system(&mut backend.0);
+        style_system(&mut backend.0);
+        text_system(&mut backend.0);
+
+        for logical_size in [10.0, 16.0] {
+            size.set(logical_size);
+            binding_system(&mut backend.0);
+            style_system(&mut backend.0);
+            // `text_system` runs the walk itself; this one only exposes the set before it is consumed.
+            text_invalidation_system(&mut backend.0);
+            // The walk ends at the rich label, whatever the spans below it display.
+            assert!(!backend.0.style.text_construction.contains(&container));
+            text_system(&mut backend.0);
+            for (name, rich) in [("displayed span", own), ("displayed intermediate", intermediate)]
+            {
+                assert_span_runs(&mut backend.0, name, rich, logical_size);
+            }
+        }
+    }
+
+    #[test]
+    fn animated_span_font_size_reaches_the_enclosing_rich_paragraph() {
+        let mut cx = Context::default();
+        let hidden = std::cell::Cell::new(Entity::null());
+        let rich = Label::rich(&mut cx, "lead", |cx| {
+            hidden.set(TextSpan::new(cx, "span", |_| {}).entity());
+        })
+        .entity();
+        let shrink = cx.add_animation(
+            AnimationBuilder::new()
+                .keyframe(0.0, |keyframe| keyframe.font_size(10.0))
+                .keyframe(1.0, |keyframe| keyframe.font_size(10.0)),
+        );
+        let mut backend = BackendContext::new(cx);
+        backend.set_scale_factor(2.0);
+        // The first frame builds the paragraph before the animation starts.
+        binding_system(&mut backend.0);
+        style_system(&mut backend.0);
+        animation_system(&mut backend.0);
+        text_system(&mut backend.0);
+        assert!(paragraph_font_sizes(&mut backend.0, rich).iter().all(|actual| *actual == 32.0));
+
+        backend.0.style.enqueue_animation(
+            hidden.get(),
+            shrink,
+            Duration::from_secs(60),
+            Duration::ZERO,
+        );
+        // The frame order of the application loop: style, animations, then layout, which builds text.
+        style_system(&mut backend.0);
+        animation_system(&mut backend.0);
+        text_system(&mut backend.0);
+        assert_span_runs(&mut backend.0, "animated span", rich, 10.0);
+    }
+
+    #[test]
+    fn text_free_trees_skip_the_inherited_text_walk() {
+        let mut cx = Context::default();
+        let size = Signal::new(16.0f32);
+        let mut leaf = Entity::null();
+        let container = HStack::new(&mut cx, |cx| {
+            VStack::new(cx, |cx| {
+                leaf = Element::new(cx).entity();
+            });
+        })
+        .font_size(size)
+        .entity();
+        let mut backend = BackendContext::new(cx);
+        // The first pass links the inline values of the whole tree.
+        binding_system(&mut backend.0);
+        style_system(&mut backend.0);
+        text_system(&mut backend.0);
+        backend.0.style.text_construction.clear();
+
+        for logical_size in [10.0, 16.0, 12.0] {
+            size.set(logical_size);
+            binding_system(&mut backend.0);
+            style_system(&mut backend.0);
+            text_system(&mut backend.0);
+            assert!(backend.0.style.text_construction.contains(&container));
+            assert!(
+                !backend.0.style.text_construction.contains(&leaf),
+                "a text-free tree has no paragraph to rebuild below the container"
+            );
+        }
+    }
 
     #[test]
     fn rtl_flips_explicit_left_right_text_align() {
