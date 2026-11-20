@@ -1,4 +1,5 @@
-use chrono::Utc;
+use jiff::Timestamp;
+use jiff::tz::TimeZone;
 #[allow(unused_imports)]
 use vizia::prelude::*;
 
@@ -51,8 +52,8 @@ fn main() -> Result<(), ApplicationError> {
             let item_count = Signal::new(42);
             let price = Signal::new(99.99);
             let price_text = Signal::new("99.99".to_owned());
-            let event_date = Utc::now();
-            let release_date = Utc::now().naive_utc();
+            let event_date = Timestamp::now();
+            let release_date = event_date.to_zoned_datetime(TimeZone::UTC).datetime();
 
             AppData { name, emails }.build(cx);
 
@@ -117,9 +118,9 @@ fn main() -> Result<(), ApplicationError> {
                     Localized::new("percentage-complete").arg("percent", percentage(0.753, 1)),
                 );
 
-                // Date formatting with chrono (timezone-aware + naive).
+                // Date formatting with jiff (instants + civil datetimes).
                 Label::new(cx, Localized::new("event-date").arg("date", event_date));
-                Label::new(cx, Localized::new("last-updated").arg("date", Utc::now()));
+                Label::new(cx, Localized::new("last-updated").arg("date", Timestamp::now()));
                 Label::new(cx, Localized::new("release-date").arg("date", release_date));
 
                 // Key exists only in en-US to show per-key fallback when FR is active.

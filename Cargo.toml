@@ -33,7 +33,7 @@ vizia_baseview = { workspace = true, optional = true }
 tokio = { workspace = true, optional = true }
 
 [dev-dependencies]
-chrono.workspace = true
+jiff.workspace = true
 log.workspace = true
 fern.workspace = true
 ego-tree.workspace = true
@@ -66,7 +66,6 @@ accesskit = "0.25"
 accesskit_winit = "0.34"
 baseview = { version = "0.4.2", features = ["opengl"] }
 bitflags = "2.13.2"
-chrono = "0.4"
 comrak = { version = "0.59", default-features = false }
 copypasta = { version = "0.10", default-features = false }
 cssparser = "0.38"
@@ -82,6 +81,7 @@ glutin = { version = "0.32", default-features = false, features = ["egl", "wgl",
 glutin-winit = { version = "0.5", default-features = false, features = ["egl", "wgl", "glx"] }
 hashbrown = "0.17"
 indexmap = "2.14"
+jiff = { version = "1", default-features = false, features = ["std"] }
 keyboard-types = { version = "0.8", default-features = false }
 log = "0.4"
 morphorm = "0.9"

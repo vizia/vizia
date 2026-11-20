@@ -1,14 +1,16 @@
 mod helpers;
-use chrono::{NaiveDate, Utc};
 use helpers::*;
+use jiff::Timestamp;
+use jiff::civil::Date;
+use jiff::tz::TimeZone;
 use vizia::prelude::*;
 
 struct AppState {
-    date: Signal<NaiveDate>,
+    date: Signal<Date>,
 }
 
 pub enum AppEvent {
-    SetDate(NaiveDate),
+    SetDate(Date),
 }
 
 impl Model for AppState {
@@ -26,7 +28,7 @@ fn main() -> Result<(), ApplicationError> {
         load_translations(cx);
 
         Window::new(cx, |cx| {
-            let date = Signal::new(Utc::now().date_naive());
+            let date = Signal::new(Timestamp::now().to_zoned_datetime(TimeZone::UTC).date());
 
             AppState { date }.build(cx);
 

@@ -15,10 +15,11 @@ use crate::context::ResourceContext;
 use crate::entity::Entity;
 use crate::prelude::IntoCssStr;
 // use crate::view::Canvas;
-use chrono::{DateTime, Utc};
 use fluent_bundle::types::{FluentNumber, FluentNumberOptions};
 use fluent_bundle::{FluentArgs, FluentBundle, FluentResource, FluentValue};
 use hashbrown::{HashMap, HashSet};
+use jiff::Timestamp;
+use jiff::tz::TimeZone;
 use std::fmt;
 use unic_langid::LanguageIdentifier;
 
@@ -150,12 +151,15 @@ fn fluent_datetime<'a>(positional: &[FluentValue<'a>], named: &FluentArgs) -> Fl
         _ => return FluentValue::Error,
     };
 
-    let Some(dt) = DateTime::<Utc>::from_timestamp_millis(millis) else {
+    let Ok(timestamp) = Timestamp::from_millisecond(millis) else {
         return FluentValue::Error;
     };
 
     let pattern = datetime_format_pattern(named);
-    FluentValue::String(dt.format(&pattern).to_string().into())
+    match jiff::fmt::strtime::format(&pattern, &timestamp.to_zoned_datetime(TimeZone::UTC)) {
+        Ok(text) => FluentValue::String(text.into()),
+        Err(_) => FluentValue::Error,
+    }
 }
 
 fn make_bundle(lang: LanguageIdentifier) -> FluentBundle<FluentResource> {
@@ -753,6 +757,154 @@ mod tests {
         let bundle = manager.current_translation(&"zz-ZZ".parse().unwrap());
 
         assert!(bundle.get_message("hello").is_none());
+    }
+
+    fn format_datetime(
+        millis: i64,
+        options: &[(&'static str, &'static str)],
+    ) -> FluentValue<'static> {
+        let mut args = FluentArgs::new();
+        for (key, value) in options {
+            args.set(*key, *value);
+        }
+        fluent_datetime(&[FluentValue::from(millis)], &args)
+    }
+
+    fn string_value(text: &str) -> FluentValue<'static> {
+        FluentValue::String(text.to_owned().into())
+    }
+
+    #[test]
+    fn datetime_without_options_uses_the_default_pattern() {
+        assert_eq!(format_datetime(0, &[]), string_value("1970-01-01 00:00:00"));
+        assert_eq!(format_datetime(1_700_000_000_000, &[]), string_value("2023-11-14 22:13:20"));
+    }
+
+    #[test]
+    fn datetime_formats_before_the_epoch_and_drops_sub_second_millis() {
+        assert_eq!(format_datetime(-1, &[]), string_value("1969-12-31 23:59:59"));
+        assert_eq!(format_datetime(1_700_000_000_999, &[]), string_value("2023-11-14 22:13:20"));
+    }
+
+    #[test]
+    fn datetime_formats_date_options() {
+        assert_eq!(
+            format_datetime(
+                1_700_000_000_000,
+                &[("weekday", "long"), ("month", "long"), ("day", "numeric"), ("year", "numeric")],
+            ),
+            string_value("Tuesday November 14 2023")
+        );
+        assert_eq!(
+            format_datetime(
+                1_700_000_000_000,
+                &[
+                    ("weekday", "short"),
+                    ("month", "short"),
+                    ("day", "2-digit"),
+                    ("year", "2-digit")
+                ],
+            ),
+            string_value("Tue Nov 14 23")
+        );
+        assert_eq!(
+            format_datetime(
+                1_704_067_200_000,
+                &[("month", "numeric"), ("day", "numeric"), ("year", "numeric")],
+            ),
+            string_value("1 1 2024")
+        );
+        assert_eq!(
+            format_datetime(
+                1_704_067_200_000,
+                &[("month", "2-digit"), ("day", "2-digit"), ("year", "numeric")],
+            ),
+            string_value("01 01 2024")
+        );
+    }
+
+    #[test]
+    fn datetime_formats_time_options() {
+        assert_eq!(
+            format_datetime(
+                1_704_067_200_000 + (5 * 60 + 7) * 60_000,
+                &[("hour", "numeric"), ("minute", "numeric")],
+            ),
+            string_value("5:7")
+        );
+        assert_eq!(
+            format_datetime(
+                1_704_067_200_000 + (5 * 60 + 7) * 60_000,
+                &[
+                    ("month", "short"),
+                    ("day", "numeric"),
+                    ("hour", "2-digit"),
+                    ("minute", "2-digit")
+                ],
+            ),
+            string_value("Jan 1 05:07")
+        );
+    }
+
+    #[test]
+    fn datetime_accepts_numeric_strings_and_rejects_other_values() {
+        let args = FluentArgs::new();
+        assert_eq!(
+            fluent_datetime(&[string_value("1700000000000")], &args),
+            string_value("2023-11-14 22:13:20")
+        );
+        assert_eq!(
+            fluent_datetime(&[string_value("not a number")], &args),
+            string_value("1970-01-01 00:00:00")
+        );
+        assert!(matches!(fluent_datetime(&[FluentValue::None], &args), FluentValue::Error));
+        assert!(matches!(fluent_datetime(&[], &args), FluentValue::Error));
+    }
+
+    #[test]
+    fn datetime_rejects_milliseconds_outside_the_supported_range() {
+        let args = FluentArgs::new();
+        assert!(matches!(
+            fluent_datetime(&[FluentValue::from(i64::MAX)], &args),
+            FluentValue::Error
+        ));
+        assert!(matches!(
+            fluent_datetime(&[FluentValue::from(i64::MIN)], &args),
+            FluentValue::Error
+        ));
+    }
+
+    #[test]
+    fn datetime_range_ends_at_the_edges_of_a_timestamp() {
+        let max = Timestamp::MAX.as_second() * 1_000;
+        let min = Timestamp::MIN.as_second() * 1_000;
+
+        assert_eq!(format_datetime(max, &[]), string_value("9999-12-30 22:00:00"));
+        assert!(matches!(format_datetime(max + 1, &[]), FluentValue::Error));
+        assert_eq!(format_datetime(min, &[]), string_value("-9999-01-02 01:59:59"));
+        assert!(matches!(format_datetime(min - 1, &[]), FluentValue::Error));
+    }
+
+    #[test]
+    fn datetime_rejects_the_last_day_of_year_9999() {
+        // 9999-12-31 12:00:00 UTC is past the last instant a timestamp holds.
+        assert!(matches!(format_datetime(253_402_257_600_000, &[]), FluentValue::Error));
+        assert_eq!(format_datetime(253_402_207_199_000, &[]), string_value("9999-12-30 21:59:59"));
+    }
+
+    #[test]
+    fn datetime_formats_negative_years() {
+        // 0000-06-15, -0001-06-15 and -9999-06-15 at noon UTC.
+        let year_zero = -62_152_833_600_000;
+        let year_minus_one = -62_184_456_000_000;
+        let year_minus_9999 = -377_690_817_600_000;
+
+        assert_eq!(format_datetime(year_zero, &[("year", "numeric")]), string_value("0000"));
+        assert_eq!(format_datetime(year_zero, &[("year", "2-digit")]), string_value("00"));
+        assert_eq!(format_datetime(year_minus_one, &[("year", "numeric")]), string_value("-001"));
+        assert_eq!(format_datetime(year_minus_one, &[("year", "2-digit")]), string_value("-1"));
+        assert_eq!(format_datetime(year_minus_9999, &[("year", "numeric")]), string_value("-9999"));
+        assert_eq!(format_datetime(year_minus_9999, &[("year", "2-digit")]), string_value("-99"));
     }
 
     #[test]

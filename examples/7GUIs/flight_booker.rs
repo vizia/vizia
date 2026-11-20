@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use jiff::civil::{Date, date};
 use vizia::prelude::*;
 
 const STYLE: &str = r#"
@@ -18,14 +18,14 @@ const STYLE: &str = r#"
 
 pub struct AppData {
     selected_option: Signal<Option<usize>>,
-    start_date: Signal<NaiveDate>,
-    end_date: Signal<NaiveDate>,
+    start_date: Signal<Date>,
+    end_date: Signal<Date>,
 }
 
 pub enum AppEvent {
     SetChoice(usize),
-    SetStartDate(NaiveDate),
-    SetEndDate(NaiveDate),
+    SetStartDate(Date),
+    SetEndDate(Date),
 }
 
 impl Model for AppData {
@@ -41,14 +41,14 @@ impl Model for AppData {
 fn input_box<R>(
     cx: &mut Context,
     date_value: R,
-    message: impl Fn(NaiveDate) -> AppEvent + Send + Sync + 'static,
+    message: impl Fn(Date) -> AppEvent + Send + Sync + 'static,
 ) where
     R: Res<String> + Clone + 'static,
 {
     Textbox::new(cx, date_value)
-        .validate(|text| NaiveDate::parse_from_str(text, "%Y:%m:%d").is_ok())
+        .validate(|text| Date::strptime("%Y:%m:%d", text).is_ok())
         .on_submit(move |ex, text, _| {
-            if let Ok(val) = NaiveDate::parse_from_str(&text, "%Y:%m:%d") {
+            if let Ok(val) = Date::strptime("%Y:%m:%d", &text) {
                 ex.emit(message(val));
             }
         })
@@ -63,13 +63,13 @@ fn main() -> Result<(), ApplicationError> {
             let options =
                 Signal::new(["one-way flight", "return flight"].map(Signal::new).to_vec());
             let selected_option = Signal::new(Some(0));
-            let start_date = Signal::new(NaiveDate::from_ymd_opt(2022, 2, 12).unwrap());
-            let end_date = Signal::new(NaiveDate::from_ymd_opt(2022, 2, 26).unwrap());
+            let start_date = Signal::new(date(2022, 2, 12));
+            let end_date = Signal::new(date(2022, 2, 26));
 
             let start_date_text =
-                Memo::new(move |_| format!("{}", start_date.get().format("%Y:%m:%d")));
+                Memo::new(move |_| format!("{}", start_date.get().strftime("%Y:%m:%d")));
             let end_date_text =
-                Memo::new(move |_| format!("{}", end_date.get().format("%Y:%m:%d")));
+                Memo::new(move |_| format!("{}", end_date.get().strftime("%Y:%m:%d")));
 
             AppData { selected_option, start_date, end_date }.build(cx);
 
