@@ -1,4 +1,6 @@
-use crate::{CustomParseError, ParserOptions, Property};
+use crate::{
+    CustomParseError, Gap, Padding, Parse, ParserOptions, Property, Rect, UnparsedProperty,
+};
 
 use cssparser::*;
 
@@ -62,8 +64,39 @@ pub(crate) fn parse_declaration<'i>(
     important_declarations: &mut DeclarationList<'i>,
     _options: &ParserOptions,
 ) -> Result<(), ParseError<CustomParseError<'i>>> {
-    let property =
-        input.parse_until_before(Delimiter::Bang, |input| Property::parse_value(name, input))?;
+    enum ParsedDeclaration<'i> {
+        Single(Property<'i>),
+        Padding([crate::Units; 4]),
+        Gap([crate::Units; 2]),
+    }
+
+    let declaration = input.parse_until_before(Delimiter::Bang, |input| match name.as_ref() {
+        "padding" => match input.try_parse(Padding::parse) {
+            Ok(Padding(Rect(top, right, bottom, left))) => {
+                if top == right && top == bottom && top == left {
+                    Ok(ParsedDeclaration::Single(Property::Padding(top)))
+                } else {
+                    Ok(ParsedDeclaration::Padding([top, right, bottom, left]))
+                }
+            }
+            Err(_) => Ok(ParsedDeclaration::Single(Property::Unparsed(UnparsedProperty::parse(
+                name, input,
+            )?))),
+        },
+        "gap" => match input.try_parse(Gap::parse) {
+            Ok(Gap { row, column }) => {
+                if row == column {
+                    Ok(ParsedDeclaration::Single(Property::Gap(row)))
+                } else {
+                    Ok(ParsedDeclaration::Gap([row, column]))
+                }
+            }
+            Err(_) => Ok(ParsedDeclaration::Single(Property::Unparsed(UnparsedProperty::parse(
+                name, input,
+            )?))),
+        },
+        _ => Ok(ParsedDeclaration::Single(Property::parse_value(name, input)?)),
+    })?;
 
     let important = input
         .try_parse(|input| {
@@ -72,10 +105,18 @@ pub(crate) fn parse_declaration<'i>(
         })
         .is_ok();
 
-    if important {
-        important_declarations.push(property);
-    } else {
-        declarations.push(property);
+    let declarations = if important { important_declarations } else { declarations };
+    match declaration {
+        ParsedDeclaration::Single(property) => declarations.push(property),
+        ParsedDeclaration::Padding([top, right, bottom, left]) => declarations.extend([
+            Property::PaddingTop(top),
+            Property::PaddingRight(right),
+            Property::PaddingBottom(bottom),
+            Property::PaddingLeft(left),
+        ]),
+        ParsedDeclaration::Gap([row, column]) => {
+            declarations.extend([Property::VerticalGap(row), Property::HorizontalGap(column)]);
+        }
     }
     Ok(())
 }
@@ -103,3 +144,41 @@ impl<'i> RuleBodyItemParser<'i, (), CustomParseError<'i>> for PropertyDeclaratio
 }
 
 pub(crate) type DeclarationList<'i> = Vec<Property<'i>>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::Units;
+
+    #[test]
+    fn spacing_shorthands_expand_into_existing_properties() {
+        let mut parser = Parser::new(
+            "padding: 1px 2px 3px; gap: 4px 5px; padding: 6px; gap: 7px;
+             padding: 8px 9px !important;",
+        );
+        let block = DeclarationBlock::parse(&mut parser, &ParserOptions::new()).unwrap();
+        let px = Units::Pixels;
+        assert_eq!(
+            block.declarations,
+            vec![
+                Property::PaddingTop(px(1.0)),
+                Property::PaddingRight(px(2.0)),
+                Property::PaddingBottom(px(3.0)),
+                Property::PaddingLeft(px(2.0)),
+                Property::VerticalGap(px(4.0)),
+                Property::HorizontalGap(px(5.0)),
+                Property::Padding(px(6.0)),
+                Property::Gap(px(7.0)),
+            ]
+        );
+        assert_eq!(
+            block.important_declarations,
+            vec![
+                Property::PaddingTop(px(8.0)),
+                Property::PaddingRight(px(9.0)),
+                Property::PaddingBottom(px(8.0)),
+                Property::PaddingLeft(px(9.0)),
+            ]
+        );
+    }
+}

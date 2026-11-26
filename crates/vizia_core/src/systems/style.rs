@@ -1799,6 +1799,105 @@ mod tests {
     impl View for Unnamed {}
 
     #[test]
+    fn spacing_shorthands_apply_in_order_and_preserve_variable_resolution() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".spacing {
+                padding: 1px 2px 3px 4px;
+                padding-left: 9px;
+                gap: 5px 6px;
+                column-gap: 7px;
+            }
+            .reverse {
+                padding-left: 9px;
+                padding: 1px 2px;
+                row-gap: 9px;
+                gap: 5px 6px;
+            }
+            .variable {
+                --spacing: 8px;
+                padding: var(--spacing);
+                padding-top: 9px;
+                gap: var(--missing, 3px);
+            }
+            .zero {
+                --spacing: 0;
+                padding: var(--spacing);
+                gap: var(--missing, 0);
+            }
+            .invalid {
+                padding: 1px;
+                padding: var(--missing, 4px) 2px;
+                gap: 5px;
+                gap: 2px 3px 4px;
+            }",
+        )
+        .unwrap();
+        let spacing = Element::new(&mut cx).class("spacing").entity();
+        let reverse = Element::new(&mut cx).class("reverse").entity();
+        let variable = Element::new(&mut cx).class("variable").entity();
+        let zero = Element::new(&mut cx).class("zero").entity();
+        let invalid = Element::new(&mut cx).class("invalid").entity();
+        style_system(&mut cx);
+
+        let resolved = |store: &crate::storage::animatable_var_set::AnimatableVarSet<Units>,
+                        entity| {
+            store.get_resolved(entity, &cx.style.custom_units_props)
+        };
+        let px = |value| Some(Units::Pixels(value));
+        assert_eq!(resolved(&cx.style.padding_top, spacing), px(1.0));
+        assert_eq!(resolved(&cx.style.padding_right, spacing), px(2.0));
+        assert_eq!(resolved(&cx.style.padding_bottom, spacing), px(3.0));
+        assert_eq!(resolved(&cx.style.padding_left, spacing), px(9.0));
+        assert_eq!(resolved(&cx.style.vertical_gap, spacing), px(5.0));
+        assert_eq!(resolved(&cx.style.horizontal_gap, spacing), px(7.0));
+        assert_eq!(resolved(&cx.style.padding_left, reverse), px(2.0));
+        assert_eq!(resolved(&cx.style.vertical_gap, reverse), px(5.0));
+        assert_eq!(resolved(&cx.style.horizontal_gap, reverse), px(6.0));
+        assert_eq!(resolved(&cx.style.padding_top, variable), px(9.0));
+        assert_eq!(resolved(&cx.style.padding_left, variable), px(8.0));
+        assert_eq!(resolved(&cx.style.vertical_gap, variable), px(3.0));
+        assert_eq!(resolved(&cx.style.horizontal_gap, variable), px(3.0));
+        assert_eq!(resolved(&cx.style.padding_left, zero), px(0.0));
+        assert_eq!(resolved(&cx.style.vertical_gap, zero), px(0.0));
+        assert_eq!(resolved(&cx.style.horizontal_gap, zero), px(0.0));
+        assert_eq!(resolved(&cx.style.padding_left, invalid), px(1.0));
+        assert_eq!(resolved(&cx.style.horizontal_gap, invalid), px(5.0));
+    }
+
+    #[test]
+    fn spacing_shorthands_expand_in_keyframes() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            "@keyframes spacing {
+                from { padding: 1px 2px; gap: 3px 4px; }
+                to { padding: 5px 6px 7px 8px; gap: 9px 10px; }
+            }",
+        )
+        .unwrap();
+        let animation = *cx.style.get_animation("spacing").unwrap();
+        let values = |frames: &[crate::animation::Keyframe<Units>]| {
+            frames.iter().map(|frame| frame.value).collect::<Vec<_>>()
+        };
+        assert_eq!(
+            values(&cx.style.padding_top.get_animation_mut(animation).unwrap().keyframes),
+            vec![Units::Pixels(1.0), Units::Pixels(5.0)]
+        );
+        assert_eq!(
+            values(&cx.style.padding_left.get_animation_mut(animation).unwrap().keyframes),
+            vec![Units::Pixels(2.0), Units::Pixels(8.0)]
+        );
+        assert_eq!(
+            values(&cx.style.vertical_gap.get_animation_mut(animation).unwrap().keyframes),
+            vec![Units::Pixels(3.0), Units::Pixels(9.0)]
+        );
+        assert_eq!(
+            values(&cx.style.horizontal_gap.get_animation_mut(animation).unwrap().keyframes),
+            vec![Units::Pixels(4.0), Units::Pixels(10.0)]
+        );
+    }
+
+    #[test]
     fn standard_property_aliases_apply_and_resolve_variables() {
         let mut cx = Context::default();
         cx.add_stylesheet(

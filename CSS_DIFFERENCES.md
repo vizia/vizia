@@ -18,8 +18,8 @@ is not necessarily applied or rendered like it would be in a browser.
 | `grid-template-columns`, `grid-template-rows`, and grid placement properties | The template names alias `grid-columns` and `grid-rows`. Tracks use Vizia layout units, not the full CSS grid track syntax. Placement uses `column-start`, `column-span`, `row-start`, and `row-span`; Vizia start indices are zero-based, unlike CSS grid lines. |
 | `width` and `height` | Vizia also provides `size` to set both dimensions, and `min-size` and `max-size` to set both corresponding constraints. |
 | `margin` and `inset` shorthands | Vizia provides `space` to set `left`, `right`, `top`, and `bottom`. These layout properties are not a browser margin shorthand. |
-| `padding: 4px 8px` | Vizia's `padding` takes one value for all four sides. Use `padding-top`, `padding-right`, `padding-bottom`, and `padding-left` for different values. |
-| `gap: 4px 8px`, `row-gap`, `column-gap` | Vizia's `gap` takes one value for both axes. `row-gap` and `column-gap` alias `vertical-gap` and `horizontal-gap`. Vizia also has `min-gap`, `max-gap`, and per-axis gap constraints. |
+| `padding: 4px 8px` | Vizia supports one to four values using CSS top/right/bottom/left expansion. Values use Vizia layout units; a single `var()` can supply one value, but mixed or multi-value variable substitution is not supported. |
+| `gap: 4px 8px`, `row-gap`, `column-gap` | Vizia supports one or two values, in row/column order, using Vizia layout units. A single `var()` can supply one value, but mixed or multi-value variable substitution is not supported. `row-gap` and `column-gap` alias `vertical-gap` and `horizontal-gap`. Vizia also has `min-gap`, `max-gap`, and per-axis gap constraints. |
 | `overflow: visible`, `hidden`, `clip`, `scroll`, or `auto` | `overflow`, `overflow-x`, and `overflow-y` accept `visible` and `hidden`; the other listed values are not supported. |
 
 ### Layout units
@@ -29,6 +29,7 @@ padding, and gaps, the parser accepts `auto`, percentages, absolute lengths
 convertible to pixels (`px`, `in`, `cm`, `mm`, `q`, `pt`, and `pc`), and the
 Vizia-specific stretch unit `s`. For example, `width: 1s` requests one share of
 remaining space; in a CSS transition, by contrast, `1s` means one second.
+The `padding` and `gap` shorthands also accept unitless zero.
 
 Do not assume browser length support for layout properties: `em`, `rem`, and
 viewport units are not convertible to pixels by the layout-units parser.

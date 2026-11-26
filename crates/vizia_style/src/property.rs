@@ -4,7 +4,7 @@ use crate::{
     CornerRadius, CursorIcon, CustomParseError, CustomProperty, Direction, Display, Filter,
     FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWidth, LayoutType, LayoutWrap,
     Length, LengthOrPercentage, LetterSpacing, LineClamp, LineHeight, Opacity, Outline, Overflow,
-    Parse, PointerEvents, Position, PositionType, Scale, Shadow, TextAlign, TextDecoration,
+    Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
     TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
     Transition, Translate, Units, UnparsedProperty, Visibility, define_property,
 };
@@ -30,6 +30,54 @@ pub fn canonical_property_name(name: &str) -> &str {
         "font-style" => "font-slant",
         "font-stretch" => "font-width",
         _ => name,
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct Padding(pub Rect<Units>);
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct Gap {
+    pub row: Units,
+    pub column: Units,
+}
+
+#[derive(Clone)]
+struct ShorthandUnit(Units);
+
+impl<'i> Parse<'i> for ShorthandUnit {
+    fn parse<'t>(
+        input: &mut Parser<'i>,
+    ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
+        let state = input.state();
+        if let Ok(number) = input.try_parse(|input| input.expect_number()) {
+            if number == 0.0 {
+                return Ok(Self(Units::Pixels(0.0)));
+            }
+            input.reset(&state);
+        }
+        Units::parse(input).map(Self)
+    }
+}
+
+impl<'i> Parse<'i> for Padding {
+    fn parse<'t>(
+        input: &mut Parser<'i>,
+    ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
+        let Rect(top, right, bottom, left) = Rect::<ShorthandUnit>::parse(input)?;
+        input.expect_exhausted()?;
+        Ok(Self(Rect(top.0, right.0, bottom.0, left.0)))
+    }
+}
+
+impl<'i> Parse<'i> for Gap {
+    fn parse<'t>(
+        input: &mut Parser<'i>,
+    ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
+        let row = ShorthandUnit::parse(input)?.0;
+        let column = input.try_parse(ShorthandUnit::parse).map(|value| value.0).unwrap_or(row);
+        input.expect_exhausted()?;
+        Ok(Self { row, column })
     }
 }
 
@@ -232,6 +280,48 @@ mod tests {
     use cssparser::CowRcStr;
 
     use super::*;
+
+    #[test]
+    fn spacing_shorthands_expand_in_css_order() {
+        let px = Units::Pixels;
+        let padding_cases = [
+            ("1px", Rect(px(1.0), px(1.0), px(1.0), px(1.0))),
+            ("1px 2px", Rect(px(1.0), px(2.0), px(1.0), px(2.0))),
+            ("1px 2px 3px", Rect(px(1.0), px(2.0), px(3.0), px(2.0))),
+            ("0 2px 3% 4s", Rect(px(0.0), px(2.0), Units::Percentage(3.0), Units::Stretch(4.0))),
+        ];
+        for (value, expected) in padding_cases {
+            let mut parser = Parser::new(value);
+            assert_eq!(Padding::parse(&mut parser).unwrap(), Padding(expected), "{value}");
+            assert!(parser.is_exhausted());
+        }
+
+        for (value, row, column) in [("5px", px(5.0), px(5.0)), ("0 2px", px(0.0), px(2.0))] {
+            let mut parser = Parser::new(value);
+            assert_eq!(Gap::parse(&mut parser).unwrap(), Gap { row, column }, "{value}");
+            assert!(parser.is_exhausted());
+        }
+    }
+
+    #[test]
+    fn spacing_shorthands_do_not_parse_partial_values() {
+        for (name, value) in [
+            ("padding", "1px 2px 3px 4px 5px"),
+            ("padding", "1px invalid"),
+            ("padding", "1px var(--spacing)"),
+            ("gap", "1px 2px 3px"),
+            ("gap", "1px invalid"),
+            ("gap", "var(--spacing) 2px"),
+        ] {
+            let mut parser = Parser::new(value);
+            let parsed = match name {
+                "padding" => Padding::parse(&mut parser).map(|_| ()),
+                "gap" => Gap::parse(&mut parser).map(|_| ()),
+                _ => unreachable!(),
+            };
+            assert!(parsed.is_err(), "{name}: {value}");
+        }
+    }
 
     #[test]
     fn standard_property_aliases_parse_like_vizia_names() {

@@ -1013,6 +1013,13 @@ impl Style {
                 }
 
                 // Padding
+                Property::Padding(value) => {
+                    insert_keyframe2(&mut self.padding_top, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_right, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_bottom, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_left, animation_id, time, *value);
+                }
+
                 Property::PaddingLeft(value) => {
                     insert_keyframe2(&mut self.padding_left, animation_id, time, *value);
                 }
@@ -1986,6 +1993,10 @@ impl Style {
 
         fn units_fallback(var: &Variable<'_>) -> Option<Units> {
             match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Number { value, .. })) if *value == 0.0 => {
+                    Some(Units::Pixels(0.0))
+                }
+
                 Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
                     if unit.as_ref().eq_ignore_ascii_case("px") =>
                 {
@@ -2232,10 +2243,10 @@ impl Style {
 
             // Padding
             Property::Padding(padding) => {
-                self.padding_left.insert_rule(rule_id, padding);
-                self.padding_right.insert_rule(rule_id, padding);
                 self.padding_top.insert_rule(rule_id, padding);
+                self.padding_right.insert_rule(rule_id, padding);
                 self.padding_bottom.insert_rule(rule_id, padding);
+                self.padding_left.insert_rule(rule_id, padding);
             }
 
             Property::PaddingLeft(padding_left) => {
@@ -2774,6 +2785,17 @@ impl Style {
                         }
                     };
                 }
+                macro_rules! parse_units_shorthand_var {
+                    ($($prop:expr),+) => {
+                        if let [TokenOrValue::Var(var)] = unparsed.value.0.as_slice() {
+                            let hash = variable_hash(var);
+                            let fallback = units_fallback(var);
+                            $($prop.insert_variable_rule(rule_id, hash, fallback.clone());)+
+                        } else {
+                            warn!("Unparsed {} {:?}", unparsed.name, unparsed.value);
+                        }
+                    };
+                }
                 match unparsed.name.as_ref() {
                     "background-color" => parse_color_var!(self.background_color),
                     "border-color" => parse_color_var!(
@@ -2873,7 +2895,7 @@ impl Style {
                     "padding-right" => parse_units_var!(self.padding_right),
                     "padding-top" => parse_units_var!(self.padding_top),
                     "padding-bottom" => parse_units_var!(self.padding_bottom),
-                    "padding" => parse_units_var!(
+                    "padding" => parse_units_shorthand_var!(
                         self.padding_left,
                         self.padding_right,
                         self.padding_top,
@@ -2881,7 +2903,7 @@ impl Style {
                     ),
                     "row-gap" | "vertical-gap" => parse_units_var!(self.vertical_gap),
                     "column-gap" | "horizontal-gap" => parse_units_var!(self.horizontal_gap),
-                    "gap" => parse_units_var!(self.vertical_gap, self.horizontal_gap),
+                    "gap" => parse_units_shorthand_var!(self.vertical_gap, self.horizontal_gap),
                     "min-gap" => {
                         parse_units_var!(self.min_horizontal_gap, self.min_vertical_gap)
                     }
@@ -3211,6 +3233,19 @@ impl Style {
                             }
                         }
                         TokenOrValue::Token(CssToken::Number { value, .. }) => {
+                            if *value == 0.0 {
+                                let units_val = Units::Pixels(0.0);
+                                if let Some(store) =
+                                    self.custom_units_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, units_val);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, units_val);
+                                    self.custom_units_props.insert(variable_name_hash, store);
+                                }
+                            }
+
                             // Plain number like 0.5 → Opacity
                             let opacity_val = Opacity(*value);
                             if let Some(store) =
