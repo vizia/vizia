@@ -1577,6 +1577,7 @@ pub(crate) fn style_system(cx: &mut Context) {
                 }
                 cx.style.needs_relayout(entity);
                 redraw_entities.push(entity);
+                // `text_invalidation_system` also rebuilds the paragraph a span belongs to.
                 cx.style.needs_text_update(entity);
             }
         }
