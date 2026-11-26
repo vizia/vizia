@@ -1,17 +1,34 @@
-use crate::{
-    AutoKeyword, CustomParseError, LengthPixels, Parse, Percentage, Stretch, macros::impl_parse,
-};
+use crate::{AutoKeyword, CustomParseError, LengthPixels, Parse, Percentage, Stretch};
 use cssparser::*;
 pub use morphorm::Units;
 
-impl_parse! {
-    Units,
-
-    try_parse {
-        AutoKeyword,
-        Stretch,
-        Percentage,
-        LengthPixels,
+impl<'i> Parse<'i> for Units {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
+        if input
+            .try_parse(|input| -> Result<(), ParseError<CustomParseError<'i>>> {
+                if input.expect_number()? == 0.0 {
+                    Ok(())
+                } else {
+                    Err(ParseError::custom(CustomParseError::InvalidDeclaration))
+                }
+            })
+            .is_ok()
+        {
+            return Ok(Units::Pixels(0.0));
+        }
+        if let Ok(value) = input.try_parse(AutoKeyword::parse) {
+            return Ok(value.into());
+        }
+        if let Ok(value) = input.try_parse(Stretch::parse) {
+            return Ok(value.into());
+        }
+        if let Ok(value) = input.try_parse(Percentage::parse) {
+            return Ok(value.into());
+        }
+        if let Ok(value) = input.try_parse(LengthPixels::parse) {
+            return Ok(value.into());
+        }
+        Err(ParseError::custom(CustomParseError::InvalidDeclaration))
     }
 }
 
@@ -75,6 +92,22 @@ mod tests {
             "pt" => Units::Pixels(LengthValue::PX_PER_PT),
             "pc" => Units::Pixels(LengthValue::PX_PER_PC),
             "s" => Units::Stretch,
+        }
+
+        custom {
+            success {
+                "0" => Units::Pixels(0.0),
+                "-0" => Units::Pixels(0.0),
+                "0.0" => Units::Pixels(0.0),
+                "0s" => Units::Stretch(0.0),
+            }
+
+            failure {
+                "1",
+                "-1",
+                "0.1",
+                "0foo",
+            }
         }
     }
 }

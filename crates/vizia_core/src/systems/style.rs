@@ -1817,6 +1817,70 @@ mod tests {
     impl View for Unnamed {}
 
     #[test]
+    fn unitless_zero_applies_to_layout_longhands_and_variables() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".direct { width: 0; left: -0; padding-left: 0.0; row-gap: 0; }
+             .variable {
+                 --zero: 0;
+                 width: var(--zero);
+                 left: var(--missing, 0);
+                 padding-left: var(--zero);
+             }
+             .invalid { width: 7px; width: 1; padding-left: 8px; padding-left: -1; }",
+        )
+        .unwrap();
+        let direct = Element::new(&mut cx).class("direct").entity();
+        let variable = Element::new(&mut cx).class("variable").entity();
+        let invalid = Element::new(&mut cx).class("invalid").entity();
+        style_system(&mut cx);
+
+        let resolved = |store: &crate::storage::animatable_var_set::AnimatableVarSet<Units>,
+                        entity| {
+            store.get_resolved(entity, &cx.style.custom_units_props)
+        };
+        for entity in [direct, variable] {
+            assert_eq!(resolved(&cx.style.width, entity), Some(Units::Pixels(0.0)));
+            assert_eq!(resolved(&cx.style.left, entity), Some(Units::Pixels(0.0)));
+            assert_eq!(resolved(&cx.style.padding_left, entity), Some(Units::Pixels(0.0)));
+        }
+        assert_eq!(resolved(&cx.style.vertical_gap, direct), Some(Units::Pixels(0.0)));
+        assert_eq!(resolved(&cx.style.width, invalid), Some(Units::Pixels(7.0)));
+        assert_eq!(resolved(&cx.style.padding_left, invalid), Some(Units::Pixels(8.0)));
+    }
+
+    #[test]
+    fn unitless_zero_works_in_layout_animations() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            "@keyframes resize { from { width: 0; } to { width: 10px; } }
+             .before { width: 10px; }
+             .after { width: 0; transition: width 5s; }",
+        )
+        .unwrap();
+        let animation = *cx.style.get_animation("resize").unwrap();
+        let frames = &cx.style.width.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(
+            frames.iter().map(|frame| frame.value).collect::<Vec<_>>(),
+            vec![Units::Pixels(0.0), Units::Pixels(10.0)]
+        );
+
+        let entity = Element::new(&mut cx).class("before").entity();
+        style_system(&mut cx);
+        cx.style.set_class(&cx.tree, entity, "after", true);
+        style_system(&mut cx);
+        let transition = cx
+            .style
+            .width
+            .get_active_animations()
+            .unwrap()
+            .iter()
+            .find(|animation| animation.entities.contains(&entity))
+            .unwrap();
+        assert_eq!(transition.keyframes.last().unwrap().value, Units::Pixels(0.0));
+    }
+
+    #[test]
     fn spacing_shorthands_apply_in_order_and_preserve_variable_resolution() {
         let mut cx = Context::default();
         cx.add_stylesheet(

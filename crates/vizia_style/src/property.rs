@@ -42,31 +42,13 @@ pub(crate) struct Gap {
     pub column: Units,
 }
 
-#[derive(Clone)]
-struct ShorthandUnit(Units);
-
-impl<'i> Parse<'i> for ShorthandUnit {
-    fn parse<'t>(
-        input: &mut Parser<'i>,
-    ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
-        let state = input.state();
-        if let Ok(number) = input.try_parse(|input| input.expect_number()) {
-            if number == 0.0 {
-                return Ok(Self(Units::Pixels(0.0)));
-            }
-            input.reset(&state);
-        }
-        Units::parse(input).map(Self)
-    }
-}
-
 impl<'i> Parse<'i> for Padding {
     fn parse<'t>(
         input: &mut Parser<'i>,
     ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
-        let Rect(top, right, bottom, left) = Rect::<ShorthandUnit>::parse(input)?;
+        let Rect(top, right, bottom, left) = Rect::<Units>::parse(input)?;
         input.expect_exhausted()?;
-        Ok(Self(Rect(top.0, right.0, bottom.0, left.0)))
+        Ok(Self(Rect(top, right, bottom, left)))
     }
 }
 
@@ -74,8 +56,8 @@ impl<'i> Parse<'i> for Gap {
     fn parse<'t>(
         input: &mut Parser<'i>,
     ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
-        let row = ShorthandUnit::parse(input)?.0;
-        let column = input.try_parse(ShorthandUnit::parse).map(|value| value.0).unwrap_or(row);
+        let row = Units::parse(input)?;
+        let column = input.try_parse(Units::parse).unwrap_or(row);
         input.expect_exhausted()?;
         Ok(Self { row, column })
     }

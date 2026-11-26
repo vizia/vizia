@@ -27,9 +27,10 @@ is not necessarily applied or rendered like it would be in a browser.
 For layout properties using Vizia's `Units` type, including widths, offsets,
 padding, and gaps, the parser accepts `auto`, percentages, absolute lengths
 convertible to pixels (`px`, `in`, `cm`, `mm`, `q`, `pt`, and `pc`), and the
-Vizia-specific stretch unit `s`. For example, `width: 1s` requests one share of
-remaining space; in a CSS transition, by contrast, `1s` means one second.
-The `padding` and `gap` shorthands also accept unitless zero.
+Vizia-specific stretch unit `s`. Unitless zero is accepted for these
+properties, including longhands and the `padding` and `gap` shorthands. For
+example, `width: 1s` requests one share of remaining space; in a CSS
+transition, by contrast, `1s` means one second.
 
 Do not assume browser length support for layout properties: `em`, `rem`, and
 viewport units are not convertible to pixels by the layout-units parser.
