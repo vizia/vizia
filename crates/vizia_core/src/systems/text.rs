@@ -460,6 +460,7 @@ mod tests {
     use super::*;
     use crate::context::backend::BackendContext;
     use crate::systems::{animation_system, binding_system, style_system};
+    use vizia_style::Property;
 
     fn paragraph_font_sizes(cx: &mut Context, entity: Entity) -> Vec<f32> {
         let paragraph =
@@ -646,6 +647,264 @@ mod tests {
         animation_system(&mut backend.0);
         text_system(&mut backend.0);
         assert_span_runs(&mut backend.0, "animated span", rich, 10.0);
+    }
+
+    // A frame in the order of the application loops: binding, style, animation, then text.
+    fn frame(cx: &mut Context) {
+        binding_system(cx);
+        style_system(cx);
+        animation_system(cx);
+        text_system(cx);
+    }
+
+    #[test]
+    fn an_animated_font_size_reaches_inherited_labels() {
+        let mut cx = Context::default();
+        let label = std::cell::Cell::new(Entity::null());
+        let container = VStack::new(&mut cx, |cx| {
+            label.set(Label::new(cx, "inherited").entity());
+        })
+        .entity();
+        let shrink = cx.add_animation(
+            AnimationBuilder::new()
+                .keyframe(0.0, |keyframe| keyframe.font_size(10.0))
+                .keyframe(1.0, |keyframe| keyframe.font_size(10.0)),
+        );
+        let mut backend = BackendContext::new(cx);
+        backend.set_scale_factor(2.0);
+        frame(&mut backend.0);
+        assert_eq!(paragraph_font_sizes(&mut backend.0, label.get()), [32.0]);
+
+        backend.0.style.enqueue_animation(
+            container,
+            shrink,
+            Duration::from_secs(60),
+            Duration::ZERO,
+        );
+        frame(&mut backend.0);
+        // The container is now at 10 logical pixels, so the label that inherits it is at 20.
+        assert_eq!(paragraph_font_sizes(&mut backend.0, label.get()), [20.0]);
+    }
+
+    #[test]
+    fn a_signal_font_size_reaches_inherited_labels() {
+        let mut cx = Context::default();
+        let size = Signal::new(16.0f32);
+        let label = std::cell::Cell::new(Entity::null());
+        VStack::new(&mut cx, |cx| {
+            label.set(Label::new(cx, "inherited").entity());
+        })
+        .font_size(size);
+        let mut backend = BackendContext::new(cx);
+        backend.set_scale_factor(2.0);
+        frame(&mut backend.0);
+        assert_eq!(paragraph_font_sizes(&mut backend.0, label.get()), [32.0]);
+
+        size.set(10.0);
+        frame(&mut backend.0);
+        assert_eq!(paragraph_font_sizes(&mut backend.0, label.get()), [20.0]);
+    }
+
+    #[test]
+    fn an_animated_font_size_reaches_nested_labels_but_not_explicit_ones() {
+        let mut cx = Context::default();
+        let nested = std::cell::Cell::new(Entity::null());
+        let explicit = std::cell::Cell::new(Entity::null());
+        let container = VStack::new(&mut cx, |cx| {
+            HStack::new(cx, |cx| {
+                nested.set(Label::new(cx, "nested").entity());
+            });
+            explicit.set(Label::new(cx, "explicit").font_size(7.0).entity());
+        })
+        .entity();
+        let shrink = cx.add_animation(
+            AnimationBuilder::new()
+                .keyframe(0.0, |keyframe| keyframe.font_size(10.0))
+                .keyframe(1.0, |keyframe| keyframe.font_size(10.0)),
+        );
+        let mut backend = BackendContext::new(cx);
+        backend.set_scale_factor(2.0);
+        frame(&mut backend.0);
+
+        backend.0.style.enqueue_animation(
+            container,
+            shrink,
+            Duration::from_secs(60),
+            Duration::ZERO,
+        );
+        frame(&mut backend.0);
+        assert_eq!(paragraph_font_sizes(&mut backend.0, nested.get()), [20.0]);
+        assert_eq!(paragraph_font_sizes(&mut backend.0, explicit.get()), [14.0]);
+    }
+
+    #[test]
+    fn inherited_labels_return_to_the_stored_font_size_when_an_animation_ends() {
+        let mut cx = Context::default();
+        let label = std::cell::Cell::new(Entity::null());
+        let sibling = std::cell::Cell::new(Entity::null());
+        let container = VStack::new(&mut cx, |cx| {
+            label.set(Label::new(cx, "inherited").entity());
+        })
+        .font_size(16.0)
+        .entity();
+        sibling.set(Label::new(&mut cx, "sibling").entity());
+        let to_size = |cx: &mut Context, size: f32| {
+            cx.add_animation(
+                AnimationBuilder::new()
+                    .keyframe(0.0, |keyframe| keyframe.font_size(size))
+                    .keyframe(1.0, |keyframe| keyframe.font_size(size)),
+            )
+        };
+        let shrink = to_size(&mut cx, 10.0);
+        let grow = to_size(&mut cx, 12.0);
+        let mut backend = BackendContext::new(cx);
+        frame(&mut backend.0);
+        let resolved = |cx: &Context| {
+            cx.style
+                .font_size
+                .get_resolved(label.get(), &cx.style.custom_font_size_props)
+                .and_then(|size| size.0.to_px())
+        };
+
+        // The container's animation ends at once, while another one keeps running beside it.
+        backend.0.style.enqueue_animation(
+            container,
+            shrink,
+            Duration::from_nanos(1),
+            Duration::ZERO,
+        );
+        backend.0.style.enqueue_animation(
+            sibling.get(),
+            grow,
+            Duration::from_secs(60),
+            Duration::ZERO,
+        );
+        frame(&mut backend.0);
+        assert_eq!(resolved(&backend.0), Some(10.0));
+
+        frame(&mut backend.0);
+        assert_eq!(resolved(&backend.0), Some(16.0));
+    }
+
+    /// A container and a label beside it, both at 16 logical pixels, with an animation to 10 that
+    /// ends as soon as it starts, and the label inheriting the container's size.
+    fn ending_animation() -> (BackendContext, Entity, Entity, Entity) {
+        let mut cx = Context::default();
+        let inherited = std::cell::Cell::new(Entity::null());
+        let container = VStack::new(&mut cx, |cx| {
+            inherited.set(Label::new(cx, "inherited").entity());
+        })
+        .font_size(16.0)
+        .entity();
+        let animated = Label::new(&mut cx, "animated").font_size(16.0).entity();
+        let shrink = cx.add_animation(
+            AnimationBuilder::new()
+                .keyframe(0.0, |keyframe| keyframe.font_size(10.0))
+                .keyframe(1.0, |keyframe| keyframe.font_size(10.0)),
+        );
+        let mut backend = BackendContext::new(cx);
+        backend.set_scale_factor(2.0);
+        frame(&mut backend.0);
+        for entity in [container, animated] {
+            backend.0.style.enqueue_animation(
+                entity,
+                shrink,
+                Duration::from_nanos(1),
+                Duration::ZERO,
+            );
+        }
+        (backend, container, inherited.get(), animated)
+    }
+
+    #[test]
+    fn paragraphs_are_rebuilt_when_an_animation_ends() {
+        let (mut backend, _, inherited, animated) = ending_animation();
+        frame(&mut backend.0);
+        assert_eq!(paragraph_font_sizes(&mut backend.0, inherited), [20.0]);
+        assert_eq!(paragraph_font_sizes(&mut backend.0, animated), [20.0]);
+
+        frame(&mut backend.0);
+        assert_eq!(paragraph_font_sizes(&mut backend.0, inherited), [32.0]);
+        assert_eq!(paragraph_font_sizes(&mut backend.0, animated), [32.0]);
+    }
+
+    #[test]
+    fn an_ended_animation_leaves_nothing_for_later_inheritance_passes() {
+        let (mut backend, _, inherited, _) = ending_animation();
+        frame(&mut backend.0);
+        frame(&mut backend.0);
+
+        // Adding a view reruns inheritance over the whole tree.
+        Label::new(&mut backend.0, "unrelated");
+        binding_system(&mut backend.0);
+        style_system(&mut backend.0);
+        assert!(!backend.0.style.text_construction.contains(&inherited));
+    }
+
+    fn paragraph_extent(cx: &mut Context, entity: Entity) -> (f32, f32) {
+        let paragraph =
+            cx.text_context.text_paragraphs.get_mut(entity).expect("paragraph is built");
+        paragraph.layout(400.0);
+        (paragraph.max_intrinsic_width(), paragraph.height())
+    }
+
+    /// Plays an animation holding `property` on a container, and checks that a label inheriting it
+    /// lays out like a label that sets the same value itself.
+    fn assert_animated_property_reaches_inherited_labels(
+        property: Property<'static>,
+        set: impl FnOnce(&mut Context, Entity),
+    ) {
+        let mut cx = Context::default();
+        let label = std::cell::Cell::new(Entity::null());
+        let container = VStack::new(&mut cx, |cx| {
+            label.set(Label::new(cx, "inherited").entity());
+        })
+        .entity();
+        let reference = Label::new(&mut cx, "inherited").entity();
+        set(&mut cx, reference);
+        let animation = cx.add_animation(AnimationBuilder::new());
+        for time in [0.0, 1.0] {
+            cx.style.add_keyframe(animation, time, std::slice::from_ref(&property));
+        }
+        let mut backend = BackendContext::new(cx);
+        backend.set_scale_factor(2.0);
+        frame(&mut backend.0);
+        assert_ne!(
+            paragraph_extent(&mut backend.0, label.get()),
+            paragraph_extent(&mut backend.0, reference),
+            "{property:?} must change the label's extent"
+        );
+
+        backend.0.style.enqueue_animation(
+            container,
+            animation,
+            Duration::from_secs(60),
+            Duration::ZERO,
+        );
+        frame(&mut backend.0);
+        assert_eq!(
+            paragraph_extent(&mut backend.0, label.get()),
+            paragraph_extent(&mut backend.0, reference),
+            "{property:?}"
+        );
+    }
+
+    #[test]
+    fn an_animated_letter_spacing_reaches_inherited_labels() {
+        let spacing = LetterSpacing::Length(Length::px(4.0));
+        assert_animated_property_reaches_inherited_labels(
+            Property::LetterSpacing(spacing.clone()),
+            |cx, reference| cx.style.letter_spacing.insert(reference, spacing),
+        );
+    }
+
+    #[test]
+    fn an_animated_line_height_reaches_inherited_labels() {
+        let height = LineHeight::Number(3.0);
+        assert_animated_property_reaches_inherited_labels(
+            Property::LineHeight(height.clone()),
+            |cx, reference| cx.style.line_height.insert(reference, height),
+        );
     }
 
     #[test]

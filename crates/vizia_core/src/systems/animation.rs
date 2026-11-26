@@ -1,6 +1,6 @@
 use morphorm::Node;
 
-use crate::{layout::node::SubLayout, prelude::*};
+use crate::{layout::node::SubLayout, prelude::*, systems::animation_inheritance_system};
 
 macro_rules! process_auto_animations {
     ($cx:expr, $property:expr, $height:expr) => {
@@ -79,7 +79,8 @@ macro_rules! process_auto_animations {
 
 pub(crate) fn animation_system(cx: &mut Context) -> bool {
     let _scope = crate::profiling::scope("animation_system");
-    cx.style.play_pending_animations();
+    let started = cx.style.play_pending_animations();
+    animation_inheritance_system(cx, &started);
 
     process_auto_animations!(cx, cx.style.max_height, true);
     process_auto_animations!(cx, cx.style.max_width, false);

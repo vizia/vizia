@@ -1127,14 +1127,19 @@ impl Style {
         self.pending_animations.push((entity, animation, duration, delay));
     }
 
-    pub(crate) fn play_pending_animations(&mut self) {
+    /// Plays the queued animations, returning the entities they were played on.
+    pub(crate) fn play_pending_animations(&mut self) -> Vec<Entity> {
         let start_time = Instant::now();
 
         let pending_animations = std::mem::take(&mut self.pending_animations);
 
-        for (entity, animation, duration, delay) in pending_animations {
-            self.play_animation(entity, animation, start_time + delay, duration, delay)
-        }
+        pending_animations
+            .into_iter()
+            .map(|(entity, animation, duration, delay)| {
+                self.play_animation(entity, animation, start_time + delay, duration, delay);
+                entity
+            })
+            .collect()
     }
 
     pub(crate) fn play_animation(
