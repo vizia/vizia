@@ -1179,6 +1179,28 @@ mod tests {
     }
 
     #[test]
+    fn standard_box_shadow_values_render_and_none_clears() {
+        let direct = paint_probe(".probe { box-shadow: red 20px 0; }");
+        assert_eq!(direct(40, 20), RED);
+
+        let custom = paint_probe(".probe { --shadow: red 20px 0; box-shadow: var(--shadow); }");
+        assert_eq!(custom(40, 20), RED);
+
+        let fallback = paint_probe(".probe { box-shadow: var(--missing, red 20px 0); }");
+        assert_eq!(fallback(40, 20), RED);
+
+        let none = paint_probe(".probe { box-shadow: red 20px 0; box-shadow: none; }");
+        assert_eq!(none(40, 20), [0, 0, 0, 0]);
+
+        let variable_none =
+            paint_probe(".probe { --shadow: none; box-shadow: var(--shadow, red 20px 0); }");
+        assert_eq!(variable_none(40, 20), [0, 0, 0, 0]);
+
+        let fallback_none = paint_probe(".probe { box-shadow: var(--missing, none); }");
+        assert_eq!(fallback_none(40, 20), [0, 0, 0, 0]);
+    }
+
+    #[test]
     fn currentcolor_background_follows_the_font_color() {
         let pixel = paint_probe(".probe { color: red; background-color: currentcolor; }");
         assert_eq!(pixel(20, 20), RED);

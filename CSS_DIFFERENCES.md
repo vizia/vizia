@@ -41,7 +41,7 @@ depends on the property.
 | Standard CSS | Vizia |
 | --- | --- |
 | `border-radius` and `border-top-left-radius`, etc. | These alias `corner-radius` and the corresponding `corner-*-radius` properties. The value parser does not support the full CSS elliptical radius syntax. |
-| `box-shadow` | An alias for `shadow`. Its direct value parser expects horizontal offset, vertical offset, optional blur, optional spread, optional color, and optional `inset`, in that order. Multiple shadows can be comma-separated. |
+| `box-shadow` | An alias for `shadow`. Supports `none`, unitless zero, color and `inset` before or after lengths, and comma-separated shadows. Vizia also accepts some nonstandard orderings and negative blur radii. Length resolution and animation behavior are not fully equivalent to browser CSS; transitions between `none` and shadows with omitted color or `currentColor` are discrete. |
 | `background` shorthand | Use individual properties such as `background-color`, `background-image`, `background-position`, `background-repeat`, and `background-size`. `background-repeat` accepts `repeat`, `repeat-x`, `repeat-y`, and `no-repeat`. |
 | `outline-style` | Not present in the property list. `outline` applies its color and width; use `outline-color`, `outline-width`, and `outline-offset` as needed. |
 | `mix-blend-mode` | An alias for `blend-mode`. |

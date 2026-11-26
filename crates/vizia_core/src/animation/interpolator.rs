@@ -212,13 +212,59 @@ impl Interpolator for Matrix {
     }
 }
 
-impl<T: Interpolator> Interpolator for Vec<T> {
+macro_rules! interpolate_vec {
+    ($($item:ty),+ $(,)?) => {
+        $(
+            impl Interpolator for Vec<$item> {
+                fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+                    start.iter().zip(end.iter())
+                        .map(|(start, end)| <$item>::interpolate(start, end, t))
+                        .collect()
+                }
+            }
+        )+
+    };
+}
+
+interpolate_vec!(Transform, ImageOrGradient, Position, BackgroundRepeat, BackgroundSize);
+
+impl Interpolator for Vec<Shadow> {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        start
-            .iter()
-            .zip(end.iter())
-            .map(|(start, end)| T::interpolate(start, end, t))
-            .collect::<Vec<T>>()
+        fn transparent_shadow(reference: &Shadow) -> Shadow {
+            let color = match reference.color {
+                Some(Color::RGBA(color)) => Color::rgba(color.r(), color.g(), color.b(), 0),
+                _ => Color::rgba(0, 0, 0, 0),
+            };
+            Shadow::new(
+                Length::zero(),
+                Length::zero(),
+                reference.blur_radius.as_ref().map(|_| Length::zero()),
+                reference.spread_radius.as_ref().map(|_| Length::zero()),
+                Some(color),
+                reference.inset,
+            )
+        }
+
+        (0..start.len().max(end.len()))
+            .filter_map(|index| match (start.get(index), end.get(index)) {
+                (Some(start), Some(end)) => Some(Shadow::interpolate(start, end, t)),
+                (Some(start), None) if matches!(start.color, None | Some(Color::CurrentColor)) => {
+                    if t < 0.5 {
+                        Some(start.clone())
+                    } else {
+                        None
+                    }
+                }
+                (None, Some(end)) if matches!(end.color, None | Some(Color::CurrentColor)) => {
+                    if t < 0.5 { None } else { Some(end.clone()) }
+                }
+                (Some(start), None) => {
+                    Some(Shadow::interpolate(start, &transparent_shadow(start), t))
+                }
+                (None, Some(end)) => Some(Shadow::interpolate(&transparent_shadow(end), end, t)),
+                (None, None) => unreachable!(),
+            })
+            .collect()
     }
 }
 
@@ -430,5 +476,38 @@ impl Interpolator for ClipPath {
             (ClipPath::Shape(s), ClipPath::Shape(e)) => ClipPath::Shape(Rect::interpolate(s, e, t)),
             _ => end.clone(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn standard_box_shadow_none_transitions_preserve_visible_shadows() {
+        let shadow = Shadow::new(
+            Length::px(20.0),
+            Length::zero(),
+            Some(Length::px(4.0)),
+            None,
+            Some(Color::rgb(255, 0, 0)),
+            true,
+        );
+        let visible = vec![shadow.clone()];
+        let empty = vec![];
+        for result in [
+            Vec::<Shadow>::interpolate(&empty, &visible, 0.5),
+            Vec::<Shadow>::interpolate(&visible, &empty, 0.5),
+        ] {
+            assert_eq!(result.len(), 1);
+            assert_eq!(result[0].x_offset, Length::px(10.0));
+            assert_eq!(result[0].blur_radius, Some(Length::px(2.0)));
+            assert_eq!(result[0].color, Some(Color::rgba(255, 0, 0, 127)));
+            assert!(result[0].inset);
+        }
+
+        let current = vec![Shadow { color: None, ..shadow }];
+        assert!(Vec::<Shadow>::interpolate(&empty, &current, 0.25).is_empty());
+        assert_eq!(Vec::<Shadow>::interpolate(&empty, &current, 0.75), current);
     }
 }

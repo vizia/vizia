@@ -688,6 +688,19 @@ fn link_variable_data(
             redraw_entities.push(entity);
         }
     }
+
+    let resolved_shadows: HashMap<u64, _> = {
+        let props = &style.custom_shadow_props;
+        props
+            .iter()
+            .filter_map(|(h, p)| p.get_with_variables(entity, props).map(|v| (*h, v)))
+            .collect()
+    };
+    for prop in style.custom_shadow_props.values_mut() {
+        if prop.link_with_resolved(entity, matched_rules, &resolved_shadows) {
+            redraw_entities.push(entity);
+        }
+    }
 }
 
 fn inherit_variable_data(
@@ -729,6 +742,11 @@ fn inherit_variable_data(
                 }
             }
             for prop in style.custom_opacity_props.values_mut() {
+                if prop.inherit_shared(entity, parent) {
+                    redraw_entities.push(entity);
+                }
+            }
+            for prop in style.custom_shadow_props.values_mut() {
                 if prop.inherit_shared(entity, parent) {
                     redraw_entities.push(entity);
                 }
@@ -1943,6 +1961,36 @@ mod tests {
             Some(shadow),
             cx.style.shadow.get_resolved(legacy, &cx.style.custom_shadow_props)
         );
+    }
+
+    #[test]
+    fn standard_box_shadow_resolves_inherited_variables_and_fallbacks() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".parent { --shadow: inset rgba(255, 0, 0, 1) 0 2px; }
+             .inherited { box-shadow: var(--shadow); }
+             .fallback { shadow: var(--missing, inset #f00 0 2px); }",
+        )
+        .unwrap();
+        let parent = Element::new(&mut cx).class("parent").entity();
+        let inherited = cx.with_current(parent, |cx| Element::new(cx).class("inherited").entity());
+        let fallback = Element::new(&mut cx).class("fallback").entity();
+        style_system(&mut cx);
+
+        let expected = vec![Shadow::new(
+            Length::zero(),
+            Length::px(2.0),
+            None,
+            None,
+            Some(Color::rgb(255, 0, 0)),
+            true,
+        )];
+        for entity in [inherited, fallback] {
+            assert_eq!(
+                cx.style.shadow.get_resolved(entity, &cx.style.custom_shadow_props),
+                Some(expected.clone())
+            );
+        }
     }
 
     #[test]

@@ -87,7 +87,7 @@ pub use vizia_style::{
 use cssparser::Token as CssToken;
 use vizia_style::{
     BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, Selectors, StyleSheet,
-    TokenList, TokenOrValue, Variable, canonical_property_name,
+    TokenList, TokenOrValue, Variable, canonical_property_name, parse_shadow_tokens,
 };
 
 mod rule;
@@ -2035,88 +2035,8 @@ impl Style {
             }
         }
 
-        fn parse_shadow_list(tokens: &[TokenOrValue<'_>]) -> Option<Vec<Shadow>> {
-            fn parse_shadow_length(token: &TokenOrValue<'_>) -> Option<Length> {
-                match token {
-                    TokenOrValue::Token(CssToken::Dimension { value, unit, .. })
-                        if unit.as_ref().eq_ignore_ascii_case("px") =>
-                    {
-                        Some(Length::Value(LengthValue::Px(*value)))
-                    }
-
-                    TokenOrValue::Token(CssToken::Number { value, .. }) if *value == 0.0 => {
-                        Some(Length::Value(LengthValue::Px(0.0)))
-                    }
-
-                    _ => None,
-                }
-            }
-
-            fn parse_single_shadow(tokens: &[TokenOrValue<'_>]) -> Option<Shadow> {
-                let mut lengths: Vec<Length> = Vec::new();
-                let mut color = None;
-                let mut inset = false;
-
-                for token in tokens {
-                    match token {
-                        TokenOrValue::Token(CssToken::WhiteSpace(_)) => {}
-
-                        TokenOrValue::Color(c) => {
-                            if color.is_some() {
-                                return None;
-                            }
-                            color = Some(*c);
-                        }
-
-                        TokenOrValue::Token(CssToken::Ident(ident))
-                            if ident.as_ref().eq_ignore_ascii_case("inset") =>
-                        {
-                            if inset {
-                                return None;
-                            }
-                            inset = true;
-                        }
-
-                        other => {
-                            let length = parse_shadow_length(other)?;
-                            lengths.push(length);
-                        }
-                    }
-                }
-
-                if !(2..=4).contains(&lengths.len()) {
-                    return None;
-                }
-
-                let x_offset = lengths[0].clone();
-                let y_offset = lengths[1].clone();
-                let blur_radius = lengths.get(2).cloned();
-                let spread_radius = lengths.get(3).cloned();
-
-                Some(Shadow::new(x_offset, y_offset, blur_radius, spread_radius, color, inset))
-            }
-
-            let mut parts = Vec::<&[TokenOrValue<'_>]>::new();
-            let mut start = 0usize;
-            for (idx, token) in tokens.iter().enumerate() {
-                if matches!(token, TokenOrValue::Token(CssToken::Comma)) {
-                    parts.push(&tokens[start..idx]);
-                    start = idx + 1;
-                }
-            }
-            parts.push(&tokens[start..]);
-
-            let mut parsed = Vec::new();
-            for part in parts {
-                let shadow = parse_single_shadow(part)?;
-                parsed.push(shadow);
-            }
-
-            Some(parsed)
-        }
-
         fn shadow_fallback(var: &Variable<'_>) -> Option<Vec<Shadow>> {
-            var.fallback.as_ref().and_then(|TokenList(tokens)| parse_shadow_list(tokens))
+            var.fallback.as_ref().and_then(|TokenList(tokens)| parse_shadow_tokens(tokens))
         }
 
         match property.clone() {
@@ -2937,7 +2857,7 @@ impl Style {
                 custom.name.hash(&mut s);
                 let variable_name_hash = s.finish();
 
-                if let Some(shadows) = parse_shadow_list(&custom.value.0) {
+                if let Some(shadows) = parse_shadow_tokens(&custom.value.0) {
                     if let Some(store) = self.custom_shadow_props.get_mut(&variable_name_hash) {
                         store.insert_rule(rule_id, shadows);
                     } else {
