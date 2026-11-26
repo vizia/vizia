@@ -876,8 +876,8 @@ mod tests {
 
     #[test]
     fn datetime_range_ends_at_the_edges_of_a_timestamp() {
-        let max = Timestamp::MAX.as_second() * 1_000;
-        let min = Timestamp::MIN.as_second() * 1_000;
+        let max = Timestamp::MAX.as_millisecond();
+        let min = Timestamp::MIN.as_millisecond();
 
         assert_eq!(format_datetime(max, &[]), string_value("9999-12-30 22:00:00"));
         assert!(matches!(format_datetime(max + 1, &[]), FluentValue::Error));
