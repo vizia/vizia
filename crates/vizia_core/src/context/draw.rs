@@ -1367,10 +1367,13 @@ impl DrawContext<'_> {
                 shadow_paint.set_color(shadow_color);
 
                 if blur_radius > 0.0 {
+                    // The canvas matrix holds the view's transform and not the scale factor, so the
+                    // sigma is scaled here, as `filter: blur()` scales its own, and the mask filter
+                    // applies the view's transform to it.
                     shadow_paint.set_mask_filter(MaskFilter::blur(
                         BlurStyle::Normal,
-                        blur_radius / 2.0,
-                        false,
+                        blur_radius * self.scale_factor() / 2.0,
+                        true,
                     ));
                 }
 
