@@ -488,6 +488,50 @@ pub(crate) fn inline_inheritance_system(
     }
 }
 
+/// Carries each entity's text invalidation down to its descendants. An inline text value can change
+/// without changing the inherited storage index, so the inheritance walk does not see the change.
+///
+/// Runs once per frame at the start of `text_system`, after binding, style and animation updates
+/// have all marked entities, so it sees every invalidation the paragraphs are built from.
+pub(crate) fn text_invalidation_system(cx: &mut Context) {
+    let root = Entity::root();
+    let invalidated = cx
+        .style
+        .text_construction
+        .iter()
+        .copied()
+        .filter(|entity| {
+            cx.entity_manager.is_alive(*entity)
+                && (*entity == root || cx.tree.get_parent(*entity).is_some())
+        })
+        .collect::<Vec<_>>();
+    let roots = inheritance_roots(&cx.tree, &invalidated, &cx.style.text_construction);
+    // A span is shaped as part of its enclosing paragraph, so its change rebuilds that paragraph.
+    // `add_block` includes spans whatever their `display`, so the chain of spans is followed to the
+    // first non-span parent, rebuilding each displayed entity on the way: a displayed span builds its
+    // own paragraph as well.
+    for entity in invalidated {
+        if cx.style.text_span.get(entity).copied().unwrap_or_default() {
+            for current in LayoutParentIterator::new(&cx.tree, entity) {
+                if cx.style.display.get(current).copied().unwrap_or_default() != Display::None {
+                    cx.style.needs_text_update(current);
+                }
+                if !cx.style.text_span.get(current).copied().unwrap_or_default() {
+                    break;
+                }
+            }
+        }
+    }
+    for entity in subtrees(&cx.tree, &roots) {
+        if let Some(parent) = cx.tree.get_layout_parent(entity)
+            && cx.style.text_construction.contains(&parent)
+        {
+            // The text system relayouts every paragraph it rebuilds, so no relayout is needed here.
+            cx.style.needs_text_update(entity);
+        }
+    }
+}
+
 /// Link inheritable shared properties to their parent within the subtrees of the given roots.
 pub(crate) fn shared_inheritance_system(
     cx: &mut Context,
