@@ -66,6 +66,12 @@ macro_rules! define_property {
         impl<'i> $name<'i> {
             pub fn parse_value(name: cssparser::CowRcStr<'i>, input: &mut Parser<'i>) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
 
+                let canonical = $crate::canonical_property_name(name.as_ref());
+                let name = if canonical != name.as_ref() {
+                    cssparser::CowRcStr::from(canonical.to_owned())
+                } else {
+                    name
+                };
                 let state = input.state();
                 let name_ref = name.as_ref();
                 match name_ref {

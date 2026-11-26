@@ -10,6 +10,29 @@ use crate::{
 };
 use cssparser::Parser;
 
+/// Returns the Vizia property name for a supported CSS property alias.
+pub fn canonical_property_name(name: &str) -> &str {
+    match name {
+        "position" => "position-type",
+        "flex-direction" => "layout-type",
+        "flex-wrap" => "wrap",
+        "grid-template-columns" => "grid-columns",
+        "grid-template-rows" => "grid-rows",
+        "row-gap" => "vertical-gap",
+        "column-gap" => "horizontal-gap",
+        "border-radius" => "corner-radius",
+        "border-top-left-radius" => "corner-top-left-radius",
+        "border-top-right-radius" => "corner-top-right-radius",
+        "border-bottom-left-radius" => "corner-bottom-left-radius",
+        "border-bottom-right-radius" => "corner-bottom-right-radius",
+        "box-shadow" => "shadow",
+        "mix-blend-mode" => "blend-mode",
+        "font-style" => "font-slant",
+        "font-stretch" => "font-width",
+        _ => name,
+    }
+}
+
 define_property! {
     pub enum Property<'i> {
         // General
@@ -209,6 +232,52 @@ mod tests {
     use cssparser::CowRcStr;
 
     use super::*;
+
+    #[test]
+    fn standard_property_aliases_parse_like_vizia_names() {
+        let aliases = [
+            ("position", "position-type", "absolute"),
+            ("flex-direction", "layout-type", "column"),
+            ("flex-wrap", "wrap", "wrap"),
+            ("grid-template-columns", "grid-columns", "20px 1s"),
+            ("grid-template-rows", "grid-rows", "20px 1s"),
+            ("row-gap", "vertical-gap", "5px"),
+            ("column-gap", "horizontal-gap", "6px"),
+            ("border-radius", "corner-radius", "4px"),
+            ("border-top-left-radius", "corner-top-left-radius", "5px"),
+            ("border-top-right-radius", "corner-top-right-radius", "6px"),
+            ("border-bottom-left-radius", "corner-bottom-left-radius", "7px"),
+            ("border-bottom-right-radius", "corner-bottom-right-radius", "8px"),
+            ("box-shadow", "shadow", "1px 2px 3px red"),
+            ("mix-blend-mode", "blend-mode", "multiply"),
+            ("font-style", "font-slant", "italic"),
+            ("font-stretch", "font-width", "condensed"),
+        ];
+
+        for (alias, original, value) in aliases {
+            let parsed = |name| {
+                let mut parser = Parser::new(value);
+                let property = Property::parse_value(CowRcStr::from(name), &mut parser).unwrap();
+                assert!(parser.is_exhausted(), "{name}: {value}");
+                assert!(!matches!(property, Property::Custom(_) | Property::Unparsed(_)));
+                property
+            };
+            assert_eq!(parsed(alias), parsed(original), "{alias}");
+        }
+    }
+
+    #[test]
+    fn standard_property_aliases_keep_canonical_names_for_variable_resolution() {
+        for (alias, original) in [
+            ("border-radius", "corner-radius"),
+            ("box-shadow", "shadow"),
+            ("row-gap", "vertical-gap"),
+        ] {
+            let mut parser = Parser::new("var(--value, 4px)");
+            let property = Property::parse_value(CowRcStr::from(alias), &mut parser).unwrap();
+            assert!(matches!(property, Property::Unparsed(ref value) if value.name == original));
+        }
+    }
 
     #[test]
     fn parse_property() {

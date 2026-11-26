@@ -1799,6 +1799,104 @@ mod tests {
     impl View for Unnamed {}
 
     #[test]
+    fn standard_property_aliases_apply_and_resolve_variables() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".standard {
+                --radius: 12px;
+                border-radius: var(--radius);
+                border-top-left-radius: 20px;
+                row-gap: var(--missing, 4px);
+                box-shadow: var(--missing-shadow, 1px 2px #f00);
+            }
+            .legacy {
+                --radius: 12px;
+                corner-radius: var(--radius);
+                corner-top-left-radius: 20px;
+                vertical-gap: var(--missing, 4px);
+                shadow: var(--missing-shadow, 1px 2px #f00);
+            }",
+        )
+        .unwrap();
+        let standard = Element::new(&mut cx).class("standard").entity();
+        let legacy = Element::new(&mut cx).class("legacy").entity();
+        style_system(&mut cx);
+
+        assert_eq!(
+            cx.style.corner_top_left_radius.get(standard),
+            Some(&LengthOrPercentage::px(20.0))
+        );
+        let radius = |entity| {
+            cx.style.corner_top_right_radius.get_resolved(entity, &cx.style.custom_length_props)
+        };
+        assert_eq!(radius(standard), Some(LengthOrPercentage::px(12.0)));
+        assert_eq!(radius(standard), radius(legacy));
+        let gap = |entity| cx.style.vertical_gap.get_resolved(entity, &cx.style.custom_units_props);
+        assert_eq!(gap(standard), Some(Units::Pixels(4.0)));
+        assert_eq!(gap(standard), gap(legacy));
+        let shadow = cx
+            .style
+            .shadow
+            .get_resolved(standard, &cx.style.custom_shadow_props)
+            .expect("alias shadow should resolve");
+        assert_eq!(shadow.len(), 1);
+        assert_eq!(
+            Some(shadow),
+            cx.style.shadow.get_resolved(legacy, &cx.style.custom_shadow_props)
+        );
+    }
+
+    #[test]
+    fn standard_property_aliases_work_in_keyframes_and_transitions() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            "@keyframes rounded { from { border-top-left-radius: 2px; } to { border-top-left-radius: 10px; } }
+             .before { border-radius: 2px; row-gap: 2px; box-shadow: 1px 2px black; }
+             .after {
+                 corner-radius: 10px;
+                 vertical-gap: 10px;
+                 shadow: 3px 4px black;
+                 transition: border-radius 5s, row-gap 5s, box-shadow 5s;
+             }",
+        )
+        .unwrap();
+
+        let animation = *cx.style.get_animation("rounded").unwrap();
+        let keyframes =
+            &cx.style.corner_top_left_radius.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(keyframes.len(), 2);
+
+        let entity = Element::new(&mut cx).class("before").entity();
+        style_system(&mut cx);
+        cx.style.set_class(&cx.tree, entity, "after", true);
+        style_system(&mut cx);
+        assert!(
+            cx.style
+                .corner_top_left_radius
+                .get_active_animations()
+                .unwrap()
+                .iter()
+                .any(|animation| animation.entities.contains(&entity))
+        );
+        assert!(
+            cx.style
+                .vertical_gap
+                .get_active_animations()
+                .unwrap()
+                .iter()
+                .any(|animation| animation.entities.contains(&entity))
+        );
+        assert!(
+            cx.style
+                .shadow
+                .get_active_animations()
+                .unwrap()
+                .iter()
+                .any(|animation| animation.entities.contains(&entity))
+        );
+    }
+
+    #[test]
     fn recycled_views_resolve_only_their_own_element_selector() {
         let mut cx = Context::default();
         cx.add_stylesheet("label { width: 111px; }").unwrap();

@@ -87,7 +87,7 @@ pub use vizia_style::{
 use cssparser::Token as CssToken;
 use vizia_style::{
     BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, Selectors, StyleSheet,
-    TokenList, TokenOrValue, Variable,
+    TokenList, TokenOrValue, Variable, canonical_property_name,
 };
 
 mod rule;
@@ -1393,7 +1393,7 @@ impl Style {
 
     fn insert_transition(&mut self, rule_id: Rule, transition: &Transition) {
         let animation = self.animation_manager.create();
-        match transition.property.as_ref() {
+        match canonical_property_name(transition.property.as_ref()) {
             "display" => {
                 self.display.insert_animation(animation, self.add_transition(transition));
                 self.display.insert_transition(rule_id, animation);
