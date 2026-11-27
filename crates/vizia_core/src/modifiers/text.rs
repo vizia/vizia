@@ -25,7 +25,7 @@ pub trait TextModifiers: internal::Modifiable {
                 };
 
                 // cx.text_context.set_text(entity, &text_data);
-                cx.style.text.insert(entity, text_data);
+                cx.style.set_text(cx.tree, entity, text_data);
 
                 cx.style.needs_text_update(entity);
                 cx.needs_relayout();
@@ -46,7 +46,7 @@ pub trait TextModifiers: internal::Modifiable {
                 };
 
                 // cx.text_context.set_text(entity, &text_data);
-                cx.style.text.insert(entity, text_data);
+                cx.style.set_text(cx.tree, entity, text_data);
 
                 cx.style.needs_text_update(entity);
                 cx.needs_relayout();

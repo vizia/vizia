@@ -1413,6 +1413,11 @@ fn has_same_selector(style: &Style, entity1: Entity, entity2: Entity) -> bool {
         && style.classes.get(entity1) == style.classes.get(entity2)
         && style.pseudo_classes.get(entity1).map(|flags| flags.bits())
             == style.pseudo_classes.get(entity2).map(|flags| flags.bits())
+        && style.disabled.get(entity1).copied().unwrap_or_default()
+            == style.disabled.get(entity2).copied().unwrap_or_default()
+        && style.direction.get(entity1) == style.direction.get(entity2)
+        && (!matches!(style.direction.get(entity1), Some(Direction::Auto))
+            || resolved_text_direction(style, entity1) == resolved_text_direction(style, entity2))
 }
 
 fn has_nth_child_rule(style: &Style, rules: &[(Rule, u32)]) -> bool {
@@ -1469,20 +1474,27 @@ struct MatchedRules {
 
 impl MatchedRules {
     #[cfg(not(feature = "rayon"))]
-    fn build(entities: &[Entity], style: &Style, tree: &Tree<Entity>) -> Self {
+    fn build(entities: &[Entity], style: &Style, tree: &Tree<Entity>, share_matches: bool) -> Self {
         let filter = &mut BloomFilter::default();
 
         let mut cache = HashMap::new();
         let rules = entities
             .iter()
-            .filter_map(|entity| Self::build_inner(*entity, style, tree, filter, &mut cache))
+            .filter_map(|entity| {
+                Self::build_inner(*entity, style, tree, filter, share_matches, &mut cache)
+            })
             .collect();
 
         Self { rules, cache }
     }
 
     #[cfg(feature = "rayon")]
-    fn build_parallel(entities: &[Entity], style: &Style, tree: &Tree<Entity>) -> Self {
+    fn build_parallel(
+        entities: &[Entity],
+        style: &Style,
+        tree: &Tree<Entity>,
+        share_matches: bool,
+    ) -> Self {
         let num_threads = std::thread::available_parallelism().map_or(1, |n| n.get());
 
         // Potential tuning oppertunity:
@@ -1499,7 +1511,7 @@ impl MatchedRules {
             .par_iter()
             .with_min_len(min_len)
             .map_init(BloomFilter::default, |filter, entity| {
-                Self::build_inner(*entity, style, tree, filter, &cache)
+                Self::build_inner(*entity, style, tree, filter, share_matches, &cache)
             })
             .flatten_iter()
             .collect();
@@ -1512,6 +1524,7 @@ impl MatchedRules {
         style: &Style,
         tree: &Tree<Entity>,
         filter: &mut BloomFilter,
+        share_matches: bool,
         #[cfg(feature = "rayon")] rule_cache: &DashMap<Entity, Vec<MatchedRulesCache>>,
         #[cfg(not(feature = "rayon"))] rule_cache: &mut HashMap<Entity, Vec<MatchedRulesCache>>,
     ) -> Option<(Entity, (Entity, usize))> {
@@ -1521,7 +1534,8 @@ impl MatchedRules {
 
         let mut matched_index = None;
 
-        if !tree.is_first_child(entity)
+        if share_matches
+            && !tree.is_first_child(entity)
             && !tree.is_last_child(entity)
             && let Some(cache) = rule_cache.get(&parent)
         {
@@ -1696,14 +1710,15 @@ pub(crate) fn style_system(cx: &mut Context) {
 
     // Direction is now resolved; linking the remaining properties must not change the
     // direction snapshot against which their :dir() selectors were matched.
+    let share_matches = cx.style.can_share_selector_list_matches();
     let matched_rules = {
         #[cfg(feature = "rayon")]
         {
-            MatchedRules::build_parallel(&entities, &cx.style, &cx.tree)
+            MatchedRules::build_parallel(&entities, &cx.style, &cx.tree, share_matches)
         }
         #[cfg(not(feature = "rayon"))]
         {
-            MatchedRules::build(&entities, &cx.style, &cx.tree)
+            MatchedRules::build(&entities, &cx.style, &cx.tree, share_matches)
         }
     };
 
@@ -1870,6 +1885,238 @@ mod tests {
     struct Unnamed;
 
     impl View for Unnamed {}
+
+    #[test]
+    fn is_and_where_match_with_standard_specificity() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".item { width: 10px; height: 10px; top: 1px; bottom: 1px; left: 1px; }
+             :is(.item, #absent) { width: 20px; }
+             .item { width: 30px; }
+             :where(#absent, .item) { height: 30px; }
+             :is(.item, :made-up) { top: 20px; }
+             :where(:made-up, .item) { bottom: 20px; }
+             :where(:made-up, .item) { right: 20px; }
+             :is(:made-up) { left: 99px; }
+             :is(.item, #absent:made-up) { left: 42px; }
+             .item { left: 1px; }",
+        )
+        .unwrap();
+        let item = Element::new(&mut cx).class("item").entity();
+        style_system(&mut cx);
+
+        assert_eq!(cx.style.width.get(item), Some(&Units::Pixels(20.0)));
+        assert_eq!(cx.style.height.get(item), Some(&Units::Pixels(10.0)));
+        assert_eq!(cx.style.top.get(item), Some(&Units::Pixels(20.0)));
+        assert_eq!(cx.style.bottom.get(item), Some(&Units::Pixels(1.0)));
+        assert_eq!(cx.style.right.get(item), Some(&Units::Pixels(20.0)));
+        assert_eq!(cx.style.left.get(item), Some(&Units::Pixels(1.0)));
+    }
+
+    #[test]
+    fn is_and_where_nested_positional_selectors_distinguish_siblings() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".item { width: 10px; }
+             .item:is(:nth-child(2)) { width: 20px; }
+             .item:where(:nth-child(3)) { width: 30px; }",
+        )
+        .unwrap();
+        let mut items = Vec::new();
+        VStack::new(&mut cx, |cx| {
+            for _ in 0..5 {
+                items.push(Element::new(cx).class("item").entity());
+            }
+        });
+        style_system(&mut cx);
+        for (entity, width) in items.into_iter().zip([10.0, 20.0, 30.0, 10.0, 10.0]) {
+            assert_eq!(cx.style.width.get(entity), Some(&Units::Pixels(width)));
+        }
+    }
+
+    #[test]
+    fn is_nested_has_distinguishes_siblings_with_different_children() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".item { width: 10px; } .item:is(:has(> .trigger)) { width: 20px; }")
+            .unwrap();
+        let mut items = Vec::new();
+        VStack::new(&mut cx, |cx| {
+            for index in 0..5 {
+                items.push(
+                    VStack::new(cx, |cx| {
+                        if index == 1 {
+                            Element::new(cx).class("trigger");
+                        }
+                    })
+                    .class("item")
+                    .entity(),
+                );
+            }
+        });
+        style_system(&mut cx);
+        for (entity, width) in items.into_iter().zip([10.0, 20.0, 10.0, 10.0, 10.0]) {
+            assert_eq!(cx.style.width.get(entity), Some(&Units::Pixels(width)));
+        }
+    }
+
+    #[test]
+    fn is_nested_sibling_selector_distinguishes_siblings() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".item { width: 10px; }
+             :is(.trigger + .item, .other) { width: 20px; }",
+        )
+        .unwrap();
+        let mut items = Vec::new();
+        VStack::new(&mut cx, |cx| {
+            for index in 0..5 {
+                let item = Element::new(cx).class("item");
+                let item = if index == 0 { item.class("trigger") } else { item };
+                items.push(item.entity());
+            }
+        });
+        style_system(&mut cx);
+        for (entity, width) in items.into_iter().zip([10.0, 20.0, 10.0, 10.0, 10.0]) {
+            assert_eq!(cx.style.width.get(entity), Some(&Units::Pixels(width)));
+        }
+    }
+
+    #[test]
+    fn is_and_where_distinguish_sibling_direction_and_disabled_state() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".item { width: 10px; height: 10px; }
+             .item:is(:dir(rtl)) { width: 20px; }
+             .item:where(:disabled) { height: 20px; }",
+        )
+        .unwrap();
+        let mut items = Vec::new();
+        VStack::new(&mut cx, |cx| {
+            for index in 0..5 {
+                let item = Element::new(cx).class("item");
+                let item = if index == 1 { item.direction(Direction::RightToLeft) } else { item };
+                let item = if index == 2 { item.disabled(true) } else { item };
+                items.push(item.entity());
+            }
+        });
+        style_system(&mut cx);
+        for (entity, (width, height)) in items.into_iter().zip([
+            (10.0, 10.0),
+            (20.0, 10.0),
+            (10.0, 20.0),
+            (10.0, 10.0),
+            (10.0, 10.0),
+        ]) {
+            assert_eq!(cx.style.width.get(entity), Some(&Units::Pixels(width)));
+            assert_eq!(cx.style.height.get(entity), Some(&Units::Pixels(height)));
+        }
+    }
+
+    #[test]
+    fn is_direction_auto_distinguishes_sibling_text() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".item { width: 10px; } .item:is(:dir(rtl)) { width: 20px; }").unwrap();
+        let mut items = Vec::new();
+        VStack::new(&mut cx, |cx| {
+            for text in ["left", "\u{05d0}", "left", "\u{05d0}", "left"] {
+                items.push(Label::new(cx, text).class("item").direction(Direction::Auto).entity());
+            }
+        });
+        style_system(&mut cx);
+        for (entity, width) in items.into_iter().zip([10.0, 20.0, 10.0, 20.0, 10.0]) {
+            assert_eq!(cx.style.width.get(entity), Some(&Units::Pixels(width)));
+        }
+    }
+
+    #[test]
+    fn is_direction_auto_restyles_after_text_changes() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".item { width: 10px; } .item:is(:dir(rtl)) { width: 20px; }").unwrap();
+        let text = Signal::new("left".to_string());
+        let item = Label::new(&mut cx, text).class("item").direction(Direction::Auto).entity();
+        crate::systems::binding_system(&mut cx);
+        style_system(&mut cx);
+        assert_eq!(cx.style.width.get(item), Some(&Units::Pixels(10.0)));
+
+        text.set("\u{05d0}".to_string());
+        crate::systems::binding_system(&mut cx);
+        style_system(&mut cx);
+        assert_eq!(cx.style.width.get(item), Some(&Units::Pixels(20.0)));
+
+        text.set("left".to_string());
+        crate::systems::binding_system(&mut cx);
+        style_system(&mut cx);
+        assert_eq!(cx.style.width.get(item), Some(&Units::Pixels(10.0)));
+    }
+
+    #[test]
+    fn is_direction_auto_restyles_dependents_after_set_text() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".hit { width: 10px; } .item:is(:dir(rtl)) + .hit { width: 20px; }
+             .parent { opacity: 1; } .parent:has(> .item:where(:dir(rtl))) { opacity: 0.5; }",
+        )
+        .unwrap();
+        let mut item = Entity::null();
+        let mut hit = Entity::null();
+        let parent = VStack::new(&mut cx, |cx| {
+            item = Label::new(cx, "left").class("item").direction(Direction::Auto).entity();
+            hit = Element::new(cx).class("hit").entity();
+        })
+        .class("parent")
+        .entity();
+        style_system(&mut cx);
+        for (text, width, opacity) in [("\u{05d0}", 20.0, 0.5), ("left", 10.0, 1.0)] {
+            EventContext::new_with_current(&mut cx, item).set_text(text);
+            style_system(&mut cx);
+            assert_eq!(cx.style.width.get(hit), Some(&Units::Pixels(width)));
+            assert_eq!(cx.style.opacity.get(parent), Some(&Opacity(opacity)));
+        }
+    }
+
+    #[test]
+    fn is_and_where_restyle_after_nested_selector_changes() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".hit { width: 10px; height: 10px; top: 10px; }
+             :is(.panel.active > .hit, .other) { width: 20px; }
+             :where(.panel:hover) .hit { height: 20px; }
+             :is(.trigger + .hit, .other) { top: 20px; }
+             .panel { opacity: 1; }
+             .panel:has(> :is(.switch, .other)) { opacity: 0.5; }",
+        )
+        .unwrap();
+        let mut trigger = Entity::null();
+        let mut hit = Entity::null();
+        let panel = VStack::new(&mut cx, |cx| {
+            trigger = Element::new(cx).entity();
+            hit = Element::new(cx).class("hit").entity();
+        })
+        .class("panel")
+        .entity();
+        style_system(&mut cx);
+
+        for (enabled, value) in [(true, 20.0), (false, 10.0)] {
+            cx.style.set_class(&cx.tree, panel, "active", enabled);
+            style_system(&mut cx);
+            assert_eq!(cx.style.width.get(hit), Some(&Units::Pixels(value)));
+        }
+        for (enabled, value) in [(true, 20.0), (false, 10.0)] {
+            cx.set_pseudo_class(panel, PseudoClassFlags::HOVER, enabled);
+            style_system(&mut cx);
+            assert_eq!(cx.style.height.get(hit), Some(&Units::Pixels(value)));
+        }
+        for (enabled, value) in [(true, 20.0), (false, 10.0)] {
+            cx.style.set_class(&cx.tree, trigger, "trigger", enabled);
+            style_system(&mut cx);
+            assert_eq!(cx.style.top.get(hit), Some(&Units::Pixels(value)));
+        }
+        for (enabled, opacity) in [(true, 0.5), (false, 1.0)] {
+            cx.style.set_class(&cx.tree, trigger, "switch", enabled);
+            style_system(&mut cx);
+            assert_eq!(cx.style.opacity.get(panel), Some(&Opacity(opacity)));
+        }
+    }
 
     #[test]
     fn language_ranges_match_locale_subtags() {

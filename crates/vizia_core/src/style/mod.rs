@@ -466,6 +466,17 @@ pub struct Style {
 }
 
 impl Style {
+    pub(crate) fn set_text(&mut self, tree: &Tree<Entity>, entity: Entity, text: String) {
+        let previous_direction = (self.direction.get(entity) == Some(&Direction::Auto))
+            .then(|| crate::text::resolved_text_direction(self, entity));
+        self.text.insert(entity, text);
+        if previous_direction.is_some_and(|direction| {
+            direction != crate::text::resolved_text_direction(self, entity)
+        }) {
+            self.needs_restyle_with_dependents(tree, entity);
+        }
+    }
+
     pub(crate) fn resolved_font_weight(
         &self,
         tree: &Tree<Entity>,
@@ -547,6 +558,12 @@ impl Style {
     /// siblings, such as `:first-child`.
     pub(crate) fn has_positional_rules(&mut self) -> bool {
         self.invalidation_map().positional
+    }
+
+    pub(crate) fn can_share_selector_list_matches(&mut self) -> bool {
+        let map = self.invalidation_map();
+        // Siblings with identical local state can differ in position, neighbors, or children.
+        !map.selector_list || !(map.positional || map.sibling_dependent || map.ancestor_dependent)
     }
 
     /// Marks the entities which may be affected by a change to the selector attributes (element,

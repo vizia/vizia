@@ -73,6 +73,18 @@ mod test {
         assert_eq!(parse(&css).unwrap(), selector);
     }
 
+    #[test]
+    fn is_and_where_use_forgiving_selector_lists() {
+        for name in ["is", "where"] {
+            let input = format!(":{name}(.valid, :made-up)");
+            let selector = parse(&input).unwrap();
+            assert_eq!(selector.to_css_string(), input);
+            assert!(parse(&format!(":{name}(:made-up)")).is_ok());
+        }
+        assert!(parse(".valid, :made-up").is_err());
+        assert!(parse(":not(.valid, :made-up)").is_err());
+    }
+
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct Entity(u32);
 

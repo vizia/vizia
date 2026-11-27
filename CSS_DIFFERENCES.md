@@ -66,6 +66,9 @@ and the individual [value parsers](crates/vizia_style/src/values/) for details.
   `textbox`, and `window`, rather than HTML elements. Class and ID selectors,
   combinators, and various structural selectors are supported on the view tree.
   Parent and sibling matching uses the layout tree.
+- `:is()` and `:where()` support forgiving selector lists; unsupported
+  arguments do not match. `:where()` contributes zero specificity, while
+  `:is()` uses its most specific valid argument.
 - `:root` matches Vizia's root entity, not every window. Use the `window`
   selector to style windows.
 - Attribute selectors do not match: the view-tree selector implementation
@@ -74,11 +77,13 @@ and the individual [value parsers](crates/vizia_style/src/values/) for details.
 - Vizia recognizes state selectors including `:hover`, `:active`, `:focus`,
   `:focus-visible`, `:focus-within`, `:disabled`, and `:checked`. It also
   provides the nonstandard `:over`. State availability depends on the view.
-- `:dir()` and `:has()` have matching implementations. `:lang()` matches
+- `:dir()` and `:has()` have matching implementations. For `direction: auto`,
+  Vizia resolves direction from the view's own text, not descendant text.
+  `:lang()` matches
   comma-separated language ranges, including quoted wildcards, against the
   application locale and updates when it changes. Vizia does not currently
   support per-view language overrides or track the language of translated text.
-  Unknown pseudo-classes are rejected during parsing.
+  Unknown pseudo-classes invalidate ordinary selectors.
 - Pseudo-elements such as `::before`, `::after`, and `::selection` are parsed
   but do not match views. They do not create browser-style generated content.
 
