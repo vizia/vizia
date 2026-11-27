@@ -47,7 +47,7 @@ depends on the property.
 | `outline-style` | Not present in the property list. `outline` applies its color and width; use `outline-color`, `outline-width`, and `outline-offset` as needed. |
 | `mix-blend-mode` | An alias for `blend-mode`. |
 | `font-style`, `font-stretch`, and `font` shorthand | `font-style` and `font-stretch` alias `font-slant` and `font-width`; their values remain limited to Vizia's parsers. The `font` shorthand is not in the property list. |
-| `text-wrap` CSS keywords | Vizia's `text-wrap` is a boolean, for example `text-wrap: false`. |
+| `text-wrap` CSS keywords | `wrap` and `nowrap` map to Vizia's text-wrapping behavior. Vizia also accepts legacy boolean values such as `false`; advanced CSS wrapping modes are not supported. |
 | `::selection` | Pseudo-elements do not match in the current implementation; Vizia provides `selection-color` instead. |
 | Text decoration thickness properties | Vizia parses `underline-thickness`, `overline-thickness`, and `strikethrough-thickness`, but the current stylesheet property application does not apply them. |
 

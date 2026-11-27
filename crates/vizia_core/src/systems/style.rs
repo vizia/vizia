@@ -1817,6 +1817,25 @@ mod tests {
     impl View for Unnamed {}
 
     #[test]
+    fn text_wrap_standard_keywords_apply_like_legacy_booleans() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".standard { text-wrap: true; text-wrap: nowrap; }
+             .legacy { text-wrap: false; }
+             .wrapped { text-wrap: WRAP; }",
+        )
+        .unwrap();
+        let standard = Element::new(&mut cx).class("standard").entity();
+        let legacy = Element::new(&mut cx).class("legacy").entity();
+        let wrapped = Element::new(&mut cx).class("wrapped").entity();
+        style_system(&mut cx);
+
+        assert_eq!(cx.style.text_wrap.get(standard), Some(&false));
+        assert_eq!(cx.style.text_wrap.get(legacy), Some(&false));
+        assert_eq!(cx.style.text_wrap.get(wrapped), Some(&true));
+    }
+
+    #[test]
     fn unitless_zero_applies_to_layout_longhands_and_variables() {
         let mut cx = Context::default();
         cx.add_stylesheet(

@@ -257,11 +257,67 @@ define_property! {
     }
 }
 
+impl<'i> Property<'i> {
+    pub fn parse_value(
+        name: cssparser::CowRcStr<'i>,
+        input: &mut Parser<'i>,
+    ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
+        if name.as_ref() == "text-wrap"
+            && let Ok(value) =
+                input.try_parse(|input| -> Result<bool, cssparser::BasicParseError> {
+                    let wrap = input.try_parse(|input| input.expect_ident_matching("wrap")).is_ok();
+                    if !wrap {
+                        input.expect_ident_matching("nowrap")?;
+                    }
+                    input.expect_exhausted()?;
+                    Ok(wrap)
+                })
+        {
+            return Ok(Self::TextWrap(value));
+        }
+        Self::parse_value_default(name, input)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use cssparser::CowRcStr;
 
     use super::*;
+
+    #[test]
+    fn text_wrap_standard_keywords_preserve_boolean_values() {
+        for (value, expected) in [
+            ("wrap", true),
+            ("WRAP", true),
+            ("nowrap", false),
+            ("NoWrap", false),
+            ("true", true),
+            ("false", false),
+            ("on", true),
+            ("off", false),
+            ("yes", true),
+            ("no", false),
+        ] {
+            let mut parser = Parser::new(value);
+            assert_eq!(
+                Property::parse_value(CowRcStr::from("text-wrap"), &mut parser).unwrap(),
+                Property::TextWrap(expected),
+                "{value}"
+            );
+            assert!(parser.is_exhausted());
+        }
+        for value in ["balance", "pretty", "wrap nowrap"] {
+            let mut parser = Parser::new(value);
+            assert!(
+                matches!(
+                    Property::parse_value(CowRcStr::from("text-wrap"), &mut parser),
+                    Ok(Property::Unparsed(_))
+                ),
+                "{value}"
+            );
+        }
+    }
 
     #[test]
     fn spacing_shorthands_expand_in_css_order() {
