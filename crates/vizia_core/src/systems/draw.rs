@@ -1142,12 +1142,12 @@ mod tests {
     /// Styles a `.probe` view, a child of a `.parent` view, with `css`, paints the probe's shadows
     /// and background with its bounds at (10, 10, 20, 20) on a 60x40 surface, and returns a lookup
     /// of the painted pixel at (x, y).
-    fn paint_probe(css: &'static str) -> impl Fn(usize, usize) -> [u8; 4] {
+    fn paint_probe(css: &str) -> impl Fn(usize, usize) -> [u8; 4] {
         paint_probe_with_image(css, None)
     }
 
     fn paint_probe_with_image(
-        css: &'static str,
+        css: &str,
         image_size: Option<(i32, i32)>,
     ) -> impl Fn(usize, usize) -> [u8; 4] {
         use skia_safe::{AlphaType, ColorType, ImageInfo};
@@ -1166,7 +1166,7 @@ mod tests {
                 );
             }
         }
-        cx.add_stylesheet(css).unwrap();
+        cx.add_stylesheet(crate::util::CSS::from_string(css)).unwrap();
         let parent = Element::new(&mut cx).class("parent").entity();
         let probe = cx.with_current(parent, |cx| Element::new(cx).class("probe").entity());
         crate::systems::style_system(&mut cx);
@@ -1339,6 +1339,115 @@ mod tests {
     }
 
     #[test]
+    fn gradient_background_size_and_position() {
+        for gradient in ["linear-gradient(red, red)", "radial-gradient(red, red)"] {
+            for (size, position, inside, outside, expected) in [
+                ("8px 6px", "right bottom", (27, 27), (21, 27), RED),
+                ("50% auto", "center", (15, 11), (14, 11), RED),
+                ("auto 25%", "left top", (29, 14), (29, 15), RED),
+                ("40px 6px", "right bottom", (10, 27), (10, 23), RED),
+                ("contain", "left top", (29, 29), (30, 29), RED),
+                ("cover", "left top", (29, 29), (30, 29), RED),
+                ("0 5px", "left top", (10, 10), (29, 29), [0, 0, 0, 0]),
+                ("5px 0", "left top", (10, 10), (29, 29), [0, 0, 0, 0]),
+            ] {
+                let css = format!(
+                    ".probe {{ background-image: {gradient}; background-size: {size}; \
+                     background-position: {position}; background-repeat: no-repeat; }}"
+                );
+                let pixel = paint_probe(&css);
+                assert_eq!(pixel(inside.0, inside.1), expected, "{css}");
+                assert_eq!(pixel(outside.0, outside.1), [0, 0, 0, 0], "{css}");
+            }
+        }
+
+        let pixel = paint_probe(
+            ".probe { background: linear-gradient(red, red) right bottom / 8px 6px no-repeat; }",
+        );
+        assert_eq!(pixel(27, 27), RED);
+        assert_eq!(pixel(21, 27), [0, 0, 0, 0]);
+
+        let gradient = paint_probe(
+            ".probe { background: linear-gradient(red, red) 0.25px 0.25px / 4.5px 4.5px no-repeat; }",
+        );
+        let image = paint_probe_with_image(
+            ".probe { background: url(image.png) 0.25px 0.25px / 4.5px 4.5px no-repeat; }",
+            Some((4, 4)),
+        );
+        for y in 10..16 {
+            for x in 10..16 {
+                for (gradient, image) in gradient(x, y).into_iter().zip(image(x, y)) {
+                    assert!(gradient.abs_diff(image) <= 1, "at ({x}, {y})");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn gradient_background_repeat_and_layer_lists() {
+        for (repeat, inside, outside) in [
+            ("no-repeat", (14, 14), (11, 14)),
+            ("repeat-x", (11, 14), (11, 11)),
+            ("repeat-y", (14, 11), (11, 11)),
+            ("repeat", (11, 11), (30, 11)),
+        ] {
+            let css = format!(
+                ".probe {{ background-image: none, none, linear-gradient(to right, red, blue);
+                 background-position: 4px 4px, right bottom; background-size: 4px 4px, 0 0;
+                 background-repeat: {repeat}, no-repeat; }}"
+            );
+            let pixel = paint_probe(&css);
+            assert_ne!(pixel(inside.0, inside.1), [0, 0, 0, 0], "{css}");
+            assert_eq!(pixel(outside.0, outside.1), [0, 0, 0, 0], "{css}");
+            if repeat == "repeat" || repeat == "repeat-x" {
+                assert_eq!(pixel(10, 14), pixel(14, 14), "{css}");
+                assert_ne!(pixel(10, 14), pixel(12, 14), "{css}");
+            }
+        }
+
+        let pixel = paint_probe(
+                ".probe { background-image: radial-gradient(red, blue);
+                 background-position: -2px -2px; background-size: 4px 4px; background-repeat: repeat; }",
+            );
+        assert_eq!(pixel(11, 11), pixel(15, 15));
+        assert_ne!(pixel(10, 10), pixel(11, 11));
+
+        let pixel = paint_probe(
+                ".probe { background-image: linear-gradient(to right, red, blue);
+                 background-position: 0.5px 0.5px; background-size: 4px 4px; background-repeat: repeat-x; }",
+            );
+        assert_eq!(pixel(11, 11), pixel(15, 11));
+        assert_ne!(pixel(11, 11), pixel(13, 11));
+        assert_eq!(pixel(11, 15), [0, 0, 0, 0]);
+
+        let pixel = paint_probe(
+            ".probe { background-image: linear-gradient(to right, red, blue);
+                 background-size: 2.5px 4px; background-repeat: repeat-x; }",
+        );
+        assert_eq!(pixel(10, 11), pixel(15, 11));
+        assert_ne!(pixel(10, 11), pixel(11, 11));
+
+        let pixel = paint_probe(
+            ".probe { background-image: linear-gradient(red, red);
+             background-position: 0.25px 0.25px; background-size: 2.5px 3.5px; background-repeat: repeat; }",
+        );
+        for y in 10..30 {
+            for x in 10..30 {
+                assert_eq!(pixel(x, y), RED, "at ({x}, {y})");
+            }
+        }
+
+        let pixel = paint_probe_with_image(
+                ".probe { background-image: none, linear-gradient(rgba(255, 0, 0, 0.5), rgba(255, 0, 0, 0.5)), url(blue.png);
+                 background-size: 0 0, 4px 4px, 20px 20px;
+                 background-position: left top; background-repeat: no-repeat, repeat, no-repeat; }",
+                Some((4, 2)),
+            );
+        assert_eq!(pixel(11, 11), [128, 0, 127, 255]);
+        assert_eq!(pixel(19, 19), [128, 0, 127, 255]);
+    }
+
+    #[test]
     fn background_image_layers_paint_first_on_top() {
         let pixel = paint_probe_with_image(
             ".probe { background-color: lime; background-image: url(image.png), url(blue.png);
@@ -1372,7 +1481,7 @@ mod tests {
     fn background_layers_composite_images_and_gradients() {
         let pixel = paint_probe_with_image(
             ".probe { background-image: url(image.png), linear-gradient(blue, blue);
-             background-size: 4px 4px; background-repeat: no-repeat; }",
+             background-size: 4px 4px, auto auto; background-repeat: no-repeat; }",
             Some((4, 2)),
         );
         assert_eq!(pixel(11, 11), RED);

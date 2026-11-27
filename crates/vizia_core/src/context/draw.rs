@@ -1,8 +1,8 @@
 use skia_safe::canvas::SaveLayerRec;
 use skia_safe::wrapper::PointerWrapper;
 use skia_safe::{
-    BlurStyle, ClipOp, MaskFilter, Matrix, Paint, PaintStyle, Path, PathBuilder, PathEffect, Point,
-    RRect, Rect, SamplingOptions, TileMode,
+    BlurStyle, ClipOp, FilterMode, MaskFilter, Matrix, Paint, PaintStyle, Path, PathBuilder,
+    PathEffect, PictureRecorder, Point, RRect, Rect, SamplingOptions, TileMode,
 };
 use std::any::{Any, TypeId};
 use std::f32::consts::SQRT_2;
@@ -1411,6 +1411,57 @@ impl DrawContext<'_> {
             if values.is_empty() { None } else { values.get(index % values.len()) }
         }
 
+        fn draw_gradient_layer(
+            canvas: &Canvas,
+            rrect: RRect,
+            view: BoundingBox,
+            tile: BoundingBox,
+            repeat: BackgroundRepeat,
+            mut paint: Paint,
+        ) {
+            let repeat_x = matches!(repeat, BackgroundRepeat::Repeat | BackgroundRepeat::RepeatX);
+            let repeat_y = matches!(repeat, BackgroundRepeat::Repeat | BackgroundRepeat::RepeatY);
+            let needs_tiles = (repeat_x
+                && (tile.left() > view.left() || tile.right() < view.right()))
+                || (repeat_y && (tile.top() > view.top() || tile.bottom() < view.bottom()));
+            let clip_x = !repeat_x && (tile.left() > view.left() || tile.right() < view.right());
+            let clip_y = !repeat_y && (tile.top() > view.top() || tile.bottom() < view.bottom());
+
+            if needs_tiles {
+                // Tile the gradient as an image; clipping below restricts non-repeating axes.
+                let tile_rect = Rect::new(tile.left(), tile.top(), tile.right(), tile.bottom());
+                let mut recorder = PictureRecorder::new();
+                recorder.begin_recording(tile_rect, false).draw_rect(tile_rect, &paint);
+                let picture = recorder
+                    .finish_recording_as_picture(None)
+                    .expect("gradient tile recording must produce a picture");
+                paint.set_shader(picture.to_shader(
+                    (TileMode::Repeat, TileMode::Repeat),
+                    FilterMode::Nearest,
+                    None,
+                    &tile_rect,
+                ));
+            }
+
+            if clip_x || clip_y {
+                canvas.save();
+                canvas.clip_rect(
+                    Rect::new(
+                        if clip_x { tile.left() } else { view.left() - view.w },
+                        if clip_y { tile.top() } else { view.top() - view.h },
+                        if clip_x { tile.right() } else { view.right() + view.w },
+                        if clip_y { tile.bottom() } else { view.bottom() + view.h },
+                    ),
+                    ClipOp::Intersect,
+                    true,
+                );
+            }
+            canvas.draw_rrect(rrect, &paint);
+            if clip_x || clip_y {
+                canvas.restore();
+            }
+        }
+
         let bounds = self.bounds();
 
         if self.background_images().is_some() {
@@ -1421,9 +1472,52 @@ impl DrawContext<'_> {
                 let image_repeats = self.background_repeat();
 
                 for (index, image) in images.iter().enumerate().rev() {
+                    let gradient_geometry = || {
+                        let size = layer_value(&image_sizes, index);
+                        let (width, height) = match size {
+                            Some(BackgroundSize::Explicit { width, height }) => {
+                                let dimension =
+                                    |value: &LengthPercentageOrAuto, available| match value {
+                                        LengthPercentageOrAuto::LengthPercentage(length) => {
+                                            length.to_pixels(available, self.scale_factor())
+                                        }
+                                        LengthPercentageOrAuto::Auto => available,
+                                    };
+                                (dimension(width, bounds.w), dimension(height, bounds.h))
+                            }
+                            _ => (bounds.w, bounds.h),
+                        };
+                        if width <= 0.0
+                            || height <= 0.0
+                            || !width.is_finite()
+                            || !height.is_finite()
+                        {
+                            return None;
+                        }
+                        let position =
+                            layer_value(&image_positions, index).cloned().unwrap_or_default();
+                        let x = bounds.x
+                            + position
+                                .x
+                                .to_length_or_percentage()
+                                .to_pixels(bounds.w - width, self.scale_factor());
+                        let y = bounds.y
+                            + position
+                                .y
+                                .to_length_or_percentage()
+                                .to_pixels(bounds.h - height, self.scale_factor());
+                        let repeat = layer_value(&image_repeats, index)
+                            .copied()
+                            .unwrap_or(BackgroundRepeat::Repeat);
+                        Some((BoundingBox { x, y, w: width, h: height }, repeat))
+                    };
                     match image {
                         ImageOrGradient::Gradient(gradient) => match gradient {
                             Gradient::Linear(linear_gradient) => {
+                                let view_bounds = bounds;
+                                let Some((bounds, repeat)) = gradient_geometry() else {
+                                    continue;
+                                };
                                 let (start, end, parent_length) = match linear_gradient.direction {
                                     LineDirection::Horizontal(horizontal_keyword) => {
                                         match horizontal_keyword {
@@ -1558,10 +1652,21 @@ impl DrawContext<'_> {
                                 paint.set_shader(shader);
                                 paint.set_anti_alias(true);
 
-                                canvas.draw_rrect(rrect, &paint);
+                                draw_gradient_layer(
+                                    canvas,
+                                    rrect,
+                                    view_bounds,
+                                    bounds,
+                                    repeat,
+                                    paint,
+                                );
                             }
 
                             Gradient::Radial(radial_gradient) => {
+                                let view_bounds = bounds;
+                                let Some((bounds, repeat)) = gradient_geometry() else {
+                                    continue;
+                                };
                                 let num_stops = radial_gradient.stops.len();
 
                                 let mut stops = radial_gradient
@@ -1620,7 +1725,14 @@ impl DrawContext<'_> {
                                 paint.set_shader(shader);
                                 paint.set_anti_alias(true);
 
-                                canvas.draw_rrect(rrect, &paint);
+                                draw_gradient_layer(
+                                    canvas,
+                                    rrect,
+                                    view_bounds,
+                                    bounds,
+                                    repeat,
+                                    paint,
+                                );
                             }
 
                             _ => {}
