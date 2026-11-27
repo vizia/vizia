@@ -2656,6 +2656,63 @@ mod tests {
     }
 
     #[test]
+    fn font_size_unitless_zero_applies_to_stylesheets_and_variables() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".direct { font-size: 4px; font-size: -0; }
+             .variables { --zero: 0; --mixed: 0 1; }
+             .variable { font-size: var(--zero); }
+             .fallback { font-size: var(--missing, 0.0); }
+             .mixed { font-size: var(--mixed, 3px); }
+             .invalid-fallback { font-size: var(--missing, 0 1); }
+             .invalid { font-size: 12px; font-size: 1; }",
+        )
+        .unwrap();
+        let direct = Element::new(&mut cx).class("direct").entity();
+        let invalid = Element::new(&mut cx).class("invalid").entity();
+        let invalid_fallback = Element::new(&mut cx).class("invalid-fallback").entity();
+        let mut children = Vec::new();
+        VStack::new(&mut cx, |cx| {
+            for class in ["variable", "fallback", "mixed"] {
+                children.push(Element::new(cx).class(class).entity());
+            }
+        })
+        .class("variables");
+        let mut inherited = Entity::null();
+        VStack::new(&mut cx, |cx| {
+            inherited = Element::new(cx).entity();
+        })
+        .class("direct");
+        style_system(&mut cx);
+
+        let resolved =
+            |entity| cx.style.font_size.get_resolved(entity, &cx.style.custom_font_size_props);
+        let zero = Some(FontSize(Length::zero()));
+        assert_eq!(resolved(direct), zero);
+        assert_eq!(resolved(inherited), zero);
+        assert_eq!(resolved(children[0]), zero);
+        assert_eq!(resolved(children[1]), zero);
+        assert_eq!(resolved(children[2]), Some(FontSize(Length::px(3.0))));
+        assert_eq!(resolved(invalid), Some(FontSize(Length::px(12.0))));
+        assert_eq!(resolved(invalid_fallback), None);
+    }
+
+    #[test]
+    fn font_size_unitless_zero_works_in_keyframes() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            "@keyframes font-sizing { from { font-size: 0; } to { font-size: 12px; } }",
+        )
+        .unwrap();
+        let animation = *cx.style.get_animation("font-sizing").unwrap();
+        let frames = &cx.style.font_size.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(
+            frames.iter().map(|frame| frame.value.clone()).collect::<Vec<_>>(),
+            vec![FontSize(Length::zero()), FontSize(Length::px(12.0))]
+        );
+    }
+
+    #[test]
     fn unitless_zero_works_in_layout_animations() {
         let mut cx = Context::default();
         cx.add_stylesheet(

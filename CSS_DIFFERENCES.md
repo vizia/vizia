@@ -49,6 +49,7 @@ depends on the property.
 | `outline-style` | Not present in the property list. `outline` applies its color and width; use `outline-color`, `outline-width`, and `outline-offset` as needed. `outline` and `outline-width` accept unitless zero. |
 | `mix-blend-mode` | An alias for `blend-mode`. |
 | `font-style`, `font-stretch`, and `font` shorthand | `font-style` and `font-stretch` alias `font-slant` and `font-width`; their values remain limited to Vizia's parsers. The `font` shorthand is not in the property list. |
+| `font-size` | Accepts unitless zero, including through supported single-value custom properties and fallbacks. Other values and length resolution remain limited to Vizia's font-size parser and text rendering support. |
 | `font-weight` | `bolder` and `lighter` use the CSS relative-weight mapping against the parent's computed weight. Numeric weights are parsed as integers without enforcing the standard 1-1000 range; CSS also permits fractional values. |
 | `letter-spacing` | Accepts unitless zero, including through supported single-value custom properties and fallbacks. Length resolution remains limited to Vizia's text rendering support. |
 | `text-wrap` CSS keywords | `wrap` and `nowrap` map to Vizia's text-wrapping behavior. Vizia also accepts legacy boolean values such as `false`; advanced CSS wrapping modes are not supported. |

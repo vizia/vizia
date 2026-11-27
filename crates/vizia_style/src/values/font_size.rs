@@ -1,6 +1,7 @@
 use cssparser::*;
 
-use crate::{FontSizeKeyword, Parse, macros::impl_parse};
+use crate::values::length::length::parse_unitless_zero;
+use crate::{CustomParseError, FontSizeKeyword, Parse};
 
 use super::Length;
 
@@ -8,12 +9,18 @@ use super::Length;
 #[derive(Debug, Clone, PartialEq)]
 pub struct FontSize(pub Length);
 
-impl_parse! {
-    FontSize,
-
-    try_parse {
-        FontSizeKeyword,
-        Length,
+impl<'i> Parse<'i> for FontSize {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
+        if let Ok(zero) = input.try_parse(parse_unitless_zero) {
+            return Ok(Self(zero));
+        }
+        if let Ok(keyword) = input.try_parse(FontSizeKeyword::parse) {
+            return Ok(keyword.into());
+        }
+        if let Ok(length) = input.try_parse(Length::parse) {
+            return Ok(Self(length));
+        }
+        Err(ParseError::custom(CustomParseError::InvalidDeclaration))
     }
 }
 
@@ -98,6 +105,19 @@ mod tests {
             "x-large" => FontSize(Length::px(21.0)),
             "xx-large" => FontSize(Length::px(28.0)),
             "xxx-large" => FontSize(Length::px(42.0)),
+        }
+
+        custom {
+            success {
+                "0" => FontSize(Length::zero()),
+                "-0" => FontSize(Length::zero()),
+                "0.0" => FontSize(Length::zero()),
+                "12px" => FontSize(Length::px(12.0)),
+            }
+            failure {
+                "1",
+                "-1",
+            }
         }
 
     }

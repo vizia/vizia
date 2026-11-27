@@ -2012,6 +2012,13 @@ impl Style {
 
         fn font_size_fallback(var: &Variable<'_>) -> Option<FontSize> {
             match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Number { value, .. }))
+                    if *value == 0.0
+                        && matches!(var.fallback.as_ref(), Some(TokenList(tokens)) if tokens.len() == 1) =>
+                {
+                    Some(FontSize(Length::zero()))
+                }
+
                 Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
                     if unit.as_ref().eq_ignore_ascii_case("px") =>
                 {
@@ -3261,6 +3268,17 @@ impl Style {
                                         let mut store = AnimatableVarSet::default();
                                         store.insert_rule(rule_id, length_val);
                                         self.custom_length_props.insert(variable_name_hash, store);
+                                    }
+                                    let font_size = FontSize(Length::zero());
+                                    if let Some(store) =
+                                        self.custom_font_size_props.get_mut(&variable_name_hash)
+                                    {
+                                        store.insert_rule(rule_id, font_size);
+                                    } else {
+                                        let mut store = AnimatableVarSet::default();
+                                        store.insert_rule(rule_id, font_size);
+                                        self.custom_font_size_props
+                                            .insert(variable_name_hash, store);
                                     }
                                     let letter_spacing = LetterSpacing::Length(Length::zero());
                                     if let Some(store) = self
