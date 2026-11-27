@@ -2949,6 +2949,30 @@ mod tests {
     }
 
     #[test]
+    fn unitless_zero_custom_layout_value_rejects_compound_tokens() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".valid { --spacing: 0; padding: var(--spacing); gap: var(--spacing); }
+             .invalid { --spacing: 0 garbage; padding: var(--spacing);
+                        width: var(--spacing, 7px); gap: var(--spacing); }",
+        )
+        .unwrap();
+        let valid = Element::new(&mut cx).class("valid").entity();
+        let invalid = Element::new(&mut cx).class("invalid").entity();
+        style_system(&mut cx);
+
+        let resolved = |store: &crate::storage::animatable_var_set::AnimatableVarSet<Units>,
+                        entity| {
+            store.get_resolved(entity, &cx.style.custom_units_props)
+        };
+        assert_eq!(resolved(&cx.style.padding_left, valid), Some(Units::Pixels(0.0)));
+        assert_eq!(resolved(&cx.style.vertical_gap, valid), Some(Units::Pixels(0.0)));
+        assert_eq!(resolved(&cx.style.padding_left, invalid), None);
+        assert_eq!(resolved(&cx.style.vertical_gap, invalid), None);
+        assert_eq!(resolved(&cx.style.width, invalid), Some(Units::Pixels(7.0)));
+    }
+
+    #[test]
     fn letter_spacing_unitless_zero_applies_to_stylesheets_and_variables() {
         let mut cx = Context::default();
         cx.add_stylesheet(

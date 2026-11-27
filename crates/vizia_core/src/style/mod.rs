@@ -3292,16 +3292,16 @@ impl Style {
                                         self.custom_letter_spacing_props
                                             .insert(variable_name_hash, store);
                                     }
-                                }
-                                let units_val = Units::Pixels(0.0);
-                                if let Some(store) =
-                                    self.custom_units_props.get_mut(&variable_name_hash)
-                                {
-                                    store.insert_rule(rule_id, units_val);
-                                } else {
-                                    let mut store = AnimatableVarSet::default();
-                                    store.insert_rule(rule_id, units_val);
-                                    self.custom_units_props.insert(variable_name_hash, store);
+                                    let units_val = Units::Pixels(0.0);
+                                    if let Some(store) =
+                                        self.custom_units_props.get_mut(&variable_name_hash)
+                                    {
+                                        store.insert_rule(rule_id, units_val);
+                                    } else {
+                                        let mut store = AnimatableVarSet::default();
+                                        store.insert_rule(rule_id, units_val);
+                                        self.custom_units_props.insert(variable_name_hash, store);
+                                    }
                                 }
                             }
 
