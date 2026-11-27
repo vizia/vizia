@@ -2592,6 +2592,42 @@ mod tests {
     }
 
     #[test]
+    fn unresolved_background_calculations_preserve_prior_declarations() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".probe { background: linear-gradient(red, red) left top / 4px 4px no-repeat; }
+             .size-x { background-size: calc(1px + 1em) 20px; }
+             .size-y { background-size: 20px calc(1px + 1em); }
+             .pos-x { background-position: calc(1px + 1em) 0; }
+             .pos-y { background-position: 0 calc(1px + 1em); }
+             .short-size { background: linear-gradient(blue, blue) left top / 20px calc(1px + 1em); }
+             .short-pos { background: linear-gradient(blue, blue) calc(1px + 1em) 0 / 20px 20px; }",
+        )
+        .unwrap();
+        let baseline = Element::new(&mut cx).class("probe").entity();
+        let entities: Vec<_> = ["size-x", "size-y", "pos-x", "pos-y", "short-size", "short-pos"]
+            .into_iter()
+            .map(|class| Element::new(&mut cx).class("probe").class(class).entity())
+            .collect();
+        style_system(&mut cx);
+
+        for entity in entities {
+            assert_eq!(
+                cx.style.background_size.get(entity),
+                cx.style.background_size.get(baseline)
+            );
+            assert_eq!(
+                cx.style.background_position.get(entity),
+                cx.style.background_position.get(baseline)
+            );
+            assert_eq!(
+                cx.style.background_image.get(entity),
+                cx.style.background_image.get(baseline)
+            );
+        }
+    }
+
+    #[test]
     fn background_size_unitless_zero_works_in_keyframes() {
         use vizia_style::LengthPercentageOrAuto;
 

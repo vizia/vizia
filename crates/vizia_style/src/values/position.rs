@@ -3,7 +3,7 @@ use crate::horizontal_position_keyword::HorizontalPositionKeyword;
 use crate::traits::Parse;
 use crate::values::length::length::parse_unitless_zero;
 use crate::vertical_position_keyword::VerticalPositionKeyword;
-use crate::{Length, LengthOrPercentage};
+use crate::{Length, LengthOrPercentage, ParserErrorExt};
 use cssparser::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -116,7 +116,17 @@ impl Position {
             }
             Ok(Position { x, y })
         };
-        input.try_parse(edge_position).or_else(|_| Position::parse(input))
+        let position = input.try_parse(edge_position).or_else(|_| Position::parse(input))?;
+        if matches!(
+            position.x,
+            HorizontalPosition::Length(LengthOrPercentage::Length(Length::Calc(_)))
+        ) || matches!(
+            position.y,
+            VerticalPosition::Length(LengthOrPercentage::Length(Length::Calc(_)))
+        ) {
+            return Err(input.new_custom_error(CustomParseError::InvalidValue));
+        }
+        Ok(position)
     }
 }
 
@@ -357,5 +367,20 @@ mod tests {
             assert_eq!(position.y.to_length_or_percentage(), y);
         }
         assert!(parser.is_exhausted());
+    }
+
+    #[test]
+    fn background_positions_reject_unresolved_calculations() {
+        for value in [
+            "calc(1px + 1em) 0",
+            "0 calc(1px + 1em)",
+            "left top, calc(1px + 1em) 0",
+            "right calc(1px + 1em) bottom",
+        ] {
+            assert!(Vec::<Position>::parse(&mut Parser::new(value)).is_err(), "{value}");
+        }
+        for value in ["calc(1px + 2px) 0", "right 5px bottom 2px"] {
+            assert!(Vec::<Position>::parse(&mut Parser::new(value)).is_ok(), "{value}");
+        }
     }
 }

@@ -1253,9 +1253,12 @@ mod tests {
                 "background-position: 0 calc(10px + 1em)",
             ] {
                 let css = format!(
-                    ".probe {{ background-color: lime; background-image: {image}; {declaration}; }}"
+                    ".probe {{ background-color: lime; background-image: {image};
+                     background-position: left top; background-size: 4px 4px;
+                     background-repeat: no-repeat; {declaration}; }}"
                 );
                 let pixel = paint_probe_with_assets(&css, Some((4, 2)), Some(TEST_SVG), 1.0);
+                assert_eq!(pixel(11, 11), RED, "{css}");
                 assert_eq!(pixel(15, 15), [0, 255, 0, 255], "{css}");
             }
         }

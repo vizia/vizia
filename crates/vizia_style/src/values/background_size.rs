@@ -1,6 +1,6 @@
 use crate::ParserErrorExt;
 use crate::values::length::length::parse_unitless_zero;
-use crate::{CustomParseError, LengthPercentageOrAuto, Parse};
+use crate::{CustomParseError, Length, LengthOrPercentage, LengthPercentageOrAuto, Parse};
 use cssparser::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -29,7 +29,16 @@ impl<'i> Parse<'i> for BackgroundSize {
             if let Ok(zero) = input.try_parse(parse_unitless_zero) {
                 return Ok(zero.into());
             }
-            LengthPercentageOrAuto::parse(input)
+            let value = LengthPercentageOrAuto::parse(input)?;
+            if matches!(
+                value,
+                LengthPercentageOrAuto::LengthPercentage(LengthOrPercentage::Length(Length::Calc(
+                    _
+                )))
+            ) {
+                return Err(input.new_custom_error(CustomParseError::InvalidValue));
+            }
+            Ok(value)
         }
 
         if let Ok(width) = input.try_parse(parse_dimension) {
@@ -102,5 +111,14 @@ mod tests {
         for value in ["1", "0 1", "1 0", "0 0 0", "0,"] {
             assert!(Vec::<BackgroundSize>::parse(&mut Parser::new(value)).is_err(), "{value}");
         }
+    }
+
+    #[test]
+    fn unresolved_calculations_are_rejected_in_each_axis_and_layer() {
+        for value in ["calc(1px + 1em) 20px", "20px calc(1px + 1em)", "cover, calc(1px + 1em) auto"]
+        {
+            assert!(Vec::<BackgroundSize>::parse(&mut Parser::new(value)).is_err(), "{value}");
+        }
+        assert!(Vec::<BackgroundSize>::parse(&mut Parser::new("calc(1px + 2px) auto")).is_ok());
     }
 }
