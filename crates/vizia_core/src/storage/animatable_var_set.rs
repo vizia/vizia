@@ -77,17 +77,25 @@ impl std::fmt::Debug for DataIndex {
 pub(crate) struct InlineIndex {
     data_index: DataIndex,
     anim_index: u32,
+    /// The ancestor whose animation an entity without a value of its own inherits. Its own
+    /// animation index is read when resolving, so the entity shows the same animation state and
+    /// returns to its inherited value when that animation ends.
+    anim_source: u32,
 }
 
 impl Default for InlineIndex {
     fn default() -> Self {
-        InlineIndex { data_index: DataIndex::null(), anim_index: u32::MAX }
+        InlineIndex { data_index: DataIndex::null(), anim_index: u32::MAX, anim_source: u32::MAX }
     }
 }
 
 impl SparseSetIndex for InlineIndex {
     fn new(index: usize) -> Self {
-        InlineIndex { data_index: DataIndex::inline(index), anim_index: u32::MAX }
+        InlineIndex {
+            data_index: DataIndex::inline(index),
+            anim_index: u32::MAX,
+            anim_source: u32::MAX,
+        }
     }
 
     fn null() -> Self {
@@ -148,6 +156,9 @@ pub(crate) struct AnimatableVarSet<T: Interpolator> {
     animations: SparseSet<AnimationState<T>>,
     /// Animations which are currently playing
     active_animations: Vec<AnimationState<T>>,
+    /// Whether any entity may inherit an animation, so that removing an animation has inheritors
+    /// to look for.
+    inherits_animations: bool,
 }
 
 impl<T> AnimatableVarSet<T>
@@ -156,10 +167,17 @@ where
 {
     /// Insert an inline value for an entity.
     pub fn insert(&mut self, entity: Entity, value: T) {
-        if !self.inline_data.contains(entity) {
-            super::bump_inline_structure_generation();
+        if self.inline_data.contains(entity) {
+            self.inline_data.insert(entity, value);
+            return;
         }
+
+        super::bump_inline_structure_generation();
+        // A new value resets the entity's index, which must keep any animation playing on it.
+        let anim_index =
+            self.inline_data.sparse.get(entity.index()).map_or(u32::MAX, |index| index.anim_index);
         self.inline_data.insert(entity, value);
+        self.inline_data.sparse[entity.index()].anim_index = anim_index;
     }
 
     /// Remove an entity and any inline data.
@@ -170,16 +188,32 @@ where
             super::bump_inline_structure_generation();
             let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
 
+            // The entity's animation ends with it, and the next tick removes the finished state.
+            // Nothing keeps referring to the entity, so it is neither re-indexed nor reported. An
+            // entity listed by any state has a valid index, and restarting an animation can leave
+            // it listed by an earlier state too.
             if active_anim_index < self.active_animations.len() {
-                let anim_state = &mut self.active_animations[active_anim_index];
-                anim_state.t = 1.0;
-
-                self.remove_innactive_animations();
+                self.active_animations[active_anim_index].t = 1.0;
+                for state in self.active_animations.iter_mut() {
+                    state.entities.remove(&entity);
+                }
+                self.inline_data.sparse[entity_index].anim_index = u32::MAX;
             }
 
             let data_index = self.inline_data.sparse[entity_index].data_index;
             if data_index.is_inline() && !data_index.is_inherited() {
-                self.inline_data.remove(entity)
+                // Removal moves the last value into the freed slot and gives its entity the removed
+                // entity's index, which must keep the animation fields of the moved entity.
+                let moved = self.inline_data.dense.last().map(|entry| entry.key.index());
+                let moved_index = moved.map(|moved| self.inline_data.sparse[moved]);
+                let value = self.inline_data.remove(entity);
+                if let (Some(moved), Some(moved_index)) = (moved, moved_index)
+                    && moved != entity_index
+                {
+                    self.inline_data.sparse[moved].anim_index = moved_index.anim_index;
+                    self.inline_data.sparse[moved].anim_source = moved_index.anim_source;
+                }
+                value
             } else {
                 self.inline_data.sparse[entity_index] = InlineIndex::null();
                 None
@@ -189,8 +223,72 @@ where
         }
     }
 
-    /// Inherit inline data from a parent entity.
+    /// Returns true if the data index refers to a value set on the entity itself, rather than one
+    /// it inherits.
+    fn is_explicit(&self, data_index: DataIndex) -> bool {
+        !data_index.is_inherited()
+            && if data_index.is_inline() {
+                data_index.index() < self.inline_data.dense.len()
+            } else {
+                data_index.index() < self.shared_data.dense.len()
+            }
+    }
+
+    /// Returns the index of the active animation that determines the value of the entity: its own,
+    /// or that of the ancestor it inherits from.
+    fn active_animation_index(&self, entity_index: usize) -> Option<usize> {
+        let sparse_index = self.inline_data.sparse.get(entity_index)?;
+        let own = sparse_index.anim_index as usize;
+        if own < self.active_animations.len() {
+            return Some(own);
+        }
+        let source = self.inline_data.sparse.get(sparse_index.anim_source as usize)?;
+        let inherited = source.anim_index as usize;
+        (inherited < self.active_animations.len()).then_some(inherited)
+    }
+
+    /// Point an entity without a value of its own at the animation of its parent, or at the
+    /// animation the parent itself inherits.
+    fn inherit_animation(&mut self, entity: Entity, parent: Entity) -> bool {
+        let entity_index = entity.index();
+        let parent_index = parent.index();
+
+        let source = match self.inline_data.sparse.get(parent_index) {
+            Some(parent_sparse_index)
+                if (parent_sparse_index.anim_index as usize) < self.active_animations.len() =>
+            {
+                parent_index as u32
+            }
+            Some(parent_sparse_index) => parent_sparse_index.anim_source,
+            None => u32::MAX,
+        };
+
+        if entity_index >= self.inline_data.sparse.len() {
+            if source == u32::MAX {
+                return false;
+            }
+            self.inline_data.sparse.resize(entity_index + 1, InlineIndex::null());
+        }
+
+        let entity_sparse_index = self.inline_data.sparse[entity_index];
+        let source =
+            if self.is_explicit(entity_sparse_index.data_index) { u32::MAX } else { source };
+        if entity_sparse_index.anim_source == source {
+            return false;
+        }
+
+        self.inline_data.sparse[entity_index].anim_source = source;
+        self.inherits_animations |= source != u32::MAX;
+        true
+    }
+
+    /// Inherit inline data, and any animation of the parent, from a parent entity.
     pub fn inherit_inline(&mut self, entity: Entity, parent: Entity) -> bool {
+        let data_changed = self.inherit_inline_data(entity, parent);
+        self.inherit_animation(entity, parent) | data_changed
+    }
+
+    fn inherit_inline_data(&mut self, entity: Entity, parent: Entity) -> bool {
         let entity_index = entity.index();
         let parent_index = parent.index();
 
@@ -207,19 +305,10 @@ where
                 let entity_sparse_index = self.inline_data.sparse[entity_index];
 
                 let current = entity_sparse_index.data_index;
-                let explicit = !current.is_inherited()
-                    && if current.is_inline() {
-                        current.index() < self.inline_data.dense.len()
-                    } else {
-                        current.index() < self.shared_data.dense.len()
-                    };
                 let inherited =
                     DataIndex::inline(parent_sparse_index.data_index.index()).inherited();
-                if !explicit && current != inherited {
-                    self.inline_data.sparse[entity_index] = InlineIndex {
-                        data_index: inherited,
-                        anim_index: entity_sparse_index.anim_index,
-                    };
+                if !self.is_explicit(current) && current != inherited {
+                    self.inline_data.sparse[entity_index].data_index = inherited;
                     return true;
                 }
             }
@@ -228,8 +317,13 @@ where
         false
     }
 
-    /// Inherit shared data from a parent entity.
+    /// Inherit shared data, and any animation of the parent, from a parent entity.
     pub fn inherit_shared(&mut self, entity: Entity, parent: Entity) -> bool {
+        let data_changed = self.inherit_shared_data(entity, parent);
+        self.inherit_animation(entity, parent) | data_changed
+    }
+
+    fn inherit_shared_data(&mut self, entity: Entity, parent: Entity) -> bool {
         let entity_index = entity.index();
         let parent_index = parent.index();
 
@@ -249,29 +343,20 @@ where
                     && self.inline_data.sparse[entity_index].data_index.index()
                         != parent_sparse_index.data_index.index()
                 {
+                    // Only the data index changes, preserving any active animation (e.g. a reverse
+                    // transition that was just started before inheritance runs).
                     if entity_sparse_index.data_index.index() < self.shared_data.dense.len() {
                         if entity_sparse_index.data_index.is_inherited() {
-                            self.inline_data.sparse[entity_index] = InlineIndex {
-                                data_index: DataIndex::shared(
-                                    parent_sparse_index.data_index.index(),
-                                )
-                                .inherited(),
-                                // Preserve any active animation (e.g. a reverse transition
-                                // that was just started before inheritance runs).
-                                anim_index: entity_sparse_index.anim_index,
-                            };
+                            self.inline_data.sparse[entity_index].data_index =
+                                DataIndex::shared(parent_sparse_index.data_index.index())
+                                    .inherited();
                             return true;
                         }
                     } else {
                         if !entity_sparse_index.data_index.is_inline() {
-                            self.inline_data.sparse[entity_index] = InlineIndex {
-                                data_index: DataIndex::shared(
-                                    parent_sparse_index.data_index.index(),
-                                )
-                                .inherited(),
-                                // Preserve any active animation.
-                                anim_index: entity_sparse_index.anim_index,
-                            };
+                            self.inline_data.sparse[entity_index].data_index =
+                                DataIndex::shared(parent_sparse_index.data_index.index())
+                                    .inherited();
                         }
                         return true;
                     }
@@ -404,9 +489,10 @@ where
         }
     }
 
-    /// Tick the animation for the given time and return a list of entities which have been animated.
+    /// Tick the animation for the given time and return a list of entities which have been animated,
+    /// including those whose finished animation this tick removes.
     pub fn tick(&mut self, time: Instant) -> Vec<Entity> {
-        self.remove_innactive_animations();
+        let mut entities = self.remove_innactive_animations();
 
         if self.has_animations() {
             for state in self.active_animations.iter_mut() {
@@ -443,13 +529,10 @@ where
                 state.output = Some(T::interpolate(&start.value, &end.value, timing_t));
             }
 
-            self.active_animations
-                .iter()
-                .flat_map(|state| state.entities.clone())
-                .collect::<Vec<Entity>>()
-        } else {
-            Vec::new()
+            entities.extend(self.active_animations.iter().flat_map(|state| state.entities.clone()));
         }
+
+        entities
     }
 
     // Returns true if the given entity is linked to an active animation
@@ -476,18 +559,19 @@ where
 
         if entity_index < self.inline_data.sparse.len() {
             let active_anim_index = self.inline_data.sparse[entity_index].anim_index as usize;
-            if active_anim_index < self.active_animations.len() {
-                let anim_state = &mut self.active_animations[active_anim_index];
-                if anim_state.id == animation {
-                    anim_state.entities.remove(&entity);
-                }
+            if active_anim_index < self.active_animations.len()
+                && self.active_animations[active_anim_index].id == animation
+            {
+                self.active_animations[active_anim_index].entities.remove(&entity);
+                self.inline_data.sparse[entity_index].anim_index = u32::MAX;
+                self.release_inherited_animations(&[entity]);
             }
-            self.inline_data.sparse[entity_index].anim_index = u32::MAX;
         }
     }
 
-    /// Remove any inactive animations from the active animations list.
-    pub fn remove_innactive_animations(&mut self) {
+    /// Remove any inactive animations from the active animations list, returning the entities
+    /// that stopped animating.
+    pub fn remove_innactive_animations(&mut self) -> Vec<Entity> {
         // Create a list of finished animations
         let inactive: Vec<AnimationState<T>> = self
             .active_animations
@@ -500,7 +584,7 @@ where
         // Retains persistent animations
         self.active_animations.retain(|e| e.t < 1.0 || e.persistent);
 
-        for state in inactive.into_iter() {
+        for state in inactive.iter() {
             for entity in state.entities.iter() {
                 self.inline_data.sparse[entity.index()].anim_index = u32::MAX;
             }
@@ -511,6 +595,58 @@ where
                 self.inline_data.sparse[entity.index()].anim_index = index as u32;
             }
         }
+
+        // An entity can still be animating through another state.
+        let released = inactive
+            .iter()
+            .flat_map(|state| state.entities.iter().copied())
+            .filter(|entity| {
+                self.inline_data.sparse[entity.index()].anim_index as usize
+                    >= self.active_animations.len()
+            })
+            .collect::<Vec<_>>();
+        if !released.is_empty() {
+            self.release_inherited_animations(&released);
+        }
+        released
+    }
+
+    /// Points the entities that inherit an animation from one of the given entities, which have
+    /// stopped animating, at the animation those entities inherit themselves, if any.
+    ///
+    /// One pass over the entities of this store, with a binary search of the released entities
+    /// for each entity that inherits an animation. Skipped while no entity inherits one.
+    fn release_inherited_animations(&mut self, released: &[Entity]) {
+        if !self.inherits_animations {
+            return;
+        }
+
+        let mut released = released.iter().map(|entity| entity.index() as u32).collect::<Vec<_>>();
+        released.sort_unstable();
+        let is_released = |source: u32| released.binary_search(&source).is_ok();
+
+        let mut inherits_animations = false;
+        for entity_index in 0..self.inline_data.sparse.len() {
+            let mut source = self.inline_data.sparse[entity_index].anim_source;
+            if source == u32::MAX {
+                continue;
+            }
+            // Sources point at ancestors, so following them past ancestors that stopped at the
+            // same time ends within as many hops as there are released entities.
+            for _ in 0..released.len() {
+                if !is_released(source) {
+                    break;
+                }
+                source = self
+                    .inline_data
+                    .sparse
+                    .get(source as usize)
+                    .map_or(u32::MAX, |sparse_index| sparse_index.anim_source);
+            }
+            self.inline_data.sparse[entity_index].anim_source = source;
+            inherits_animations |= source != u32::MAX;
+        }
+        self.inherits_animations = inherits_animations;
     }
 
     /// Returns true if there are any active animations.
@@ -577,9 +713,7 @@ where
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
             // Animations override inline and shared styling
-            let animation_index = self.inline_data.sparse[entity_index].anim_index as usize;
-
-            if animation_index < self.active_animations.len() {
+            if let Some(animation_index) = self.active_animation_index(entity_index) {
                 return self.active_animations[animation_index].get_output();
             }
 
@@ -635,9 +769,8 @@ where
     ) -> Option<T> {
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {
-            // An active animation on this property itself takes priority.
-            let animation_index = self.inline_data.sparse[entity_index].anim_index as usize;
-            if animation_index < self.active_animations.len() {
+            // An active animation on this property itself, or the one it inherits, takes priority.
+            if let Some(animation_index) = self.active_animation_index(entity_index) {
                 return self.active_animations[animation_index].get_output().cloned();
             }
 

@@ -488,6 +488,20 @@ pub(crate) fn inline_inheritance_system(
     }
 }
 
+/// Points the descendants that inherit from the given entities at the animations just played on
+/// them. Queued animations start after the style pass has linked inheritance for the frame.
+pub(crate) fn animation_inheritance_system(cx: &mut Context, animated: &[Entity]) {
+    let animated = animated.iter().copied().collect::<HashSet<_>>();
+    let entities = animated.iter().copied().collect::<Vec<_>>();
+    let roots = inheritance_roots(&cx.tree, &entities, &animated);
+
+    let mut redraw_entities = Vec::new();
+    inline_inheritance_system(cx, &roots, &mut redraw_entities);
+    for entity in redraw_entities {
+        cx.needs_redraw(entity);
+    }
+}
+
 /// Carries each entity's text invalidation down to its descendants. An inline text value can change
 /// without changing the inherited storage index, so the inheritance walk does not see the change.
 ///
@@ -1749,8 +1763,10 @@ fn invalidate_focus_on_hidden(cx: &mut Context) {
 #[cfg(test)]
 mod tests {
     use super::{sort_matched_rules, style_system};
+    use crate::context::WindowState;
     use crate::prelude::*;
     use crate::style::Rule;
+    use crate::systems::animation_system;
     use vizia_id::GenerationalId;
 
     #[test]
@@ -2130,5 +2146,66 @@ mod tests {
         assert_eq!(cx.style.opacity.get(label), Some(&Opacity(0.5)));
         assert!(cx.style.matched_rules.get(&binding).is_none());
         assert_eq!(cx.style.opacity.get(binding), None);
+    }
+
+    #[test]
+    fn an_animated_fill_reaches_and_redraws_inheriting_children() {
+        let mut cx = Context::default();
+        cx.windows.insert(Entity::root(), WindowState::default());
+        let mut child = Entity::null();
+        let container = VStack::new(&mut cx, |cx| {
+            child = Element::new(cx).entity();
+        })
+        .entity();
+        let tint = cx.add_animation(AnimationBuilder::new());
+        for time in [0.0, 1.0] {
+            cx.style.add_keyframe(tint, time, &[vizia_style::Property::Fill(Color::red())]);
+        }
+        style_system(&mut cx);
+        animation_system(&mut cx);
+        cx.windows.get_mut(&Entity::root()).unwrap().redraw_list.clear();
+
+        cx.style.enqueue_animation(container, tint, Duration::from_secs(60), Duration::ZERO);
+        style_system(&mut cx);
+        animation_system(&mut cx);
+        assert_eq!(cx.style.fill.get(child), Some(&Color::red()));
+        assert!(cx.windows[&Entity::root()].redraw_list.contains(&child));
+    }
+
+    #[test]
+    fn descendants_using_an_inherited_variable_follow_its_transition() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".container { --size: 16px; transition: --size 100s; }
+             .container.small { --size: 10px; transition: --size 100s; }
+             .inherited { font-size: var(--size); }",
+        )
+        .unwrap();
+        let mut label = Entity::null();
+        let container = VStack::new(&mut cx, |cx| {
+            label = Label::new(cx, "inherited").class("inherited").entity();
+        })
+        .class("container")
+        .entity();
+        let size = |cx: &Context| {
+            cx.style
+                .font_size
+                .get_resolved(label, &cx.style.custom_font_size_props)
+                .and_then(|size| size.0.to_px())
+        };
+        style_system(&mut cx);
+        assert_eq!(size(&cx), Some(16.0));
+
+        cx.style.set_class(&cx.tree, container, "small", true);
+        style_system(&mut cx);
+        // The transition starts from 16, while the stored value is already 10.
+        assert_eq!(size(&cx), Some(16.0));
+
+        let halfway = Instant::now() + Duration::from_secs(50);
+        for store in cx.style.custom_font_size_props.values_mut() {
+            store.tick(halfway);
+        }
+        let halfway = size(&cx).unwrap();
+        assert!(10.5 < halfway && halfway < 15.5, "halfway through the transition: {halfway}");
     }
 }
