@@ -1,5 +1,7 @@
 use crate::{
-    CustomParseError, Gap, Padding, Parse, ParserOptions, Property, Rect, UnparsedProperty,
+    BackgroundImage, BackgroundRepeat, BackgroundSize, Color, CustomParseError, Gap,
+    HorizontalPosition, Padding, Parse, ParserOptions, Position, Property, Rect, UnparsedProperty,
+    VerticalPosition,
 };
 
 use cssparser::*;
@@ -68,6 +70,7 @@ pub(crate) fn parse_declaration<'i>(
         Single(Property<'i>),
         Padding([crate::Units; 4]),
         Gap([crate::Units; 2]),
+        Background(Vec<Property<'i>>),
     }
 
     let declaration = input.parse_until_before(Delimiter::Bang, |input| match name.as_ref() {
@@ -95,6 +98,12 @@ pub(crate) fn parse_declaration<'i>(
                 name, input,
             )?))),
         },
+        "background" => match input.try_parse(parse_background) {
+            Ok(properties) => Ok(ParsedDeclaration::Background(properties)),
+            Err(_) => Ok(ParsedDeclaration::Single(Property::Unparsed(UnparsedProperty::parse(
+                name, input,
+            )?))),
+        },
         _ => Ok(ParsedDeclaration::Single(Property::parse_value(name, input)?)),
     })?;
 
@@ -117,8 +126,91 @@ pub(crate) fn parse_declaration<'i>(
         ParsedDeclaration::Gap([row, column]) => {
             declarations.extend([Property::VerticalGap(row), Property::HorizontalGap(column)]);
         }
+        ParsedDeclaration::Background(properties) => declarations.extend(properties),
     }
     Ok(())
+}
+
+fn parse_background<'i>(
+    input: &mut Parser<'i>,
+) -> Result<Vec<Property<'i>>, ParseError<CustomParseError<'i>>> {
+    let mut color = None;
+    let mut image = None;
+    let mut position = None;
+    let mut size = None;
+    let mut repeat = None;
+    let mut any = false;
+
+    while !input.is_exhausted() {
+        input.skip_whitespace();
+        if color.is_none()
+            && let Ok(value) = input.try_parse(Color::parse)
+        {
+            color = Some(value);
+        } else if image.is_none()
+            && let Ok(value) = input.try_parse(|input| {
+                let state = input.state();
+                let valid = match input.next()? {
+                    Token::UnquotedUrl(_) | Token::Function(_) => true,
+                    Token::Ident(name) => name.eq_ignore_ascii_case("none"),
+                    _ => false,
+                };
+                input.reset(&state);
+                if valid {
+                    BackgroundImage::parse(input)
+                } else {
+                    Err(input.new_error_for_next_token())
+                }
+            })
+        {
+            image = Some(value);
+        } else if repeat.is_none()
+            && let Ok(value) = input.try_parse(BackgroundRepeat::parse)
+        {
+            repeat = Some(value);
+        } else if position.is_none()
+            && let Ok(value) = input.try_parse(|input| {
+                let state = input.state();
+                let first = input.try_parse(HorizontalPosition::parse);
+                let starts_position = if let Ok(first) = first {
+                    if input.try_parse(VerticalPosition::parse).is_err()
+                        && !matches!(first, HorizontalPosition::Center)
+                        && input.try_parse(HorizontalPosition::parse).is_ok()
+                    {
+                        return Err(input.new_error_for_next_token());
+                    }
+                    true
+                } else {
+                    input.try_parse(VerticalPosition::parse).is_ok()
+                };
+                input.reset(&state);
+                if !starts_position {
+                    return Err(input.new_error_for_next_token());
+                }
+                Position::parse(input)
+            })
+        {
+            position = Some(value);
+            if input.try_parse(|input| input.expect_delim('/')).is_ok() {
+                size = Some(BackgroundSize::parse(input)?);
+            }
+        } else {
+            return Err(input.new_error_for_next_token());
+        }
+        any = true;
+    }
+
+    if !any {
+        return Err(input.new_error_for_next_token());
+    }
+
+    Ok(vec![
+        Property::BackgroundColor(color.unwrap_or(Color::rgba(0, 0, 0, 0))),
+        Property::BackgroundImage(vec![image.unwrap_or(BackgroundImage::None)]),
+        Property::BackgroundPosition(vec![position.unwrap_or_default()]),
+        Property::BackgroundSize(vec![size.unwrap_or_default()]),
+        Property::BackgroundRepeat(vec![repeat.unwrap_or_default()]),
+    ])
 }
 
 impl<'i> AtRuleParser<'i> for PropertyDeclarationParser<'_, 'i> {
@@ -180,5 +272,83 @@ mod tests {
                 Property::PaddingLeft(px(9.0)),
             ]
         );
+    }
+
+    #[test]
+    fn background_shorthand_expands_and_resets_omitted_values() {
+        let mut parser = Parser::new(
+            "background: url(\"image.png\") center / cover no-repeat red;
+             background: blue !important;",
+        );
+
+        let block = DeclarationBlock::parse(&mut parser, &ParserOptions::new()).unwrap();
+        assert_eq!(
+            block.declarations,
+            vec![
+                Property::BackgroundColor(Color::rgb(255, 0, 0)),
+                Property::BackgroundImage(vec![BackgroundImage::from("url(\"image.png\")")]),
+                Property::BackgroundPosition(vec![Position::center()]),
+                Property::BackgroundSize(vec![BackgroundSize::Cover]),
+                Property::BackgroundRepeat(vec![BackgroundRepeat::NoRepeat]),
+            ]
+        );
+        assert_eq!(
+            block.important_declarations,
+            vec![
+                Property::BackgroundColor(Color::rgb(0, 0, 255)),
+                Property::BackgroundImage(vec![BackgroundImage::None]),
+                Property::BackgroundPosition(vec![Position::default()]),
+                Property::BackgroundSize(vec![BackgroundSize::default()]),
+                Property::BackgroundRepeat(vec![BackgroundRepeat::Repeat]),
+            ]
+        );
+
+        let mut parser = Parser::new(
+            "background: no-repeat repeat bottom right / contain linear-gradient(red, blue);",
+        );
+        let block = DeclarationBlock::parse(&mut parser, &ParserOptions::new()).unwrap();
+        assert!(matches!(
+            block.declarations.as_slice(),
+            [
+                Property::BackgroundColor(color),
+                Property::BackgroundImage(images),
+                Property::BackgroundPosition(positions),
+                Property::BackgroundSize(sizes),
+                Property::BackgroundRepeat(repeats),
+            ] if *color == Color::rgba(0, 0, 0, 0)
+                && matches!(images.as_slice(), [BackgroundImage::Gradient(_)])
+                && positions[0].x.to_length_or_percentage() == crate::LengthOrPercentage::Percentage(100.0)
+                && positions[0].y.to_length_or_percentage() == crate::LengthOrPercentage::Percentage(100.0)
+                && sizes == &[BackgroundSize::Contain]
+                && repeats == &[BackgroundRepeat::RepeatY]
+        ));
+    }
+
+    #[test]
+    fn background_shorthand_rejects_unsupported_or_invalid_values_atomically() {
+        for value in [
+            "",
+            "red blue",
+            "none none",
+            "center /",
+            "/ cover",
+            "red, blue",
+            "red fixed",
+            "url(a.png) / cover",
+            "\"image.png\"",
+            "var(--background)",
+            "left right",
+            "10px left",
+        ] {
+            let css = format!("background: {value};");
+            let mut parser = Parser::new(&css);
+            let block = DeclarationBlock::parse(&mut parser, &ParserOptions::new()).unwrap();
+            assert!(
+                block.declarations.is_empty()
+                    || matches!(block.declarations.as_slice(), [Property::Unparsed(_)]),
+                "{value}: {:?}",
+                block.declarations
+            );
+        }
     }
 }

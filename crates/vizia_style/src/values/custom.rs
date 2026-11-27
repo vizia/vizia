@@ -150,9 +150,8 @@ impl<'i> TokenList<'i> {
                     last_is_delim = false;
                     last_is_whitespace = false;
                 }
-                Ok(&cssparser::Token::UnquotedUrl(_)) => {
-                    input.reset(&state);
-                    //tokens.push(TokenOrValue::Url(Url::parse(input)?));
+                Ok(token @ &cssparser::Token::UnquotedUrl(_)) => {
+                    tokens.push(token.clone().into());
                     last_is_delim = false;
                     last_is_whitespace = false;
                 }
@@ -242,9 +241,23 @@ impl<'i> Variable<'i> {
 
 #[cfg(test)]
 mod tests {
-    use cssparser::{CowRcStr, Parser};
+    use cssparser::{CowRcStr, Parser, Token};
 
-    use crate::CustomProperty;
+    use crate::{CustomProperty, TokenOrValue};
+
+    #[test]
+    fn custom_value_preserves_unquoted_url_tokens() {
+        let mut parser = Parser::new("url(image.png) no-repeat");
+        let property = CustomProperty::parse(CowRcStr::from("--image"), &mut parser).unwrap();
+        assert!(matches!(
+            property.value.0.as_slice(),
+            [
+                TokenOrValue::Token(Token::UnquotedUrl(url)),
+                TokenOrValue::Token(Token::WhiteSpace(_)),
+                TokenOrValue::Token(Token::Ident(repeat)),
+            ] if url.as_ref() == "image.png" && repeat.as_ref() == "no-repeat"
+        ));
+    }
 
     #[test]
     fn parse_custom_ident() {

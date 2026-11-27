@@ -2475,6 +2475,83 @@ mod tests {
     }
 
     #[test]
+    fn background_shorthand_resets_and_obeys_longhand_cascade() {
+        use crate::style::ImageOrGradient;
+
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".base {
+                 background-color: green; background-image: url(old.png);
+                 background-position: center; background-size: cover; background-repeat: no-repeat;
+             }
+             .reset { background: red; }
+             .override {
+                 background: url(new.png) center / cover no-repeat red;
+                 background-color: blue; background-repeat: repeat-y;
+             }
+             .invalid { background: url(bad.png) / cover; }",
+        )
+        .unwrap();
+        let reset = Element::new(&mut cx).class("base").class("reset").entity();
+        let overridden = Element::new(&mut cx).class("base").class("override").entity();
+        let invalid = Element::new(&mut cx).class("base").class("invalid").entity();
+        style_system(&mut cx);
+
+        let color =
+            |entity| cx.style.background_color.get_resolved(entity, &cx.style.custom_color_props);
+        assert_eq!(color(reset), Some(Color::rgb(255, 0, 0)));
+        assert_eq!(cx.style.background_image.get(reset), Some(&vec![]));
+        assert_eq!(cx.style.background_position.get(reset), Some(&vec![Position::default()]));
+        assert_eq!(cx.style.background_size.get(reset), Some(&vec![BackgroundSize::default()]));
+        assert_eq!(cx.style.background_repeat.get(reset), Some(&vec![BackgroundRepeat::Repeat]));
+
+        assert_eq!(color(overridden), Some(Color::rgb(0, 0, 255)));
+        assert_eq!(
+            cx.style.background_image.get(overridden),
+            Some(&vec![ImageOrGradient::Image("new.png".into())])
+        );
+        assert_eq!(cx.style.background_position.get(overridden), Some(&vec![Position::center()]));
+        assert_eq!(cx.style.background_size.get(overridden), Some(&vec![BackgroundSize::Cover]));
+        assert_eq!(
+            cx.style.background_repeat.get(overridden),
+            Some(&vec![BackgroundRepeat::RepeatY])
+        );
+
+        assert_eq!(color(invalid), Some(Color::rgb(0, 128, 0)));
+        assert_eq!(
+            cx.style.background_image.get(invalid),
+            Some(&vec![ImageOrGradient::Image("old.png".into())])
+        );
+        assert_eq!(
+            cx.style.background_repeat.get(invalid),
+            Some(&vec![BackgroundRepeat::NoRepeat])
+        );
+    }
+
+    #[test]
+    fn background_shorthand_expands_in_keyframes() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            "@keyframes background-test {
+                 from { background: red; }
+                 to { background: blue center / cover no-repeat; }
+             }",
+        )
+        .unwrap();
+        let animation = *cx.style.get_animation("background-test").unwrap();
+        let frames = &cx.style.background_repeat.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(
+            frames.iter().map(|frame| frame.value.clone()).collect::<Vec<_>>(),
+            vec![vec![BackgroundRepeat::Repeat], vec![BackgroundRepeat::NoRepeat]]
+        );
+        let frames = &cx.style.background_size.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(
+            frames.iter().map(|frame| frame.value.clone()).collect::<Vec<_>>(),
+            vec![vec![BackgroundSize::default()], vec![BackgroundSize::Cover]]
+        );
+    }
+
+    #[test]
     fn text_wrap_standard_keywords_apply_like_legacy_booleans() {
         let mut cx = Context::default();
         cx.add_stylesheet(
