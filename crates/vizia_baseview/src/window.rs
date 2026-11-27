@@ -1,5 +1,6 @@
 use crate::application::ApplicationRunner;
 use crate::window_settings::{FramePolicy, WindowScalePolicy};
+use baseview::dpi::LogicalSize;
 use baseview::gl::GlConfig;
 use baseview::{
     Event, EventStatus, HandlerError, Window, WindowContext, WindowHandler, WindowSettings,
@@ -109,6 +110,13 @@ impl ViziaWindow {
         let dpi_factor = window_scale_factor * win_desc.user_scale_factor;
 
         cx.add_main_window(Entity::root(), &win_desc, dpi_factor as f32);
+        // The window can be created at a different size to `inner_size` when that's outside
+        // its min and max size, so lay out at the size it actually has.
+        cx.set_window_size(
+            Entity::root(),
+            initial_size.physical.width as f32,
+            initial_size.physical.height as f32,
+        );
         cx.add_window(Entity::root(), WindowView {});
 
         cx.0.windows.insert(
@@ -156,20 +164,8 @@ impl ViziaWindow {
         F: Fn(&mut Context),
         F: 'static + Send,
     {
-        let window_settings = WindowSettings::new()
-            .with_title(win_desc.title.clone())
-            .with_size(baseview::dpi::LogicalSize::new(
-                // We have our own uniform non-DPI scaling factor that gets applied in addition to
-                // the DPI scaling since both can change independently at runtime
-                win_desc.inner_size.width as f64 * win_desc.user_scale_factor,
-                win_desc.inner_size.height as f64 * win_desc.user_scale_factor,
-            ))
-            .with_parent(Some(parent))
-            .with_fallback_scale_factor(match scale_policy {
-                WindowScalePolicy::ScaleFactor(scale) => Some(scale),
-                WindowScalePolicy::SystemScaleFactor => None,
-            })
-            .with_gl_config(GlConfig::default());
+        let window_settings =
+            window_settings(&win_desc, scale_policy, true).with_parent(Some(parent));
 
         let window = Window::create(
             window_settings,
@@ -213,17 +209,7 @@ impl ViziaWindow {
         F: Fn(&mut Context),
         F: 'static + Send,
     {
-        let window_settings = WindowSettings::new()
-            .with_title(win_desc.title.clone())
-            .with_size(baseview::dpi::LogicalSize::new(
-                win_desc.inner_size.width as f64 * win_desc.user_scale_factor,
-                win_desc.inner_size.height as f64 * win_desc.user_scale_factor,
-            ))
-            .with_fallback_scale_factor(match scale_policy {
-                WindowScalePolicy::ScaleFactor(scale) => Some(scale),
-                WindowScalePolicy::SystemScaleFactor => None,
-            })
-            .with_gl_config(GlConfig::default());
+        let window_settings = window_settings(&win_desc, scale_policy, false);
 
         let window = Window::create(
             window_settings,
@@ -329,6 +315,85 @@ impl Drop for ViziaWindow {
     }
 }
 
+/// Builds the baseview settings for a window opened from `win_desc`.
+///
+/// A standalone window also gets the description's min and max size, like the winit backend,
+/// and is created inside them. A parented window doesn't, since its host decides how big it can
+/// be.
+fn window_settings(
+    win_desc: &WindowDescription,
+    scale_policy: WindowScalePolicy,
+    is_parented: bool,
+) -> WindowSettings {
+    let (min_size, max_size) = size_limits(win_desc, is_parented);
+
+    WindowSettings::new()
+        .with_title(win_desc.title.clone())
+        .with_size(user_scaled_size(win_desc, is_parented))
+        .with_min_size::<LogicalSize<f64>>(min_size)
+        .with_max_size::<LogicalSize<f64>>(max_size)
+        .with_fallback_scale_factor(match scale_policy {
+            WindowScalePolicy::ScaleFactor(scale) => Some(scale),
+            WindowScalePolicy::SystemScaleFactor => None,
+        })
+        .with_gl_config(GlConfig::default())
+}
+
+/// The min and max logical size the window is kept inside.
+///
+/// They're sizes of the window itself, which is what the OS enforces while the user resizes it,
+/// so the user scale factor doesn't change them. baseview has no way to change them after the
+/// window is open.
+fn size_limits(
+    win_desc: &WindowDescription,
+    is_parented: bool,
+) -> (Option<LogicalSize<f64>>, Option<LogicalSize<f64>>) {
+    if is_parented {
+        return (None, None);
+    }
+
+    // baseview 0.4.2 makes equal limits a fixed window whose resize() does nothing on macOS
+    // and X11.
+    if win_desc.min_inner_size == win_desc.max_inner_size {
+        return (None, None);
+    }
+
+    let logical = |size: WindowSize| LogicalSize::new(size.width as f64, size.height as f64);
+
+    (win_desc.min_inner_size.map(logical), win_desc.max_inner_size.map(logical))
+}
+
+/// The logical size the window is created at, or resized to, for the description's user scale
+/// factor.
+///
+/// A window with min and max sizes can't be made outside them, so this clamps the size the same
+/// way baseview does (max first, then min) to give the size the window actually ends up at.
+pub(crate) fn user_scaled_size(
+    win_desc: &WindowDescription,
+    is_parented: bool,
+) -> LogicalSize<f64> {
+    let mut size = LogicalSize::new(
+        // We have our own uniform non-DPI scaling factor that gets applied in addition to
+        // the DPI scaling since both can change independently at runtime
+        win_desc.inner_size.width as f64 * win_desc.user_scale_factor,
+        win_desc.inner_size.height as f64 * win_desc.user_scale_factor,
+    );
+
+    let (min_size, max_size) = size_limits(win_desc, is_parented);
+
+    if let Some(max_size) = max_size {
+        size.width = size.width.min(max_size.width);
+        size.height = size.height.min(max_size.height);
+    }
+
+    if let Some(min_size) = min_size {
+        size.width = size.width.max(min_size.width);
+        size.height = size.height.max(min_size.height);
+    }
+
+    size
+}
+
 pub struct WindowView {}
 
 impl View for WindowView {
@@ -361,4 +426,89 @@ pub fn create_surface(
         // None,
     )
     .expect("Could not create skia surface")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use baseview::dpi::Size;
+
+    fn description() -> WindowDescription {
+        WindowDescription::new()
+            .with_inner_size(800, 600)
+            .with_min_inner_size(400, 300)
+            .with_max_inner_size(1000, 700)
+    }
+
+    fn logical(width: f64, height: f64) -> Option<Size> {
+        Some(Size::Logical(LogicalSize::new(width, height)))
+    }
+
+    #[test]
+    fn standalone_window_gets_the_size_limits() {
+        let desc = description().with_inner_size(600, 400).with_scale_factor(1.5);
+        let settings = window_settings(&desc, WindowScalePolicy::SystemScaleFactor, false);
+
+        // The limits are the window's logical size, so the user scale doesn't change them.
+        assert_eq!(settings.min_size, logical(400.0, 300.0));
+        assert_eq!(settings.max_size, logical(1000.0, 700.0));
+        assert_eq!(settings.size, Size::Logical(LogicalSize::new(900.0, 600.0)));
+    }
+
+    #[test]
+    fn standalone_window_is_created_inside_the_size_limits() {
+        let small = description().with_inner_size(200, 100);
+        let large = description().with_scale_factor(1.5);
+        let settings = |desc| window_settings(desc, WindowScalePolicy::SystemScaleFactor, false);
+
+        assert_eq!(settings(&small).size, Size::Logical(LogicalSize::new(400.0, 300.0)));
+        assert_eq!(settings(&large).size, Size::Logical(LogicalSize::new(1000.0, 700.0)));
+    }
+
+    #[test]
+    fn equal_min_and_max_sizes_are_not_forwarded() {
+        let desc = description().with_min_inner_size(500, 400).with_max_inner_size(500, 400);
+        let settings = window_settings(&desc, WindowScalePolicy::SystemScaleFactor, false);
+
+        assert_eq!(settings.min_size, None);
+        assert_eq!(settings.max_size, None);
+        assert_eq!(
+            user_scaled_size(&desc.with_scale_factor(2.0), false),
+            LogicalSize::new(1600.0, 1200.0)
+        );
+    }
+
+    #[test]
+    fn parented_window_leaves_its_size_to_the_host() {
+        let desc = description().with_inner_size(200, 100);
+        let settings = window_settings(&desc, WindowScalePolicy::SystemScaleFactor, true);
+
+        assert_eq!(settings.min_size, None);
+        assert_eq!(settings.max_size, None);
+        assert_eq!(settings.size, Size::Logical(LogicalSize::new(200.0, 100.0)));
+    }
+
+    #[test]
+    fn user_scale_resize_stays_inside_the_size_limits() {
+        let size = |scale| user_scaled_size(&description().with_scale_factor(scale), false);
+
+        assert_eq!(size(2.0), LogicalSize::new(1000.0, 700.0));
+        assert_eq!(size(1.25), LogicalSize::new(1000.0, 700.0));
+        assert_eq!(size(0.25), LogicalSize::new(400.0, 300.0));
+        assert_eq!(size(1.125), LogicalSize::new(900.0, 675.0));
+    }
+
+    #[test]
+    fn user_scale_resize_lets_the_min_size_win_like_baseview() {
+        let desc = description().with_max_inner_size(300, 200);
+
+        assert_eq!(user_scaled_size(&desc, false), LogicalSize::new(400.0, 300.0));
+    }
+
+    #[test]
+    fn parented_user_scale_resize_is_not_clamped() {
+        let desc = description().with_scale_factor(2.0);
+
+        assert_eq!(user_scaled_size(&desc, true), LogicalSize::new(1600.0, 1200.0));
+    }
 }
