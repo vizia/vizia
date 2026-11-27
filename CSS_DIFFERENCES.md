@@ -37,6 +37,13 @@ viewport units are not convertible to pixels by the layout-units parser.
 Other properties use different value types, so unit and `calc()` support
 depends on the property.
 
+Direct absolute lengths (`px`, `in`, `cm`, `mm`, `q`, `pt`, and `pc`) also
+resolve in paths that use `LengthOrPercentage`, including background size and
+position, gradient stops, corner radii, and translations. Previously, non-pixel
+absolute lengths in those paths resolved to zero, so existing styles may change
+appearance. Relative units, general `calc()`, and variable-backed values
+remain subject to their existing property-specific limitations.
+
 ## Appearance and text
 
 | Standard CSS | Vizia |

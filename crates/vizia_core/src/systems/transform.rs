@@ -201,6 +201,27 @@ mod tests {
     }
 
     #[test]
+    fn absolute_lengths_resolve_in_css_translations() {
+        for (declaration, scale, expected) in [
+            ("translate: 6pt 3pt;", 1.0, (8.0, 4.0)),
+            ("transform: translate(6pt, 3pt);", 2.0, (16.0, 8.0)),
+        ] {
+            let mut cx = Context::default();
+            cx.style.dpi_factor = scale;
+            cx.add_stylesheet(crate::util::CSS::from_string(&format!(
+                ".probe {{ {declaration} }}"
+            )))
+            .unwrap();
+            let entity = Element::new(&mut cx).class("probe").entity();
+            cx.cache.set_bounds(entity, BoundingBox { x: 0.0, y: 0.0, w: 100.0, h: 80.0 });
+            crate::systems::style_system(&mut cx);
+
+            let matrix = local_transform(&cx, entity).unwrap();
+            assert_eq!(matrix.map_point((0.0, 0.0)), skia_safe::Point::from(expected));
+        }
+    }
+
+    #[test]
     fn descendants_inherit_ancestor_transforms() {
         let (mut cx, a, b, c) = setup();
         translate(&mut cx, a, 10.0, 20.0);

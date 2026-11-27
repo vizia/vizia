@@ -1677,6 +1677,49 @@ mod tests {
     }
 
     #[test]
+    fn absolute_lengths_size_and_position_background_layers() {
+        for image in ["url(image.png)", "url(image.svg)", "linear-gradient(red, red)"] {
+            let css = format!(".probe {{ background: {image} 3pt 1.5pt / 6pt 3pt no-repeat; }}");
+            let pixel = paint_probe_with_assets(&css, Some((4, 2)), Some(TEST_SVG), 1.0);
+            assert_eq!(pixel(14, 12), RED, "{css}");
+            assert_eq!(pixel(21, 15), RED, "{css}");
+            assert_eq!(pixel(13, 12), [0, 0, 0, 0], "{css}");
+            assert_eq!(pixel(22, 15), [0, 0, 0, 0], "{css}");
+            assert_eq!(pixel(14, 16), [0, 0, 0, 0], "{css}");
+
+            let css = format!(".probe {{ background: {image} left top / 6pt 3pt no-repeat; }}");
+            let pixel = paint_probe_with_assets(&css, Some((4, 2)), Some(TEST_SVG), 2.0);
+            assert_eq!(pixel(25, 17), RED, "{css}");
+            assert_eq!(pixel(26, 17), [0, 0, 0, 0], "{css}");
+            assert_eq!(pixel(25, 18), [0, 0, 0, 0], "{css}");
+        }
+    }
+
+    #[test]
+    fn absolute_lengths_match_pixels_for_rounded_corners() {
+        let points = paint_probe(".probe { background-color: red; border-radius: 6pt; }");
+        let pixels = paint_probe(".probe { background-color: red; border-radius: 8px; }");
+        assert_eq!(points(10, 10), [0, 0, 0, 0]);
+        assert_eq!(points(15, 15), RED);
+        for y in 10..30 {
+            for x in 10..30 {
+                assert_eq!(points(x, y), pixels(x, y), "at ({x}, {y})");
+            }
+        }
+    }
+
+    #[test]
+    fn absolute_lengths_position_gradient_stops() {
+        let pixel = paint_probe(
+            ".probe { background: linear-gradient(to right, red 3pt, blue 6pt) left top / 12px 4px no-repeat; }",
+        );
+        assert_eq!(pixel(11, 11), RED);
+        assert_eq!(pixel(19, 11), [0, 0, 255, 255]);
+        let middle = pixel(16, 11);
+        assert!(middle[0] > 0 && middle[2] > 0, "{middle:?}");
+    }
+
+    #[test]
     fn background_edge_offsets_position_each_layer_type() {
         for image in ["url(image.png)", "url(image.svg)", "linear-gradient(red, red)"] {
             for (position, inside, outside) in [
