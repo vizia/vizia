@@ -173,6 +173,15 @@ where
                         Index { data_index: inherited, anim_index: entity_sparse_index.anim_index };
                     return true;
                 }
+                return false;
+            }
+        }
+
+        if let Some(index) = self.inline_data.sparse.get_mut(entity_index) {
+            let current = index.data_index;
+            if current.is_inline() && current.is_inherited() {
+                index.data_index = DataIndex::null();
+                return true;
             }
         }
 
@@ -481,5 +490,19 @@ mod tests {
         assert_eq!(store.get(child), Some(&200));
         assert!(!store.inherit_shared(explicit, parent));
         assert_eq!(store.get(explicit), Some(&300));
+    }
+
+    #[test]
+    fn inline_inheritance_clears_a_removed_parent_value() {
+        let mut store = StyleSet::new();
+        let parent = Entity::new(1, 0);
+        let child = Entity::new(2, 0);
+        store.insert(parent, 100);
+        assert!(store.inherit_inline(child, parent));
+        store.remove(parent);
+
+        assert!(store.inherit_inline(child, parent));
+        assert_eq!(store.get(child), None);
+        assert!(!store.inherit_inline(child, parent));
     }
 }
