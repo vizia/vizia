@@ -2445,6 +2445,35 @@ mod tests {
     }
 
     #[test]
+    fn transition_shorthand_reordered_components_apply() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".before { width: 10px; }
+             .after { width: 20px; transition: 200ms ease width 50ms; }",
+        )
+        .unwrap();
+        let entity = Element::new(&mut cx).class("before").entity();
+        style_system(&mut cx);
+        cx.style.set_class(&cx.tree, entity, "after", true);
+        style_system(&mut cx);
+
+        let transition = cx
+            .style
+            .width
+            .get_active_animations()
+            .unwrap()
+            .iter()
+            .find(|animation| animation.entities.contains(&entity))
+            .unwrap();
+        assert_eq!(transition.duration, std::time::Duration::from_millis(200));
+        assert_eq!(transition.delay, std::time::Duration::from_millis(50));
+        assert_eq!(
+            transition.keyframes[0].timing_function.value(0.25),
+            crate::animation::TimingFunction::ease().value(0.25)
+        );
+    }
+
+    #[test]
     fn recycled_views_resolve_only_their_own_element_selector() {
         let mut cx = Context::default();
         cx.add_stylesheet("label { width: 111px; }").unwrap();
