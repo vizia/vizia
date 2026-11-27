@@ -740,7 +740,6 @@ fn inherit_variable_data(
 fn link_style_data(
     style: &mut Style,
     cache: &mut CachedData,
-    tree: &Tree<Entity>,
     entity: Entity,
     redraw_entities: &mut Vec<Entity>,
     matched_rules: &[(Rule, u32)],
@@ -1248,13 +1247,8 @@ fn link_style_data(
     }
 
     if should_reflow {
-        let iter = LayoutParentIterator::new(tree, entity);
-        for parent in iter {
-            if style.display.get(parent).copied().unwrap_or_default() != Display::None {
-                style.needs_text_update(parent);
-                break;
-            }
-        }
+        // `text_invalidation_system` also rebuilds the paragraph a span belongs to.
+        style.needs_text_update(entity);
     }
 }
 
@@ -1583,14 +1577,8 @@ pub(crate) fn style_system(cx: &mut Context) {
                 }
                 cx.style.needs_relayout(entity);
                 redraw_entities.push(entity);
-
-                let iter = LayoutParentIterator::new(&cx.tree, entity);
-                for parent in iter {
-                    if cx.style.display.get(parent).copied().unwrap_or_default() != Display::None {
-                        cx.style.needs_text_update(parent);
-                        break;
-                    }
-                }
+                // `text_invalidation_system` also rebuilds the paragraph a span belongs to.
+                cx.style.needs_text_update(entity);
             }
         }
 
@@ -1687,14 +1675,7 @@ pub(crate) fn style_system(cx: &mut Context) {
 
     for entity in to_link.iter().copied() {
         if let Some(rules) = matched_rules.get(&entity) {
-            link_style_data(
-                &mut cx.style,
-                &mut cx.cache,
-                &cx.tree,
-                entity,
-                &mut redraw_entities,
-                rules,
-            );
+            link_style_data(&mut cx.style, &mut cx.cache, entity, &mut redraw_entities, rules);
         }
     }
 

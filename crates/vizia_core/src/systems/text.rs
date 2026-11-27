@@ -614,6 +614,135 @@ mod tests {
     }
 
     #[test]
+    fn a_stylesheet_change_on_a_displayed_span_reflows_the_rich_label() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".big { font-size: 30px; }").unwrap();
+        let hidden = std::cell::Cell::new(Entity::null());
+        let own = std::cell::Cell::new(Entity::null());
+        let inner = std::cell::Cell::new(Entity::null());
+        // Spans are `display: none` by default; this one is not.
+        let control = Label::rich(&mut cx, "lead", |cx| {
+            hidden.set(TextSpan::new(cx, "span", |_| {}).entity());
+        })
+        .entity();
+        let displayed = Label::rich(&mut cx, "lead", |cx| {
+            own.set(TextSpan::new(cx, "span", |_| {}).display(Display::Flex).entity());
+        })
+        .entity();
+        // The outer span is displayed, so the inner one is nested below a displayed span.
+        let nested = Label::rich(&mut cx, "lead", |cx| {
+            TextSpan::new(cx, "outer", |cx| {
+                inner.set(TextSpan::new(cx, "inner", |_| {}).entity());
+            })
+            .display(Display::Flex);
+        })
+        .entity();
+        let mut backend = BackendContext::new(cx);
+        style_system(&mut backend.0);
+        text_system(&mut backend.0);
+
+        // A class that a stylesheet rule matches, added to a span after the first frame.
+        for span in [hidden.get(), own.get(), inner.get()] {
+            backend.0.style.set_class(&backend.0.tree, span, "big", true);
+        }
+        style_system(&mut backend.0);
+        text_system(&mut backend.0);
+
+        let stale = [
+            ("display: none span", control),
+            ("displayed span", displayed),
+            ("displayed outer span", nested),
+        ]
+        .into_iter()
+        .filter_map(|(name, label)| {
+            let sizes = paragraph_font_sizes(&mut backend.0, label);
+            (!sizes.contains(&30.0)).then(|| format!("{name}: {sizes:?}"))
+        })
+        .collect::<Vec<_>>();
+        assert!(stale.is_empty(), "labels whose runs are still at 16: {stale:?}");
+    }
+
+    #[test]
+    fn a_direction_change_on_a_displayed_span_queues_the_rich_label() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".rtl { direction: rtl; }").unwrap();
+        let hidden = std::cell::Cell::new(Entity::null());
+        let own = std::cell::Cell::new(Entity::null());
+        let inner = std::cell::Cell::new(Entity::null());
+        let control = Label::rich(&mut cx, "lead", |cx| {
+            hidden.set(TextSpan::new(cx, "span", |_| {}).entity());
+        })
+        .entity();
+        let displayed = Label::rich(&mut cx, "lead", |cx| {
+            own.set(TextSpan::new(cx, "span", |_| {}).display(Display::Flex).entity());
+        })
+        .entity();
+        let nested = Label::rich(&mut cx, "lead", |cx| {
+            TextSpan::new(cx, "outer", |cx| {
+                inner.set(TextSpan::new(cx, "inner", |_| {}).entity());
+            })
+            .display(Display::Flex);
+        })
+        .entity();
+        let mut backend = BackendContext::new(cx);
+        style_system(&mut backend.0);
+        text_system(&mut backend.0);
+
+        for span in [hidden.get(), own.get(), inner.get()] {
+            backend.0.style.set_class(&backend.0.tree, span, "rtl", true);
+        }
+        style_system(&mut backend.0);
+        // `text_system` runs the walk itself; this one only exposes the set before it is consumed.
+        text_invalidation_system(&mut backend.0);
+
+        let missed = [
+            ("display: none span", control),
+            ("displayed span", displayed),
+            ("displayed outer span", nested),
+        ]
+        .into_iter()
+        .filter_map(|(name, label)| {
+            (!backend.0.style.text_construction.contains(&label)).then_some(name)
+        })
+        .collect::<Vec<_>>();
+        assert!(
+            missed.is_empty(),
+            "labels not queued after a span's direction changed: {missed:?}"
+        );
+
+        // The displayed span builds a paragraph of its own, which now starts on the right.
+        text_system(&mut backend.0);
+        let paragraph =
+            backend.0.text_context.text_paragraphs.get_mut(own.get()).expect("paragraph is built");
+        paragraph.layout(400.0);
+        assert!(paragraph.get_line_metrics()[0].left > 0.0);
+    }
+
+    #[test]
+    fn a_stylesheet_change_on_a_hidden_view_only_queues_its_own_subtree() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".big { font-size: 30px; }").unwrap();
+        let hidden = std::cell::Cell::new(Entity::null());
+        let sibling = std::cell::Cell::new(Entity::null());
+        let container = VStack::new(&mut cx, |cx| {
+            hidden.set(Label::new(cx, "hidden").display(Display::None).entity());
+            sibling.set(Label::new(cx, "sibling").entity());
+        })
+        .entity();
+        let mut backend = BackendContext::new(cx);
+        style_system(&mut backend.0);
+        text_system(&mut backend.0);
+        backend.0.style.set_class(&backend.0.tree, hidden.get(), "big", true);
+        style_system(&mut backend.0);
+        // `text_system` runs the walk itself; this one only exposes the set before it is consumed.
+        text_invalidation_system(&mut backend.0);
+        assert!(backend.0.style.text_construction.contains(&hidden.get()));
+        // Only spans are shaped into another entity's paragraph.
+        assert!(!backend.0.style.text_construction.contains(&container));
+        assert!(!backend.0.style.text_construction.contains(&sibling.get()));
+    }
+
+    #[test]
     fn animated_span_font_size_reaches_the_enclosing_rich_paragraph() {
         let mut cx = Context::default();
         let hidden = std::cell::Cell::new(Entity::null());
