@@ -42,6 +42,7 @@ depends on the property.
 | Standard CSS | Vizia |
 | --- | --- |
 | Colors and alpha | Vizia stores colors in 8-bit RGBA components; alpha values are clamped and rounded to the nearest byte, so they may lose precision compared with CSS color values. |
+| `opacity` percentages | Percentage values use the same scale as numbers, so `50%` equals `0.5`, including supported variables and fallbacks. Previously, directly specified percentages were interpreted as numbers such as `50`, so existing percentage opacity declarations may change appearance. |
 | `border-width` and border shorthands | Accept unitless zero, including per-side widths and mixed `border-width` values. They use Vizia's existing border styling behavior. |
 | `border-radius` and `border-top-left-radius`, etc. | These alias `corner-radius` and the corresponding `corner-*-radius` properties and accept unitless zero. A single `var()` can supply one value; multi-value substitution and elliptical radii are not supported. |
 | `box-shadow` | An alias for `shadow`. Supports `none`, unitless zero, color and `inset` before or after lengths, and comma-separated shadows. Vizia also accepts some nonstandard orderings and negative blur radii. Length resolution and animation behavior are not fully equivalent to browser CSS; transitions between `none` and shadows with omitted color or `currentColor` are discrete. |

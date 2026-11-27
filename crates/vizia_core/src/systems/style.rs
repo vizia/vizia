@@ -2450,6 +2450,40 @@ mod tests {
     }
 
     #[test]
+    fn opacity_percentages_match_numbers_variables_and_keyframes() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".direct { opacity: 50%; }
+             .number { opacity: 0.5; }
+             .variable { --opacity: 50%; opacity: var(--opacity); }
+             .fallback { opacity: var(--missing, 50%); }
+             @keyframes fade-percent {
+                 from { opacity: 0%; }
+                 to { opacity: 50%; }
+             }",
+        )
+        .unwrap();
+        let entities: Vec<_> = ["direct", "number", "variable", "fallback"]
+            .into_iter()
+            .map(|class| Element::new(&mut cx).class(class).entity())
+            .collect();
+        style_system(&mut cx);
+
+        for entity in entities {
+            assert_eq!(
+                cx.style.opacity.get_resolved(entity, &cx.style.custom_opacity_props),
+                Some(Opacity(0.5))
+            );
+        }
+        let animation = *cx.style.get_animation("fade-percent").unwrap();
+        let frames = &cx.style.opacity.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(
+            frames.iter().map(|frame| frame.value).collect::<Vec<_>>(),
+            vec![Opacity(0.0), Opacity(0.5)]
+        );
+    }
+
+    #[test]
     fn background_repeat_axis_pairs_apply_to_stylesheets() {
         use vizia_style::BackgroundRepeat;
 

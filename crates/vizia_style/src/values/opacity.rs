@@ -42,7 +42,7 @@ impl From<f64> for Opacity {
 
 impl From<Percentage> for Opacity {
     fn from(percentage: Percentage) -> Self {
-        Opacity(percentage.0)
+        Opacity(percentage.0 / 100.0)
     }
 }
 
@@ -64,8 +64,15 @@ mod tests {
             Opacity,
         }
 
-        percentage {
-            Opacity,
+        custom {
+            success {
+                "0%" => Opacity(0.0),
+                "12.5%" => Opacity(0.125),
+                "50%" => Opacity(0.5),
+                "100%" => Opacity(1.0),
+                "150%" => Opacity(1.5),
+                "-25%" => Opacity(-0.25),
+            }
         }
     }
 }

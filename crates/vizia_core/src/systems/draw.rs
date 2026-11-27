@@ -2000,6 +2000,21 @@ mod tests {
         )
     }
 
+    #[test]
+    fn renderer_opacity_percentage_composites_at_half_opacity() {
+        let mut cx = Context::new();
+        cx.add_stylesheet(".half { opacity: 50%; }").unwrap();
+        let rect = renderer_rect(&mut cx, 0.0, 16.0, Color::red());
+        cx.style.set_class(&cx.tree, rect, "half", true);
+        let mut backend = renderer_backend(cx);
+        let (mut surface, mut dirty) = renderer_surfaces();
+        assert!(backend.draw(Entity::root(), &mut surface, &mut dirty));
+        assert_eq!(
+            surface.peek_pixels().unwrap().get_color((4, 8)),
+            skia_safe::Color::from_argb(128, 255, 0, 0)
+        );
+    }
+
     // Raised overlapping descendants composite once inside each nested opacity group.
     #[test]
     fn renderer_group_opacity_composites_raised_overlap_once() {
