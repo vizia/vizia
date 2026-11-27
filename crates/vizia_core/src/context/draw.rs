@@ -1411,23 +1411,112 @@ impl DrawContext<'_> {
             if values.is_empty() { None } else { values.get(index % values.len()) }
         }
 
-        fn draw_gradient_layer(
+        fn image_size(
+            size: Option<&BackgroundSize>,
+            bounds: BoundingBox,
+            scale: f32,
+            intrinsic_width: Option<f32>,
+            intrinsic_height: Option<f32>,
+            ratio: Option<f32>,
+        ) -> (f32, f32) {
+            let fit = |cover: bool| match ratio {
+                Some(ratio) if (ratio > bounds.w / bounds.h) != cover => {
+                    (bounds.w, bounds.w / ratio)
+                }
+                Some(ratio) => (bounds.h * ratio, bounds.h),
+                None => (bounds.w, bounds.h),
+            };
+            match size {
+                Some(BackgroundSize::Contain) => fit(false),
+                Some(BackgroundSize::Cover) => fit(true),
+                explicit => {
+                    let dimension = |value: &LengthPercentageOrAuto, available| match value {
+                        LengthPercentageOrAuto::LengthPercentage(length) => {
+                            Some(length.to_pixels(available, scale))
+                        }
+                        LengthPercentageOrAuto::Auto => None,
+                    };
+                    let (width, height) = match explicit {
+                        Some(BackgroundSize::Explicit { width, height }) => {
+                            (dimension(width, bounds.w), dimension(height, bounds.h))
+                        }
+                        _ => (None, None),
+                    };
+                    match (width, height) {
+                        (Some(width), Some(height)) => (width, height),
+                        (Some(width), None) => (
+                            width,
+                            ratio
+                                .map(|ratio| width / ratio)
+                                .or(intrinsic_height)
+                                .unwrap_or(bounds.h),
+                        ),
+                        (None, Some(height)) => (
+                            ratio
+                                .map(|ratio| height * ratio)
+                                .or(intrinsic_width)
+                                .unwrap_or(bounds.w),
+                            height,
+                        ),
+                        (None, None) => match (intrinsic_width, intrinsic_height, ratio) {
+                            (Some(width), Some(height), _) => (width, height),
+                            (Some(width), None, Some(ratio)) => (width, width / ratio),
+                            (None, Some(height), Some(ratio)) => (height * ratio, height),
+                            (Some(width), None, None) => (width, bounds.h),
+                            (None, Some(height), None) => (bounds.w, height),
+                            (None, None, Some(_)) => fit(false),
+                            (None, None, None) => (bounds.w, bounds.h),
+                        },
+                    }
+                }
+            }
+        }
+
+        fn svg_intrinsic_dimension(length: skia_safe::svg::Length, scale: f32) -> Option<f32> {
+            use skia_safe::svg::LengthUnit;
+            let factor = match length.unit {
+                LengthUnit::Number | LengthUnit::PX => 1.0,
+                LengthUnit::IN => 96.0,
+                LengthUnit::CM => 96.0 / 2.54,
+                LengthUnit::MM => 96.0 / 25.4,
+                LengthUnit::PT => 96.0 / 72.0,
+                LengthUnit::PC => 16.0,
+                _ => return None,
+            };
+            Some(length.value * factor * scale)
+        }
+
+        fn repeat_axes(repeat: BackgroundRepeat) -> (bool, bool) {
+            (
+                matches!(repeat, BackgroundRepeat::Repeat | BackgroundRepeat::RepeatX),
+                matches!(repeat, BackgroundRepeat::Repeat | BackgroundRepeat::RepeatY),
+            )
+        }
+
+        fn needs_background_tiles(
+            view: BoundingBox,
+            tile: BoundingBox,
+            repeat: BackgroundRepeat,
+        ) -> bool {
+            let (repeat_x, repeat_y) = repeat_axes(repeat);
+            (repeat_x && (tile.left() > view.left() || tile.right() < view.right()))
+                || (repeat_y && (tile.top() > view.top() || tile.bottom() < view.bottom()))
+        }
+
+        fn draw_background_layer(
             canvas: &Canvas,
             rrect: RRect,
             view: BoundingBox,
             tile: BoundingBox,
             repeat: BackgroundRepeat,
             mut paint: Paint,
+            already_tiled: bool,
         ) {
-            let repeat_x = matches!(repeat, BackgroundRepeat::Repeat | BackgroundRepeat::RepeatX);
-            let repeat_y = matches!(repeat, BackgroundRepeat::Repeat | BackgroundRepeat::RepeatY);
-            let needs_tiles = (repeat_x
-                && (tile.left() > view.left() || tile.right() < view.right()))
-                || (repeat_y && (tile.top() > view.top() || tile.bottom() < view.bottom()));
+            let (repeat_x, repeat_y) = repeat_axes(repeat);
             let clip_x = !repeat_x && (tile.left() > view.left() || tile.right() < view.right());
             let clip_y = !repeat_y && (tile.top() > view.top() || tile.bottom() < view.bottom());
 
-            if needs_tiles {
+            if needs_background_tiles(view, tile, repeat) && !already_tiled {
                 // Tile the gradient as an image; clipping below restricts non-repeating axes.
                 let tile_rect = Rect::new(tile.left(), tile.top(), tile.right(), tile.bottom());
                 let mut recorder = PictureRecorder::new();
@@ -1652,13 +1741,14 @@ impl DrawContext<'_> {
                                 paint.set_shader(shader);
                                 paint.set_anti_alias(true);
 
-                                draw_gradient_layer(
+                                draw_background_layer(
                                     canvas,
                                     rrect,
                                     view_bounds,
                                     bounds,
                                     repeat,
                                     paint,
+                                    false,
                                 );
                             }
 
@@ -1725,13 +1815,14 @@ impl DrawContext<'_> {
                                 paint.set_shader(shader);
                                 paint.set_anti_alias(true);
 
-                                draw_gradient_layer(
+                                draw_background_layer(
                                     canvas,
                                     rrect,
                                     view_bounds,
                                     bounds,
                                     repeat,
                                     paint,
+                                    false,
                                 );
                             }
 
@@ -1749,80 +1840,14 @@ impl DrawContext<'_> {
                                         if image_width <= 0 || image_height <= 0 {
                                             continue;
                                         }
-                                        let background_size = layer_value(&image_sizes, index);
-                                        let (width, height) = if let Some(background_size) =
-                                            background_size
-                                        {
-                                            match background_size {
-                                                BackgroundSize::Explicit { width, height } => {
-                                                    let w = match width {
-                                                        LengthPercentageOrAuto::LengthPercentage(
-                                                            length,
-                                                        ) => Some(length.to_pixels(
-                                                            bounds.w,
-                                                            self.scale_factor(),
-                                                        )),
-                                                        LengthPercentageOrAuto::Auto => None,
-                                                    };
-                                                    let h = match height {
-                                                        LengthPercentageOrAuto::LengthPercentage(
-                                                            length,
-                                                        ) => Some(length.to_pixels(
-                                                            bounds.h,
-                                                            self.scale_factor(),
-                                                        )),
-                                                        LengthPercentageOrAuto::Auto => None,
-                                                    };
-                                                    match (w, h) {
-                                                        (Some(w), Some(h)) => (w, h),
-                                                        (Some(w), None) => (
-                                                            w,
-                                                            w * image_height as f32
-                                                                / image_width as f32,
-                                                        ),
-                                                        (None, Some(h)) => (
-                                                            h * image_width as f32
-                                                                / image_height as f32,
-                                                            h,
-                                                        ),
-                                                        (None, None) => (
-                                                            image_width as f32,
-                                                            image_height as f32,
-                                                        ),
-                                                    }
-                                                }
-
-                                                BackgroundSize::Contain => {
-                                                    let image_ratio =
-                                                        image_width as f32 / image_height as f32;
-                                                    let container_ratio = bounds.w / bounds.h;
-
-                                                    let (w, h) = if image_ratio > container_ratio {
-                                                        (bounds.w, bounds.w / image_ratio)
-                                                    } else {
-                                                        (bounds.h * image_ratio, bounds.h)
-                                                    };
-
-                                                    (w, h)
-                                                }
-
-                                                BackgroundSize::Cover => {
-                                                    let image_ratio =
-                                                        image_width as f32 / image_height as f32;
-                                                    let container_ratio = bounds.w / bounds.h;
-
-                                                    let (w, h) = if image_ratio < container_ratio {
-                                                        (bounds.w, bounds.w / image_ratio)
-                                                    } else {
-                                                        (bounds.h * image_ratio, bounds.h)
-                                                    };
-
-                                                    (w, h)
-                                                }
-                                            }
-                                        } else {
-                                            (image_width as f32, image_height as f32)
-                                        };
+                                        let (width, height) = image_size(
+                                            layer_value(&image_sizes, index),
+                                            bounds,
+                                            self.scale_factor(),
+                                            Some(image_width as f32),
+                                            Some(image_height as f32),
+                                            Some(image_width as f32 / image_height as f32),
+                                        );
 
                                         let position = layer_value(&image_positions, index)
                                             .cloned()
@@ -1963,23 +1988,124 @@ impl DrawContext<'_> {
                                     }
 
                                     ImageOrSvg::Svg(svg) => {
-                                        canvas.save_layer(&SaveLayerRec::default());
-                                        canvas.translate((bounds.x, bounds.y));
-                                        let (scale_x, scale_y) = (
-                                            bounds.width() / svg.inner().fContainerSize.fWidth,
-                                            bounds.height() / svg.inner().fContainerSize.fHeight,
-                                        );
-
-                                        if scale_x.is_finite() && scale_y.is_finite() {
-                                            canvas.scale((scale_x, scale_y));
-                                        } else {
-                                            svg.clone().set_container_size((
-                                                bounds.width(),
-                                                bounds.height(),
-                                            ));
+                                        let mut root = svg.root();
+                                        let original_width = *root.width();
+                                        let original_height = *root.height();
+                                        let scale = self.scale_factor();
+                                        let intrinsic_width =
+                                            svg_intrinsic_dimension(original_width, scale);
+                                        let intrinsic_height =
+                                            svg_intrinsic_dimension(original_height, scale);
+                                        let viewbox = root.view_box().copied();
+                                        if viewbox.is_none()
+                                            && (intrinsic_width.is_some_and(|w| w <= 0.0)
+                                                || intrinsic_height.is_some_and(|h| h <= 0.0))
+                                        {
+                                            continue;
                                         }
+                                        let ratio = match (intrinsic_width, intrinsic_height) {
+                                            (Some(w), Some(h)) if w > 0.0 && h > 0.0 => Some(w / h),
+                                            _ => viewbox.and_then(|rect| {
+                                                if rect.width() > 0.0 && rect.height() > 0.0 {
+                                                    Some(rect.width() / rect.height())
+                                                } else {
+                                                    None
+                                                }
+                                            }),
+                                        };
+                                        let (width, height) = image_size(
+                                            layer_value(&image_sizes, index),
+                                            bounds,
+                                            scale,
+                                            intrinsic_width,
+                                            intrinsic_height,
+                                            ratio,
+                                        );
+                                        if width <= 0.0
+                                            || height <= 0.0
+                                            || !width.is_finite()
+                                            || !height.is_finite()
+                                        {
+                                            continue;
+                                        }
+                                        let position = layer_value(&image_positions, index)
+                                            .cloned()
+                                            .unwrap_or_default();
+                                        let tile = BoundingBox {
+                                            x: bounds.x
+                                                + position
+                                                    .x
+                                                    .to_length_or_percentage()
+                                                    .to_pixels(bounds.w - width, scale),
+                                            y: bounds.y
+                                                + position
+                                                    .y
+                                                    .to_length_or_percentage()
+                                                    .to_pixels(bounds.h - height, scale),
+                                            w: width,
+                                            h: height,
+                                        };
+                                        let repeat = layer_value(&image_repeats, index)
+                                            .copied()
+                                            .unwrap_or(BackgroundRepeat::Repeat);
+                                        // A local tile origin preserves transparent margins in Skia's picture shader.
+                                        let tile_rect = Rect::new(0.0, 0.0, width, height);
+                                        let mut recorder = PictureRecorder::new();
+                                        let tile_canvas =
+                                            recorder.begin_recording(tile_rect, false);
+                                        tile_canvas.clip_rect(tile_rect, ClipOp::Intersect, true);
+                                        tile_canvas.save_layer(&SaveLayerRec::default());
 
-                                        svg.render(canvas);
+                                        // DOM clones share the root and container, so restore both after recording.
+                                        let mut svg = svg.clone();
+                                        let original_container = svg.inner().fContainerSize;
+                                        if viewbox.is_some() {
+                                            root.set_width(skia_safe::svg::Length::new(
+                                                width / scale,
+                                                skia_safe::svg::LengthUnit::PX,
+                                            ));
+                                            root.set_height(skia_safe::svg::Length::new(
+                                                height / scale,
+                                                skia_safe::svg::LengthUnit::PX,
+                                            ));
+                                            svg.set_container_size((width / scale, height / scale));
+                                            tile_canvas.scale((scale, scale));
+                                        } else {
+                                            if intrinsic_width.is_none() {
+                                                root.set_width(skia_safe::svg::Length::new(
+                                                    width / scale,
+                                                    skia_safe::svg::LengthUnit::PX,
+                                                ));
+                                            }
+                                            if intrinsic_height.is_none() {
+                                                root.set_height(skia_safe::svg::Length::new(
+                                                    height / scale,
+                                                    skia_safe::svg::LengthUnit::PX,
+                                                ));
+                                            }
+                                            let svg_size = root.intrinsic_size();
+                                            let svg_width = svg_size.width;
+                                            let svg_height = svg_size.height;
+                                            if svg_width <= 0.0
+                                                || svg_height <= 0.0
+                                                || !svg_width.is_finite()
+                                                || !svg_height.is_finite()
+                                            {
+                                                root.set_width(original_width);
+                                                root.set_height(original_height);
+                                                continue;
+                                            }
+                                            svg.set_container_size((svg_width, svg_height));
+                                            tile_canvas
+                                                .scale((width / svg_width, height / svg_height));
+                                        }
+                                        svg.render(tile_canvas);
+                                        root.set_width(original_width);
+                                        root.set_height(original_height);
+                                        svg.set_container_size((
+                                            original_container.fWidth,
+                                            original_container.fHeight,
+                                        ));
 
                                         if let Some(color) = self.style.fill.get_resolved(
                                             self.current,
@@ -1999,10 +2125,32 @@ impl DrawContext<'_> {
                                                 paint.set_anti_alias(true);
                                                 paint.set_blend_mode(skia_safe::BlendMode::SrcIn);
                                                 paint.set_color(color);
-                                                canvas.draw_paint(&paint);
+                                                tile_canvas.draw_paint(&paint);
                                             }
                                         }
-                                        canvas.restore();
+                                        tile_canvas.restore();
+                                        let picture = recorder
+                                            .finish_recording_as_picture(None)
+                                            .expect("SVG tile recording must produce a picture");
+                                        if !needs_background_tiles(bounds, tile, repeat) {
+                                            canvas.save();
+                                            canvas.clip_rrect(rrect, ClipOp::Intersect, true);
+                                            canvas.translate((tile.x, tile.y));
+                                            canvas.draw_picture(&picture, None, None);
+                                            canvas.restore();
+                                            continue;
+                                        }
+                                        let mut paint = Paint::default();
+                                        paint.set_anti_alias(true);
+                                        paint.set_shader(picture.to_shader(
+                                            (TileMode::Repeat, TileMode::Repeat),
+                                            FilterMode::Linear,
+                                            &Matrix::translate((tile.x, tile.y)),
+                                            &tile_rect,
+                                        ));
+                                        draw_background_layer(
+                                            canvas, rrect, bounds, tile, repeat, paint, true,
+                                        );
                                     }
                                 }
                             }

@@ -1150,9 +1150,31 @@ mod tests {
         css: &str,
         image_size: Option<(i32, i32)>,
     ) -> impl Fn(usize, usize) -> [u8; 4] {
+        paint_probe_with_assets(css, image_size, None, 1.0)
+    }
+
+    fn paint_probe_with_assets(
+        css: &str,
+        image_size: Option<(i32, i32)>,
+        svg: Option<&str>,
+        scale: f64,
+    ) -> impl Fn(usize, usize) -> [u8; 4] {
+        use skia_safe::wrapper::PointerWrapper;
         use skia_safe::{AlphaType, ColorType, ImageInfo};
 
+        fn svg_state(cx: &Context) -> (skia_safe::svg::Length, skia_safe::svg::Length, (f32, f32)) {
+            let id = cx.resource_manager.image_ids.get("image.svg").unwrap();
+            let crate::resource::ImageOrSvg::Svg(svg) = &cx.resource_manager.images[id].image
+            else {
+                panic!("expected an SVG");
+            };
+            let root = svg.root();
+            let size = svg.inner().fContainerSize;
+            (*root.width(), *root.height(), (size.fWidth, size.fHeight))
+        }
+
         let mut cx = Context::default();
+        cx.style.dpi_factor = scale;
         if let Some(size) = image_size {
             for (name, color) in
                 [("image.png", skia_safe::Color::RED), ("blue.png", skia_safe::Color::BLUE)]
@@ -1166,6 +1188,18 @@ mod tests {
                 );
             }
         }
+        if let Some(svg) = svg {
+            assert!(
+                crate::context::ResourceContext::new(&mut cx)
+                    .load_svg(
+                        "image.svg".into(),
+                        svg.as_bytes(),
+                        crate::resource::ImageRetentionPolicy::Forever,
+                    )
+                    .is_some()
+            );
+        }
+        let original_svg_state = svg.map(|_| svg_state(&cx));
         cx.add_stylesheet(crate::util::CSS::from_string(css)).unwrap();
         let parent = Element::new(&mut cx).class("parent").entity();
         let probe = cx.with_current(parent, |cx| Element::new(cx).class("probe").entity());
@@ -1189,6 +1223,9 @@ mod tests {
         };
         draw_cx.draw_shadows(surface.canvas());
         draw_cx.draw_background(surface.canvas());
+        if let Some(original) = original_svg_state {
+            assert_eq!(svg_state(&cx), original);
+        }
 
         let mut pixels = vec![0u8; 60 * 40 * 4];
         assert!(surface.read_pixels(&info, &mut pixels, 60 * 4, (0, 0)));
@@ -1196,6 +1233,195 @@ mod tests {
             let i = (y * 60 + x) * 4;
             [pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]]
         }
+    }
+
+    const TEST_SVG: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" width="4" height="2" viewBox="0 0 4 2" preserveAspectRatio="none"><rect width="4" height="2" fill="#ff0000"/></svg>"##;
+    const VIEWBOX_SVG: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 2"><rect width="4" height="2" fill="#ff0000"/></svg>"##;
+
+    #[test]
+    fn svg_background_size_and_position() {
+        for (size, position, inside, outside) in [
+            ("auto auto", "left top", (13, 11), (14, 11)),
+            ("8px auto", "left top", (17, 13), (18, 13)),
+            ("auto 8px", "right bottom", (14, 22), (13, 22)),
+            ("contain", "left top", (29, 19), (29, 20)),
+            ("cover", "center", (10, 29), (30, 29)),
+            ("0 5px", "left top", (10, 10), (29, 29)),
+        ] {
+            let css =
+                format!(".probe {{ background: url(image.svg) {position} / {size} no-repeat; }}");
+            let pixel = paint_probe_with_assets(&css, None, Some(TEST_SVG), 1.0);
+            assert_eq!(
+                pixel(inside.0, inside.1),
+                if size == "0 5px" { [0, 0, 0, 0] } else { RED },
+                "{css}"
+            );
+            assert_eq!(pixel(outside.0, outside.1), [0, 0, 0, 0], "{css}");
+        }
+        let pixel = paint_probe_with_assets(
+            ".probe { background: url(image.svg) left top / auto auto no-repeat; }",
+            None,
+            Some(TEST_SVG),
+            2.0,
+        );
+        assert_eq!(pixel(17, 13), RED);
+        assert_eq!(pixel(18, 13), [0, 0, 0, 0]);
+
+        let pixel = paint_probe_with_assets(
+            ".probe { background: url(image.svg) left top / auto auto no-repeat; }",
+            None,
+            Some(VIEWBOX_SVG),
+            1.0,
+        );
+        assert_eq!(pixel(29, 19), RED);
+        assert_eq!(pixel(29, 20), [0, 0, 0, 0]);
+
+        let pixel = paint_probe_with_assets(
+            ".probe { background: url(image.svg) left top / 8px 8px no-repeat; }",
+            None,
+            Some(VIEWBOX_SVG),
+            1.0,
+        );
+        assert_eq!(pixel(11, 11), [0, 0, 0, 0]);
+        assert_eq!(pixel(11, 12), RED);
+        assert_eq!(pixel(11, 15), RED);
+        assert_eq!(pixel(11, 16), [0, 0, 0, 0]);
+
+        let fixed_no_viewbox = r##"<svg xmlns="http://www.w3.org/2000/svg" width="4" height="2"><rect width="4" height="2" fill="#ff0000"/></svg>"##;
+        let pixel = paint_probe_with_assets(
+            ".probe { background: url(image.svg) left top / 8px 8px no-repeat; }",
+            None,
+            Some(fixed_no_viewbox),
+            1.0,
+        );
+        assert_eq!(pixel(11, 11), RED);
+        assert_eq!(pixel(17, 17), RED);
+        assert_eq!(pixel(18, 17), [0, 0, 0, 0]);
+
+        let width_only = r##"<svg xmlns="http://www.w3.org/2000/svg" width="4" viewBox="0 0 4 2"><rect width="4" height="2" fill="#ff0000"/></svg>"##;
+        let pixel = paint_probe_with_assets(
+            ".probe { background: url(image.svg) left top / auto auto no-repeat; }",
+            None,
+            Some(width_only),
+            1.0,
+        );
+        assert_eq!(pixel(13, 11), RED);
+        assert_eq!(pixel(14, 11), [0, 0, 0, 0]);
+
+        let no_size = r##"<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#ff0000"/></svg>"##;
+        let pixel = paint_probe_with_assets(
+            ".probe { background: url(image.svg) left top / auto auto no-repeat; }",
+            None,
+            Some(no_size),
+            1.0,
+        );
+        assert_eq!(pixel(29, 29), RED);
+
+        let percent_size = r##"<svg xmlns="http://www.w3.org/2000/svg" width="50%" height="50%"><rect width="100%" height="100%" fill="#ff0000"/></svg>"##;
+        let pixel = paint_probe_with_assets(
+            ".probe { background: url(image.svg) left top / 8px 8px no-repeat; }",
+            None,
+            Some(percent_size),
+            1.0,
+        );
+        assert_eq!(pixel(17, 17), RED);
+
+        let width_only_no_ratio = r##"<svg xmlns="http://www.w3.org/2000/svg" width="4"><rect width="100%" height="100%" fill="#ff0000"/></svg>"##;
+        let pixel = paint_probe_with_assets(
+            ".probe { background: url(image.svg) left top / auto auto no-repeat; }",
+            None,
+            Some(width_only_no_ratio),
+            1.0,
+        );
+        assert_eq!(pixel(13, 29), RED);
+        assert_eq!(pixel(14, 29), [0, 0, 0, 0]);
+
+        let absolute_units = r##"<svg xmlns="http://www.w3.org/2000/svg" width="3pt" height="1.5pt"><rect width="100%" height="100%" fill="#ff0000"/></svg>"##;
+        let pixel = paint_probe_with_assets(
+            ".probe { background: url(image.svg) left top / auto auto no-repeat; }",
+            None,
+            Some(absolute_units),
+            1.0,
+        );
+        assert_eq!(pixel(13, 11), RED);
+        assert_eq!(pixel(14, 11), [0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn svg_background_repeat_layers_and_tint() {
+        for (repeat, inside, outside) in [
+            ("no-repeat", (14, 14), (11, 14)),
+            ("repeat-x", (11, 14), (11, 11)),
+            ("repeat-y", (14, 11), (11, 11)),
+            ("repeat", (11, 11), (30, 11)),
+        ] {
+            let css = format!(
+                ".probe {{ background-image: none, none, url(image.svg);
+                 background-position: 4px 4px, right bottom; background-size: 4px 4px, 0 0;
+                 background-repeat: {repeat}, no-repeat; }}"
+            );
+            let pixel = paint_probe_with_assets(&css, None, Some(TEST_SVG), 1.0);
+            assert_eq!(pixel(inside.0, inside.1), RED, "{css}");
+            assert_eq!(pixel(outside.0, outside.1), [0, 0, 0, 0], "{css}");
+        }
+
+        for (fill, expected) in [("blue", [0, 0, 255, 255]), ("transparent", RED)] {
+            let css = format!(
+                ".probe {{ fill: {fill}; background-color: lime; background-image: url(image.svg);
+                 background-size: 4px 4px; background-repeat: repeat-x; }}"
+            );
+            let pixel = paint_probe_with_assets(&css, None, Some(TEST_SVG), 1.0);
+            assert_eq!(pixel(11, 11), expected, "{css}");
+            assert_eq!(pixel(19, 11), expected, "{css}");
+            assert_eq!(pixel(11, 20), [0, 255, 0, 255], "{css}");
+        }
+
+        let pixel = paint_probe_with_assets(
+            ".probe { background-image: url(image.svg);
+             background-position: 0.25px 0.25px; background-size: 2.5px 3.5px; background-repeat: repeat; }",
+            None,
+            Some(TEST_SVG),
+            1.0,
+        );
+        for y in 10..30 {
+            for x in 10..30 {
+                assert_eq!(pixel(x, y), RED, "at ({x}, {y})");
+            }
+        }
+
+        let pixel = paint_probe_with_assets(
+            ".probe { background-image: url(image.svg), url(image.svg);
+             background-position: left top, right bottom; background-size: auto auto, 8px 4px;
+             background-repeat: no-repeat; }",
+            None,
+            Some(TEST_SVG),
+            1.0,
+        );
+        assert_eq!(pixel(13, 11), RED);
+        assert_eq!(pixel(14, 11), [0, 0, 0, 0]);
+        assert_eq!(pixel(29, 29), RED);
+        assert_eq!(pixel(20, 20), [0, 0, 0, 0]);
+
+        let pixel = paint_probe_with_assets(
+            ".probe { fill: blue; background-color: lime; background-image: url(image.svg);
+             background-size: 8px 8px; background-repeat: repeat; }",
+            None,
+            Some(VIEWBOX_SVG),
+            1.0,
+        );
+        assert_eq!(pixel(11, 11), [0, 255, 0, 255]);
+        assert_eq!(pixel(11, 12), [0, 0, 255, 255]);
+        assert_eq!(pixel(19, 20), [0, 0, 255, 255]);
+        assert_eq!(pixel(19, 24), [0, 255, 0, 255]);
+
+        let pixel = paint_probe_with_assets(
+            ".probe { corner-radius: 6px; background: url(image.svg) left top / 4px 2px repeat; }",
+            None,
+            Some(TEST_SVG),
+            1.0,
+        );
+        assert_eq!(pixel(10, 10), [0, 0, 0, 0]);
+        assert_eq!(pixel(15, 15), RED);
     }
 
     #[test]
