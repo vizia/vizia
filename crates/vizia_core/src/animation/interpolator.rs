@@ -96,11 +96,8 @@ impl Interpolator for Filter {
 
 impl Interpolator for LengthValue {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        match (end, start) {
-            (LengthValue::Px(end_val), LengthValue::Px(start_val)) => {
-                LengthValue::Px(f32::interpolate(start_val, end_val, t))
-            }
-
+        match (start.to_px(), end.to_px()) {
+            (Some(start), Some(end)) => LengthValue::Px(f32::interpolate(&start, &end, t)),
             _ => LengthValue::default(),
         }
     }
@@ -553,5 +550,42 @@ mod tests {
         let current = vec![Shadow { color: None, ..shadow }];
         assert!(Vec::<Shadow>::interpolate(&empty, &current, 0.25).is_empty());
         assert_eq!(Vec::<Shadow>::interpolate(&empty, &current, 0.75), current);
+    }
+
+    #[test]
+    fn absolute_length_shadow_transitions_interpolate_in_pixels() {
+        let visible = vec![Shadow::new(
+            Length::Value(LengthValue::Pt(15.0)),
+            Length::Value(LengthValue::Pc(1.0)),
+            Some(Length::Value(LengthValue::Pt(6.0))),
+            Some(Length::Value(LengthValue::In(0.25))),
+            Some(Color::rgb(255, 0, 0)),
+            false,
+        )];
+        let empty = vec![];
+        for result in [
+            Vec::<Shadow>::interpolate(&empty, &visible, 0.5),
+            Vec::<Shadow>::interpolate(&visible, &empty, 0.5),
+        ] {
+            assert_eq!(result[0].x_offset, Length::px(10.0));
+            assert_eq!(result[0].y_offset, Length::px(8.0));
+            assert_eq!(result[0].blur_radius, Some(Length::px(4.0)));
+            assert_eq!(result[0].spread_radius, Some(Length::px(12.0)));
+            assert_eq!(result[0].color, Some(Color::rgba(255, 0, 0, 127)));
+        }
+
+        for end in [
+            LengthValue::In(1.0),
+            LengthValue::Cm(2.54),
+            LengthValue::Mm(25.4),
+            LengthValue::Q(101.6),
+            LengthValue::Pt(72.0),
+            LengthValue::Pc(6.0),
+        ] {
+            let middle = LengthValue::interpolate(&LengthValue::Px(32.0), &end, 0.5);
+            assert!((middle.to_px().unwrap() - 64.0).abs() < 0.0001, "{end:?}");
+            let reverse = LengthValue::interpolate(&end, &LengthValue::Px(32.0), 0.25);
+            assert!((reverse.to_px().unwrap() - 80.0).abs() < 0.0001, "{end:?}");
+        }
     }
 }
