@@ -3536,6 +3536,23 @@ mod tests {
     }
 
     #[test]
+    fn inherited_absolute_font_weight_uses_cached_value() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".bold { font-weight: 700; }").unwrap();
+        let mut child = Entity::null();
+        let parent = VStack::new(&mut cx, |cx| {
+            child = Element::new(cx).entity();
+        })
+        .class("bold")
+        .entity();
+        style_system(&mut cx);
+
+        assert!(cx.style.font_weight.is_inherited(child));
+        cx.style.font_weight.remove(parent);
+        assert_eq!(cx.style.resolved_font_weight(&cx.tree, child), Some(FontWeight(700)));
+    }
+
+    #[test]
     fn relative_font_weight_uses_css_weight_ranges() {
         let mut cx = Context::default();
         cx.add_stylesheet(".bolder { font-weight: bolder; } .lighter { font-weight: lighter; }")

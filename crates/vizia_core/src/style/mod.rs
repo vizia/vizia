@@ -501,13 +501,14 @@ impl Style {
         let mut current = entity;
         let mut relative = Vec::new();
         let base = loop {
-            // Apply inherited relative values only at their defining ancestor.
-            if !self.font_weight.is_inherited(current) {
-                match self.font_weight.get(current) {
-                    Some(SpecifiedFontWeight::Absolute(weight)) => break Some(*weight),
-                    Some(SpecifiedFontWeight::Relative(weight)) => relative.push(*weight),
-                    None => {}
+            match self.font_weight.get(current) {
+                Some(SpecifiedFontWeight::Absolute(weight)) => break Some(*weight),
+                Some(SpecifiedFontWeight::Relative(weight))
+                    if !self.font_weight.is_inherited(current) =>
+                {
+                    relative.push(*weight);
                 }
+                _ => {}
             }
             match tree.get_layout_parent(current) {
                 Some(parent) => current = parent,
