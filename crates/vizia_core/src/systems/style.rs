@@ -2604,6 +2604,58 @@ mod tests {
     }
 
     #[test]
+    fn letter_spacing_unitless_zero_applies_to_stylesheets_and_variables() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".direct { letter-spacing: 4px; letter-spacing: -0; }
+             .variables { --zero: 0; --mixed: 0 1; }
+             .variable { letter-spacing: var(--zero); }
+             .fallback { letter-spacing: var(--missing, 0.0); }
+             .mixed { letter-spacing: var(--mixed, 3px); }
+             .invalid-fallback { letter-spacing: var(--missing, 0 1); }
+             .invalid { letter-spacing: 2px; letter-spacing: 1; }",
+        )
+        .unwrap();
+        let direct = Element::new(&mut cx).class("direct").entity();
+        let invalid = Element::new(&mut cx).class("invalid").entity();
+        let invalid_fallback = Element::new(&mut cx).class("invalid-fallback").entity();
+        let mut children = Vec::new();
+        VStack::new(&mut cx, |cx| {
+            for class in ["variable", "fallback", "mixed"] {
+                children.push(Element::new(cx).class(class).entity());
+            }
+        })
+        .class("variables");
+        style_system(&mut cx);
+
+        let resolved = |entity| {
+            cx.style.letter_spacing.get_resolved(entity, &cx.style.custom_letter_spacing_props)
+        };
+        let zero = Some(LetterSpacing::Length(Length::zero()));
+        assert_eq!(resolved(direct), zero);
+        assert_eq!(resolved(children[0]), zero);
+        assert_eq!(resolved(children[1]), zero);
+        assert_eq!(resolved(children[2]), Some(LetterSpacing::Length(Length::px(3.0))));
+        assert_eq!(resolved(invalid), Some(LetterSpacing::Length(Length::px(2.0))));
+        assert_eq!(resolved(invalid_fallback), None);
+    }
+
+    #[test]
+    fn letter_spacing_unitless_zero_works_in_keyframes() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            "@keyframes spacing { from { letter-spacing: 0; } to { letter-spacing: 2px; } }",
+        )
+        .unwrap();
+        let animation = *cx.style.get_animation("spacing").unwrap();
+        let frames = &cx.style.letter_spacing.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(
+            frames.iter().map(|frame| frame.value.clone()).collect::<Vec<_>>(),
+            vec![LetterSpacing::Length(Length::zero()), LetterSpacing::Length(Length::px(2.0))]
+        );
+    }
+
+    #[test]
     fn unitless_zero_works_in_layout_animations() {
         let mut cx = Context::default();
         cx.add_stylesheet(

@@ -50,6 +50,7 @@ depends on the property.
 | `mix-blend-mode` | An alias for `blend-mode`. |
 | `font-style`, `font-stretch`, and `font` shorthand | `font-style` and `font-stretch` alias `font-slant` and `font-width`; their values remain limited to Vizia's parsers. The `font` shorthand is not in the property list. |
 | `font-weight` | `bolder` and `lighter` use the CSS relative-weight mapping against the parent's computed weight. Numeric weights are parsed as integers without enforcing the standard 1-1000 range; CSS also permits fractional values. |
+| `letter-spacing` | Accepts unitless zero, including through supported single-value custom properties and fallbacks. Length resolution remains limited to Vizia's text rendering support. |
 | `text-wrap` CSS keywords | `wrap` and `nowrap` map to Vizia's text-wrapping behavior. Vizia also accepts legacy boolean values such as `false`; advanced CSS wrapping modes are not supported. |
 | `::selection` | Pseudo-elements do not match in the current implementation; Vizia provides `selection-color` instead. |
 | Text decoration thickness properties | Vizia parses `underline-thickness`, `overline-thickness`, and `strikethrough-thickness`, but the current stylesheet property application does not apply them. |

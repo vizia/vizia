@@ -2024,6 +2024,13 @@ impl Style {
 
         fn letter_spacing_fallback(var: &Variable<'_>) -> Option<LetterSpacing> {
             match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Number { value, .. }))
+                    if *value == 0.0
+                        && matches!(var.fallback.as_ref(), Some(TokenList(tokens)) if tokens.len() == 1) =>
+                {
+                    Some(LetterSpacing::Length(Length::zero()))
+                }
+
                 Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
                     if unit.as_ref().eq_ignore_ascii_case("px") =>
                 {
@@ -3254,6 +3261,18 @@ impl Style {
                                         let mut store = AnimatableVarSet::default();
                                         store.insert_rule(rule_id, length_val);
                                         self.custom_length_props.insert(variable_name_hash, store);
+                                    }
+                                    let letter_spacing = LetterSpacing::Length(Length::zero());
+                                    if let Some(store) = self
+                                        .custom_letter_spacing_props
+                                        .get_mut(&variable_name_hash)
+                                    {
+                                        store.insert_rule(rule_id, letter_spacing);
+                                    } else {
+                                        let mut store = AnimatableVarSet::default();
+                                        store.insert_rule(rule_id, letter_spacing);
+                                        self.custom_letter_spacing_props
+                                            .insert(variable_name_hash, store);
                                     }
                                 }
                                 let units_val = Units::Pixels(0.0);

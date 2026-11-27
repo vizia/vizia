@@ -1,5 +1,6 @@
 use cssparser::{ParseError, Parser};
 
+use crate::values::length::length::parse_unitless_zero;
 use crate::{CustomParseError, Length, Parse, define_enum};
 
 define_enum! {
@@ -21,6 +22,10 @@ impl<'i> Parse<'i> for LetterSpacing {
     fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         if let Ok(keyword) = input.try_parse(LetterSpacingKeyword::parse) {
             return Ok(keyword.into());
+        }
+
+        if let Ok(zero) = input.try_parse(parse_unitless_zero) {
+            return Ok(LetterSpacing::Length(zero));
         }
 
         let length = input.try_parse(Length::parse)?;
@@ -72,6 +77,8 @@ mod letter_spacing_tests {
                 "normal" => LetterSpacing::Normal,
                 "1px" => LetterSpacing::Length(Length::Value(LengthValue::Px(1.0))),
                 "0" => LetterSpacing::Length(Length::Value(LengthValue::Px(0.0))),
+                "-0" => LetterSpacing::Length(Length::Value(LengthValue::Px(0.0))),
+                "0.0" => LetterSpacing::Length(Length::Value(LengthValue::Px(0.0))),
                 "-0.4px" => LetterSpacing::Length(Length::Value(LengthValue::Px(-0.4))),
             }
 
@@ -79,6 +86,8 @@ mod letter_spacing_tests {
                 "auto",
                 "none",
                 "25%",
+                "1",
+                "-1",
             }
         }
     }
