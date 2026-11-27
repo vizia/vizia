@@ -263,6 +263,23 @@ impl<'i> Property<'i> {
         name: cssparser::CowRcStr<'i>,
         input: &mut Parser<'i>,
     ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
+        let border_width_property: Option<fn(BorderWidthValue) -> Self> = match name.as_ref() {
+            "border-top-width" => Some(Self::BorderTopWidth),
+            "border-right-width" => Some(Self::BorderRightWidth),
+            "border-bottom-width" => Some(Self::BorderBottomWidth),
+            "border-left-width" => Some(Self::BorderLeftWidth),
+            _ => None,
+        };
+        if let Some(property) = border_width_property {
+            if let Ok(value) = input.try_parse(|input| {
+                let value = BorderWidthValue::parse(input)?;
+                input.expect_exhausted()?;
+                Ok::<_, cssparser::ParseError<CustomParseError<'i>>>(value)
+            }) {
+                return Ok(property(value));
+            }
+            return Ok(Self::Unparsed(UnparsedProperty::parse(name, input)?));
+        }
         let radius_property: Option<fn(LengthOrPercentage) -> Self> =
             match canonical_property_name(name.as_ref()) {
                 "corner-top-left-radius" => Some(Self::CornerTopLeftRadius),

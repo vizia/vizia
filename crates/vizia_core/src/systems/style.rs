@@ -1817,6 +1817,81 @@ mod tests {
     impl View for Unnamed {}
 
     #[test]
+    fn border_width_unitless_zero_applies() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".widths { border-width: 0 2px; border-right-width: -0; border-left: 0; }
+             .mixed { border-width: 0 2px; }
+             .shorthand { border: 0 solid red; outline: 0; }
+             .outline-width { outline-width: 0; }
+             .variable { --zero: 0; border-width: var(--zero); border-left-width: var(--missing, 0); }
+             .invalid { border: 5px solid red; border: 1 solid red; }
+             .invalid-mixed { border-width: 5px; border-width: 0 2px 1; }
+             .invalid-side { border-top-width: 5px; border-top-width: 0 1px; }",
+        )
+        .unwrap();
+        let widths = Element::new(&mut cx).class("widths").entity();
+        let mixed = Element::new(&mut cx).class("mixed").entity();
+        let shorthand = Element::new(&mut cx).class("shorthand").entity();
+        let outline_width = Element::new(&mut cx).class("outline-width").entity();
+        let variable = Element::new(&mut cx).class("variable").entity();
+        let invalid = Element::new(&mut cx).class("invalid").entity();
+        let invalid_mixed = Element::new(&mut cx).class("invalid-mixed").entity();
+        let invalid_side = Element::new(&mut cx).class("invalid-side").entity();
+        style_system(&mut cx);
+
+        let resolved =
+            |store: &crate::storage::animatable_var_set::AnimatableVarSet<LengthOrPercentage>,
+             entity| store.get_resolved(entity, &cx.style.custom_length_props);
+        let zero = Some(LengthOrPercentage::px(0.0));
+        for entity in [widths, shorthand, variable] {
+            for store in [
+                &cx.style.border_top_width,
+                &cx.style.border_right_width,
+                &cx.style.border_bottom_width,
+                &cx.style.border_left_width,
+            ] {
+                assert_eq!(resolved(store, entity), zero);
+            }
+        }
+        assert_eq!(resolved(&cx.style.outline_width, shorthand), zero);
+        assert_eq!(resolved(&cx.style.outline_width, outline_width), zero);
+        assert_eq!(resolved(&cx.style.border_top_width, mixed), zero);
+        assert_eq!(
+            resolved(&cx.style.border_right_width, mixed),
+            Some(LengthOrPercentage::px(2.0))
+        );
+        assert_eq!(resolved(&cx.style.border_left_width, mixed), Some(LengthOrPercentage::px(2.0)));
+        assert_eq!(
+            resolved(&cx.style.border_top_width, invalid),
+            Some(LengthOrPercentage::px(5.0))
+        );
+        assert_eq!(
+            resolved(&cx.style.border_top_width, invalid_mixed),
+            Some(LengthOrPercentage::px(5.0))
+        );
+        assert_eq!(
+            resolved(&cx.style.border_top_width, invalid_side),
+            Some(LengthOrPercentage::px(5.0))
+        );
+    }
+
+    #[test]
+    fn border_width_unitless_zero_works_in_keyframes() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            "@keyframes borders { from { border-top-width: 0; } to { border-top-width: 5px; } }",
+        )
+        .unwrap();
+        let animation = *cx.style.get_animation("borders").unwrap();
+        let frames = &cx.style.border_top_width.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(
+            frames.iter().map(|frame| frame.value.clone()).collect::<Vec<_>>(),
+            vec![LengthOrPercentage::px(0.0), LengthOrPercentage::px(5.0)]
+        );
+    }
+
+    #[test]
     fn border_radius_unitless_zero_applies_and_resolves_variables() {
         let mut cx = Context::default();
         cx.add_stylesheet(

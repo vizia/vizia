@@ -1,4 +1,5 @@
-use crate::{CustomParseError, Length, LengthOrPercentage, Parse, Rect};
+use crate::values::length::length::parse_unitless_zero;
+use crate::{CustomParseError, LengthOrPercentage, Parse, Rect};
 use cssparser::{ParseError, Parser};
 
 /// Defines the border radius of every corner of a rectangle.
@@ -30,17 +31,8 @@ pub(crate) struct RadiusLength(pub(crate) LengthOrPercentage);
 
 impl<'i> Parse<'i> for RadiusLength {
     fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
-        if input
-            .try_parse(|input| -> Result<(), ParseError<CustomParseError<'i>>> {
-                if input.expect_number()? == 0.0 {
-                    Ok(())
-                } else {
-                    Err(ParseError::custom(CustomParseError::InvalidDeclaration))
-                }
-            })
-            .is_ok()
-        {
-            return Ok(Self(LengthOrPercentage::Length(Length::zero())));
+        if let Ok(zero) = input.try_parse(parse_unitless_zero) {
+            return Ok(Self(LengthOrPercentage::Length(zero)));
         }
         LengthOrPercentage::parse(input).map(Self)
     }

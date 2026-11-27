@@ -1,11 +1,22 @@
 use morphorm::Units;
 
 use crate::{
-    LengthValue,
+    CustomParseError, LengthValue,
     calc::Calc,
     impl_parse,
     traits::{Parse, TryAdd},
 };
+use cssparser::{ParseError, Parser};
+
+pub(crate) fn parse_unitless_zero<'i>(
+    input: &mut Parser<'i>,
+) -> Result<Length, ParseError<CustomParseError<'i>>> {
+    if input.expect_number()? == 0.0 {
+        Ok(Length::zero())
+    } else {
+        Err(ParseError::custom(CustomParseError::InvalidDeclaration))
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Length {

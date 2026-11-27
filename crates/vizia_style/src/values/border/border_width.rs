@@ -1,4 +1,5 @@
-use crate::{BorderWidthValue, Parse, Rect, impl_parse};
+use crate::{BorderWidthValue, CustomParseError, Parse, Rect};
+use cssparser::{ParseError, Parser};
 
 /// Defines the width of every border of a rectangle.
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -25,11 +26,11 @@ impl BorderWidth {
     }
 }
 
-impl_parse! {
-    BorderWidth,
-
-    try_parse {
-        Rect<BorderWidthValue>,
+impl<'i> Parse<'i> for BorderWidth {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
+        let rect = Rect::<BorderWidthValue>::parse(input)?;
+        input.expect_exhausted()?;
+        Ok(rect.into())
     }
 }
 
@@ -53,6 +54,7 @@ mod tests {
                 "10px 20px" => BorderWidth::new(Length::px(10.0).into(), Length::px(20.0).into(), Length::px(10.0).into(), Length::px(20.0).into()),
                 "10px 20px 30px" => BorderWidth::new(Length::px(10.0).into(), Length::px(20.0).into(), Length::px(30.0).into(), Length::px(20.0).into()),
                 "10px 20px 30px 40px" => BorderWidth::new(Length::px(10.0).into(), Length::px(20.0).into(), Length::px(30.0).into(), Length::px(40.0).into()),
+                "0 2px" => BorderWidth::new(Length::zero().into(), Length::px(2.0).into(), Length::zero().into(), Length::px(2.0).into()),
 
                 "thin" => BorderWidth::new(Length::px(1.0).into(), Length::px(1.0).into(), Length::px(1.0).into(), Length::px(1.0).into()),
                 "thin medium" => BorderWidth::new(Length::px(1.0).into(), Length::px(3.0).into(), Length::px(1.0).into(), Length::px(3.0).into()),
@@ -63,6 +65,8 @@ mod tests {
             failure {
                 "test",
                 "123",
+                "1",
+                "0 2px 1",
                 "10px 20px 30px 40px 50px",
             }
         }

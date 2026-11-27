@@ -1,15 +1,23 @@
-use crate::{BorderWidthKeyword, Length, LengthOrPercentage, Parse, impl_parse};
+use crate::values::length::length::parse_unitless_zero;
+use crate::{BorderWidthKeyword, CustomParseError, Length, LengthOrPercentage, Parse};
+use cssparser::{ParseError, Parser};
 
 /// A border width value either being a [`BorderWidthKeyword`] or a [`LengthOrPercentage`].
 #[derive(Debug, Clone, PartialEq)]
 pub struct BorderWidthValue(pub LengthOrPercentage);
 
-impl_parse! {
-    BorderWidthValue,
-
-    try_parse {
-        BorderWidthKeyword,
-        Length,
+impl<'i> Parse<'i> for BorderWidthValue {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
+        if let Ok(zero) = input.try_parse(parse_unitless_zero) {
+            return Ok(zero.into());
+        }
+        if let Ok(keyword) = input.try_parse(BorderWidthKeyword::parse) {
+            return Ok(keyword.into());
+        }
+        if let Ok(length) = input.try_parse(Length::parse) {
+            return Ok(length.into());
+        }
+        Err(ParseError::custom(CustomParseError::InvalidDeclaration))
     }
 }
 
@@ -64,11 +72,16 @@ mod tests {
                 "thin" => BorderWidthValue(Length::px(1.0).into()),
                 "medium" => BorderWidthValue(Length::px(3.0).into()),
                 "thick" => BorderWidthValue(Length::px(5.0).into()),
+                "0" => BorderWidthValue(Length::zero().into()),
+                "-0" => BorderWidthValue(Length::zero().into()),
+                "0.0" => BorderWidthValue(Length::zero().into()),
             }
 
             failure {
                 "test",
                 "123",
+                "-1",
+                "0.1",
                 "thinpx",
             }
         }
