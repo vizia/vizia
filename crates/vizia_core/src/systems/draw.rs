@@ -1143,18 +1143,18 @@ mod tests {
     /// and background with its bounds at (10, 10, 20, 20) on a 60x40 surface, and returns a lookup
     /// of the painted pixel at (x, y).
     fn paint_probe(css: &'static str) -> impl Fn(usize, usize) -> [u8; 4] {
-        paint_probe_with_image(css, false)
+        paint_probe_with_image(css, None)
     }
 
     fn paint_probe_with_image(
         css: &'static str,
-        with_image: bool,
+        image_size: Option<(i32, i32)>,
     ) -> impl Fn(usize, usize) -> [u8; 4] {
         use skia_safe::{AlphaType, ColorType, ImageInfo};
 
         let mut cx = Context::default();
-        if with_image {
-            let mut image = skia_safe::surfaces::raster_n32_premul((2, 2)).unwrap();
+        if let Some(size) = image_size {
+            let mut image = skia_safe::surfaces::raster_n32_premul(size).unwrap();
             image.canvas().clear(skia_safe::Color::RED);
             crate::context::ResourceContext::new(&mut cx).load_image(
                 "image.png".into(),
@@ -1198,7 +1198,7 @@ mod tests {
     fn unitless_zero_background_size_does_not_draw_raster_images() {
         let visible = paint_probe_with_image(
             ".probe { background: url(image.png) left top / 5px 5px no-repeat; }",
-            true,
+            Some((2, 2)),
         );
         assert_eq!(visible(11, 11), RED);
         for css in [
@@ -1207,9 +1207,39 @@ mod tests {
             ".probe { background-image: url(image.png); background-size: auto 0; }",
             ".probe { background: url(image.png) center / 0 0 no-repeat; }",
         ] {
-            let pixel = paint_probe_with_image(css, true);
+            let pixel = paint_probe_with_image(css, Some((2, 2)));
             assert_eq!(pixel(11, 11), [0, 0, 0, 0], "{css}");
         }
+    }
+
+    #[test]
+    fn background_size_auto_preserves_raster_image_aspect_ratio() {
+        for (css, width, height) in [
+            (".probe { background: url(image.png) left top / 8px auto no-repeat; }", 8, 4),
+            (".probe { background: url(image.png) left top / 8px no-repeat; }", 8, 4),
+            (".probe { background: url(image.png) left top / auto 8px no-repeat; }", 16, 8),
+            (
+                ".probe { background-image: url(image.png); background-size: auto 8px; background-repeat: no-repeat; }",
+                16,
+                8,
+            ),
+            (".probe { background: url(image.png) left top / 50% auto no-repeat; }", 10, 5),
+            (".probe { background: url(image.png) left top / auto auto no-repeat; }", 4, 2),
+            (".probe { background: url(image.png) left top / 8px 8px no-repeat; }", 8, 8),
+        ] {
+            let pixel = paint_probe_with_image(css, Some((4, 2)));
+            assert_eq!(pixel(10 + width - 1, 10 + height - 1), RED, "{css}");
+            assert_eq!(pixel(10 + width, 10 + height - 1), [0, 0, 0, 0], "{css}");
+            assert_eq!(pixel(10 + width - 1, 10 + height), [0, 0, 0, 0], "{css}");
+        }
+
+        let positioned = paint_probe_with_image(
+            ".probe { background: url(image.png) right bottom / 8px auto no-repeat; }",
+            Some((4, 2)),
+        );
+        assert_eq!(positioned(22, 26), RED);
+        assert_eq!(positioned(21, 26), [0, 0, 0, 0]);
+        assert_eq!(positioned(22, 25), [0, 0, 0, 0]);
     }
 
     #[test]

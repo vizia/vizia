@@ -1627,30 +1627,49 @@ impl DrawContext<'_> {
                                     ImageOrSvg::Image(image) => {
                                         let image_width = image.width();
                                         let image_height = image.height();
+                                        if image_width <= 0 || image_height <= 0 {
+                                            continue;
+                                        }
                                         let (width, height) = if let Some(background_size) =
                                             image_sizes.get(index)
                                         {
                                             match background_size {
                                                 BackgroundSize::Explicit { width, height } => {
                                                     let w = match width {
-                                                LengthPercentageOrAuto::LengthPercentage(
-                                                    length,
-                                                ) => {
-                                                    length.to_pixels(bounds.w, self.scale_factor())
-                                                }
-                                                LengthPercentageOrAuto::Auto => image_width as f32,
-                                            };
-
+                                                        LengthPercentageOrAuto::LengthPercentage(
+                                                            length,
+                                                        ) => Some(length.to_pixels(
+                                                            bounds.w,
+                                                            self.scale_factor(),
+                                                        )),
+                                                        LengthPercentageOrAuto::Auto => None,
+                                                    };
                                                     let h = match height {
-                                                LengthPercentageOrAuto::LengthPercentage(
-                                                    length,
-                                                ) => {
-                                                    length.to_pixels(bounds.h, self.scale_factor())
-                                                }
-                                                LengthPercentageOrAuto::Auto => image_height as f32,
-                                            };
-
-                                                    (w, h)
+                                                        LengthPercentageOrAuto::LengthPercentage(
+                                                            length,
+                                                        ) => Some(length.to_pixels(
+                                                            bounds.h,
+                                                            self.scale_factor(),
+                                                        )),
+                                                        LengthPercentageOrAuto::Auto => None,
+                                                    };
+                                                    match (w, h) {
+                                                        (Some(w), Some(h)) => (w, h),
+                                                        (Some(w), None) => (
+                                                            w,
+                                                            w * image_height as f32
+                                                                / image_width as f32,
+                                                        ),
+                                                        (None, Some(h)) => (
+                                                            h * image_width as f32
+                                                                / image_height as f32,
+                                                            h,
+                                                        ),
+                                                        (None, None) => (
+                                                            image_width as f32,
+                                                            image_height as f32,
+                                                        ),
+                                                    }
                                                 }
 
                                                 BackgroundSize::Contain => {
