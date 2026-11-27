@@ -1420,7 +1420,7 @@ impl DrawContext<'_> {
                 let image_positions = self.background_position();
                 let image_repeats = self.background_repeat();
 
-                for (index, image) in images.iter().enumerate() {
+                for (index, image) in images.iter().enumerate().rev() {
                     match image {
                         ImageOrGradient::Gradient(gradient) => match gradient {
                             Gradient::Linear(linear_gradient) => {

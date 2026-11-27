@@ -1154,13 +1154,17 @@ mod tests {
 
         let mut cx = Context::default();
         if let Some(size) = image_size {
-            let mut image = skia_safe::surfaces::raster_n32_premul(size).unwrap();
-            image.canvas().clear(skia_safe::Color::RED);
-            crate::context::ResourceContext::new(&mut cx).load_image(
-                "image.png".into(),
-                image.image_snapshot(),
-                crate::resource::ImageRetentionPolicy::Forever,
-            );
+            for (name, color) in
+                [("image.png", skia_safe::Color::RED), ("blue.png", skia_safe::Color::BLUE)]
+            {
+                let mut image = skia_safe::surfaces::raster_n32_premul(size).unwrap();
+                image.canvas().clear(color);
+                crate::context::ResourceContext::new(&mut cx).load_image(
+                    name.into(),
+                    image.image_snapshot(),
+                    crate::resource::ImageRetentionPolicy::Forever,
+                );
+            }
         }
         cx.add_stylesheet(css).unwrap();
         let parent = Element::new(&mut cx).class("parent").entity();
@@ -1332,6 +1336,54 @@ mod tests {
             assert_eq!(pixel(inside.0, inside.1), RED, "{css}");
             assert_eq!(pixel(outside.0, outside.1), [0, 0, 0, 0], "{css}");
         }
+    }
+
+    #[test]
+    fn background_image_layers_paint_first_on_top() {
+        let pixel = paint_probe_with_image(
+            ".probe { background-color: lime; background-image: url(image.png), url(blue.png);
+             background-size: 4px 4px, 10px 10px; background-repeat: no-repeat; }",
+            Some((4, 2)),
+        );
+        assert_eq!(pixel(11, 11), RED);
+        assert_eq!(pixel(15, 15), [0, 0, 255, 255]);
+        assert_eq!(pixel(25, 25), [0, 255, 0, 255]);
+
+        let pixel = paint_probe_with_image(
+            ".probe { background-image: url(blue.png), url(image.png);
+             background-size: 4px 4px, 10px 10px; background-repeat: no-repeat; }",
+            Some((4, 2)),
+        );
+        assert_eq!(pixel(11, 11), [0, 0, 255, 255]);
+        assert_eq!(pixel(15, 15), RED);
+
+        let pixel = paint_probe_with_image(
+            ".probe { background-image: none, url(image.png), url(blue.png);
+             background-position: left top, right top, left top;
+             background-size: 0 0, 4px 4px, 10px 10px; background-repeat: no-repeat; }",
+            Some((4, 2)),
+        );
+        assert_eq!(pixel(27, 11), RED);
+        assert_eq!(pixel(11, 11), [0, 0, 255, 255]);
+        assert_eq!(pixel(25, 11), [0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn background_layers_composite_images_and_gradients() {
+        let pixel = paint_probe_with_image(
+            ".probe { background-image: url(image.png), linear-gradient(blue, blue);
+             background-size: 4px 4px; background-repeat: no-repeat; }",
+            Some((4, 2)),
+        );
+        assert_eq!(pixel(11, 11), RED);
+        assert_eq!(pixel(20, 20), [0, 0, 255, 255]);
+
+        let pixel = paint_probe_with_image(
+            ".probe { background-image: linear-gradient(rgba(255, 0, 0, 0.5), rgba(255, 0, 0, 0.5)), url(blue.png);
+             background-size: 10px 10px; background-repeat: no-repeat; }",
+            Some((4, 2)),
+        );
+        assert_eq!(pixel(11, 11), [128, 0, 127, 255]);
     }
 
     #[test]
