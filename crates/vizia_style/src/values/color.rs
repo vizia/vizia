@@ -710,7 +710,7 @@ impl From<Color> for RGBA {
 
 impl From<cssparser_color::RgbaLegacy> for RGBA {
     fn from(rgba: cssparser_color::RgbaLegacy) -> Self {
-        Self::rgba(rgba.red, rgba.green, rgba.blue, (rgba.alpha * 255.0) as u8)
+        Self::rgba(rgba.red, rgba.green, rgba.blue, srgb_to_u8(rgba.alpha))
     }
 }
 
@@ -995,6 +995,28 @@ mod tests {
             "0",
             "#000000000",
             "#FFFFFFFFF",
+        }
+    }
+
+    #[test]
+    fn rgba_alpha_rounds_and_clamps_consistently() {
+        for (input, alpha) in [
+            ("rgba(12, 34, 56, 0)", 0),
+            ("rgba(12, 34, 56, 0.1)", 26),
+            ("rgba(12, 34, 56, 0.3)", 77),
+            ("rgba(12, 34, 56, 30%)", 77),
+            ("rgb(12 34 56 / 0.5)", 128),
+            ("rgba(12, 34, 56, 1)", 255),
+            ("rgba(12, 34, 56, -1)", 0),
+            ("rgba(12, 34, 56, 2)", 255),
+        ] {
+            let mut parser = Parser::new(input);
+            assert_eq!(
+                Color::parse(&mut parser).unwrap(),
+                Color::rgba(12, 34, 56, alpha),
+                "{input}"
+            );
+            assert!(parser.is_exhausted(), "{input}");
         }
     }
 }

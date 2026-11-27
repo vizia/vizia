@@ -2475,6 +2475,33 @@ mod tests {
     }
 
     #[test]
+    fn rgba_alpha_rounding_applies_to_styles_and_variables() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".direct { background-color: rgba(12, 34, 56, 0.3); color: rgb(12 34 56 / 30%); }
+             .variable { --shade: rgba(12, 34, 56, 0.3); background-color: var(--shade); }
+             .fallback { background-color: var(--missing, rgba(12, 34, 56, 0.3)); }",
+        )
+        .unwrap();
+        let direct = Element::new(&mut cx).class("direct").entity();
+        let variable = Element::new(&mut cx).class("variable").entity();
+        let fallback = Element::new(&mut cx).class("fallback").entity();
+        style_system(&mut cx);
+
+        let expected = Some(Color::rgba(12, 34, 56, 77));
+        for entity in [direct, variable, fallback] {
+            assert_eq!(
+                cx.style.background_color.get_resolved(entity, &cx.style.custom_color_props),
+                expected
+            );
+        }
+        assert_eq!(
+            cx.style.font_color.get_resolved(direct, &cx.style.custom_color_props),
+            expected
+        );
+    }
+
+    #[test]
     fn background_shorthand_resets_and_obeys_longhand_cascade() {
         use crate::style::ImageOrGradient;
 
