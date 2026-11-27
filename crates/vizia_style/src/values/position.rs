@@ -60,8 +60,7 @@ impl<'i> Parse<'i> for Position {
 
             // If it didn't work, assume the first actually represents a y position,
             // and the next is an x position. e.g. `center left` rather than `left center`.
-            let x =
-                input.try_parse(HorizontalPosition::parse).unwrap_or(HorizontalPosition::Center);
+            let x = input.try_parse(HorizontalPosition::parse).unwrap_or(x);
             let y: PositionComponent<VerticalPositionKeyword> = VerticalPosition::Center;
             Ok(Position { x, y })
         } else if let Ok(y) = input.try_parse(VerticalPosition::parse) {
@@ -69,7 +68,7 @@ impl<'i> Parse<'i> for Position {
             if let Ok(x) = input.try_parse(HorizontalPosition::parse) {
                 Ok(Position { x, y })
             } else {
-                Ok(Position { x: HorizontalPosition::Center, y: VerticalPosition::Center })
+                Ok(Position { x: HorizontalPosition::Center, y })
             }
         } else {
             // Return default or return an error?
@@ -182,5 +181,48 @@ impl From<HorizontalPositionKeyword> for HorizontalPosition {
 impl From<VerticalPositionKeyword> for VerticalPosition {
     fn from(value: VerticalPositionKeyword) -> Self {
         VerticalPosition::Side(value)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn single_value_positions_keep_the_specified_axis() {
+        let center = LengthOrPercentage::Percentage(50.0);
+        for (value, x, y) in [
+            ("left", LengthOrPercentage::px(0.0), center.clone()),
+            ("right", LengthOrPercentage::Percentage(100.0), center.clone()),
+            ("top", center.clone(), LengthOrPercentage::px(0.0)),
+            ("bottom", center.clone(), LengthOrPercentage::Percentage(100.0)),
+            ("center", center.clone(), center.clone()),
+            ("10px", LengthOrPercentage::px(10.0), center.clone()),
+            ("25%", LengthOrPercentage::Percentage(25.0), center.clone()),
+        ] {
+            let mut parser = Parser::new(value);
+            let position = Position::parse(&mut parser).unwrap();
+            assert_eq!(position.x.to_length_or_percentage(), x, "{value}");
+            assert_eq!(position.y.to_length_or_percentage(), y, "{value}");
+            assert!(parser.is_exhausted(), "{value}");
+        }
+    }
+
+    #[test]
+    fn two_value_positions_and_layers_remain_supported() {
+        let mut parser = Parser::new("left top, top right, center left, 10px 20%");
+        let positions = Vec::<Position>::parse(&mut parser).unwrap();
+        let expected = [
+            (LengthOrPercentage::px(0.0), LengthOrPercentage::px(0.0)),
+            (LengthOrPercentage::Percentage(100.0), LengthOrPercentage::px(0.0)),
+            (LengthOrPercentage::px(0.0), LengthOrPercentage::Percentage(50.0)),
+            (LengthOrPercentage::px(10.0), LengthOrPercentage::Percentage(20.0)),
+        ];
+        assert_eq!(positions.len(), expected.len());
+        for (position, (x, y)) in positions.iter().zip(expected) {
+            assert_eq!(position.x.to_length_or_percentage(), x);
+            assert_eq!(position.y.to_length_or_percentage(), y);
+        }
+        assert!(parser.is_exhausted());
     }
 }

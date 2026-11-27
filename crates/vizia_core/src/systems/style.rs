@@ -1817,6 +1817,33 @@ mod tests {
     impl View for Unnamed {}
 
     #[test]
+    fn single_value_positions_apply_to_background_and_transform_origin() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".probe { background-position: left, bottom, 10px; transform-origin: top; }",
+        )
+        .unwrap();
+        let entity = Element::new(&mut cx).class("probe").entity();
+        style_system(&mut cx);
+
+        let positions = cx.style.background_position.get(entity).unwrap();
+        let expected = [
+            (LengthOrPercentage::px(0.0), LengthOrPercentage::Percentage(50.0)),
+            (LengthOrPercentage::Percentage(50.0), LengthOrPercentage::Percentage(100.0)),
+            (LengthOrPercentage::px(10.0), LengthOrPercentage::Percentage(50.0)),
+        ];
+        assert_eq!(positions.len(), expected.len());
+        for (position, (x, y)) in positions.iter().zip(expected) {
+            assert_eq!(position.x.to_length_or_percentage(), x);
+            assert_eq!(position.y.to_length_or_percentage(), y);
+        }
+
+        let origin = cx.style.transform_origin.get(entity).unwrap();
+        assert_eq!(origin.x, LengthOrPercentage::Percentage(50.0));
+        assert_eq!(origin.y, LengthOrPercentage::px(0.0));
+    }
+
+    #[test]
     fn border_width_unitless_zero_applies() {
         let mut cx = Context::default();
         cx.add_stylesheet(
