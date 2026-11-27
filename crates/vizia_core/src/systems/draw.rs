@@ -1143,9 +1143,25 @@ mod tests {
     /// and background with its bounds at (10, 10, 20, 20) on a 60x40 surface, and returns a lookup
     /// of the painted pixel at (x, y).
     fn paint_probe(css: &'static str) -> impl Fn(usize, usize) -> [u8; 4] {
+        paint_probe_with_image(css, false)
+    }
+
+    fn paint_probe_with_image(
+        css: &'static str,
+        with_image: bool,
+    ) -> impl Fn(usize, usize) -> [u8; 4] {
         use skia_safe::{AlphaType, ColorType, ImageInfo};
 
         let mut cx = Context::default();
+        if with_image {
+            let mut image = skia_safe::surfaces::raster_n32_premul((2, 2)).unwrap();
+            image.canvas().clear(skia_safe::Color::RED);
+            crate::context::ResourceContext::new(&mut cx).load_image(
+                "image.png".into(),
+                image.image_snapshot(),
+                crate::resource::ImageRetentionPolicy::Forever,
+            );
+        }
         cx.add_stylesheet(css).unwrap();
         let parent = Element::new(&mut cx).class("parent").entity();
         let probe = cx.with_current(parent, |cx| Element::new(cx).class("probe").entity());
@@ -1175,6 +1191,24 @@ mod tests {
         move |x, y| {
             let i = (y * 60 + x) * 4;
             [pixels[i], pixels[i + 1], pixels[i + 2], pixels[i + 3]]
+        }
+    }
+
+    #[test]
+    fn unitless_zero_background_size_does_not_draw_raster_images() {
+        let visible = paint_probe_with_image(
+            ".probe { background: url(image.png) left top / 5px 5px no-repeat; }",
+            true,
+        );
+        assert_eq!(visible(11, 11), RED);
+        for css in [
+            ".probe { background-image: url(image.png); background-size: 0 0; }",
+            ".probe { background-image: url(image.png); background-size: 0; }",
+            ".probe { background-image: url(image.png); background-size: auto 0; }",
+            ".probe { background: url(image.png) center / 0 0 no-repeat; }",
+        ] {
+            let pixel = paint_probe_with_image(css, true);
+            assert_eq!(pixel(11, 11), [0, 0, 0, 0], "{css}");
         }
     }
 

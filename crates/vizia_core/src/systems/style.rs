@@ -2475,6 +2475,75 @@ mod tests {
     }
 
     #[test]
+    fn background_size_unitless_zero_applies_in_longhand_and_shorthand() {
+        use crate::style::ImageOrGradient;
+        use vizia_style::LengthPercentageOrAuto;
+
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".longhand { background-size: 0 0, auto -0, 0; }
+             .shorthand { background: url(image.png) center / 0 0 no-repeat; }
+             .invalid { background-size: cover; background-size: 0 1; }
+             .invalid-shorthand { background-size: contain; background: center / 0 1; }",
+        )
+        .unwrap();
+        let longhand = Element::new(&mut cx).class("longhand").entity();
+        let shorthand = Element::new(&mut cx).class("shorthand").entity();
+        let invalid = Element::new(&mut cx).class("invalid").entity();
+        let invalid_shorthand = Element::new(&mut cx).class("invalid-shorthand").entity();
+        style_system(&mut cx);
+
+        let zero = LengthPercentageOrAuto::px(0.0);
+        let auto = LengthPercentageOrAuto::Auto;
+        let size = |width, height| BackgroundSize::Explicit { width, height };
+        assert_eq!(
+            cx.style.background_size.get(longhand),
+            Some(&vec![
+                size(zero.clone(), zero.clone()),
+                size(auto.clone(), zero.clone()),
+                size(zero.clone(), auto),
+            ])
+        );
+        assert_eq!(cx.style.background_size.get(shorthand), Some(&vec![size(zero.clone(), zero)]));
+        assert_eq!(
+            cx.style.background_image.get(shorthand),
+            Some(&vec![ImageOrGradient::Image("image.png".into())])
+        );
+        assert_eq!(cx.style.background_size.get(invalid), Some(&vec![BackgroundSize::Cover]));
+        assert_eq!(
+            cx.style.background_size.get(invalid_shorthand),
+            Some(&vec![BackgroundSize::Contain])
+        );
+    }
+
+    #[test]
+    fn background_size_unitless_zero_works_in_keyframes() {
+        use vizia_style::LengthPercentageOrAuto;
+
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            "@keyframes background-sizing {
+                 from { background: center / 0; }
+                 to { background-size: 0 0; }
+             }",
+        )
+        .unwrap();
+        let animation = *cx.style.get_animation("background-sizing").unwrap();
+        let frames = &cx.style.background_size.get_animation_mut(animation).unwrap().keyframes;
+        let zero = LengthPercentageOrAuto::px(0.0);
+        assert_eq!(
+            frames.iter().map(|frame| frame.value.clone()).collect::<Vec<_>>(),
+            vec![
+                vec![BackgroundSize::Explicit {
+                    width: zero.clone(),
+                    height: LengthPercentageOrAuto::Auto,
+                }],
+                vec![BackgroundSize::Explicit { width: zero.clone(), height: zero }],
+            ]
+        );
+    }
+
+    #[test]
     fn rgba_alpha_rounding_applies_to_styles_and_variables() {
         let mut cx = Context::default();
         cx.add_stylesheet(
