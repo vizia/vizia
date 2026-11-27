@@ -177,6 +177,27 @@ mod tests {
         }
     }
 
+    #[test]
+    fn shadow_custom_tokens_preserve_calc_operators() {
+        use crate::CustomProperty;
+
+        for value in [
+            "calc(1px + 2px) 0 red",
+            "calc(5px - 2px) calc(2px + -1px) #f00",
+            "calc(calc(1px + 2px) * 2) 0 red, inset 0 2px blue",
+        ] {
+            let custom = CustomProperty::parse("--shadow".into(), &mut Parser::new(value)).unwrap();
+            let literal = Vec::<Shadow>::parse(&mut Parser::new(value)).unwrap();
+            assert_eq!(parse_shadow_tokens(&custom.value.0), Some(literal), "{value}");
+        }
+        for invalid in ["calc(1px+2px) 0 red", "calc(1px+ 2px) 0 red", "calc(1px +2px) 0 red"] {
+            let custom =
+                CustomProperty::parse("--shadow".into(), &mut Parser::new(invalid)).unwrap();
+            assert!(Vec::<Shadow>::parse(&mut Parser::new(invalid)).is_err(), "{invalid}");
+            assert!(parse_shadow_tokens(&custom.value.0).is_none(), "{invalid}");
+        }
+    }
+
     assert_parse! {
         Shadow, parse_shadow,
 

@@ -3331,6 +3331,35 @@ mod tests {
     }
 
     #[test]
+    fn shadow_calculations_resolve_in_custom_properties_and_fallbacks() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".literal { box-shadow: calc(1px + 2px) calc(5px - 2px) red; }
+             .variable { --shadow: calc(1px + 2px) calc(5px - 2px) red;
+                         box-shadow: var(--shadow); }
+             .fallback { box-shadow: var(--missing, calc(1px + 2px) calc(5px - 2px) red); }",
+        )
+        .unwrap();
+        let literal = Element::new(&mut cx).class("literal").entity();
+        let variable = Element::new(&mut cx).class("variable").entity();
+        let fallback = Element::new(&mut cx).class("fallback").entity();
+        style_system(&mut cx);
+
+        let resolved = |entity| cx.style.shadow.get_resolved(entity, &cx.style.custom_shadow_props);
+        let expected = vec![Shadow::new(
+            Length::px(3.0),
+            Length::px(3.0),
+            None,
+            None,
+            Some(Color::rgb(255, 0, 0)),
+            false,
+        )];
+        for entity in [literal, variable, fallback] {
+            assert_eq!(resolved(entity), Some(expected.clone()));
+        }
+    }
+
+    #[test]
     fn standard_property_aliases_work_in_keyframes_and_transitions() {
         let mut cx = Context::default();
         cx.add_stylesheet(

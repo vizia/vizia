@@ -173,8 +173,9 @@ impl<'i> TokenList<'i> {
                     last_is_whitespace = false;
                 }
                 Ok(token) => {
-                    last_is_delim =
-                        matches!(token, cssparser::Token::Delim(_) | cssparser::Token::Comma);
+                    // Whitespace around additive operators is significant in CSS math.
+                    last_is_delim = matches!(token, cssparser::Token::Comma)
+                        || matches!(token, cssparser::Token::Delim(c) if !matches!(c, '+' | '-'));
 
                     // If this is a delimeter, and the last token was whitespace,
                     // replace the whitespace with the delimeter since both are not required.
