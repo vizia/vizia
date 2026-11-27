@@ -43,7 +43,7 @@ depends on the property.
 | --- | --- |
 | `border-radius` and `border-top-left-radius`, etc. | These alias `corner-radius` and the corresponding `corner-*-radius` properties. The value parser does not support the full CSS elliptical radius syntax. |
 | `box-shadow` | An alias for `shadow`. Supports `none`, unitless zero, color and `inset` before or after lengths, and comma-separated shadows. Vizia also accepts some nonstandard orderings and negative blur radii. Length resolution and animation behavior are not fully equivalent to browser CSS; transitions between `none` and shadows with omitted color or `currentColor` are discrete. |
-| `background` shorthand | Use individual properties such as `background-color`, `background-image`, `background-position`, `background-repeat`, and `background-size`. `background-repeat` accepts `repeat`, `repeat-x`, `repeat-y`, and `no-repeat`. |
+| `background` shorthand | Use individual properties such as `background-color`, `background-image`, `background-position`, `background-repeat`, and `background-size`. `background-repeat` accepts `repeat`, `repeat-x`, `repeat-y`, and `no-repeat`, including two-value `repeat`/`no-repeat` axis combinations. `space` and `round` are not supported. |
 | `outline-style` | Not present in the property list. `outline` applies its color and width; use `outline-color`, `outline-width`, and `outline-offset` as needed. |
 | `mix-blend-mode` | An alias for `blend-mode`. |
 | `font-style`, `font-stretch`, and `font` shorthand | `font-style` and `font-stretch` alias `font-slant` and `font-width`; their values remain limited to Vizia's parsers. The `font` shorthand is not in the property list. |

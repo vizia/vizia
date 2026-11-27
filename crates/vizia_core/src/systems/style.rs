@@ -1817,6 +1817,31 @@ mod tests {
     impl View for Unnamed {}
 
     #[test]
+    fn background_repeat_axis_pairs_apply_to_stylesheets() {
+        use vizia_style::BackgroundRepeat;
+
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".pairs { background-repeat: repeat; background-repeat: repeat no-repeat, no-repeat repeat; }
+             .legacy { background-repeat: repeat-x, repeat-y; }
+             .invalid { background-repeat: no-repeat; background-repeat: repeat-x repeat; }",
+        )
+        .unwrap();
+        let pairs = Element::new(&mut cx).class("pairs").entity();
+        let legacy = Element::new(&mut cx).class("legacy").entity();
+        let invalid = Element::new(&mut cx).class("invalid").entity();
+        style_system(&mut cx);
+
+        let expected = vec![BackgroundRepeat::RepeatX, BackgroundRepeat::RepeatY];
+        assert_eq!(cx.style.background_repeat.get(pairs), Some(&expected));
+        assert_eq!(cx.style.background_repeat.get(legacy), Some(&expected));
+        assert_eq!(
+            cx.style.background_repeat.get(invalid),
+            Some(&vec![BackgroundRepeat::NoRepeat])
+        );
+    }
+
+    #[test]
     fn text_wrap_standard_keywords_apply_like_legacy_booleans() {
         let mut cx = Context::default();
         cx.add_stylesheet(
