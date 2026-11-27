@@ -315,6 +315,13 @@ where
         None
     }
 
+    pub(crate) fn is_inherited(&self, entity: Entity) -> bool {
+        self.inline_data
+            .sparse
+            .get(entity.index())
+            .is_some_and(|index| index.data_index.is_inherited())
+    }
+
     pub fn get_mut(&mut self, entity: Entity) -> Option<&mut T> {
         let entity_index = entity.index();
         if entity_index < self.inline_data.sparse.len() {

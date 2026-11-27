@@ -51,6 +51,9 @@ macro_rules! define_property {
                 $str: literal: $variant: ident($inner_ty: ty),
             )+
         }
+        $(extra {
+            $($extra_variant:ident($extra_ty:ty),)*
+        })?
     ) => {
         $(#[$outer])*
         #[derive(Debug, Clone, PartialEq)]
@@ -59,6 +62,7 @@ macro_rules! define_property {
                 $(#[$meta])*
                 $variant($inner_ty),
             )+
+            $($($extra_variant($extra_ty),)*)?
             Unparsed(UnparsedProperty<'i>),
             Custom(CustomProperty<'i>),
         }

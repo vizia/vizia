@@ -86,12 +86,19 @@ pub use vizia_style::{
 
 use cssparser::Token as CssToken;
 use vizia_style::{
-    BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, Selectors, StyleSheet,
-    TokenList, TokenOrValue, Variable, canonical_property_name, parse_shadow_tokens,
+    BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, RelativeFontWeight,
+    Selectors, StyleSheet, TokenList, TokenOrValue, Variable, canonical_property_name,
+    parse_shadow_tokens,
 };
 
 mod rule;
 pub(crate) use rule::Rule;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) enum SpecifiedFontWeight {
+    Absolute(FontWeight),
+    Relative(RelativeFontWeight),
+}
 
 mod pseudoclass;
 pub(crate) use pseudoclass::*;
@@ -352,7 +359,7 @@ pub struct Style {
     pub(crate) font_family: StyleSet<Vec<FamilyOwned>>,
     pub(crate) font_color: AnimatableVarSet<Color>,
     pub(crate) font_size: AnimatableVarSet<FontSize>,
-    pub(crate) font_weight: StyleSet<FontWeight>,
+    pub(crate) font_weight: StyleSet<SpecifiedFontWeight>,
     pub(crate) font_slant: StyleSet<FontSlant>,
     pub(crate) font_width: StyleSet<FontWidth>,
     pub(crate) font_variation_settings: StyleSet<Vec<FontVariation>>,
@@ -457,6 +464,48 @@ pub struct Style {
 }
 
 impl Style {
+    pub(crate) fn resolved_font_weight(
+        &self,
+        tree: &Tree<Entity>,
+        entity: Entity,
+    ) -> Option<FontWeight> {
+        let mut current = entity;
+        let mut relative = Vec::new();
+        let base = loop {
+            // Apply inherited relative values only at their defining ancestor.
+            if !self.font_weight.is_inherited(current) {
+                match self.font_weight.get(current) {
+                    Some(SpecifiedFontWeight::Absolute(weight)) => break Some(*weight),
+                    Some(SpecifiedFontWeight::Relative(weight)) => relative.push(*weight),
+                    None => {}
+                }
+            }
+            match tree.get_layout_parent(current) {
+                Some(parent) => current = parent,
+                None => break None,
+            }
+        };
+
+        if relative.is_empty() {
+            return base;
+        }
+
+        Some(relative.into_iter().rev().fold(base.unwrap_or_default(), |weight, relative| {
+            FontWeight(match relative {
+                RelativeFontWeight::Bolder => match weight.0 {
+                    0..=349 => 400,
+                    350..=549 => 700,
+                    _ => 900,
+                },
+                RelativeFontWeight::Lighter => match weight.0 {
+                    0..=549 => 100,
+                    550..=749 => 400,
+                    _ => 700,
+                },
+            })
+        }))
+    }
+
     /// Returns the scale factor of the application.
     pub fn scale_factor(&self) -> f32 {
         self.dpi_factor as f32
@@ -2465,7 +2514,11 @@ impl Style {
 
             // Font Weight
             Property::FontWeight(font_weight) => {
-                self.font_weight.insert_rule(rule_id, font_weight);
+                self.font_weight.insert_rule(rule_id, SpecifiedFontWeight::Absolute(font_weight));
+            }
+
+            Property::RelativeFontWeight(font_weight) => {
+                self.font_weight.insert_rule(rule_id, SpecifiedFontWeight::Relative(font_weight));
             }
 
             // Font Slant

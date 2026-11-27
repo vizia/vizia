@@ -30,10 +30,5 @@ define_enum! {
         /// 950
         "extra-black": ExtraBlack,
         "ultra-black": UltraBlack,
-        // TODO
-        // /// One relative weight lighter than the parent.
-        // "lighter": Lighter,
-        // /// One relative weight bolder than the parent.
-        // "bolder": Bolder,
     }
 }

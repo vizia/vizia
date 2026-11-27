@@ -194,7 +194,7 @@ impl DrawContext<'_> {
 
     /// Returns the font-weight of the current view.
     pub fn font_weight(&self) -> FontWeight {
-        self.style.font_weight.get(self.current).copied().unwrap_or_default()
+        self.style.resolved_font_weight(self.tree, self.current).unwrap_or_default()
     }
 
     /// Returns the font-width of the current view.

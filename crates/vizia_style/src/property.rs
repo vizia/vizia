@@ -5,9 +5,10 @@ use crate::{
     CornerRadius, CursorIcon, CustomParseError, CustomProperty, Direction, Display, Filter,
     FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWidth, LayoutType, LayoutWrap,
     Length, LengthOrPercentage, LetterSpacing, LineClamp, LineHeight, Opacity, Outline, Overflow,
-    Parse, PointerEvents, Position, PositionType, Rect, Scale, Shadow, TextAlign, TextDecoration,
-    TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
-    Transition, Translate, Units, UnparsedProperty, Visibility, define_property,
+    Parse, PointerEvents, Position, PositionType, Rect, RelativeFontWeight, Scale, Shadow,
+    TextAlign, TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
+    TextStrokeStyle, Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
+    define_property,
 };
 use cssparser::Parser;
 
@@ -256,6 +257,9 @@ define_property! {
         "cursor": Cursor(CursorIcon),
         "pointer-events": PointerEvents(PointerEvents),
     }
+    extra {
+        RelativeFontWeight(RelativeFontWeight),
+    }
 }
 
 impl<'i> Property<'i> {
@@ -263,6 +267,15 @@ impl<'i> Property<'i> {
         name: cssparser::CowRcStr<'i>,
         input: &mut Parser<'i>,
     ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
+        if name.as_ref() == "font-weight"
+            && let Ok(value) = input.try_parse(|input| {
+                let value = RelativeFontWeight::parse(input)?;
+                input.expect_exhausted()?;
+                Ok::<_, cssparser::ParseError<CustomParseError<'i>>>(value)
+            })
+        {
+            return Ok(Self::RelativeFontWeight(value));
+        }
         if name.as_ref() == "transform-origin" {
             if let Ok(position) = input.try_parse(|input| {
                 if input.is_exhausted() {
@@ -332,6 +345,27 @@ mod tests {
     use cssparser::CowRcStr;
 
     use super::*;
+
+    #[test]
+    fn relative_font_weight_keywords_parse_as_distinct_values() {
+        for (value, expected) in [
+            ("bolder", Property::RelativeFontWeight(RelativeFontWeight::Bolder)),
+            ("LIGHTER", Property::RelativeFontWeight(RelativeFontWeight::Lighter)),
+            ("bold", Property::FontWeight(FontWeight(700))),
+            ("400", Property::FontWeight(FontWeight(400))),
+        ] {
+            let mut parser = Parser::new(value);
+            assert_eq!(Property::parse_value("font-weight".into(), &mut parser).unwrap(), expected);
+            assert!(parser.is_exhausted(), "{value}");
+        }
+        for value in ["bolder lighter", "lighter 400"] {
+            let mut parser = Parser::new(value);
+            assert!(matches!(
+                Property::parse_value("font-weight".into(), &mut parser),
+                Ok(Property::Unparsed(_))
+            ));
+        }
+    }
 
     #[test]
     fn border_radius_longhands_accept_unitless_zero() {

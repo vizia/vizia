@@ -418,14 +418,14 @@ fn add_block(
 
         // Font Style
         match (
-            style.font_weight.get(entity),
+            style.resolved_font_weight(tree, entity),
             style.font_width.get(entity),
             style.font_slant.get(entity),
         ) {
             (None, None, None) => {}
             (weight, width, slant) => {
                 text_style.set_font_style(FontStyle::new(
-                    weight.copied().unwrap_or_default().into(),
+                    weight.unwrap_or_default().into(),
                     width.copied().unwrap_or_default().into(),
                     slant.copied().unwrap_or_default().into(),
                 ));
@@ -524,6 +524,76 @@ mod tests {
             // An unchanged pass schedules no further text construction.
             style_system(&mut backend.0);
             assert!(backend.0.style.text_construction.is_empty());
+        }
+    }
+
+    #[test]
+    fn relative_font_weight_updates_after_inline_parent_changes() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".bolder { font-weight: bolder; }").unwrap();
+        let weight = Signal::new(FontWeight(400));
+        let mut relative = Entity::null();
+        let mut inherited = Entity::null();
+        VStack::new(&mut cx, |cx| {
+            VStack::new(cx, |cx| {
+                relative = Label::new(cx, "relative").class("bolder").entity();
+                inherited = Label::new(cx, "inherited").entity();
+            })
+            .class("bolder");
+        })
+        .font_weight(weight);
+        let mut backend = BackendContext::new(cx);
+
+        for (parent, expected_relative, expected_inherited) in
+            [(400, 900, 700), (700, 900, 900), (400, 900, 700)]
+        {
+            weight.set(FontWeight(parent));
+            binding_system(&mut backend.0);
+            style_system(&mut backend.0);
+            assert_eq!(
+                backend.0.style.resolved_font_weight(&backend.0.tree, relative),
+                Some(FontWeight(expected_relative))
+            );
+            assert_eq!(
+                backend.0.style.resolved_font_weight(&backend.0.tree, inherited),
+                Some(FontWeight(expected_inherited))
+            );
+            text_invalidation_system(&mut backend.0);
+            assert!(backend.0.style.text_construction.contains(&relative));
+            assert!(backend.0.style.text_construction.contains(&inherited));
+            text_system(&mut backend.0);
+            assert!(backend.0.text_context.text_paragraphs.contains(relative));
+            assert!(backend.0.text_context.text_paragraphs.contains(inherited));
+        }
+    }
+
+    #[test]
+    fn relative_font_weight_updates_after_shared_parent_changes() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".base { font-weight: 400; } .base.heavy { font-weight: 700; }
+             .bolder { font-weight: bolder; }",
+        )
+        .unwrap();
+        let mut label = Entity::null();
+        let parent = VStack::new(&mut cx, |cx| {
+            label = Label::new(cx, "relative").class("bolder").entity();
+        })
+        .class("base")
+        .entity();
+        let mut backend = BackendContext::new(cx);
+
+        for (heavy, expected) in [(false, 700), (true, 900), (false, 700)] {
+            backend.0.style.set_class(&backend.0.tree, parent, "heavy", heavy);
+            style_system(&mut backend.0);
+            assert_eq!(
+                backend.0.style.resolved_font_weight(&backend.0.tree, label),
+                Some(FontWeight(expected))
+            );
+            text_invalidation_system(&mut backend.0);
+            assert!(backend.0.style.text_construction.contains(&label));
+            text_system(&mut backend.0);
+            assert!(backend.0.text_context.text_paragraphs.contains(label));
         }
     }
 

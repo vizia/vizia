@@ -1092,6 +1092,7 @@ fn link_style_data(
         should_redraw = true;
         should_relayout = true;
         should_reflow = true;
+        style.needs_text_update(entity);
     }
 
     if style.font_slant.link(entity, matched_rules) {
@@ -2652,6 +2653,93 @@ mod tests {
         cx.style.set_class(&cx.tree, parent, "bold", false);
         style_system(&mut cx);
         assert_eq!(cx.style.font_weight.get(label).copied(), weight);
+    }
+
+    #[test]
+    fn relative_font_weight_uses_css_weight_ranges() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".bolder { font-weight: bolder; } .lighter { font-weight: lighter; }")
+            .unwrap();
+        let mut cases = Vec::new();
+        for (parent_weight, bolder, lighter) in [
+            (100, 400, 100),
+            (349, 400, 100),
+            (350, 700, 100),
+            (549, 700, 100),
+            (550, 900, 400),
+            (749, 900, 400),
+            (750, 900, 700),
+            (900, 900, 700),
+            (1000, 900, 700),
+        ] {
+            let mut bold = Entity::null();
+            let mut light = Entity::null();
+            VStack::new(&mut cx, |cx| {
+                bold = Element::new(cx).class("bolder").entity();
+                light = Element::new(cx).class("lighter").entity();
+            })
+            .font_weight(FontWeight(parent_weight));
+            cases.push((bold, bolder, light, lighter));
+        }
+        style_system(&mut cx);
+        for (bold, bolder, light, lighter) in cases {
+            assert_eq!(cx.style.resolved_font_weight(&cx.tree, bold), Some(FontWeight(bolder)));
+            assert_eq!(cx.style.resolved_font_weight(&cx.tree, light), Some(FontWeight(lighter)));
+        }
+    }
+
+    #[test]
+    fn relative_font_weight_inherits_and_updates_with_parent_rules() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".base { font-weight: 400; } .base.heavy { font-weight: 700; }
+             .bolder { font-weight: 300; font-weight: bolder; }
+             .lighter { font-weight: lighter; }",
+        )
+        .unwrap();
+        let default_weight = Element::new(&mut cx).class("bolder").entity();
+        let mut bold = Entity::null();
+        let mut nested = Entity::null();
+        let mut inherited = Entity::null();
+        let mut light = Entity::null();
+        let mut inline = Entity::null();
+        let parent = VStack::new(&mut cx, |cx| {
+            bold = VStack::new(cx, |cx| {
+                nested = Element::new(cx).class("bolder").entity();
+                inherited = Element::new(cx).entity();
+                light = Element::new(cx).class("lighter").entity();
+            })
+            .class("bolder")
+            .entity();
+            inline = Element::new(cx).class("bolder").font_weight(FontWeight(300)).entity();
+        })
+        .class("base")
+        .entity();
+        style_system(&mut cx);
+        assert_eq!(cx.style.resolved_font_weight(&cx.tree, default_weight), Some(FontWeight(700)));
+
+        for (heavy, expected) in [
+            (false, [700, 900, 700, 400, 300]),
+            (true, [900, 900, 900, 700, 300]),
+            (false, [700, 900, 700, 400, 300]),
+        ] {
+            cx.style.set_class(&cx.tree, parent, "heavy", heavy);
+            style_system(&mut cx);
+            for (entity, weight) in
+                [bold, nested, inherited, light, inline].into_iter().zip(expected)
+            {
+                assert_eq!(
+                    cx.style.resolved_font_weight(&cx.tree, entity),
+                    Some(FontWeight(weight)),
+                    "heavy={heavy}, entity={entity:?}"
+                );
+            }
+        }
+
+        cx.style.set_class(&cx.tree, bold, "bolder", false);
+        style_system(&mut cx);
+        assert_eq!(cx.style.resolved_font_weight(&cx.tree, bold), Some(FontWeight(400)));
+        assert_eq!(cx.style.resolved_font_weight(&cx.tree, nested), Some(FontWeight(700)));
     }
 
     #[test]
