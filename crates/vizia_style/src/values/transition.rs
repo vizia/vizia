@@ -30,8 +30,11 @@ impl<'i> Parse<'i> for Transition {
     fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         let property = Ident::parse(input)?.into();
         let duration = Duration::parse(input)?;
-        let delay = input.try_parse(Duration::parse).ok();
+        let mut delay = input.try_parse(Duration::parse).ok();
         let timing_function = input.try_parse(EasingFunction::parse).ok();
+        if delay.is_none() && timing_function.is_some() {
+            delay = input.try_parse(Duration::parse).ok();
+        }
 
         if input.is_exhausted() {
             Ok(Self { property, duration, delay, timing_function })
@@ -60,10 +63,17 @@ mod tests {
                 "width 2s" => Transition::new(String::from("width"), Duration::from_secs(2), None, None),
                 "height 2s 1s" => Transition::new(String::from("height"), Duration::from_secs(2), Some(Duration::from_secs(1)), None),
                 "color 200ms linear" => Transition::new(String::from("color"), Duration::from_millis(200), None, Some(EasingFunction::Linear)),
+                "opacity 200ms ease 50ms" => Transition::new(String::from("opacity"), Duration::from_millis(200), Some(Duration::from_millis(50)), Some(EasingFunction::Ease)),
+                "opacity 200ms 50ms ease" => Transition::new(String::from("opacity"), Duration::from_millis(200), Some(Duration::from_millis(50)), Some(EasingFunction::Ease)),
+                "width 1s cubic-bezier(0.1, 0.2, 0.3, 0.4) 2s" => Transition::new(String::from("width"), Duration::from_secs(1), Some(Duration::from_secs(2)), Some(EasingFunction::CubicBezier(0.1, 0.2, 0.3, 0.4))),
             }
 
             failure {
                 "height 2s 1s 1s",
+                "width 1s ease linear 2s",
+                "width 1s 2s ease 3s",
+                "width 1s ease 2s 3s",
+                "width 1s ease 2s unknown",
                 "1s 2s height",
             }
         }
@@ -78,6 +88,10 @@ mod tests {
                     Transition::new(String::from("height"), Duration::from_secs(1), Some(Duration::from_secs(2)), None),
                     Transition::new(String::from("width"), Duration::from_secs(3), Some(Duration::from_secs(4)), None),
                     Transition::new(String::from("rotation"), Duration::from_secs(5), Some(Duration::from_secs(6)), None),
+                ],
+                "opacity 200ms ease 50ms, width 1s 2s linear" => vec![
+                    Transition::new(String::from("opacity"), Duration::from_millis(200), Some(Duration::from_millis(50)), Some(EasingFunction::Ease)),
+                    Transition::new(String::from("width"), Duration::from_secs(1), Some(Duration::from_secs(2)), Some(EasingFunction::Linear)),
                 ],
             }
 

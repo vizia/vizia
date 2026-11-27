@@ -114,11 +114,11 @@ See [declaration parsing](crates/vizia_style/src/declaration.rs),
 - `@keyframes` definitions are loaded as named Vizia animations. Standard
   `animation` and `animation-*` properties are not in the property list; play
   named animations through Vizia's animation API instead.
-- `transition` accepts a comma-separated list in the order
-  `property duration [delay] [timing-function]`, for example
-  `transition: width 200ms 50ms ease`. Other standard orderings and separate
-  `transition-*` longhands are not supported. The loader implements transitions
-  for selected properties, not all CSS properties.
+- `transition` accepts a comma-separated list starting with `property duration`,
+  followed by an optional delay and timing function in either order, for example
+  `transition: width 200ms ease 50ms` or `width 200ms 50ms ease`. Other standard
+  orderings and separate `transition-*` longhands are not supported. The loader
+  implements transitions for selected properties, not all CSS properties.
 - Supported timing functions include `linear`, `ease`, `ease-in`, `ease-out`,
   `ease-in-out`, and `cubic-bezier(...)`; `steps(...)` is not implemented.
 
