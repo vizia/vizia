@@ -2544,6 +2544,28 @@ mod tests {
     }
 
     #[test]
+    fn background_image_keyframes_preserve_empty_layers() {
+        use crate::style::ImageOrGradient;
+
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            "@keyframes layers {
+                 from { background-image: none, url(image.png); }
+                 to { background-image: url(image.png), none; }
+             }",
+        )
+        .unwrap();
+        let animation = *cx.style.get_animation("layers").unwrap();
+        let frames = &cx.style.background_image.get_animation_mut(animation).unwrap().keyframes;
+        let empty = ImageOrGradient::Gradient(Gradient::None);
+        let image = ImageOrGradient::Image("image.png".into());
+        assert_eq!(
+            frames.iter().map(|frame| frame.value.clone()).collect::<Vec<_>>(),
+            vec![vec![empty.clone(), image.clone()], vec![image, empty]]
+        );
+    }
+
+    #[test]
     fn rgba_alpha_rounding_applies_to_styles_and_variables() {
         let mut cx = Context::default();
         cx.add_stylesheet(

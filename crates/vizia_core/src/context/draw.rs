@@ -518,6 +518,9 @@ impl DrawContext<'_> {
     }
 
     /// Returns a reference to any images of the current view.
+    ///
+    /// In a multi-layer list, `ImageOrGradient::Gradient(Gradient::None)` represents an
+    /// empty `none` layer.
     pub fn background_images(&self) -> Option<&Vec<ImageOrGradient>> {
         self.style.background_image.get(self.current)
     }
@@ -1630,8 +1633,13 @@ impl DrawContext<'_> {
                                         if image_width <= 0 || image_height <= 0 {
                                             continue;
                                         }
+                                        let background_size = if image_sizes.is_empty() {
+                                            None
+                                        } else {
+                                            image_sizes.get(index % image_sizes.len())
+                                        };
                                         let (width, height) = if let Some(background_size) =
-                                            image_sizes.get(index)
+                                            background_size
                                         {
                                             match background_size {
                                                 BackgroundSize::Explicit { width, height } => {

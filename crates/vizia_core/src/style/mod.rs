@@ -166,6 +166,22 @@ pub enum ImageOrGradient {
     Gradient(Gradient),
 }
 
+fn background_image_layers(images: &[BackgroundImage<'_>]) -> Vec<ImageOrGradient> {
+    if matches!(images, [BackgroundImage::None]) {
+        return Vec::new();
+    }
+
+    images
+        .iter()
+        .map(|image| match image {
+            // Preserve empty layers without adding a public ImageOrGradient variant.
+            BackgroundImage::None => ImageOrGradient::Gradient(Gradient::None),
+            BackgroundImage::Gradient(gradient) => ImageOrGradient::Gradient(*gradient.clone()),
+            BackgroundImage::Url(url) => ImageOrGradient::Image(url.url.to_string()),
+        })
+        .collect()
+}
+
 /// A font-family.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FamilyOwned {
@@ -1001,18 +1017,7 @@ impl Style {
                 }
 
                 Property::BackgroundImage(images) => {
-                    let images = images
-                        .iter()
-                        .filter_map(|img| match img {
-                            BackgroundImage::None => None,
-                            BackgroundImage::Gradient(gradient) => {
-                                Some(ImageOrGradient::Gradient(*gradient.clone()))
-                            }
-                            BackgroundImage::Url(url) => {
-                                Some(ImageOrGradient::Image(url.url.to_string()))
-                            }
-                        })
-                        .collect::<Vec<_>>();
+                    let images = background_image_layers(images);
                     insert_keyframe(&mut self.background_image, animation_id, time, images);
                 }
 
@@ -2644,18 +2649,7 @@ impl Style {
 
             // Background Images & Gradients
             Property::BackgroundImage(images) => {
-                let images = images
-                    .into_iter()
-                    .filter_map(|img| match img {
-                        BackgroundImage::None => None,
-                        BackgroundImage::Gradient(gradient) => {
-                            Some(ImageOrGradient::Gradient(*gradient))
-                        }
-                        BackgroundImage::Url(url) => {
-                            Some(ImageOrGradient::Image(url.url.to_string()))
-                        }
-                    })
-                    .collect::<Vec<_>>();
+                let images = background_image_layers(&images);
 
                 self.background_image.insert_rule(rule_id, images);
             }

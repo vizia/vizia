@@ -1243,6 +1243,44 @@ mod tests {
     }
 
     #[test]
+    fn background_size_cycles_across_image_layers_including_none() {
+        let cases = [
+            (
+                ".probe { background-image: url(image.png), url(image.png);
+                 background-position: left top, right top;
+                 background-size: 8px 8px; background-repeat: no-repeat; }",
+                (28, 17),
+                (21, 17),
+            ),
+            (
+                ".probe { background-image: url(image.png), url(image.png), url(image.png);
+                 background-position: 0 0, 7px 0, 14px 0;
+                 background-size: 2px 2px, 4px 4px; background-repeat: no-repeat; }",
+                (25, 11),
+                (26, 11),
+            ),
+            (
+                ".probe { background-image: none, url(image.png);
+                 background-size: 2px 2px, 8px 8px; background-repeat: no-repeat; }",
+                (17, 17),
+                (18, 17),
+            ),
+            (
+                ".probe { background-image: url(image.png), none, url(image.png);
+                 background-position: 0 0, 6px 0, 12px 0;
+                 background-size: 2px 2px, 4px 4px, 6px 6px; background-repeat: no-repeat; }",
+                (27, 15),
+                (28, 15),
+            ),
+        ];
+        for (css, inside, outside) in cases {
+            let pixel = paint_probe_with_image(css, Some((4, 2)));
+            assert_eq!(pixel(inside.0, inside.1), RED, "{css}");
+            assert_eq!(pixel(outside.0, outside.1), [0, 0, 0, 0], "{css}");
+        }
+    }
+
+    #[test]
     fn standard_box_shadow_values_render_and_none_clears() {
         let direct = paint_probe(".probe { box-shadow: red 20px 0; }");
         assert_eq!(direct(40, 20), RED);
