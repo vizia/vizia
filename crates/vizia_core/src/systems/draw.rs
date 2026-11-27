@@ -1507,6 +1507,20 @@ mod tests {
     }
 
     #[test]
+    fn background_round_preserves_auto_size_without_intrinsic_ratio() {
+        let no_ratio_svg = r##"<svg xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#ff0000"/></svg>"##;
+        for image in ["url(image.svg)", "linear-gradient(red, red)", "radial-gradient(red, red)"] {
+            for (size, repeat) in [("8px auto", "round no-repeat"), ("auto 8px", "no-repeat round")]
+            {
+                let css = format!(".probe {{ background: {image} left top / {size} {repeat}; }}");
+                let pixel = paint_probe_with_assets(&css, None, Some(no_ratio_svg), 1.0);
+                assert_eq!(pixel(10, 10), RED, "{css}");
+                assert_eq!(pixel(29, 29), RED, "{css}");
+            }
+        }
+    }
+
+    #[test]
     fn svg_background_repeat_tint_and_fractional_tiles() {
         for (fill, expected) in [("blue", [0, 0, 255, 255]), ("transparent", RED)] {
             let css = format!(

@@ -1500,6 +1500,7 @@ impl DrawContext<'_> {
             repeat: BackgroundRepeat,
             mut width: f32,
             mut height: f32,
+            has_intrinsic_ratio: bool,
         ) -> (f32, f32) {
             use BackgroundRepeatMode::Round;
             let (x, y) = repeat.axes();
@@ -1519,10 +1520,12 @@ impl DrawContext<'_> {
             if y == Round {
                 height = bounds.h / (bounds.h / height).round().max(1.0);
             }
-            if x == Round && y != Round && auto_y {
-                height *= width / original_width;
-            } else if y == Round && x != Round && auto_x {
-                width *= height / original_height;
+            if has_intrinsic_ratio {
+                if x == Round && y != Round && auto_y {
+                    height *= width / original_width;
+                } else if y == Round && x != Round && auto_x {
+                    width *= height / original_height;
+                }
             }
             (width, height)
         }
@@ -1735,7 +1738,8 @@ impl DrawContext<'_> {
                         let repeat = layer_value(&image_repeats, index)
                             .copied()
                             .unwrap_or(BackgroundRepeat::Repeat);
-                        let (width, height) = rounded_size(bounds, size, repeat, width, height);
+                        let (width, height) =
+                            rounded_size(bounds, size, repeat, width, height, false);
                         if width <= 0.0
                             || height <= 0.0
                             || !width.is_finite()
@@ -2018,7 +2022,7 @@ impl DrawContext<'_> {
                                             continue;
                                         }
                                         let (width, height) =
-                                            rounded_size(bounds, size, repeat, width, height);
+                                            rounded_size(bounds, size, repeat, width, height, true);
                                         if width <= 0.0
                                             || height <= 0.0
                                             || !width.is_finite()
@@ -2231,8 +2235,14 @@ impl DrawContext<'_> {
                                         let repeat = layer_value(&image_repeats, index)
                                             .copied()
                                             .unwrap_or(BackgroundRepeat::Repeat);
-                                        let (width, height) =
-                                            rounded_size(bounds, size, repeat, width, height);
+                                        let (width, height) = rounded_size(
+                                            bounds,
+                                            size,
+                                            repeat,
+                                            width,
+                                            height,
+                                            ratio.is_some(),
+                                        );
                                         if width <= 0.0
                                             || height <= 0.0
                                             || !width.is_finite()
