@@ -46,6 +46,50 @@ impl Node<'_, '_> {
     }
 }
 
+fn matches_language_range(language: &str, range: &str) -> bool {
+    let mut language = language.split('-');
+    let mut range = range.split('-');
+    let Some(first_range) = range.next() else {
+        return false;
+    };
+    let Some(first_language) = language.next() else {
+        return false;
+    };
+    if first_range != "*"
+        && (first_range.is_empty()
+            || first_range.len() > 8
+            || !first_range.bytes().all(|c| c.is_ascii_alphabetic())
+            || !first_range.eq_ignore_ascii_case(first_language))
+    {
+        return false;
+    }
+
+    for subtag in range {
+        if subtag == "*" {
+            continue;
+        }
+        if subtag.is_empty()
+            || subtag.len() > 8
+            || !subtag.bytes().all(|c| c.is_ascii_alphanumeric())
+        {
+            return false;
+        }
+        loop {
+            let Some(candidate) = language.next() else {
+                return false;
+            };
+            if subtag.eq_ignore_ascii_case(candidate) {
+                break;
+            }
+            // Extended language-range filtering cannot skip an extension singleton.
+            if candidate.len() == 1 {
+                return false;
+            }
+        }
+    }
+    true
+}
+
 /// Used for selector matching.
 impl Element for Node<'_, '_> {
     type Impl = Selectors;
@@ -297,7 +341,11 @@ impl Element for Node<'_, '_> {
                 .pseudo_classes
                 .get(self.entity)
                 .is_some_and(|flags| flags.contains(PseudoClassFlags::USER_INVALID)),
-            PseudoClass::Lang(_) => todo!(),
+            PseudoClass::Lang(ranges) => {
+                self.store.selector_language.as_ref().is_some_and(|(_, language)| {
+                    ranges.iter().any(|range| matches_language_range(language, range))
+                })
+            }
             PseudoClass::Dir(direction) => self.matches_direction(direction),
             PseudoClass::Has(selector_list) => self.match_has(selector_list, _context),
             PseudoClass::Custom(name) => {
@@ -1518,6 +1566,12 @@ pub(crate) fn style_system(cx: &mut Context) {
     let _scope = crate::profiling::scope("style_system");
     let mut redraw_entities = Vec::new();
 
+    let locale = cx.with_current(Entity::root(), |cx| cx.environment().locale.get_untracked());
+    if cx.style.selector_language.as_ref().map(|(language, _)| language) != Some(&locale) {
+        cx.style.selector_language = Some((locale.clone(), locale.to_string()));
+        cx.style.restyle.extend(LayoutTreeIterator::full(&cx.tree));
+    }
+
     // Inline inheritance links the inline data of entities to the inline data of their parent, so
     // it only needs to rerun when the tree or which entities have inline data changes.
     let structure_key = (cx.tree.generation, crate::storage::inline_structure_generation());
@@ -1786,7 +1840,7 @@ fn invalidate_focus_on_hidden(cx: &mut Context) {
 
 #[cfg(test)]
 mod tests {
-    use super::{sort_matched_rules, style_system};
+    use super::{matches_language_range, sort_matched_rules, style_system};
     use crate::prelude::*;
     use crate::style::Rule;
     use vizia_id::GenerationalId;
@@ -1816,6 +1870,78 @@ mod tests {
     struct Unnamed;
 
     impl View for Unnamed {}
+
+    #[test]
+    fn language_ranges_match_locale_subtags() {
+        for (locale, range, expected) in [
+            ("en-US", "en", true),
+            ("en-US", "EN-us", true),
+            ("en-US", "e", false),
+            ("en-US", "en-u", false),
+            ("en-US", "en-US-GB", false),
+            ("en-US", "fr", false),
+            ("zh-Hant-TW", "zh-TW", true),
+            ("zh-Hant-TW", "zh-*-TW", true),
+            ("en", "en-*", true),
+            ("en-US", "*", true),
+            ("de-u-co-phonebk", "de-phonebk", false),
+            ("en-US", "", false),
+            ("en-US", "en--US", false),
+            ("en-US", "en-**", false),
+            ("en-US", "englishxx", false),
+        ] {
+            assert_eq!(matches_language_range(locale, range), expected, "{locale}, {range}");
+        }
+    }
+
+    #[test]
+    fn language_selectors_follow_application_locale_changes() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            r#"
+            .probe { width: 10px; height: 10px; top: 1px; right: 1px; }
+            .probe:lang(en) { width: 20px; }
+            .probe:lang(en-US) { height: 30px; }
+            .probe:lang(fr, de) { width: 40px; }
+            .probe:lang(zh-TW) { width: 60px; }
+            .probe:not(:lang(en)) { height: 50px; }
+            .probe:lang("en-*") { top: 3px; }
+            .probe:lang(fr) { direction: rtl; }
+            .probe:dir(rtl) { right: 17px; }
+            .ancestor { opacity: 1; }
+            .ancestor:has(> .probe:lang(en)) { opacity: 0.5; }
+            "#,
+        )
+        .unwrap();
+        let mut probe = Entity::null();
+        let ancestor = VStack::new(&mut cx, |cx| {
+            probe = Element::new(cx).class("probe").entity();
+        })
+        .class("ancestor")
+        .entity();
+
+        for (locale, width, height, top, right, opacity) in [
+            ("en-US", 20.0, 30.0, 3.0, 1.0, 0.5),
+            ("en-GB", 20.0, 10.0, 3.0, 1.0, 0.5),
+            ("fr-CA", 40.0, 50.0, 1.0, 17.0, 1.0),
+            ("zh-Hant-TW", 60.0, 50.0, 1.0, 1.0, 1.0),
+            ("en-US", 20.0, 30.0, 3.0, 1.0, 0.5),
+        ] {
+            cx.environment().locale.set(locale.parse().unwrap());
+            style_system(&mut cx);
+            assert_eq!(cx.style.width.get(probe), Some(&Units::Pixels(width)), "{locale}");
+            assert_eq!(cx.style.height.get(probe), Some(&Units::Pixels(height)), "{locale}");
+            assert_eq!(cx.style.top.get(probe), Some(&Units::Pixels(top)), "{locale}");
+            assert_eq!(cx.style.right.get(probe), Some(&Units::Pixels(right)), "{locale}");
+            assert_eq!(cx.style.opacity.get(ancestor), Some(&Opacity(opacity)), "{locale}");
+        }
+
+        EventContext::new_with_current(&mut cx, Entity::root())
+            .set_language("fr-CA".parse().unwrap());
+        style_system(&mut cx);
+        assert_eq!(cx.style.width.get(probe), Some(&Units::Pixels(40.0)));
+        assert_eq!(cx.style.right.get(probe), Some(&Units::Pixels(17.0)));
+    }
 
     #[test]
     fn unknown_pseudo_classes_do_not_apply_invalid_rules() {

@@ -65,6 +65,14 @@ mod test {
         assert!(parse(":made-up(value)").is_err());
     }
 
+    #[test]
+    fn language_selector_serialization_preserves_ranges() {
+        let selector = parse(r#":lang(en, "zh-*", "a\"b")"#).unwrap();
+        let css = selector.to_css_string();
+        assert_eq!(css, r#":lang("en", "zh-*", "a\"b")"#);
+        assert_eq!(parse(&css).unwrap(), selector);
+    }
+
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct Entity(u32);
 

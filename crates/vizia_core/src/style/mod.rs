@@ -235,6 +235,8 @@ pub struct Style {
     pub(crate) inline_inheritance_key: Option<(u64, u64)>,
     /// The tree and inline style structure generations at the last style pass.
     pub(crate) style_structure_key: Option<(u64, u64)>,
+    /// Application locale and its serialized language tag for selector matching.
+    pub(crate) selector_language: Option<(unic_langid::LanguageIdentifier, String)>,
 
     pub(crate) default_font: Vec<FamilyOwned>,
 
