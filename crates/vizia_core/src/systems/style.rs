@@ -2925,6 +2925,30 @@ mod tests {
     }
 
     #[test]
+    fn unitless_zero_layout_fallback_rejects_compound_values() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".valid { width: var(--missing, -0); padding: var(--missing, 0); }
+             .invalid { width: var(--missing, 0 garbage); padding: var(--missing, 0 8px);
+                        gap: var(--missing, 0 garbage); }",
+        )
+        .unwrap();
+        let valid = Element::new(&mut cx).class("valid").entity();
+        let invalid = Element::new(&mut cx).class("invalid").entity();
+        style_system(&mut cx);
+
+        let resolved = |store: &crate::storage::animatable_var_set::AnimatableVarSet<Units>,
+                        entity| {
+            store.get_resolved(entity, &cx.style.custom_units_props)
+        };
+        assert_eq!(resolved(&cx.style.width, valid), Some(Units::Pixels(0.0)));
+        assert_eq!(resolved(&cx.style.padding_left, valid), Some(Units::Pixels(0.0)));
+        assert_eq!(resolved(&cx.style.width, invalid), None);
+        assert_eq!(resolved(&cx.style.padding_left, invalid), None);
+        assert_eq!(resolved(&cx.style.vertical_gap, invalid), None);
+    }
+
+    #[test]
     fn letter_spacing_unitless_zero_applies_to_stylesheets_and_variables() {
         let mut cx = Context::default();
         cx.add_stylesheet(

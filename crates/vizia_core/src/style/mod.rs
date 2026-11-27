@@ -2090,7 +2090,10 @@ impl Style {
 
         fn units_fallback(var: &Variable<'_>) -> Option<Units> {
             match first_fallback_token(var) {
-                Some(TokenOrValue::Token(CssToken::Number { value, .. })) if *value == 0.0 => {
+                Some(TokenOrValue::Token(CssToken::Number { value, .. }))
+                    if *value == 0.0
+                        && matches!(var.fallback.as_ref(), Some(TokenList(tokens)) if tokens.len() == 1) =>
+                {
                     Some(Units::Pixels(0.0))
                 }
 
