@@ -1921,6 +1921,13 @@ impl Style {
 
         fn length_fallback(var: &Variable<'_>) -> Option<LengthOrPercentage> {
             match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Number { value, .. }))
+                    if *value == 0.0
+                        && matches!(var.fallback.as_ref(), Some(TokenList(tokens)) if tokens.len() == 1) =>
+                {
+                    Some(LengthOrPercentage::Length(Length::zero()))
+                }
+
                 Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
                     if unit.as_ref().eq_ignore_ascii_case("px") =>
                 {
@@ -2663,6 +2670,17 @@ impl Style {
                         }
                     };
                 }
+                macro_rules! parse_radius_var {
+                    ($($prop:expr),+) => {
+                        if let [TokenOrValue::Var(var)] = unparsed.value.0.as_slice() {
+                            let hash = variable_hash(var);
+                            let fallback = length_fallback(var);
+                            $($prop.insert_variable_rule(rule_id, hash, fallback.clone());)+
+                        } else {
+                            warn!("Unparsed {} {:?}", unparsed.name, unparsed.value);
+                        }
+                    };
+                }
                 macro_rules! parse_font_size_var {
                     ($prop:expr) => {
                         if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
@@ -2733,19 +2751,19 @@ impl Style {
                     "font-size" => parse_font_size_var!(self.font_size),
                     "letter-spacing" => parse_letter_spacing_var!(self.letter_spacing),
                     "line-height" => parse_line_height_var!(self.line_height),
-                    "corner-radius" => parse_length_var!(
+                    "corner-radius" => parse_radius_var!(
                         self.corner_top_left_radius,
                         self.corner_top_right_radius,
                         self.corner_bottom_left_radius,
                         self.corner_bottom_right_radius
                     ),
-                    "corner-top-left-radius" => parse_length_var!(self.corner_top_left_radius),
-                    "corner-top-right-radius" => parse_length_var!(self.corner_top_right_radius),
+                    "corner-top-left-radius" => parse_radius_var!(self.corner_top_left_radius),
+                    "corner-top-right-radius" => parse_radius_var!(self.corner_top_right_radius),
                     "corner-bottom-left-radius" => {
-                        parse_length_var!(self.corner_bottom_left_radius)
+                        parse_radius_var!(self.corner_bottom_left_radius)
                     }
                     "corner-bottom-right-radius" => {
-                        parse_length_var!(self.corner_bottom_right_radius)
+                        parse_radius_var!(self.corner_bottom_right_radius)
                     }
                     "border-width" => parse_length_var!(
                         self.border_top_width,
@@ -3154,6 +3172,18 @@ impl Style {
                         }
                         TokenOrValue::Token(CssToken::Number { value, .. }) => {
                             if *value == 0.0 {
+                                if custom.value.0.len() == 1 {
+                                    let length_val = LengthOrPercentage::Length(Length::zero());
+                                    if let Some(store) =
+                                        self.custom_length_props.get_mut(&variable_name_hash)
+                                    {
+                                        store.insert_rule(rule_id, length_val);
+                                    } else {
+                                        let mut store = AnimatableVarSet::default();
+                                        store.insert_rule(rule_id, length_val);
+                                        self.custom_length_props.insert(variable_name_hash, store);
+                                    }
+                                }
                                 let units_val = Units::Pixels(0.0);
                                 if let Some(store) =
                                     self.custom_units_props.get_mut(&variable_name_hash)

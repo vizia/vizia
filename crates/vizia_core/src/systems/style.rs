@@ -1817,6 +1817,88 @@ mod tests {
     impl View for Unnamed {}
 
     #[test]
+    fn border_radius_unitless_zero_applies_and_resolves_variables() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".direct { border-radius: 0 8px; border-bottom-left-radius: 0; }
+             .variable { --zero: 0; corner-radius: var(--zero); }
+             .fallback { border-radius: var(--missing, 0); border-top-right-radius: var(--missing, 0); }
+             .invalid { border-radius: 6px; border-radius: 1; }
+             .mixed { border-radius: 6px; border-radius: var(--missing, 0) 8px; }
+             .bad-fallback { border-top-left-radius: var(--missing, 0 8px); }
+             .nonzero { --value: 1; border-top-left-radius: var(--value, 7px); }",
+        )
+        .unwrap();
+        let direct = Element::new(&mut cx).class("direct").entity();
+        let variable = Element::new(&mut cx).class("variable").entity();
+        let fallback = Element::new(&mut cx).class("fallback").entity();
+        let invalid = Element::new(&mut cx).class("invalid").entity();
+        let mixed = Element::new(&mut cx).class("mixed").entity();
+        let bad_fallback = Element::new(&mut cx).class("bad-fallback").entity();
+        let nonzero = Element::new(&mut cx).class("nonzero").entity();
+        style_system(&mut cx);
+
+        let resolved =
+            |store: &crate::storage::animatable_var_set::AnimatableVarSet<LengthOrPercentage>,
+             entity| store.get_resolved(entity, &cx.style.custom_length_props);
+        assert_eq!(
+            resolved(&cx.style.corner_top_left_radius, direct),
+            Some(LengthOrPercentage::px(0.0))
+        );
+        assert_eq!(
+            resolved(&cx.style.corner_top_right_radius, direct),
+            Some(LengthOrPercentage::px(8.0))
+        );
+        assert_eq!(
+            resolved(&cx.style.corner_bottom_right_radius, direct),
+            Some(LengthOrPercentage::px(0.0))
+        );
+        assert_eq!(
+            resolved(&cx.style.corner_bottom_left_radius, direct),
+            Some(LengthOrPercentage::px(0.0))
+        );
+        for entity in [variable, fallback] {
+            assert_eq!(
+                resolved(&cx.style.corner_top_left_radius, entity),
+                Some(LengthOrPercentage::px(0.0))
+            );
+            assert_eq!(
+                resolved(&cx.style.corner_top_right_radius, entity),
+                Some(LengthOrPercentage::px(0.0))
+            );
+        }
+        assert_eq!(
+            resolved(&cx.style.corner_top_left_radius, invalid),
+            Some(LengthOrPercentage::px(6.0))
+        );
+        assert_eq!(
+            resolved(&cx.style.corner_top_left_radius, mixed),
+            Some(LengthOrPercentage::px(6.0))
+        );
+        assert_eq!(resolved(&cx.style.corner_top_left_radius, bad_fallback), None);
+        assert_eq!(
+            resolved(&cx.style.corner_top_left_radius, nonzero),
+            Some(LengthOrPercentage::px(7.0))
+        );
+    }
+
+    #[test]
+    fn border_radius_unitless_zero_works_in_keyframes() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            "@keyframes rounded { from { border-top-left-radius: 0; } to { border-top-left-radius: 6px; } }",
+        )
+        .unwrap();
+        let animation = *cx.style.get_animation("rounded").unwrap();
+        let frames =
+            &cx.style.corner_top_left_radius.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(
+            frames.iter().map(|frame| frame.value.clone()).collect::<Vec<_>>(),
+            vec![LengthOrPercentage::px(0.0), LengthOrPercentage::px(6.0)]
+        );
+    }
+
+    #[test]
     fn background_repeat_axis_pairs_apply_to_stylesheets() {
         use vizia_style::BackgroundRepeat;
 

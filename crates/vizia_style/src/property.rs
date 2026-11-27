@@ -1,3 +1,4 @@
+use crate::values::border::border_radius::RadiusLength;
 use crate::{
     Alignment, Angle, AspectRatio, BackgroundImage, BackgroundRepeat, BackgroundSize, BlendMode,
     Border, BorderStyle, BorderStyleKeyword, BorderWidth, BorderWidthValue, ClipPath, Color,
@@ -262,6 +263,23 @@ impl<'i> Property<'i> {
         name: cssparser::CowRcStr<'i>,
         input: &mut Parser<'i>,
     ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
+        let radius_property: Option<fn(LengthOrPercentage) -> Self> =
+            match canonical_property_name(name.as_ref()) {
+                "corner-top-left-radius" => Some(Self::CornerTopLeftRadius),
+                "corner-top-right-radius" => Some(Self::CornerTopRightRadius),
+                "corner-bottom-left-radius" => Some(Self::CornerBottomLeftRadius),
+                "corner-bottom-right-radius" => Some(Self::CornerBottomRightRadius),
+                _ => None,
+            };
+        if let Some(property) = radius_property
+            && let Ok(value) = input.try_parse(|input| {
+                let value = RadiusLength::parse(input)?;
+                input.expect_exhausted()?;
+                Ok::<_, cssparser::ParseError<CustomParseError<'i>>>(value.0)
+            })
+        {
+            return Ok(property(value));
+        }
         if name.as_ref() == "text-wrap"
             && let Ok(value) =
                 input.try_parse(|input| -> Result<bool, cssparser::BasicParseError> {
@@ -284,6 +302,37 @@ mod tests {
     use cssparser::CowRcStr;
 
     use super::*;
+
+    #[test]
+    fn border_radius_longhands_accept_unitless_zero() {
+        for (name, expected) in [
+            ("border-top-left-radius", Property::CornerTopLeftRadius(LengthOrPercentage::px(0.0))),
+            (
+                "border-top-right-radius",
+                Property::CornerTopRightRadius(LengthOrPercentage::px(0.0)),
+            ),
+            (
+                "border-bottom-left-radius",
+                Property::CornerBottomLeftRadius(LengthOrPercentage::px(0.0)),
+            ),
+            (
+                "border-bottom-right-radius",
+                Property::CornerBottomRightRadius(LengthOrPercentage::px(0.0)),
+            ),
+            ("corner-top-left-radius", Property::CornerTopLeftRadius(LengthOrPercentage::px(0.0))),
+        ] {
+            let mut parser = Parser::new("-0");
+            assert_eq!(Property::parse_value(CowRcStr::from(name), &mut parser).unwrap(), expected);
+            assert!(parser.is_exhausted());
+        }
+        for value in ["1", "0 1px"] {
+            let mut parser = Parser::new(value);
+            assert!(matches!(
+                Property::parse_value(CowRcStr::from("border-top-left-radius"), &mut parser),
+                Ok(Property::Unparsed(_))
+            ));
+        }
+    }
 
     #[test]
     fn text_wrap_standard_keywords_preserve_boolean_values() {

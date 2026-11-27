@@ -1,4 +1,6 @@
-use crate::{LengthOrPercentage, Parse, Rect, macros::impl_parse};
+use crate::{CustomParseError, Length, LengthOrPercentage, Parse, Rect};
+use cssparser::{ParseError, Parser};
+
 /// Defines the border radius of every corner of a rectangle.
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct CornerRadius {
@@ -23,11 +25,33 @@ impl CornerRadius {
     }
 }
 
-impl_parse! {
-    CornerRadius,
+#[derive(Clone)]
+pub(crate) struct RadiusLength(pub(crate) LengthOrPercentage);
 
-    try_parse {
-        Rect<LengthOrPercentage>,
+impl<'i> Parse<'i> for RadiusLength {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
+        if input
+            .try_parse(|input| -> Result<(), ParseError<CustomParseError<'i>>> {
+                if input.expect_number()? == 0.0 {
+                    Ok(())
+                } else {
+                    Err(ParseError::custom(CustomParseError::InvalidDeclaration))
+                }
+            })
+            .is_ok()
+        {
+            return Ok(Self(LengthOrPercentage::Length(Length::zero())));
+        }
+        LengthOrPercentage::parse(input).map(Self)
+    }
+}
+
+impl<'i> Parse<'i> for CornerRadius {
+    fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
+        let Rect(top_left, top_right, bottom_right, bottom_left) =
+            Rect::<RadiusLength>::parse(input)?;
+        input.expect_exhausted()?;
+        Ok(Self::new(top_left.0, top_right.0, bottom_right.0, bottom_left.0))
     }
 }
 
@@ -136,11 +160,18 @@ mod tests {
             "10px 20px" =>  CornerRadius::new(LengthOrPercentage::Length(Length::px(10.0)), LengthOrPercentage::Length(Length::px(20.0)), LengthOrPercentage::Length(Length::px(10.0)), LengthOrPercentage::Length(Length::px(20.0))),
             "10px 20px 30px" =>  CornerRadius::new(LengthOrPercentage::Length(Length::px(10.0)), LengthOrPercentage::Length(Length::px(20.0)), LengthOrPercentage::Length(Length::px(30.0)), LengthOrPercentage::Length(Length::px(20.0))),
             "10px 20px 30px 40px" =>  CornerRadius::new(LengthOrPercentage::Length(Length::px(10.0)), LengthOrPercentage::Length(Length::px(20.0)), LengthOrPercentage::Length(Length::px(30.0)), LengthOrPercentage::Length(Length::px(40.0))),
+            "0" => CornerRadius::new(LengthOrPercentage::px(0.0), LengthOrPercentage::px(0.0), LengthOrPercentage::px(0.0), LengthOrPercentage::px(0.0)),
+            "0 8px" => CornerRadius::new(LengthOrPercentage::px(0.0), LengthOrPercentage::px(8.0), LengthOrPercentage::px(0.0), LengthOrPercentage::px(8.0)),
+            "0 5% 8px" => CornerRadius::new(LengthOrPercentage::px(0.0), LengthOrPercentage::Percentage(5.0), LengthOrPercentage::px(8.0), LengthOrPercentage::Percentage(5.0)),
+            "0 8px -0 12px" => CornerRadius::new(LengthOrPercentage::px(0.0), LengthOrPercentage::px(8.0), LengthOrPercentage::px(0.0), LengthOrPercentage::px(12.0)),
         }
 
         failure {
             "px",
             "10px 20px 30px 40px 50px",
+            "0 8px 1",
+            "1",
+            "0 8px / 4px",
         }
     }
 }
