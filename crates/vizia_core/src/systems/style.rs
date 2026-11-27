@@ -1817,6 +1817,37 @@ mod tests {
     impl View for Unnamed {}
 
     #[test]
+    fn unitless_zero_positions_apply_without_accepting_nonzero_numbers() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".probe { background-position: 0 0, right 0; transform-origin: 0 0; }
+             .invalid { background-position: left; background-position: 0 1;
+                        transform-origin: right; transform-origin: 0 1; }",
+        )
+        .unwrap();
+        let probe = Element::new(&mut cx).class("probe").entity();
+        let invalid = Element::new(&mut cx).class("invalid").entity();
+        style_system(&mut cx);
+
+        let positions = cx.style.background_position.get(probe).unwrap();
+        assert_eq!(positions.len(), 2);
+        assert_eq!(positions[0].x.to_length_or_percentage(), LengthOrPercentage::px(0.0));
+        assert_eq!(positions[0].y.to_length_or_percentage(), LengthOrPercentage::px(0.0));
+        assert_eq!(positions[1].x.to_length_or_percentage(), LengthOrPercentage::Percentage(100.0));
+        assert_eq!(positions[1].y.to_length_or_percentage(), LengthOrPercentage::px(0.0));
+        let origin = cx.style.transform_origin.get(probe).unwrap();
+        assert_eq!(origin.x, LengthOrPercentage::px(0.0));
+        assert_eq!(origin.y, LengthOrPercentage::px(0.0));
+
+        let position = &cx.style.background_position.get(invalid).unwrap()[0];
+        assert_eq!(position.x.to_length_or_percentage(), LengthOrPercentage::px(0.0));
+        assert_eq!(position.y.to_length_or_percentage(), LengthOrPercentage::Percentage(50.0));
+        let origin = cx.style.transform_origin.get(invalid).unwrap();
+        assert_eq!(origin.x, LengthOrPercentage::Percentage(100.0));
+        assert_eq!(origin.y, LengthOrPercentage::Percentage(50.0));
+    }
+
+    #[test]
     fn single_value_positions_apply_to_background_and_transform_origin() {
         let mut cx = Context::default();
         cx.add_stylesheet(

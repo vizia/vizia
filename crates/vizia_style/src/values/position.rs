@@ -1,6 +1,7 @@
 use crate::error::CustomParseError;
 use crate::horizontal_position_keyword::HorizontalPositionKeyword;
 use crate::traits::Parse;
+use crate::values::length::length::parse_unitless_zero;
 use crate::vertical_position_keyword::VerticalPositionKeyword;
 use crate::{Length, LengthOrPercentage};
 use cssparser::*;
@@ -84,7 +85,12 @@ impl<'i> Parse<'i> for Vec<Position> {
             return Err(input.new_error_for_next_token());
         }
 
-        input.parse_comma_separated(Position::parse)
+        input.parse_comma_separated(|input| {
+            if input.is_exhausted() {
+                return Err(input.new_error_for_next_token());
+            }
+            Position::parse(input)
+        })
     }
 }
 
@@ -120,6 +126,10 @@ impl<'i, S: Parse<'i> + Copy + Into<LengthOrPercentage>> Parse<'i> for PositionC
     fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         if input.try_parse(|i| i.expect_ident_matching("center")).is_ok() {
             return Ok(PositionComponent::Center);
+        }
+
+        if let Ok(zero) = input.try_parse(parse_unitless_zero) {
+            return Ok(PositionComponent::Length(LengthOrPercentage::Length(zero)));
         }
 
         if let Ok(lp) = input.try_parse(LengthOrPercentage::parse) {
@@ -187,6 +197,35 @@ impl From<VerticalPositionKeyword> for VerticalPosition {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn unitless_zero_positions_parse_per_axis() {
+        let zero = LengthOrPercentage::px(0.0);
+        let center = LengthOrPercentage::Percentage(50.0);
+        for (value, x, y) in [
+            ("0", zero.clone(), center),
+            ("0 0", zero.clone(), zero.clone()),
+            ("-0 25%", zero.clone(), LengthOrPercentage::Percentage(25.0)),
+            ("right 0", LengthOrPercentage::Percentage(100.0), zero.clone()),
+            ("0 bottom", zero.clone(), LengthOrPercentage::Percentage(100.0)),
+        ] {
+            let mut parser = Parser::new(value);
+            let positions = Vec::<Position>::parse(&mut parser).unwrap();
+            assert_eq!(positions.len(), 1);
+            assert_eq!(positions[0].x.to_length_or_percentage(), x, "{value}");
+            assert_eq!(positions[0].y.to_length_or_percentage(), y, "{value}");
+            assert!(parser.is_exhausted(), "{value}");
+        }
+        let mut parser = Parser::new("0 0, 0 10px");
+        let positions = Vec::<Position>::parse(&mut parser).unwrap();
+        assert_eq!(positions.len(), 2);
+        assert_eq!(positions[0].y.to_length_or_percentage(), zero);
+        assert_eq!(positions[1].y.to_length_or_percentage(), LengthOrPercentage::px(10.0));
+
+        for value in ["1", "0 1", "0 0 0", "0,"] {
+            assert!(Vec::<Position>::parse(&mut Parser::new(value)).is_err(), "{value}");
+        }
+    }
 
     #[test]
     fn single_value_positions_keep_the_specified_axis() {

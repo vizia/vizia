@@ -188,6 +188,19 @@ mod tests {
     }
 
     #[test]
+    fn unitless_zero_transform_origin_positions_scale_pivot() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".probe { transform-origin: 0 0; scale: 2; }").unwrap();
+        let entity = Element::new(&mut cx).class("probe").entity();
+        cx.cache.set_bounds(entity, BoundingBox { x: 0.0, y: 0.0, w: 100.0, h: 80.0 });
+        crate::systems::style_system(&mut cx);
+
+        let matrix = local_transform(&cx, entity).unwrap();
+        assert_eq!(matrix.map_point((0.0, 0.0)), skia_safe::Point::new(0.0, 0.0));
+        assert_eq!(matrix.map_point((50.0, 40.0)), skia_safe::Point::new(100.0, 80.0));
+    }
+
+    #[test]
     fn descendants_inherit_ancestor_transforms() {
         let (mut cx, a, b, c) = setup();
         translate(&mut cx, a, 10.0, 20.0);

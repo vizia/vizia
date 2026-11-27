@@ -263,6 +263,19 @@ impl<'i> Property<'i> {
         name: cssparser::CowRcStr<'i>,
         input: &mut Parser<'i>,
     ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
+        if name.as_ref() == "transform-origin" {
+            if let Ok(position) = input.try_parse(|input| {
+                if input.is_exhausted() {
+                    return Err(input.new_error_for_next_token());
+                }
+                let position = Position::parse(input)?;
+                input.expect_exhausted()?;
+                Ok::<_, cssparser::ParseError<CustomParseError<'i>>>(position)
+            }) {
+                return Ok(Self::TransformOrigin(position));
+            }
+            return Ok(Self::Unparsed(UnparsedProperty::parse(name, input)?));
+        }
         let border_width_property: Option<fn(BorderWidthValue) -> Self> = match name.as_ref() {
             "border-top-width" => Some(Self::BorderTopWidth),
             "border-right-width" => Some(Self::BorderRightWidth),
