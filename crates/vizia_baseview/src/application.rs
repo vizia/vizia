@@ -1,5 +1,5 @@
 use crate::window::ViziaWindow;
-use crate::window::create_surface;
+use crate::window::{create_surface, user_scaled_size};
 use crate::window_settings::{FramePolicy, WindowScalePolicy};
 use baseview::{Window, WindowContext};
 use gl_rs as gl;
@@ -88,6 +88,30 @@ where
 
     pub fn inner_size(mut self, size: impl Into<WindowSize>) -> Self {
         self.window_description.inner_size = size.into();
+
+        self
+    }
+
+    /// Sets the minimum logical size of the window, or removes it with `None`. Defaults to
+    /// 100x100.
+    ///
+    /// This is a size of the window itself, so a user scale factor doesn't change it. It only
+    /// applies to a window opened with [`run()`][Self::run], since a parented window's size is up
+    /// to its host.
+    pub fn min_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
+        self.window_description.min_inner_size = size.map(Into::into);
+
+        self
+    }
+
+    /// Sets the maximum logical size of the window, or removes it with `None`. Defaults to no
+    /// maximum.
+    ///
+    /// Like [`min_inner_size()`][Self::min_inner_size], this only applies to a window opened with
+    /// [`run()`][Self::run]. Equal min and max sizes aren't applied, since baseview 0.4.2 treats
+    /// equal limits as fixed, which drops them and stops `resize()` on macOS and X11.
+    pub fn max_inner_size<S: Into<WindowSize>>(mut self, size: Option<S>) -> Self {
+        self.window_description.max_inner_size = size.map(Into::into);
 
         self
     }
@@ -263,14 +287,13 @@ impl ApplicationRunner {
         // baseview treats the user scale factor as part of its
         // logical size, so the size we hand to `Window::resize` is
         // already user-scaled. The HiDPI factor is applied on top by
-        // baseview itself when computing pixel dims.
-        let base_logical_w = self.window_description.inner_size.width as f64;
-        let base_logical_h = self.window_description.inner_size.height as f64;
-        let scaled_logical_w = base_logical_w * new_user_scale;
-        let scaled_logical_h = base_logical_h * new_user_scale;
-        self.window_context
-            .resize(baseview::dpi::LogicalSize::new(scaled_logical_w, scaled_logical_h))
-            .expect("Failed to resize window");
+        // baseview itself when computing pixel dims. A standalone window
+        // can't be resized outside its min and max size, so the size is
+        // clamped the same way here and the surfaces match the window.
+        let scaled_logical = user_scaled_size(&self.window_description, self.is_parented);
+        let scaled_logical_w = scaled_logical.width;
+        let scaled_logical_h = scaled_logical.height;
+        self.window_context.resize(scaled_logical).expect("Failed to resize window");
 
         let new_dpi_factor = self.window_scale_factor * new_user_scale;
         self.cx.set_scale_factor(new_dpi_factor);
@@ -827,5 +850,25 @@ fn translate_mouse_cursor(icon: CursorIcon) -> baseview::MouseCursor {
         CursorIcon::AllScroll => baseview::MouseCursor::AllScroll,
         CursorIcon::ColResize => baseview::MouseCursor::ColResize,
         CursorIcon::RowResize => baseview::MouseCursor::RowResize,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn size_limit_builders_set_the_window_description() {
+        let app = Application::new(|_| {})
+            .min_inner_size(Some((300, 200)))
+            .max_inner_size(Some((1200, 900)));
+
+        assert_eq!(app.window_description.min_inner_size, Some(WindowSize::new(300, 200)));
+        assert_eq!(app.window_description.max_inner_size, Some(WindowSize::new(1200, 900)));
+
+        let app = app.min_inner_size(None::<WindowSize>).max_inner_size(None::<WindowSize>);
+
+        assert_eq!(app.window_description.min_inner_size, None);
+        assert_eq!(app.window_description.max_inner_size, None);
     }
 }
