@@ -2475,6 +2475,47 @@ mod tests {
     }
 
     #[test]
+    fn background_repeat_space_and_round_apply_in_rules_and_keyframes() {
+        use crate::animation::Interpolator;
+        use vizia_style::{BackgroundRepeat, BackgroundRepeatMode};
+
+        let axes = |x, y| BackgroundRepeat::Axes { x, y };
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".longhand { background-repeat: space round, round no-repeat; }
+             .shorthand { background: none left top / 6px 4px space round; }
+             .invalid { background-repeat: space; background: none round repeat-x; }
+             @keyframes repeat-mode {
+                 from { background-repeat: space; }
+                 to { background: none round no-repeat; }
+             }",
+        )
+        .unwrap();
+        let longhand = Element::new(&mut cx).class("longhand").entity();
+        let shorthand = Element::new(&mut cx).class("shorthand").entity();
+        let invalid = Element::new(&mut cx).class("invalid").entity();
+        style_system(&mut cx);
+
+        let space_round = axes(BackgroundRepeatMode::Space, BackgroundRepeatMode::Round);
+        let round_no_repeat = axes(BackgroundRepeatMode::Round, BackgroundRepeatMode::NoRepeat);
+        let space = axes(BackgroundRepeatMode::Space, BackgroundRepeatMode::Space);
+        assert_eq!(
+            cx.style.background_repeat.get(longhand),
+            Some(&vec![space_round, round_no_repeat])
+        );
+        assert_eq!(cx.style.background_repeat.get(shorthand), Some(&vec![space_round]));
+        assert_eq!(cx.style.background_repeat.get(invalid), Some(&vec![space]));
+        let animation = *cx.style.get_animation("repeat-mode").unwrap();
+        let frames = &cx.style.background_repeat.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(
+            frames.iter().map(|frame| frame.value.clone()).collect::<Vec<_>>(),
+            vec![vec![space], vec![round_no_repeat]]
+        );
+        assert_eq!(BackgroundRepeat::interpolate(&space, &round_no_repeat, 0.49), space);
+        assert_eq!(BackgroundRepeat::interpolate(&space, &round_no_repeat, 0.5), round_no_repeat);
+    }
+
+    #[test]
     fn background_size_unitless_zero_applies_in_longhand_and_shorthand() {
         use crate::style::ImageOrGradient;
         use vizia_style::LengthPercentageOrAuto;

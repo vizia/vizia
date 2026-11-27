@@ -1364,7 +1364,119 @@ mod tests {
             assert_eq!(pixel(inside.0, inside.1), RED, "{css}");
             assert_eq!(pixel(outside.0, outside.1), [0, 0, 0, 0], "{css}");
         }
+    }
 
+    #[test]
+    fn background_repeat_space_and_round_render_each_image_type() {
+        for image in [
+            "url(image.png)",
+            "url(image.svg)",
+            "linear-gradient(red, red)",
+            "radial-gradient(red, red)",
+        ] {
+            let css = format!(".probe {{ background: none, {image} center / 6px 6px space; }}");
+            let pixel = paint_probe_with_assets(&css, Some((4, 2)), Some(TEST_SVG), 1.0);
+            for (x, y) in [(10, 10), (17, 17), (29, 29)] {
+                assert_eq!(pixel(x, y), RED, "{css} at ({x}, {y})");
+            }
+            for (x, y) in [(16, 10), (10, 16), (23, 17)] {
+                assert_eq!(pixel(x, y), [0, 0, 0, 0], "{css} at ({x}, {y})");
+            }
+
+            let css = format!(
+                ".probe {{ background: {image} right bottom / 12px 4px space no-repeat; }}"
+            );
+            let pixel = paint_probe_with_assets(&css, Some((4, 2)), Some(TEST_SVG), 1.0);
+            assert_eq!(pixel(18, 26), RED, "{css}");
+            assert_eq!(pixel(17, 26), [0, 0, 0, 0], "{css}");
+            assert_eq!(pixel(18, 25), [0, 0, 0, 0], "{css}");
+
+            let css =
+                format!(".probe {{ background: {image} left top / 8px 4px round no-repeat; }}");
+            let pixel = paint_probe_with_assets(&css, Some((4, 2)), Some(TEST_SVG), 1.0);
+            assert_eq!(pixel(10, 10), RED, "{css}");
+            assert_eq!(pixel(29, 13), RED, "{css}");
+            assert_eq!(pixel(10, 14), [0, 0, 0, 0], "{css}");
+        }
+
+        for image in ["url(image.png)", "url(image.svg)"] {
+            let css =
+                format!(".probe {{ background: {image} left top / 8px auto round no-repeat; }}");
+            let pixel = paint_probe_with_assets(&css, Some((4, 2)), Some(TEST_SVG), 1.0);
+            assert_eq!(pixel(11, 12), RED, "{css}");
+            assert_ne!(pixel(11, 13), RED, "{css}");
+            assert_eq!(pixel(11, 14), [0, 0, 0, 0], "{css}");
+        }
+
+        let pixel = paint_probe(
+            ".probe { background: linear-gradient(to right, red, blue) left top / 8px 4px round no-repeat; }",
+        );
+        assert!(pixel(16, 11)[2] > pixel(16, 11)[0]);
+        assert!(pixel(17, 11)[0] > pixel(17, 11)[2]);
+
+        let pixel = paint_probe(
+            ".probe { background: linear-gradient(to right, red, blue) left top / 40px 4px round no-repeat; }",
+        );
+        assert!(pixel(28, 11)[2] > pixel(28, 11)[0]);
+
+        let pixel = paint_probe(
+            ".probe { background: linear-gradient(to right, red, blue) right top / 6px 4px space no-repeat; }",
+        );
+        assert!(pixel(10, 11)[0] > pixel(10, 11)[2]);
+        assert!(pixel(15, 11)[2] > pixel(15, 11)[0]);
+        assert_eq!(pixel(16, 11), [0, 0, 0, 0]);
+        assert_eq!(pixel(10, 11), pixel(17, 11));
+
+        let pixel = paint_probe_with_image(
+                ".probe { background-image: linear-gradient(rgba(255, 0, 0, 0.5), rgba(255, 0, 0, 0.5)), url(blue.png);
+                 background-size: 6px 6px, 20px 20px; background-repeat: space, no-repeat; }",
+                Some((4, 2)),
+            );
+        assert_eq!(pixel(10, 10), [128, 0, 127, 255]);
+        assert_eq!(pixel(16, 10), [0, 0, 255, 255]);
+    }
+
+    #[test]
+    fn background_repeat_space_round_axes_and_scaling() {
+        for image in ["url(image.png)", "url(image.svg)", "linear-gradient(red, red)"] {
+            let css = format!(".probe {{ background: {image} center / 4px 6px no-repeat space; }}");
+            let pixel = paint_probe_with_assets(&css, Some((4, 2)), Some(TEST_SVG), 1.0);
+            assert_eq!(pixel(18, 10), RED, "{css}");
+            assert_eq!(pixel(18, 16), [0, 0, 0, 0], "{css}");
+            assert_eq!(pixel(18, 17), RED, "{css}");
+            assert_eq!(pixel(17, 17), [0, 0, 0, 0], "{css}");
+
+            let css =
+                format!(".probe {{ background: {image} right bottom / 6px 8px space round; }}");
+            let pixel = paint_probe_with_assets(&css, Some((4, 2)), Some(TEST_SVG), 1.0);
+            assert_eq!(pixel(10, 29), RED, "{css}");
+            assert_eq!(pixel(16, 20), [0, 0, 0, 0], "{css}");
+            assert_eq!(pixel(17, 20), RED, "{css}");
+        }
+
+        for image in ["url(image.png)", "url(image.svg)"] {
+            let css =
+                format!(".probe {{ background: {image} left top / auto 8px no-repeat round; }}");
+            let pixel = paint_probe_with_assets(&css, Some((4, 2)), Some(TEST_SVG), 1.0);
+            assert_eq!(pixel(22, 11), RED, "{css}");
+            assert_eq!(pixel(24, 11), [0, 0, 0, 0], "{css}");
+        }
+
+        let pixel = paint_probe_with_assets(
+            ".probe { background-image: none, none, url(image.png);
+             background-size: 3px 2px; background-repeat: space no-repeat, no-repeat; }",
+            Some((4, 2)),
+            None,
+            2.0,
+        );
+        assert_eq!(pixel(15, 10), RED);
+        assert_eq!(pixel(16, 10), [0, 0, 0, 0]);
+        assert_eq!(pixel(17, 10), RED);
+        assert_eq!(pixel(17, 14), [0, 0, 0, 0]);
+    }
+
+    #[test]
+    fn svg_background_repeat_tint_and_fractional_tiles() {
         for (fill, expected) in [("blue", [0, 0, 255, 255]), ("transparent", RED)] {
             let css = format!(
                 ".probe {{ fill: {fill}; background-color: lime; background-image: url(image.svg);

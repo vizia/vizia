@@ -9,38 +9,69 @@ pub enum BackgroundRepeat {
     RepeatX,
     RepeatY,
     NoRepeat,
+    Axes {
+        x: BackgroundRepeatMode,
+        y: BackgroundRepeatMode,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BackgroundRepeatMode {
+    Repeat,
+    NoRepeat,
+    Space,
+    Round,
+}
+
+impl BackgroundRepeat {
+    pub fn axes(self) -> (BackgroundRepeatMode, BackgroundRepeatMode) {
+        use BackgroundRepeatMode::*;
+        match self {
+            Self::Repeat => (Repeat, Repeat),
+            Self::RepeatX => (Repeat, NoRepeat),
+            Self::RepeatY => (NoRepeat, Repeat),
+            Self::NoRepeat => (NoRepeat, NoRepeat),
+            Self::Axes { x, y } => (x, y),
+        }
+    }
+
+    fn from_axes(x: BackgroundRepeatMode, y: BackgroundRepeatMode) -> Self {
+        use BackgroundRepeatMode::*;
+        match (x, y) {
+            (Repeat, Repeat) => Self::Repeat,
+            (Repeat, NoRepeat) => Self::RepeatX,
+            (NoRepeat, Repeat) => Self::RepeatY,
+            (NoRepeat, NoRepeat) => Self::NoRepeat,
+            _ => Self::Axes { x, y },
+        }
+    }
 }
 
 impl<'i> Parse<'i> for BackgroundRepeat {
     fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
-        let location = input.current_source_location();
-        let ident = input.expect_ident()?;
-        let first = match_ignore_ascii_case! { ident,
-            "repeat" => BackgroundRepeat::Repeat,
-            "repeat-x" => BackgroundRepeat::RepeatX,
-            "repeat-y" => BackgroundRepeat::RepeatY,
-            "no-repeat" => BackgroundRepeat::NoRepeat,
-            _ => return Err(location.new_unexpected_token_error(Token::Ident(ident.clone())))
-        };
-        if matches!(first, BackgroundRepeat::Repeat | BackgroundRepeat::NoRepeat) {
-            let second = input.try_parse(|input| -> Result<bool, BasicParseError> {
-                if input.try_parse(|input| input.expect_ident_matching("repeat")).is_ok() {
-                    Ok(true)
-                } else {
-                    input.expect_ident_matching("no-repeat")?;
-                    Ok(false)
-                }
-            });
-            if let Ok(repeat_y) = second {
-                return Ok(match (first == BackgroundRepeat::Repeat, repeat_y) {
-                    (true, true) => BackgroundRepeat::Repeat,
-                    (true, false) => BackgroundRepeat::RepeatX,
-                    (false, true) => BackgroundRepeat::RepeatY,
-                    (false, false) => BackgroundRepeat::NoRepeat,
-                });
-            }
+        fn mode<'i>(
+            input: &mut Parser<'i>,
+        ) -> Result<BackgroundRepeatMode, ParseError<CustomParseError<'i>>> {
+            let location = input.current_source_location();
+            let ident = input.expect_ident()?;
+            Ok(match_ignore_ascii_case! { ident,
+                "repeat" => BackgroundRepeatMode::Repeat,
+                "no-repeat" => BackgroundRepeatMode::NoRepeat,
+                "space" => BackgroundRepeatMode::Space,
+                "round" => BackgroundRepeatMode::Round,
+                _ => return Err(location.new_unexpected_token_error(Token::Ident(ident.clone())))
+            })
         }
-        Ok(first)
+
+        if input.try_parse(|input| input.expect_ident_matching("repeat-x")).is_ok() {
+            return Ok(Self::RepeatX);
+        }
+        if input.try_parse(|input| input.expect_ident_matching("repeat-y")).is_ok() {
+            return Ok(Self::RepeatY);
+        }
+        let x = mode(input)?;
+        let y = input.try_parse(mode).unwrap_or(x);
+        Ok(Self::from_axes(x, y))
     }
 }
 
@@ -88,11 +119,33 @@ mod tests {
             "repeat-x repeat",
             "repeat-y no-repeat",
             "repeat repeat repeat",
-            "repeat space",
-            "round no-repeat",
+            "round repeat-x",
+            "space unknown",
             "repeat no-repeat,",
         ] {
             assert!(Vec::<BackgroundRepeat>::parse(&mut Parser::new(value)).is_err(), "{value}");
+        }
+    }
+
+    #[test]
+    fn background_repeat_parses_space_and_round_in_each_axis() {
+        use BackgroundRepeatMode::*;
+        let modes =
+            [("repeat", Repeat), ("no-repeat", NoRepeat), ("space", Space), ("round", Round)];
+        for (x_name, x) in modes {
+            for (y_name, y) in modes {
+                let value = format!("{x_name} {y_name}");
+                let mut parser = Parser::new(&value);
+                let values = Vec::<BackgroundRepeat>::parse(&mut parser).unwrap();
+                assert_eq!(values[0].axes(), (x, y), "{value}");
+                assert!(parser.is_exhausted(), "{value}");
+            }
+        }
+        for (value, mode) in [("SPACE", Space), ("round", Round)] {
+            let mut parser = Parser::new(value);
+            let values = Vec::<BackgroundRepeat>::parse(&mut parser).unwrap();
+            assert_eq!(values[0].axes(), (mode, mode), "{value}");
+            assert!(parser.is_exhausted(), "{value}");
         }
     }
 }

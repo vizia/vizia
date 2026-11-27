@@ -2,11 +2,11 @@ use skia_safe::canvas::SaveLayerRec;
 use skia_safe::wrapper::PointerWrapper;
 use skia_safe::{
     BlurStyle, ClipOp, FilterMode, MaskFilter, Matrix, Paint, PaintStyle, Path, PathBuilder,
-    PathEffect, PictureRecorder, Point, RRect, Rect, SamplingOptions, TileMode,
+    PathEffect, Picture, PictureRecorder, Point, RRect, Rect, SamplingOptions, TileMode,
 };
 use std::any::{Any, TypeId};
 use std::f32::consts::SQRT_2;
-use vizia_style::LengthPercentageOrAuto;
+use vizia_style::{BackgroundRepeatMode, LengthPercentageOrAuto};
 
 use hashbrown::HashMap;
 
@@ -1486,6 +1486,104 @@ impl DrawContext<'_> {
             Some(length.value * factor * scale)
         }
 
+        fn rounded_size(
+            bounds: BoundingBox,
+            size: Option<&BackgroundSize>,
+            repeat: BackgroundRepeat,
+            mut width: f32,
+            mut height: f32,
+        ) -> (f32, f32) {
+            use BackgroundRepeatMode::Round;
+            let (x, y) = repeat.axes();
+            let original_width = width;
+            let original_height = height;
+            let (auto_x, auto_y) = match size {
+                Some(BackgroundSize::Explicit { width, height }) => (
+                    matches!(width, LengthPercentageOrAuto::Auto),
+                    matches!(height, LengthPercentageOrAuto::Auto),
+                ),
+                None => (true, true),
+                _ => (false, false),
+            };
+            if x == Round {
+                width = bounds.w / (bounds.w / width).round().max(1.0);
+            }
+            if y == Round {
+                height = bounds.h / (bounds.h / height).round().max(1.0);
+            }
+            if x == Round && y != Round && auto_y {
+                height *= width / original_width;
+            } else if y == Round && x != Round && auto_x {
+                width *= height / original_height;
+            }
+            (width, height)
+        }
+
+        fn draw_spaced_or_rounded_layer(
+            canvas: &Canvas,
+            rrect: RRect,
+            view: BoundingBox,
+            tile: BoundingBox,
+            repeat: BackgroundRepeat,
+            picture: &Picture,
+        ) {
+            fn axis(
+                start: f32,
+                available: f32,
+                tile_start: f32,
+                length: f32,
+                mode: BackgroundRepeatMode,
+            ) -> (f32, f32, bool) {
+                match mode {
+                    BackgroundRepeatMode::Space => {
+                        let count = (available / length).floor();
+                        if count >= 2.0 {
+                            (start, (available - length) / (count - 1.0), true)
+                        } else {
+                            (tile_start, length, false)
+                        }
+                    }
+                    BackgroundRepeatMode::NoRepeat => (tile_start, length, false),
+                    BackgroundRepeatMode::Repeat | BackgroundRepeatMode::Round => {
+                        (tile_start, length, true)
+                    }
+                }
+            }
+            let (x_mode, y_mode) = repeat.axes();
+            let (x, step_x, repeat_x) = axis(view.x, view.w, tile.x, tile.w, x_mode);
+            let (y, step_y, repeat_y) = axis(view.y, view.h, tile.y, tile.h, y_mode);
+            let period = Rect::new(0.0, 0.0, step_x, step_y);
+            let mut recorder = PictureRecorder::new();
+            recorder.begin_recording(period, false).draw_picture(picture, None, None);
+            let padded = recorder
+                .finish_recording_as_picture(None)
+                .expect("background tile recording must produce a picture");
+            let mut paint = Paint::default();
+            paint.set_anti_alias(true);
+            paint.set_shader(padded.to_shader(
+                (TileMode::Repeat, TileMode::Repeat),
+                FilterMode::Nearest,
+                &Matrix::translate((x, y)),
+                &period,
+            ));
+
+            canvas.save();
+            if !repeat_x || !repeat_y {
+                canvas.clip_rect(
+                    Rect::new(
+                        if repeat_x { view.left() } else { x },
+                        if repeat_y { view.top() } else { y },
+                        if repeat_x { view.right() } else { x + tile.w },
+                        if repeat_y { view.bottom() } else { y + tile.h },
+                    ),
+                    ClipOp::Intersect,
+                    true,
+                );
+            }
+            canvas.draw_rrect(rrect, &paint);
+            canvas.restore();
+        }
+
         fn repeat_axes(repeat: BackgroundRepeat) -> (bool, bool) {
             (
                 matches!(repeat, BackgroundRepeat::Repeat | BackgroundRepeat::RepeatX),
@@ -1512,6 +1610,21 @@ impl DrawContext<'_> {
             mut paint: Paint,
             already_tiled: bool,
         ) {
+            if matches!(repeat, BackgroundRepeat::Axes { .. }) {
+                let local = Rect::new(0.0, 0.0, tile.w, tile.h);
+                let mut recorder = PictureRecorder::new();
+                let tile_canvas = recorder.begin_recording(local, false);
+                tile_canvas.translate((-tile.x, -tile.y));
+                tile_canvas.draw_rect(
+                    Rect::new(tile.left(), tile.top(), tile.right(), tile.bottom()),
+                    &paint,
+                );
+                let picture = recorder
+                    .finish_recording_as_picture(None)
+                    .expect("gradient tile recording must produce a picture");
+                draw_spaced_or_rounded_layer(canvas, rrect, view, tile, repeat, &picture);
+                return;
+            }
             let (repeat_x, repeat_y) = repeat_axes(repeat);
             let clip_x = !repeat_x && (tile.left() > view.left() || tile.right() < view.right());
             let clip_y = !repeat_y && (tile.top() > view.top() || tile.bottom() < view.bottom());
@@ -1583,6 +1696,17 @@ impl DrawContext<'_> {
                         {
                             return None;
                         }
+                        let repeat = layer_value(&image_repeats, index)
+                            .copied()
+                            .unwrap_or(BackgroundRepeat::Repeat);
+                        let (width, height) = rounded_size(bounds, size, repeat, width, height);
+                        if width <= 0.0
+                            || height <= 0.0
+                            || !width.is_finite()
+                            || !height.is_finite()
+                        {
+                            return None;
+                        }
                         let position =
                             layer_value(&image_positions, index).cloned().unwrap_or_default();
                         let x = bounds.x
@@ -1595,9 +1719,6 @@ impl DrawContext<'_> {
                                 .y
                                 .to_length_or_percentage()
                                 .to_pixels(bounds.h - height, self.scale_factor());
-                        let repeat = layer_value(&image_repeats, index)
-                            .copied()
-                            .unwrap_or(BackgroundRepeat::Repeat);
                         Some((BoundingBox { x, y, w: width, h: height }, repeat))
                     };
                     match image {
@@ -1840,8 +1961,9 @@ impl DrawContext<'_> {
                                         if image_width <= 0 || image_height <= 0 {
                                             continue;
                                         }
+                                        let size = layer_value(&image_sizes, index);
                                         let (width, height) = image_size(
-                                            layer_value(&image_sizes, index),
+                                            size,
                                             bounds,
                                             self.scale_factor(),
                                             Some(image_width as f32),
@@ -1849,10 +1971,29 @@ impl DrawContext<'_> {
                                             Some(image_width as f32 / image_height as f32),
                                         );
 
+                                        let repeat = layer_value(&image_repeats, index)
+                                            .copied()
+                                            .unwrap_or(BackgroundRepeat::Repeat);
+                                        if width <= 0.0
+                                            || height <= 0.0
+                                            || !width.is_finite()
+                                            || !height.is_finite()
+                                        {
+                                            continue;
+                                        }
+                                        let (width, height) =
+                                            rounded_size(bounds, size, repeat, width, height);
+                                        if width <= 0.0
+                                            || height <= 0.0
+                                            || !width.is_finite()
+                                            || !height.is_finite()
+                                        {
+                                            continue;
+                                        }
+
                                         let position = layer_value(&image_positions, index)
                                             .cloned()
                                             .unwrap_or_default();
-
                                         let posx = position
                                             .x
                                             .to_length_or_percentage()
@@ -1861,19 +2002,39 @@ impl DrawContext<'_> {
                                             bounds.height() - height,
                                             self.scale_factor(),
                                         );
-                                        let repeat = layer_value(&image_repeats, index)
-                                            .copied()
-                                            .unwrap_or(BackgroundRepeat::Repeat);
-
-                                        if width <= 0.0 || height <= 0.0 {
-                                            continue;
-                                        }
-
                                         let mut paint = Paint::default();
                                         paint.set_anti_alias(true);
 
                                         let origin_x = bounds.left() + posx;
                                         let origin_y = bounds.top() + posy;
+
+                                        if matches!(repeat, BackgroundRepeat::Axes { .. }) {
+                                            let local = Rect::new(0.0, 0.0, width, height);
+                                            let mut recorder = PictureRecorder::new();
+                                            recorder
+                                                .begin_recording(local, false)
+                                                .draw_image_rect_with_sampling_options(
+                                                    image,
+                                                    None,
+                                                    local,
+                                                    SamplingOptions::default(),
+                                                    &paint,
+                                                );
+                                            let picture =
+                                                recorder.finish_recording_as_picture(None).expect(
+                                                    "image tile recording must produce a picture",
+                                                );
+                                            let tile = BoundingBox {
+                                                x: origin_x,
+                                                y: origin_y,
+                                                w: width,
+                                                h: height,
+                                            };
+                                            draw_spaced_or_rounded_layer(
+                                                canvas, rrect, bounds, tile, repeat, &picture,
+                                            );
+                                            continue;
+                                        }
 
                                         let mut start_x = origin_x;
                                         let mut start_y = origin_y;
@@ -1979,9 +2140,11 @@ impl DrawContext<'_> {
                                                             );
                                                         x += width;
                                                     }
+
                                                     y += height;
                                                 }
                                             }
+                                            BackgroundRepeat::Axes { .. } => unreachable!(),
                                         }
 
                                         canvas.restore();
@@ -2013,14 +2176,27 @@ impl DrawContext<'_> {
                                                 }
                                             }),
                                         };
+                                        let size = layer_value(&image_sizes, index);
                                         let (width, height) = image_size(
-                                            layer_value(&image_sizes, index),
+                                            size,
                                             bounds,
                                             scale,
                                             intrinsic_width,
                                             intrinsic_height,
                                             ratio,
                                         );
+                                        if width <= 0.0
+                                            || height <= 0.0
+                                            || !width.is_finite()
+                                            || !height.is_finite()
+                                        {
+                                            continue;
+                                        }
+                                        let repeat = layer_value(&image_repeats, index)
+                                            .copied()
+                                            .unwrap_or(BackgroundRepeat::Repeat);
+                                        let (width, height) =
+                                            rounded_size(bounds, size, repeat, width, height);
                                         if width <= 0.0
                                             || height <= 0.0
                                             || !width.is_finite()
@@ -2045,9 +2221,6 @@ impl DrawContext<'_> {
                                             w: width,
                                             h: height,
                                         };
-                                        let repeat = layer_value(&image_repeats, index)
-                                            .copied()
-                                            .unwrap_or(BackgroundRepeat::Repeat);
                                         // A local tile origin preserves transparent margins in Skia's picture shader.
                                         let tile_rect = Rect::new(0.0, 0.0, width, height);
                                         let mut recorder = PictureRecorder::new();
@@ -2132,6 +2305,12 @@ impl DrawContext<'_> {
                                         let picture = recorder
                                             .finish_recording_as_picture(None)
                                             .expect("SVG tile recording must produce a picture");
+                                        if matches!(repeat, BackgroundRepeat::Axes { .. }) {
+                                            draw_spaced_or_rounded_layer(
+                                                canvas, rrect, bounds, tile, repeat, &picture,
+                                            );
+                                            continue;
+                                        }
                                         if !needs_background_tiles(bounds, tile, repeat) {
                                             canvas.save();
                                             canvas.clip_rrect(rrect, ClipOp::Intersect, true);
