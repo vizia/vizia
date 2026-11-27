@@ -311,6 +311,7 @@ mod tests {
             ("position", "position-type", "absolute"),
             ("flex-direction", "layout-type", "column"),
             ("flex-wrap", "wrap", "wrap"),
+            ("flex-wrap", "wrap", "nowrap"),
             ("grid-template-columns", "grid-columns", "20px 1s"),
             ("grid-template-rows", "grid-rows", "20px 1s"),
             ("row-gap", "vertical-gap", "5px"),

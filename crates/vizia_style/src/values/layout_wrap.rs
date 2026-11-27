@@ -8,6 +8,7 @@ impl_parse! {
     tokens {
         ident {
             "no-wrap" => LayoutWrap::NoWrap,
+            "nowrap" => LayoutWrap::NoWrap,
             "wrap" => LayoutWrap::Wrap,
         }
     }
@@ -23,7 +24,14 @@ mod tests {
 
         ident {
             "no-wrap" => LayoutWrap::NoWrap,
+            "nowrap" => LayoutWrap::NoWrap,
             "wrap" => LayoutWrap::Wrap,
+        }
+
+        custom {
+            failure {
+                "wrap-reverse",
+            }
         }
     }
 }

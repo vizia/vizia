@@ -1989,6 +1989,8 @@ mod tests {
                 border-top-left-radius: 20px;
                 row-gap: var(--missing, 4px);
                 box-shadow: var(--missing-shadow, 1px 2px #f00);
+                wrap: wrap;
+                flex-wrap: nowrap;
             }
             .legacy {
                 --radius: 12px;
@@ -1996,6 +1998,7 @@ mod tests {
                 corner-top-left-radius: 20px;
                 vertical-gap: var(--missing, 4px);
                 shadow: var(--missing-shadow, 1px 2px #f00);
+                wrap: no-wrap;
             }",
         )
         .unwrap();
@@ -2003,6 +2006,8 @@ mod tests {
         let legacy = Element::new(&mut cx).class("legacy").entity();
         style_system(&mut cx);
 
+        assert_eq!(cx.style.wrap.get(standard), Some(&LayoutWrap::NoWrap));
+        assert_eq!(cx.style.wrap.get(standard), cx.style.wrap.get(legacy));
         assert_eq!(
             cx.style.corner_top_left_radius.get(standard),
             Some(&LengthOrPercentage::px(20.0))
