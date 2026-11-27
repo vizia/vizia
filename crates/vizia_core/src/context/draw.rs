@@ -1407,6 +1407,10 @@ impl DrawContext<'_> {
 
     /// Draw background images (including gradients) for the current view.
     fn draw_background_images(&mut self, canvas: &Canvas) {
+        fn layer_value<T>(values: &[T], index: usize) -> Option<&T> {
+            if values.is_empty() { None } else { values.get(index % values.len()) }
+        }
+
         let bounds = self.bounds();
 
         if self.background_images().is_some() {
@@ -1633,11 +1637,7 @@ impl DrawContext<'_> {
                                         if image_width <= 0 || image_height <= 0 {
                                             continue;
                                         }
-                                        let background_size = if image_sizes.is_empty() {
-                                            None
-                                        } else {
-                                            image_sizes.get(index % image_sizes.len())
-                                        };
+                                        let background_size = layer_value(&image_sizes, index);
                                         let (width, height) = if let Some(background_size) =
                                             background_size
                                         {
@@ -1712,10 +1712,8 @@ impl DrawContext<'_> {
                                             (image_width as f32, image_height as f32)
                                         };
 
-                                        let position = image_positions
-                                            .get(index)
+                                        let position = layer_value(&image_positions, index)
                                             .cloned()
-                                            .or_else(|| image_positions.last().cloned())
                                             .unwrap_or_default();
 
                                         let posx = position
@@ -1726,10 +1724,8 @@ impl DrawContext<'_> {
                                             bounds.height() - height,
                                             self.scale_factor(),
                                         );
-                                        let repeat = image_repeats
-                                            .get(index)
+                                        let repeat = layer_value(&image_repeats, index)
                                             .copied()
-                                            .or_else(|| image_repeats.last().copied())
                                             .unwrap_or(BackgroundRepeat::Repeat);
 
                                         if width <= 0.0 || height <= 0.0 {

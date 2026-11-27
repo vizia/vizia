@@ -1281,6 +1281,60 @@ mod tests {
     }
 
     #[test]
+    fn background_position_and_repeat_cycle_across_layers() {
+        for (css, inside, outside) in [
+            (
+                ".probe { background-image: none, none, url(image.png);
+                 background-position: left top, right bottom;
+                 background-size: 2px 2px; background-repeat: no-repeat; }",
+                (10, 10),
+                (28, 28),
+            ),
+            (
+                ".probe { background-image: url(image.png), url(image.png), url(image.png);
+                 background-position: left top, right bottom;
+                 background-size: 0 0, 0 0, 2px 2px; background-repeat: no-repeat; }",
+                (10, 10),
+                (28, 28),
+            ),
+            (
+                ".probe { background-image: none, none, none, none, url(image.png);
+                 background-position: left top, right bottom;
+                 background-size: 2px 2px; background-repeat: no-repeat; }",
+                (10, 10),
+                (28, 28),
+            ),
+            (
+                ".probe { background-image: none, none, url(image.png);
+                 background-size: 2px 2px; background-repeat: repeat-x, no-repeat; }",
+                (25, 10),
+                (25, 13),
+            ),
+            (
+                ".probe { background-image: none, none, url(image.png);
+                 background-size: 2px 2px; background-repeat: no-repeat, repeat-y; }",
+                (10, 10),
+                (10, 20),
+            ),
+            (
+                ".probe { background-image: none, none, none, none, url(image.png);
+                 background-size: 2px 2px; background-repeat: repeat-y, no-repeat; }",
+                (10, 20),
+                (15, 20),
+            ),
+            (
+                ".probe { background-image: none, none, url(image.png); background-size: 2px 2px; }",
+                (29, 29),
+                (30, 29),
+            ),
+        ] {
+            let pixel = paint_probe_with_image(css, Some((4, 2)));
+            assert_eq!(pixel(inside.0, inside.1), RED, "{css}");
+            assert_eq!(pixel(outside.0, outside.1), [0, 0, 0, 0], "{css}");
+        }
+    }
+
+    #[test]
     fn standard_box_shadow_values_render_and_none_clears() {
         let direct = paint_probe(".probe { box-shadow: red 20px 0; }");
         assert_eq!(direct(40, 20), RED);
