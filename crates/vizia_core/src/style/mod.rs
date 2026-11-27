@@ -525,10 +525,12 @@ impl Style {
                 RelativeFontWeight::Bolder => match weight.0 {
                     0..=349 => 400,
                     350..=549 => 700,
-                    _ => 900,
+                    550..=899 => 900,
+                    _ => weight.0,
                 },
                 RelativeFontWeight::Lighter => match weight.0 {
-                    0..=549 => 100,
+                    0..=99 => weight.0,
+                    100..=549 => 100,
                     550..=749 => 400,
                     _ => 700,
                 },
