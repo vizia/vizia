@@ -1722,6 +1722,19 @@ mod tests {
     }
 
     #[test]
+    fn layered_background_shorthand_renders_in_layer_order() {
+        let pixel = paint_probe_with_image(
+            ".probe { background: none,
+                     url(image.png) left top / 4px 4px no-repeat,
+                     linear-gradient(blue, blue) left top / 10px 10px no-repeat lime; }",
+            Some((4, 2)),
+        );
+        assert_eq!(pixel(11, 11), RED);
+        assert_eq!(pixel(15, 15), [0, 0, 255, 255]);
+        assert_eq!(pixel(25, 25), [0, 255, 0, 255]);
+    }
+
+    #[test]
     fn standard_box_shadow_values_render_and_none_clears() {
         let direct = paint_probe(".probe { box-shadow: red 20px 0; }");
         assert_eq!(direct(40, 20), RED);

@@ -134,6 +134,46 @@ pub(crate) fn parse_declaration<'i>(
 fn parse_background<'i>(
     input: &mut Parser<'i>,
 ) -> Result<Vec<Property<'i>>, ParseError<CustomParseError<'i>>> {
+    let layers = input.parse_comma_separated(parse_background_layer)?;
+    let Some((last, previous)) = layers.split_last() else {
+        return Err(input.new_error_for_next_token());
+    };
+    if previous.iter().any(|layer| layer.color.is_some()) {
+        return Err(input.new_error_for_next_token());
+    }
+    let color = last.color.unwrap_or(Color::rgba(0, 0, 0, 0));
+
+    let mut images = Vec::with_capacity(layers.len());
+    let mut positions = Vec::with_capacity(layers.len());
+    let mut sizes = Vec::with_capacity(layers.len());
+    let mut repeats = Vec::with_capacity(layers.len());
+    for layer in layers {
+        images.push(layer.image);
+        positions.push(layer.position);
+        sizes.push(layer.size);
+        repeats.push(layer.repeat);
+    }
+
+    Ok(vec![
+        Property::BackgroundColor(color),
+        Property::BackgroundImage(images),
+        Property::BackgroundPosition(positions),
+        Property::BackgroundSize(sizes),
+        Property::BackgroundRepeat(repeats),
+    ])
+}
+
+struct BackgroundLayer<'i> {
+    color: Option<Color>,
+    image: BackgroundImage<'i>,
+    position: Position,
+    size: BackgroundSize,
+    repeat: BackgroundRepeat,
+}
+
+fn parse_background_layer<'i>(
+    input: &mut Parser<'i>,
+) -> Result<BackgroundLayer<'i>, ParseError<CustomParseError<'i>>> {
     let mut color = None;
     let mut image = None;
     let mut position = None;
@@ -204,13 +244,13 @@ fn parse_background<'i>(
         return Err(input.new_error_for_next_token());
     }
 
-    Ok(vec![
-        Property::BackgroundColor(color.unwrap_or(Color::rgba(0, 0, 0, 0))),
-        Property::BackgroundImage(vec![image.unwrap_or(BackgroundImage::None)]),
-        Property::BackgroundPosition(vec![position.unwrap_or_default()]),
-        Property::BackgroundSize(vec![size.unwrap_or_default()]),
-        Property::BackgroundRepeat(vec![repeat.unwrap_or_default()]),
-    ])
+    Ok(BackgroundLayer {
+        color,
+        image: image.unwrap_or(BackgroundImage::None),
+        position: position.unwrap_or_default(),
+        size: size.unwrap_or_default(),
+        repeat: repeat.unwrap_or_default(),
+    })
 }
 
 impl<'i> AtRuleParser<'i> for PropertyDeclarationParser<'_, 'i> {
@@ -325,6 +365,61 @@ mod tests {
     }
 
     #[test]
+    fn layered_background_shorthand_expands_each_layer() {
+        let mut parser = Parser::new(
+            "background: url(\"front,a.png\") right bottom / 8px 6px no-repeat,
+                         none center / auto repeat-x,
+                         linear-gradient(red, blue) left top / cover repeat-y rgba(0, 255, 0, 1);
+             background: none, url(back.png) blue !important;",
+        );
+        let block = DeclarationBlock::parse(&mut parser, &ParserOptions::new()).unwrap();
+        assert!(matches!(
+            block.declarations.as_slice(),
+            [
+                Property::BackgroundColor(color),
+                Property::BackgroundImage(images),
+                Property::BackgroundPosition(positions),
+                Property::BackgroundSize(sizes),
+                Property::BackgroundRepeat(repeats),
+            ] if *color == Color::rgb(0, 255, 0)
+                && images.len() == 3
+                && images[0] == BackgroundImage::from("url(\"front,a.png\")")
+                && images[1] == BackgroundImage::None
+                && matches!(images[2], BackgroundImage::Gradient(_))
+                && positions[0].x.to_length_or_percentage() == crate::LengthOrPercentage::Percentage(100.0)
+                && positions[0].y.to_length_or_percentage() == crate::LengthOrPercentage::Percentage(100.0)
+                && positions[1] == Position::center()
+                && positions[2] == Position::new(
+                    crate::HorizontalPositionKeyword::Left,
+                    crate::VerticalPositionKeyword::Top,
+                )
+                && sizes == &[
+                    BackgroundSize::Explicit {
+                        width: crate::LengthPercentageOrAuto::px(8.0),
+                        height: crate::LengthPercentageOrAuto::px(6.0),
+                    },
+                    BackgroundSize::default(),
+                    BackgroundSize::Cover,
+                ]
+                && repeats == &[BackgroundRepeat::NoRepeat, BackgroundRepeat::RepeatX, BackgroundRepeat::RepeatY]
+        ));
+        assert!(matches!(
+            block.important_declarations.as_slice(),
+            [
+                Property::BackgroundColor(color),
+                Property::BackgroundImage(images),
+                Property::BackgroundPosition(positions),
+                Property::BackgroundSize(sizes),
+                Property::BackgroundRepeat(repeats),
+            ] if *color == Color::rgb(0, 0, 255)
+                && images == &[BackgroundImage::None, BackgroundImage::from("url(back.png)")]
+                && positions == &[Position::default(), Position::default()]
+                && sizes == &[BackgroundSize::default(), BackgroundSize::default()]
+                && repeats == &[BackgroundRepeat::Repeat, BackgroundRepeat::Repeat]
+        ));
+    }
+
+    #[test]
     fn background_shorthand_rejects_unsupported_or_invalid_values_atomically() {
         for value in [
             "",
@@ -339,6 +434,13 @@ mod tests {
             "var(--background)",
             "left right",
             "10px left",
+            "red, url(image.png)",
+            "url(a.png) red, url(b.png) blue",
+            "url(a.png),",
+            ", url(a.png)",
+            "url(a.png), , url(b.png)",
+            "url(a.png), center /",
+            "url(a.png), var(--background)",
         ] {
             let css = format!("background: {value};");
             let mut parser = Parser::new(&css);

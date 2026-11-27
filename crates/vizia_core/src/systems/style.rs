@@ -2670,6 +2670,100 @@ mod tests {
     }
 
     #[test]
+    fn layered_background_shorthand_cascades_and_rejects_invalid_colors() {
+        use crate::style::ImageOrGradient;
+
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".base { background: url(old.png) center / cover no-repeat green; }
+             .layered {
+                 background: none, url(front.png) right bottom / 8px 6px no-repeat, blue;
+                 background-repeat: repeat-y;
+             }
+             .reset { background: url(a.png), url(b.png); background: red; }
+             .invalid { background: url(a.png) red, url(b.png) blue; }",
+        )
+        .unwrap();
+        let layered = Element::new(&mut cx).class("base").class("layered").entity();
+        let reset = Element::new(&mut cx).class("reset").entity();
+        let invalid = Element::new(&mut cx).class("base").class("invalid").entity();
+        style_system(&mut cx);
+
+        let color =
+            |entity| cx.style.background_color.get_resolved(entity, &cx.style.custom_color_props);
+        assert_eq!(color(layered), Some(Color::rgb(0, 0, 255)));
+        assert_eq!(
+            cx.style.background_image.get(layered),
+            Some(&vec![
+                ImageOrGradient::Gradient(Gradient::None),
+                ImageOrGradient::Image("front.png".into()),
+                ImageOrGradient::Gradient(Gradient::None),
+            ])
+        );
+        assert_eq!(
+            cx.style.background_size.get(layered),
+            Some(&vec![
+                BackgroundSize::default(),
+                BackgroundSize::Explicit {
+                    width: vizia_style::LengthPercentageOrAuto::px(8.0),
+                    height: vizia_style::LengthPercentageOrAuto::px(6.0),
+                },
+                BackgroundSize::default(),
+            ])
+        );
+        assert_eq!(cx.style.background_repeat.get(layered), Some(&vec![BackgroundRepeat::RepeatY]));
+
+        assert_eq!(color(reset), Some(Color::rgb(255, 0, 0)));
+        assert_eq!(cx.style.background_image.get(reset), Some(&vec![]));
+        assert_eq!(cx.style.background_size.get(reset), Some(&vec![BackgroundSize::default()]));
+
+        assert_eq!(color(invalid), Some(Color::rgb(0, 128, 0)));
+        assert_eq!(
+            cx.style.background_image.get(invalid),
+            Some(&vec![ImageOrGradient::Image("old.png".into())])
+        );
+        assert_eq!(cx.style.background_size.get(invalid), Some(&vec![BackgroundSize::Cover]));
+    }
+
+    #[test]
+    fn layered_background_shorthand_expands_in_keyframes() {
+        use crate::style::ImageOrGradient;
+
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            "@keyframes layered-background {
+                 from { background: none, url(image.png) left top / cover no-repeat red; }
+                 to { background: url(image.png) center / contain repeat-x, none blue; }
+             }",
+        )
+        .unwrap();
+        let animation = *cx.style.get_animation("layered-background").unwrap();
+        let empty = ImageOrGradient::Gradient(Gradient::None);
+        let image = ImageOrGradient::Image("image.png".into());
+        let frames = &cx.style.background_image.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(
+            frames.iter().map(|frame| frame.value.clone()).collect::<Vec<_>>(),
+            vec![vec![empty.clone(), image.clone()], vec![image, empty]]
+        );
+        let frames = &cx.style.background_size.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(
+            frames.iter().map(|frame| frame.value.clone()).collect::<Vec<_>>(),
+            vec![
+                vec![BackgroundSize::default(), BackgroundSize::Cover],
+                vec![BackgroundSize::Contain, BackgroundSize::default()],
+            ]
+        );
+        let frames = &cx.style.background_repeat.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(
+            frames.iter().map(|frame| frame.value.clone()).collect::<Vec<_>>(),
+            vec![
+                vec![BackgroundRepeat::Repeat, BackgroundRepeat::NoRepeat],
+                vec![BackgroundRepeat::RepeatX, BackgroundRepeat::Repeat],
+            ]
+        );
+    }
+
+    #[test]
     fn text_wrap_standard_keywords_apply_like_legacy_booleans() {
         let mut cx = Context::default();
         cx.add_stylesheet(
