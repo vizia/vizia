@@ -1239,6 +1239,37 @@ mod tests {
     const VIEWBOX_SVG: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 2"><rect width="4" height="2" fill="#ff0000"/></svg>"##;
 
     #[test]
+    fn unresolved_background_calculations_do_not_panic() {
+        for image in [
+            "url(image.png)",
+            "url(image.svg)",
+            "linear-gradient(red, red)",
+            "radial-gradient(red, red)",
+        ] {
+            for declaration in [
+                "background-size: calc(10px + 1em) 20px",
+                "background-size: 20px calc(10px + 1em)",
+                "background-position: calc(10px + 1em) 0",
+                "background-position: 0 calc(10px + 1em)",
+            ] {
+                let css = format!(
+                    ".probe {{ background-color: lime; background-image: {image}; {declaration}; }}"
+                );
+                let pixel = paint_probe_with_assets(&css, Some((4, 2)), Some(TEST_SVG), 1.0);
+                assert_eq!(pixel(15, 15), [0, 255, 0, 255], "{css}");
+            }
+        }
+        for gradient in [
+            "linear-gradient(red calc(10px + 1em), red)",
+            "radial-gradient(red calc(10px + 1em), red)",
+        ] {
+            let css = format!(".probe {{ background-color: lime; background-image: {gradient}; }}");
+            let pixel = paint_probe(&css);
+            assert_eq!(pixel(15, 15), [0, 255, 0, 255], "{css}");
+        }
+    }
+
+    #[test]
     fn svg_background_size_and_position() {
         for (size, position, inside, outside) in [
             ("auto auto", "left top", (13, 11), (14, 11)),

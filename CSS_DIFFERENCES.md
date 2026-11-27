@@ -93,7 +93,7 @@ Other properties use different value types, so relative units and general
 | `border-style` | Only `none`, `solid`, `dotted`, and `dashed` are parsed; styles such as `double`, `groove`, `ridge`, `inset`, and `outset` are missing. |
 | `border-radius` and `border-top-left-radius`, etc. | These alias the corresponding `corner-*` properties. Multi-value variable substitution and elliptical radii are not supported. |
 | `box-shadow` | Vizia accepts some nonstandard orderings and negative blur radii. Length resolution and animation behavior are not fully equivalent to browser CSS; transitions between `none` and shadows with omitted color or `currentColor` are discrete. |
-| `background` | Attachment, origin, clip, and `var()` substitution in the shorthand are not supported. The value and rendering limitations of the component properties also apply. |
+| `background` | Attachment, origin, clip, and `var()` substitution in the shorthand are not supported. Layers with unresolved length calculations in their size, position, or gradient stops are skipped with a warning. The value and rendering limitations of the component properties also apply. |
 | `background-repeat` | Vizia uses its existing background bounds rather than CSS `background-origin` and `background-clip` boxes. |
 | `background-position` | Edge offsets do not support relative lengths or general mixed-unit `calc()`. Vizia also accepts nonstandard two-value cases such as `top 20px`; full CSS position syntax is not supported. |
 | `transform-origin` | Three- and four-value edge offsets and full CSS position syntax are not supported. |

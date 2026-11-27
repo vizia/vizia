@@ -6,7 +6,7 @@ use skia_safe::{
 };
 use std::any::{Any, TypeId};
 use std::f32::consts::SQRT_2;
-use vizia_style::{BackgroundRepeatMode, LengthPercentageOrAuto};
+use vizia_style::{BackgroundRepeatMode, Length, LengthOrPercentage, LengthPercentageOrAuto};
 
 use hashbrown::HashMap;
 
@@ -1411,6 +1411,14 @@ impl DrawContext<'_> {
             if values.is_empty() { None } else { values.get(index % values.len()) }
         }
 
+        fn unresolved_calculation(value: &LengthOrPercentage) -> bool {
+            matches!(value, LengthOrPercentage::Length(Length::Calc(_)))
+        }
+
+        fn unresolved_dimension(value: &LengthPercentageOrAuto) -> bool {
+            matches!(value, LengthPercentageOrAuto::LengthPercentage(length) if unresolved_calculation(length))
+        }
+
         fn image_size(
             size: Option<&BackgroundSize>,
             bounds: BoundingBox,
@@ -1674,6 +1682,34 @@ impl DrawContext<'_> {
                 let image_repeats = self.background_repeat();
 
                 for (index, image) in images.iter().enumerate().rev() {
+                    let unresolved_size = matches!(
+                        layer_value(&image_sizes, index),
+                        Some(BackgroundSize::Explicit { width, height })
+                            if unresolved_dimension(width) || unresolved_dimension(height)
+                    );
+                    let unresolved_position =
+                        layer_value(&image_positions, index).is_some_and(|position| {
+                            unresolved_calculation(&position.x.to_length_or_percentage())
+                                || unresolved_calculation(&position.y.to_length_or_percentage())
+                        });
+                    let unresolved_stop = match image {
+                        ImageOrGradient::Gradient(Gradient::Linear(gradient)) => {
+                            gradient.stops.as_slice()
+                        }
+                        ImageOrGradient::Gradient(Gradient::Radial(gradient)) => {
+                            gradient.stops.as_slice()
+                        }
+                        _ => &[],
+                    }
+                    .iter()
+                    .any(|stop| stop.position.as_ref().is_some_and(unresolved_calculation));
+                    if unresolved_size || unresolved_position || unresolved_stop {
+                        log::warn!(
+                            "Cannot draw background layer {index}: unresolved length calculation"
+                        );
+                        continue;
+                    }
+
                     let gradient_geometry = || {
                         let size = layer_value(&image_sizes, index);
                         let (width, height) = match size {
