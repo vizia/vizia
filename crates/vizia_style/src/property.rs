@@ -556,6 +556,72 @@ mod tests {
     }
 
     #[test]
+    fn background_position_edge_offsets_parse_per_axis_and_layer() {
+        for (value, x, y) in [
+            ("right 10px bottom 5px", 90.0, 75.0),
+            ("bottom 10% left 12px", 12.0, 72.0),
+            ("right 25% top", 75.0, 0.0),
+            ("left top 25%", 0.0, 20.0),
+            ("center bottom 10px", 50.0, 70.0),
+            ("bottom 10px center", 50.0, 70.0),
+            ("center right 10px", 90.0, 40.0),
+            ("right -10px bottom -5px", 110.0, 85.0),
+            ("right 1in bottom 0", 4.0, 80.0),
+            ("right calc(10px + 1px) bottom 2px", 89.0, 78.0),
+            ("right 10px", 100.0, 10.0),
+        ] {
+            let mut parser = Parser::new(value);
+            let property =
+                Property::parse_value("background-position".into(), &mut parser).unwrap();
+            let Property::BackgroundPosition(positions) = property else {
+                panic!("{value} did not parse");
+            };
+            assert_eq!(
+                positions[0].x.to_length_or_percentage().to_pixels(100.0, 1.0),
+                x,
+                "{value}"
+            );
+            assert_eq!(positions[0].y.to_length_or_percentage().to_pixels(80.0, 1.0), y, "{value}");
+        }
+
+        let mut parser = Parser::new("right 10px bottom 5px, left 20% top 25%");
+        let property = Property::parse_value("background-position".into(), &mut parser).unwrap();
+        let Property::BackgroundPosition(positions) = property else {
+            panic!("layered positions did not parse");
+        };
+        assert_eq!(positions.len(), 2);
+        assert_eq!(positions[0].x.to_length_or_percentage().to_pixels(100.0, 2.0), 80.0);
+        assert_eq!(positions[1].x.to_length_or_percentage().to_pixels(100.0, 2.0), 20.0);
+        assert_eq!(positions[1].y.to_length_or_percentage().to_pixels(80.0, 2.0), 20.0);
+
+        for value in [
+            "right 10px 20px",
+            "left 10px right 2px",
+            "center 10px bottom",
+            "right center 10px",
+            "right 10px bottom 5px 1px",
+            "right 1em bottom 2px",
+            "right calc(10px + 1em) bottom 2px",
+            "right calc(10% + 1px) bottom 2px",
+            "right 10px bottom 5px, left 1em top",
+        ] {
+            let mut parser = Parser::new(value);
+            assert!(
+                matches!(
+                    Property::parse_value("background-position".into(), &mut parser),
+                    Ok(Property::Unparsed(_))
+                ),
+                "{value}"
+            );
+        }
+        let mut parser = Parser::new("right 10px bottom 5px");
+        assert!(matches!(
+            Property::parse_value("transform-origin".into(), &mut parser),
+            Ok(Property::Unparsed(_))
+        ));
+    }
+
+    #[test]
     fn parse_background_repeat_property() {
         let mut parser = Parser::new("repeat-x, no-repeat");
         let parsed_property =

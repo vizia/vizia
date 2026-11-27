@@ -120,6 +120,14 @@ impl Interpolator for Length {
 
 impl Interpolator for LengthOrPercentage {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        fn components(value: &LengthOrPercentage) -> Option<(f32, f32)> {
+            match value {
+                LengthOrPercentage::Length(length) => length.to_px().map(|px| (0.0, px)),
+                LengthOrPercentage::Percentage(percentage) => Some((*percentage, 0.0)),
+                LengthOrPercentage::Calc { percentage, px } => Some((*percentage, *px)),
+            }
+        }
+
         match (start, end) {
             (LengthOrPercentage::Length(start_val), LengthOrPercentage::Length(end_val)) => {
                 LengthOrPercentage::Length(Length::interpolate(start_val, end_val, t))
@@ -129,6 +137,21 @@ impl Interpolator for LengthOrPercentage {
                 LengthOrPercentage::Percentage(start_val),
                 LengthOrPercentage::Percentage(end_val),
             ) => LengthOrPercentage::Percentage(f32::interpolate(start_val, end_val, t)),
+
+            (LengthOrPercentage::Calc { .. }, _) | (_, LengthOrPercentage::Calc { .. }) => {
+                if let (Some((start_percent, start_px)), Some((end_percent, end_px))) =
+                    (components(start), components(end))
+                {
+                    LengthOrPercentage::Calc {
+                        percentage: f32::interpolate(&start_percent, &end_percent, t),
+                        px: f32::interpolate(&start_px, &end_px, t),
+                    }
+                } else if t < 0.5 {
+                    start.clone()
+                } else {
+                    end.clone()
+                }
+            }
 
             _ => LengthOrPercentage::default(),
         }
@@ -315,13 +338,11 @@ impl Interpolator for Position {
 
             match (&start_value, &end_value) {
                 (LengthOrPercentage::Length(_), LengthOrPercentage::Length(_))
-                | (LengthOrPercentage::Percentage(_), LengthOrPercentage::Percentage(_)) => {
-                    vizia_style::PositionComponent::Length(LengthOrPercentage::interpolate(
-                        &start_value,
-                        &end_value,
-                        t,
-                    ))
-                }
+                | (LengthOrPercentage::Percentage(_), LengthOrPercentage::Percentage(_))
+                | (LengthOrPercentage::Calc { .. }, _)
+                | (_, LengthOrPercentage::Calc { .. }) => vizia_style::PositionComponent::Length(
+                    LengthOrPercentage::interpolate(&start_value, &end_value, t),
+                ),
 
                 _ => {
                     if t < 0.5 {
@@ -482,6 +503,29 @@ impl Interpolator for ClipPath {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn background_edge_offsets_interpolate_without_losing_percentage() {
+        let edge = |px| {
+            Position::new(
+                vizia_style::HorizontalPosition::Length(LengthOrPercentage::Calc {
+                    percentage: 100.0,
+                    px,
+                }),
+                vizia_style::VerticalPosition::Center,
+            )
+        };
+        let start = edge(-10.0);
+        let end = edge(-20.0);
+        let middle = Position::interpolate(&start, &end, 0.5);
+        assert_eq!(middle.x.to_length_or_percentage().to_pixels(100.0, 1.0), 85.0);
+        assert_eq!(middle.x.to_length_or_percentage().to_pixels(200.0, 2.0), 170.0);
+
+        let middle = Position::interpolate(&start, &Position::center(), 0.5);
+        assert_eq!(middle.x.to_length_or_percentage().to_pixels(100.0, 1.0), 70.0);
+        assert_eq!(middle.x.to_length_or_percentage().to_pixels(200.0, 2.0), 140.0);
+        assert!(Position::interpolate(&start, &Position::center(), 1.0).is_center());
+    }
 
     #[test]
     fn standard_box_shadow_none_transitions_preserve_visible_shadows() {

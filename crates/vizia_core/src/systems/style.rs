@@ -2544,6 +2544,40 @@ mod tests {
     }
 
     #[test]
+    fn background_edge_offsets_apply_in_stylesheets_and_keyframes() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".probe { background-position: left top; background-position: right 10px bottom 5px, left 25% top 0; }
+             .invalid { background-position: right top; background-position: right 10px 20px; }
+             @keyframes edge-position {
+                 from { background-position: right 10px bottom 5px; }
+                 to { background: none right 20px bottom 15px / 4px 4px no-repeat; }
+             }",
+        )
+        .unwrap();
+        let probe = Element::new(&mut cx).class("probe").entity();
+        let invalid = Element::new(&mut cx).class("invalid").entity();
+        style_system(&mut cx);
+
+        let positions = cx.style.background_position.get(probe).unwrap();
+        assert_eq!(positions.len(), 2);
+        assert_eq!(positions[0].x.to_length_or_percentage().to_pixels(100.0, 1.0), 90.0);
+        assert_eq!(positions[0].y.to_length_or_percentage().to_pixels(80.0, 1.0), 75.0);
+        assert_eq!(positions[1].x.to_length_or_percentage().to_pixels(100.0, 1.0), 25.0);
+        assert_eq!(positions[1].y.to_length_or_percentage().to_pixels(80.0, 1.0), 0.0);
+        let position = &cx.style.background_position.get(invalid).unwrap()[0];
+        assert_eq!(position.x.to_length_or_percentage().to_pixels(100.0, 1.0), 100.0);
+        assert_eq!(position.y.to_length_or_percentage().to_pixels(80.0, 1.0), 0.0);
+
+        let animation = *cx.style.get_animation("edge-position").unwrap();
+        let frames = &cx.style.background_position.get_animation_mut(animation).unwrap().keyframes;
+        assert_eq!(frames.len(), 2);
+        assert_eq!(frames[0].value[0].x.to_length_or_percentage().to_pixels(100.0, 1.0), 90.0);
+        assert_eq!(frames[1].value[0].x.to_length_or_percentage().to_pixels(100.0, 1.0), 80.0);
+        assert_eq!(frames[1].value[0].y.to_length_or_percentage().to_pixels(80.0, 1.0), 65.0);
+    }
+
+    #[test]
     fn background_image_keyframes_preserve_empty_layers() {
         use crate::style::ImageOrGradient;
 

@@ -27,6 +27,97 @@ impl Position {
     pub fn is_center(&self) -> bool {
         self.x.is_center() && self.y.is_center()
     }
+
+    pub(crate) fn parse_background<'i>(
+        input: &mut Parser<'i>,
+    ) -> Result<Self, ParseError<CustomParseError<'i>>> {
+        enum Offset {
+            Pixels(f32),
+            Percentage(f32),
+        }
+
+        fn offset<'i>(input: &mut Parser<'i>) -> Result<Offset, ParseError<CustomParseError<'i>>> {
+            if input.try_parse(parse_unitless_zero).is_ok() {
+                return Ok(Offset::Pixels(0.0));
+            }
+            match LengthOrPercentage::parse(input)? {
+                LengthOrPercentage::Percentage(value) => Ok(Offset::Percentage(value)),
+                LengthOrPercentage::Length(length) => length
+                    .to_px()
+                    .map(Offset::Pixels)
+                    .ok_or_else(|| input.new_error_for_next_token()),
+                LengthOrPercentage::Calc { .. } => Err(input.new_error_for_next_token()),
+            }
+        }
+
+        fn resolve_offset(value: Offset, from_end: bool) -> LengthOrPercentage {
+            match (value, from_end) {
+                (Offset::Percentage(value), true) => LengthOrPercentage::Percentage(100.0 - value),
+                (Offset::Percentage(value), false) => LengthOrPercentage::Percentage(value),
+                (Offset::Pixels(px), true) => {
+                    LengthOrPercentage::Calc { percentage: 100.0, px: -px }
+                }
+                (Offset::Pixels(px), false) => LengthOrPercentage::px(px),
+            }
+        }
+
+        fn horizontal<'i>(
+            input: &mut Parser<'i>,
+        ) -> Result<(HorizontalPosition, bool), ParseError<CustomParseError<'i>>> {
+            if input.try_parse(|input| input.expect_ident_matching("center")).is_ok() {
+                return Ok((HorizontalPosition::Center, false));
+            }
+            let side = HorizontalPositionKeyword::parse(input)?;
+            if let Ok(value) = input.try_parse(offset) {
+                Ok((
+                    HorizontalPosition::Length(resolve_offset(
+                        value,
+                        matches!(side, HorizontalPositionKeyword::Right),
+                    )),
+                    true,
+                ))
+            } else {
+                Ok((HorizontalPosition::Side(side), false))
+            }
+        }
+
+        fn vertical<'i>(
+            input: &mut Parser<'i>,
+        ) -> Result<(VerticalPosition, bool), ParseError<CustomParseError<'i>>> {
+            if input.try_parse(|input| input.expect_ident_matching("center")).is_ok() {
+                return Ok((VerticalPosition::Center, false));
+            }
+            let side = VerticalPositionKeyword::parse(input)?;
+            if let Ok(value) = input.try_parse(offset) {
+                Ok((
+                    VerticalPosition::Length(resolve_offset(
+                        value,
+                        matches!(side, VerticalPositionKeyword::Bottom),
+                    )),
+                    true,
+                ))
+            } else {
+                Ok((VerticalPosition::Side(side), false))
+            }
+        }
+
+        let edge_position = |input: &mut Parser<'i>| {
+            let ((x, x_offset), (y, y_offset)) = if let Ok(values) = input.try_parse(|input| {
+                Ok::<_, ParseError<CustomParseError<'i>>>((horizontal(input)?, vertical(input)?))
+            }) {
+                values
+            } else {
+                let y = vertical(input)?;
+                let x = horizontal(input)?;
+                (x, y)
+            };
+            if !x_offset && !y_offset {
+                return Err(input.new_error_for_next_token());
+            }
+            Ok(Position { x, y })
+        };
+        input.try_parse(edge_position).or_else(|_| Position::parse(input))
+    }
 }
 
 impl Default for Position {
@@ -89,7 +180,7 @@ impl<'i> Parse<'i> for Vec<Position> {
             if input.is_exhausted() {
                 return Err(input.new_error_for_next_token());
             }
-            Position::parse(input)
+            Position::parse_background(input)
         })
     }
 }
@@ -109,6 +200,9 @@ impl<S: Copy + Into<LengthOrPercentage>> PositionComponent<S> {
         match self {
             PositionComponent::Center => true,
             PositionComponent::Length(LengthOrPercentage::Percentage(p)) => *p == 50.0,
+            PositionComponent::Length(LengthOrPercentage::Calc { percentage, px }) => {
+                *percentage == 50.0 && *px == 0.0
+            }
             _ => false,
         }
     }

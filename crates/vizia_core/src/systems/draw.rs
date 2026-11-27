@@ -1565,6 +1565,58 @@ mod tests {
     }
 
     #[test]
+    fn background_edge_offsets_position_each_layer_type() {
+        for image in ["url(image.png)", "url(image.svg)", "linear-gradient(red, red)"] {
+            for (position, inside, outside) in [
+                ("right 3px bottom 2px", (23, 24), (22, 24)),
+                ("bottom 50% right 25%", (22, 18), (21, 18)),
+                ("left 3px bottom", (13, 26), (12, 26)),
+                ("center right 3px", (23, 18), (22, 18)),
+                ("bottom 2px center", (18, 24), (17, 24)),
+            ] {
+                let css = format!(
+                    ".probe {{ background: none, {image} {position} / 4px 4px no-repeat; }}"
+                );
+                let pixel = paint_probe_with_assets(&css, Some((4, 2)), Some(TEST_SVG), 1.0);
+                assert_eq!(pixel(inside.0, inside.1), RED, "{css}");
+                assert_eq!(pixel(outside.0, outside.1), [0, 0, 0, 0], "{css}");
+            }
+        }
+
+        let pixel = paint_probe_with_image(
+            ".probe { background-image: none, none, url(image.png);
+             background-position: right 3px bottom 2px, left top;
+             background-size: 4px 4px; background-repeat: no-repeat; }",
+            Some((4, 2)),
+        );
+        assert_eq!(pixel(23, 24), RED);
+        assert_eq!(pixel(22, 24), [0, 0, 0, 0]);
+
+        let pixel = paint_probe_with_image(
+            ".probe { background: url(image.png) right 2px bottom 2px / 30px 4px no-repeat; }",
+            Some((4, 2)),
+        );
+        assert_eq!(pixel(27, 24), RED);
+        assert_eq!(pixel(28, 24), [0, 0, 0, 0]);
+
+        let pixel = paint_probe_with_image(
+            ".probe { background: url(image.png) right 150% bottom 2px / 30px 4px no-repeat; }",
+            Some((4, 2)),
+        );
+        assert_eq!(pixel(15, 24), RED);
+        assert_eq!(pixel(14, 24), [0, 0, 0, 0]);
+
+        let pixel = paint_probe_with_assets(
+            ".probe { background: url(image.png) right 2px bottom 2px / 4px 4px no-repeat; }",
+            Some((4, 2)),
+            None,
+            2.0,
+        );
+        assert_eq!(pixel(18, 18), RED);
+        assert_eq!(pixel(17, 18), [0, 0, 0, 0]);
+    }
+
+    #[test]
     fn gradient_background_size_and_position() {
         for gradient in ["linear-gradient(red, red)", "radial-gradient(red, red)"] {
             for (size, position, inside, outside, expected) in [

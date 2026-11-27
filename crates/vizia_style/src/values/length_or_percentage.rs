@@ -7,6 +7,11 @@ use morphorm::Units;
 pub enum LengthOrPercentage {
     Length(Length),
     Percentage(f32),
+    /// A percentage plus a length in logical pixels.
+    Calc {
+        percentage: f32,
+        px: f32,
+    },
 }
 
 impl Default for LengthOrPercentage {
@@ -37,6 +42,10 @@ impl LengthOrPercentage {
 
             LengthOrPercentage::Percentage(val) => {
                 return (val / 100.0) * min_bounds;
+            }
+
+            LengthOrPercentage::Calc { percentage, px } => {
+                return (percentage / 100.0) * min_bounds + px * scale;
             }
         }
 

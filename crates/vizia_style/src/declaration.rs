@@ -227,7 +227,7 @@ fn parse_background_layer<'i>(
                 if !starts_position {
                     return Err(input.new_error_for_next_token());
                 }
-                Position::parse(input)
+                Position::parse_background(input)
             })
         {
             position = Some(value);
@@ -441,6 +441,10 @@ mod tests {
             "url(a.png), , url(b.png)",
             "url(a.png), center /",
             "url(a.png), var(--background)",
+            "url(a.png) right 10px bottom 5px, url(b.png) left 1em top",
+            "url(a.png) right calc(10px + 1em) bottom 2px",
+            "url(a.png) right calc(10% + 1px) bottom 2px",
+            "url(a.png) right 10px bottom 5px 1px",
         ] {
             let css = format!("background: {value};");
             let mut parser = Parser::new(&css);
