@@ -301,8 +301,8 @@ impl Element for Node<'_, '_> {
             PseudoClass::Dir(direction) => self.matches_direction(direction),
             PseudoClass::Has(selector_list) => self.match_has(selector_list, _context),
             PseudoClass::Custom(name) => {
-                println!("custom: {}", name);
-                todo!()
+                log::warn!("Unsupported custom pseudo-class :{name}");
+                false
             }
         }
     }
@@ -1815,6 +1815,50 @@ mod tests {
     struct Unnamed;
 
     impl View for Unnamed {}
+
+    #[test]
+    fn unknown_pseudo_classes_do_not_apply_invalid_rules() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(
+            ".probe { width: 10px; }
+             .probe:made-up { width: 80px; }
+             .probe, .other:made-up { width: 90px; }
+             .probe:not(:made-up) { width: 100px; }
+             .probe:has(> :made-up) { width: 110px; }
+             .probe { height: 20px; }",
+        )
+        .unwrap();
+        let probe = Element::new(&mut cx).class("probe").entity();
+        style_system(&mut cx);
+
+        assert_eq!(cx.style.width.get(probe), Some(&Units::Pixels(10.0)));
+        assert_eq!(cx.style.height.get(probe), Some(&Units::Pixels(20.0)));
+    }
+
+    #[test]
+    fn custom_pseudo_class_does_not_match() {
+        use super::{MatchingContext, MatchingMode, Node, PseudoClass, QuirksMode};
+        use vizia_style::selectors::context::{
+            MatchingForInvalidation, NeedsSelectorFlags, SelectorCaches,
+        };
+
+        let cx = Context::default();
+        let node = Node { entity: Entity::root(), store: &cx.style, tree: &cx.tree };
+        let mut cache = SelectorCaches::default();
+        let mut context = MatchingContext::new(
+            MatchingMode::Normal,
+            None,
+            &mut cache,
+            QuirksMode::NoQuirks,
+            NeedsSelectorFlags::Yes,
+            MatchingForInvalidation::No,
+        );
+        assert!(!vizia_style::Element::match_non_ts_pseudo_class(
+            &node,
+            &PseudoClass::Custom("made-up".into()),
+            &mut context,
+        ));
+    }
 
     #[test]
     fn unitless_zero_positions_apply_without_accepting_nonzero_numbers() {

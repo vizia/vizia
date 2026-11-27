@@ -117,7 +117,9 @@ impl<'i> selectors::parser::Parser<'i> for SelectorParser<'_, 'i> {
             "user-invalid" => UserInvalid,
             "placeholder-shown" => PlaceholderShown,
 
-            _ => Custom(name.to_string())
+            _ => return Err(ParseError::custom(CustomParseError::from(
+                selectors::parser::SelectorParseErrorKind::UnsupportedPseudoClassOrElement
+            )))
 
         };
 

@@ -38,6 +38,33 @@ mod test {
         )
     }
 
+    #[test]
+    fn unknown_pseudo_classes_are_rejected() {
+        use crate::error::SelectorError;
+
+        for selector in [
+            ":made-up",
+            ".valid, .invalid:made-up",
+            ".invalid:made-up, .valid",
+            ":not(.valid, :made-up)",
+            ":has(> .valid, > :made-up)",
+        ] {
+            let error = parse(selector).unwrap_err();
+            assert_eq!(
+                error.kind,
+                ParseErrorKind::Custom(CustomParseError::SelectorError(
+                    SelectorError::UnsupportedPseudoClassOrElement
+                )),
+                "{selector}"
+            );
+        }
+
+        for selector in [":hover", ":HOVER", ":over", ":not(:hover)", ":has(> :over)"] {
+            assert!(parse(selector).is_ok(), "{selector}");
+        }
+        assert!(parse(":made-up(value)").is_err());
+    }
+
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct Entity(u32);
 

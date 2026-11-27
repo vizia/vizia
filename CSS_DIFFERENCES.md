@@ -73,9 +73,8 @@ and the individual [value parsers](crates/vizia_style/src/values/) for details.
 - Vizia recognizes state selectors including `:hover`, `:active`, `:focus`,
   `:focus-visible`, `:focus-within`, `:disabled`, and `:checked`. It also
   provides the nonstandard `:over`. State availability depends on the view.
-- `:dir()` and `:has()` have matching implementations. `:lang()` is parsed but
-  its matcher is unimplemented and can panic. Unknown nonfunctional
-  pseudo-classes are treated as custom pseudo-classes, whose matcher is also
+- `:dir()` and `:has()` have matching implementations. Unknown pseudo-classes
+  are rejected during parsing. `:lang()` is parsed but its matcher is
   unimplemented and can panic.
 - Pseudo-elements such as `::before`, `::after`, and `::selection` are parsed
   but do not match views. They do not create browser-style generated content.
