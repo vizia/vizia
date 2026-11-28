@@ -173,6 +173,15 @@ where
                         Index { data_index: inherited, anim_index: entity_sparse_index.anim_index };
                     return true;
                 }
+                return false;
+            }
+        }
+
+        if let Some(index) = self.inline_data.sparse.get_mut(entity_index) {
+            let current = index.data_index;
+            if current.is_inline() && current.is_inherited() {
+                index.data_index = DataIndex::null();
+                return true;
             }
         }
 
@@ -195,30 +204,19 @@ where
 
                 let entity_sparse_index = self.inline_data.sparse[entity_index];
 
-                if !entity_sparse_index.data_index.is_inline()
-                    && self.inline_data.sparse[entity_index].data_index.index()
-                        != parent_sparse_index.data_index.index()
-                {
-                    if entity_sparse_index.data_index.index() < self.shared_data.dense.len() {
-                        if entity_sparse_index.data_index.is_inherited() {
-                            self.inline_data.sparse[entity_index] = Index {
-                                data_index: DataIndex::shared(
-                                    parent_sparse_index.data_index.index(),
-                                )
-                                .inherited(),
-                                anim_index: u32::MAX,
-                            };
-                            return true;
-                        }
+                let current = entity_sparse_index.data_index;
+                let explicit = !current.is_inherited()
+                    && if current.is_inline() {
+                        current.index() < self.inline_data.dense.len()
                     } else {
-                        self.inline_data.sparse[entity_index] = Index {
-                            data_index: DataIndex::shared(parent_sparse_index.data_index.index())
-                                .inherited(),
-                            anim_index: u32::MAX,
-                        };
-
-                        return true;
-                    }
+                        current.index() < self.shared_data.dense.len()
+                    };
+                let inherited =
+                    DataIndex::shared(parent_sparse_index.data_index.index()).inherited();
+                if !explicit && current != inherited {
+                    self.inline_data.sparse[entity_index] =
+                        Index { data_index: inherited, anim_index: u32::MAX };
+                    return true;
                 }
                 return false;
             }
@@ -313,6 +311,13 @@ where
         }
 
         None
+    }
+
+    pub(crate) fn is_inherited(&self, entity: Entity) -> bool {
+        self.inline_data
+            .sparse
+            .get(entity.index())
+            .is_some_and(|index| index.data_index.is_inherited())
     }
 
     pub fn get_mut(&mut self, entity: Entity) -> Option<&mut T> {
@@ -464,5 +469,40 @@ mod tests {
 
         assert!(style_set.link(entity, &[]));
         assert_eq!(style_set.get(entity), None);
+    }
+
+    #[test]
+    fn shared_inheritance_replaces_inherited_inline_but_not_explicit_values() {
+        let mut store = StyleSet::new();
+        let ancestor = Entity::new(1, 0);
+        let parent = Entity::new(2, 0);
+        let child = Entity::new(3, 0);
+        let explicit = Entity::new(4, 0);
+        let rule = Rule::new(0, 0);
+        store.insert(ancestor, 100);
+        store.inherit_inline(parent, ancestor);
+        store.inherit_inline(child, parent);
+        store.insert(explicit, 300);
+        store.insert_rule(rule, 200);
+        store.link(parent, &[(rule, 0)]);
+
+        assert!(store.inherit_shared(child, parent));
+        assert_eq!(store.get(child), Some(&200));
+        assert!(!store.inherit_shared(explicit, parent));
+        assert_eq!(store.get(explicit), Some(&300));
+    }
+
+    #[test]
+    fn inline_inheritance_clears_a_removed_parent_value() {
+        let mut store = StyleSet::new();
+        let parent = Entity::new(1, 0);
+        let child = Entity::new(2, 0);
+        store.insert(parent, 100);
+        assert!(store.inherit_inline(child, parent));
+        store.remove(parent);
+
+        assert!(store.inherit_inline(child, parent));
+        assert_eq!(store.get(child), None);
+        assert!(!store.inherit_inline(child, parent));
     }
 }

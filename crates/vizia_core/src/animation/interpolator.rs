@@ -96,11 +96,8 @@ impl Interpolator for Filter {
 
 impl Interpolator for LengthValue {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        match (end, start) {
-            (LengthValue::Px(end_val), LengthValue::Px(start_val)) => {
-                LengthValue::Px(f32::interpolate(start_val, end_val, t))
-            }
-
+        match (start.to_px(), end.to_px()) {
+            (Some(start), Some(end)) => LengthValue::Px(f32::interpolate(&start, &end, t)),
             _ => LengthValue::default(),
         }
     }
@@ -120,6 +117,14 @@ impl Interpolator for Length {
 
 impl Interpolator for LengthOrPercentage {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+        fn components(value: &LengthOrPercentage) -> Option<(f32, f32)> {
+            match value {
+                LengthOrPercentage::Length(length) => length.to_px().map(|px| (0.0, px)),
+                LengthOrPercentage::Percentage(percentage) => Some((*percentage, 0.0)),
+                LengthOrPercentage::Calc { percentage, px } => Some((*percentage, *px)),
+            }
+        }
+
         match (start, end) {
             (LengthOrPercentage::Length(start_val), LengthOrPercentage::Length(end_val)) => {
                 LengthOrPercentage::Length(Length::interpolate(start_val, end_val, t))
@@ -129,6 +134,21 @@ impl Interpolator for LengthOrPercentage {
                 LengthOrPercentage::Percentage(start_val),
                 LengthOrPercentage::Percentage(end_val),
             ) => LengthOrPercentage::Percentage(f32::interpolate(start_val, end_val, t)),
+
+            (LengthOrPercentage::Calc { .. }, _) | (_, LengthOrPercentage::Calc { .. }) => {
+                if let (Some((start_percent, start_px)), Some((end_percent, end_px))) =
+                    (components(start), components(end))
+                {
+                    LengthOrPercentage::Calc {
+                        percentage: f32::interpolate(&start_percent, &end_percent, t),
+                        px: f32::interpolate(&start_px, &end_px, t),
+                    }
+                } else if t < 0.5 {
+                    start.clone()
+                } else {
+                    end.clone()
+                }
+            }
 
             _ => LengthOrPercentage::default(),
         }
@@ -212,13 +232,59 @@ impl Interpolator for Matrix {
     }
 }
 
-impl<T: Interpolator> Interpolator for Vec<T> {
+macro_rules! interpolate_vec {
+    ($($item:ty),+ $(,)?) => {
+        $(
+            impl Interpolator for Vec<$item> {
+                fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
+                    start.iter().zip(end.iter())
+                        .map(|(start, end)| <$item>::interpolate(start, end, t))
+                        .collect()
+                }
+            }
+        )+
+    };
+}
+
+interpolate_vec!(Transform, ImageOrGradient, Position, BackgroundRepeat, BackgroundSize);
+
+impl Interpolator for Vec<Shadow> {
     fn interpolate(start: &Self, end: &Self, t: f32) -> Self {
-        start
-            .iter()
-            .zip(end.iter())
-            .map(|(start, end)| T::interpolate(start, end, t))
-            .collect::<Vec<T>>()
+        fn transparent_shadow(reference: &Shadow) -> Shadow {
+            let color = match reference.color {
+                Some(Color::RGBA(color)) => Color::rgba(color.r(), color.g(), color.b(), 0),
+                _ => Color::rgba(0, 0, 0, 0),
+            };
+            Shadow::new(
+                Length::zero(),
+                Length::zero(),
+                reference.blur_radius.as_ref().map(|_| Length::zero()),
+                reference.spread_radius.as_ref().map(|_| Length::zero()),
+                Some(color),
+                reference.inset,
+            )
+        }
+
+        (0..start.len().max(end.len()))
+            .filter_map(|index| match (start.get(index), end.get(index)) {
+                (Some(start), Some(end)) => Some(Shadow::interpolate(start, end, t)),
+                (Some(start), None) if matches!(start.color, None | Some(Color::CurrentColor)) => {
+                    if t < 0.5 {
+                        Some(start.clone())
+                    } else {
+                        None
+                    }
+                }
+                (None, Some(end)) if matches!(end.color, None | Some(Color::CurrentColor)) => {
+                    if t < 0.5 { None } else { Some(end.clone()) }
+                }
+                (Some(start), None) => {
+                    Some(Shadow::interpolate(start, &transparent_shadow(start), t))
+                }
+                (None, Some(end)) => Some(Shadow::interpolate(&transparent_shadow(end), end, t)),
+                (None, None) => unreachable!(),
+            })
+            .collect()
     }
 }
 
@@ -269,13 +335,11 @@ impl Interpolator for Position {
 
             match (&start_value, &end_value) {
                 (LengthOrPercentage::Length(_), LengthOrPercentage::Length(_))
-                | (LengthOrPercentage::Percentage(_), LengthOrPercentage::Percentage(_)) => {
-                    vizia_style::PositionComponent::Length(LengthOrPercentage::interpolate(
-                        &start_value,
-                        &end_value,
-                        t,
-                    ))
-                }
+                | (LengthOrPercentage::Percentage(_), LengthOrPercentage::Percentage(_))
+                | (LengthOrPercentage::Calc { .. }, _)
+                | (_, LengthOrPercentage::Calc { .. }) => vizia_style::PositionComponent::Length(
+                    LengthOrPercentage::interpolate(&start_value, &end_value, t),
+                ),
 
                 _ => {
                     if t < 0.5 {
@@ -429,6 +493,99 @@ impl Interpolator for ClipPath {
         match (start, end) {
             (ClipPath::Shape(s), ClipPath::Shape(e)) => ClipPath::Shape(Rect::interpolate(s, e, t)),
             _ => end.clone(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn background_edge_offsets_interpolate_without_losing_percentage() {
+        let edge = |px| {
+            Position::new(
+                vizia_style::HorizontalPosition::Length(LengthOrPercentage::Calc {
+                    percentage: 100.0,
+                    px,
+                }),
+                vizia_style::VerticalPosition::Center,
+            )
+        };
+        let start = edge(-10.0);
+        let end = edge(-20.0);
+        let middle = Position::interpolate(&start, &end, 0.5);
+        assert_eq!(middle.x.to_length_or_percentage().to_pixels(100.0, 1.0), 85.0);
+        assert_eq!(middle.x.to_length_or_percentage().to_pixels(200.0, 2.0), 170.0);
+
+        let middle = Position::interpolate(&start, &Position::center(), 0.5);
+        assert_eq!(middle.x.to_length_or_percentage().to_pixels(100.0, 1.0), 70.0);
+        assert_eq!(middle.x.to_length_or_percentage().to_pixels(200.0, 2.0), 140.0);
+        assert!(Position::interpolate(&start, &Position::center(), 1.0).is_center());
+    }
+
+    #[test]
+    fn standard_box_shadow_none_transitions_preserve_visible_shadows() {
+        let shadow = Shadow::new(
+            Length::px(20.0),
+            Length::zero(),
+            Some(Length::px(4.0)),
+            None,
+            Some(Color::rgb(255, 0, 0)),
+            true,
+        );
+        let visible = vec![shadow.clone()];
+        let empty = vec![];
+        for result in [
+            Vec::<Shadow>::interpolate(&empty, &visible, 0.5),
+            Vec::<Shadow>::interpolate(&visible, &empty, 0.5),
+        ] {
+            assert_eq!(result.len(), 1);
+            assert_eq!(result[0].x_offset, Length::px(10.0));
+            assert_eq!(result[0].blur_radius, Some(Length::px(2.0)));
+            assert_eq!(result[0].color, Some(Color::rgba(255, 0, 0, 127)));
+            assert!(result[0].inset);
+        }
+
+        let current = vec![Shadow { color: None, ..shadow }];
+        assert!(Vec::<Shadow>::interpolate(&empty, &current, 0.25).is_empty());
+        assert_eq!(Vec::<Shadow>::interpolate(&empty, &current, 0.75), current);
+    }
+
+    #[test]
+    fn absolute_length_shadow_transitions_interpolate_in_pixels() {
+        let visible = vec![Shadow::new(
+            Length::Value(LengthValue::Pt(15.0)),
+            Length::Value(LengthValue::Pc(1.0)),
+            Some(Length::Value(LengthValue::Pt(6.0))),
+            Some(Length::Value(LengthValue::In(0.25))),
+            Some(Color::rgb(255, 0, 0)),
+            false,
+        )];
+        let empty = vec![];
+        for result in [
+            Vec::<Shadow>::interpolate(&empty, &visible, 0.5),
+            Vec::<Shadow>::interpolate(&visible, &empty, 0.5),
+        ] {
+            assert_eq!(result[0].x_offset, Length::px(10.0));
+            assert_eq!(result[0].y_offset, Length::px(8.0));
+            assert_eq!(result[0].blur_radius, Some(Length::px(4.0)));
+            assert_eq!(result[0].spread_radius, Some(Length::px(12.0)));
+            assert_eq!(result[0].color, Some(Color::rgba(255, 0, 0, 127)));
+        }
+
+        for end in [
+            LengthValue::In(1.0),
+            LengthValue::Cm(2.54),
+            LengthValue::Mm(25.4),
+            LengthValue::Q(101.6),
+            LengthValue::Pt(72.0),
+            LengthValue::Pc(6.0),
+        ] {
+            let middle = LengthValue::interpolate(&LengthValue::Px(32.0), &end, 0.5);
+            assert!((middle.to_px().unwrap() - 64.0).abs() < 0.0001, "{end:?}");
+            let reverse = LengthValue::interpolate(&end, &LengthValue::Px(32.0), 0.25);
+            assert!((reverse.to_px().unwrap() - 80.0).abs() < 0.0001, "{end:?}");
         }
     }
 }

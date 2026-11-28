@@ -166,6 +166,8 @@ pub(crate) struct InvalidationMap {
     /// Whether selectors depend on the position of an entity among its siblings, e.g.
     /// `:first-child` or `:nth-child()`.
     pub(crate) positional: bool,
+    /// Whether a selector contains :is() or :where().
+    pub(crate) selector_list: bool,
 }
 
 /// State collected for a compound selector while walking a selector.
@@ -338,6 +340,9 @@ impl InvalidationMap {
             }
 
             Component::Negation(list) | Component::Is(list) | Component::Where(list) => {
+                if matches!(component, Component::Is(_) | Component::Where(_)) {
+                    self.selector_list = true;
+                }
                 let nested_scope = scope.unwrap_or(Scope::Subject);
                 for selector in list.slice() {
                     let (dependencies, _) =

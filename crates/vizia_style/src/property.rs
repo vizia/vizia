@@ -1,14 +1,69 @@
+use crate::values::border::border_radius::RadiusLength;
 use crate::{
     Alignment, Angle, AspectRatio, BackgroundImage, BackgroundRepeat, BackgroundSize, BlendMode,
     Border, BorderStyle, BorderStyleKeyword, BorderWidth, BorderWidthValue, ClipPath, Color,
     CornerRadius, CursorIcon, CustomParseError, CustomProperty, Direction, Display, Filter,
     FontFamily, FontSize, FontSlant, FontVariation, FontWeight, FontWidth, LayoutType, LayoutWrap,
     Length, LengthOrPercentage, LetterSpacing, LineClamp, LineHeight, Opacity, Outline, Overflow,
-    Parse, PointerEvents, Position, PositionType, Scale, Shadow, TextAlign, TextDecoration,
-    TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke, TextStrokeStyle, Transform,
-    Transition, Translate, Units, UnparsedProperty, Visibility, define_property,
+    Parse, PointerEvents, Position, PositionType, Rect, RelativeFontWeight, Scale, Shadow,
+    TextAlign, TextDecoration, TextDecorationLine, TextDecorationStyle, TextOverflow, TextStroke,
+    TextStrokeStyle, Transform, Transition, Translate, Units, UnparsedProperty, Visibility,
+    define_property,
 };
 use cssparser::Parser;
+
+/// Returns the Vizia property name for a supported CSS property alias.
+pub fn canonical_property_name(name: &str) -> &str {
+    match name {
+        "position" => "position-type",
+        "flex-direction" => "layout-type",
+        "flex-wrap" => "wrap",
+        "grid-template-columns" => "grid-columns",
+        "grid-template-rows" => "grid-rows",
+        "row-gap" => "vertical-gap",
+        "column-gap" => "horizontal-gap",
+        "border-radius" => "corner-radius",
+        "border-top-left-radius" => "corner-top-left-radius",
+        "border-top-right-radius" => "corner-top-right-radius",
+        "border-bottom-left-radius" => "corner-bottom-left-radius",
+        "border-bottom-right-radius" => "corner-bottom-right-radius",
+        "box-shadow" => "shadow",
+        "mix-blend-mode" => "blend-mode",
+        "font-style" => "font-slant",
+        "font-stretch" => "font-width",
+        _ => name,
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct Padding(pub Rect<Units>);
+
+#[derive(Debug, Clone, PartialEq)]
+pub(crate) struct Gap {
+    pub row: Units,
+    pub column: Units,
+}
+
+impl<'i> Parse<'i> for Padding {
+    fn parse<'t>(
+        input: &mut Parser<'i>,
+    ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
+        let Rect(top, right, bottom, left) = Rect::<Units>::parse(input)?;
+        input.expect_exhausted()?;
+        Ok(Self(Rect(top, right, bottom, left)))
+    }
+}
+
+impl<'i> Parse<'i> for Gap {
+    fn parse<'t>(
+        input: &mut Parser<'i>,
+    ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
+        let row = Units::parse(input)?;
+        let column = input.try_parse(Units::parse).unwrap_or(row);
+        input.expect_exhausted()?;
+        Ok(Self { row, column })
+    }
+}
 
 define_property! {
     pub enum Property<'i> {
@@ -202,6 +257,87 @@ define_property! {
         "cursor": Cursor(CursorIcon),
         "pointer-events": PointerEvents(PointerEvents),
     }
+    extra {
+        RelativeFontWeight(RelativeFontWeight),
+    }
+}
+
+impl<'i> Property<'i> {
+    pub fn parse_value(
+        name: cssparser::CowRcStr<'i>,
+        input: &mut Parser<'i>,
+    ) -> Result<Self, cssparser::ParseError<CustomParseError<'i>>> {
+        if name.as_ref() == "font-weight"
+            && let Ok(value) = input.try_parse(|input| {
+                let value = RelativeFontWeight::parse(input)?;
+                input.expect_exhausted()?;
+                Ok::<_, cssparser::ParseError<CustomParseError<'i>>>(value)
+            })
+        {
+            return Ok(Self::RelativeFontWeight(value));
+        }
+        if name.as_ref() == "transform-origin" {
+            if let Ok(position) = input.try_parse(|input| {
+                if input.is_exhausted() {
+                    return Err(input.new_error_for_next_token());
+                }
+                let position = Position::parse(input)?;
+                input.expect_exhausted()?;
+                Ok::<_, cssparser::ParseError<CustomParseError<'i>>>(position)
+            }) {
+                return Ok(Self::TransformOrigin(position));
+            }
+            return Ok(Self::Unparsed(UnparsedProperty::parse(name, input)?));
+        }
+        let border_width_property: Option<fn(BorderWidthValue) -> Self> = match name.as_ref() {
+            "border-top-width" => Some(Self::BorderTopWidth),
+            "border-right-width" => Some(Self::BorderRightWidth),
+            "border-bottom-width" => Some(Self::BorderBottomWidth),
+            "border-left-width" => Some(Self::BorderLeftWidth),
+            _ => None,
+        };
+        if let Some(property) = border_width_property {
+            if let Ok(value) = input.try_parse(|input| {
+                let value = BorderWidthValue::parse(input)?;
+                input.expect_exhausted()?;
+                Ok::<_, cssparser::ParseError<CustomParseError<'i>>>(value)
+            }) {
+                return Ok(property(value));
+            }
+            return Ok(Self::Unparsed(UnparsedProperty::parse(name, input)?));
+        }
+        let radius_property: Option<fn(LengthOrPercentage) -> Self> =
+            match canonical_property_name(name.as_ref()) {
+                "corner-top-left-radius" => Some(Self::CornerTopLeftRadius),
+                "corner-top-right-radius" => Some(Self::CornerTopRightRadius),
+                "corner-bottom-left-radius" => Some(Self::CornerBottomLeftRadius),
+                "corner-bottom-right-radius" => Some(Self::CornerBottomRightRadius),
+                _ => None,
+            };
+        if let Some(property) = radius_property
+            && let Ok(value) = input.try_parse(|input| {
+                let value = RadiusLength::parse(input)?;
+                input.expect_exhausted()?;
+                Ok::<_, cssparser::ParseError<CustomParseError<'i>>>(value.0)
+            })
+        {
+            return Ok(property(value));
+        }
+        if name.as_ref() == "text-wrap"
+            && let Ok(value) =
+                input.try_parse(|input| -> Result<bool, cssparser::BasicParseError> {
+                    let wrap = input.try_parse(|input| input.expect_ident_matching("wrap")).is_ok();
+                    if !wrap {
+                        input.expect_ident_matching("nowrap")?;
+                    }
+                    input.expect_exhausted()?;
+                    Ok(wrap)
+                })
+        {
+            return Ok(Self::TextWrap(value));
+        }
+        Self::parse_value_default(name, input)
+    }
 }
 
 #[cfg(test)]
@@ -209,6 +345,181 @@ mod tests {
     use cssparser::CowRcStr;
 
     use super::*;
+
+    #[test]
+    fn relative_font_weight_keywords_parse_as_distinct_values() {
+        for (value, expected) in [
+            ("bolder", Property::RelativeFontWeight(RelativeFontWeight::Bolder)),
+            ("LIGHTER", Property::RelativeFontWeight(RelativeFontWeight::Lighter)),
+            ("bold", Property::FontWeight(FontWeight(700))),
+            ("400", Property::FontWeight(FontWeight(400))),
+        ] {
+            let mut parser = Parser::new(value);
+            assert_eq!(Property::parse_value("font-weight".into(), &mut parser).unwrap(), expected);
+            assert!(parser.is_exhausted(), "{value}");
+        }
+        for value in ["bolder lighter", "lighter 400"] {
+            let mut parser = Parser::new(value);
+            assert!(matches!(
+                Property::parse_value("font-weight".into(), &mut parser),
+                Ok(Property::Unparsed(_))
+            ));
+        }
+    }
+
+    #[test]
+    fn border_radius_longhands_accept_unitless_zero() {
+        for (name, expected) in [
+            ("border-top-left-radius", Property::CornerTopLeftRadius(LengthOrPercentage::px(0.0))),
+            (
+                "border-top-right-radius",
+                Property::CornerTopRightRadius(LengthOrPercentage::px(0.0)),
+            ),
+            (
+                "border-bottom-left-radius",
+                Property::CornerBottomLeftRadius(LengthOrPercentage::px(0.0)),
+            ),
+            (
+                "border-bottom-right-radius",
+                Property::CornerBottomRightRadius(LengthOrPercentage::px(0.0)),
+            ),
+            ("corner-top-left-radius", Property::CornerTopLeftRadius(LengthOrPercentage::px(0.0))),
+        ] {
+            let mut parser = Parser::new("-0");
+            assert_eq!(Property::parse_value(CowRcStr::from(name), &mut parser).unwrap(), expected);
+            assert!(parser.is_exhausted());
+        }
+        for value in ["1", "0 1px"] {
+            let mut parser = Parser::new(value);
+            assert!(matches!(
+                Property::parse_value(CowRcStr::from("border-top-left-radius"), &mut parser),
+                Ok(Property::Unparsed(_))
+            ));
+        }
+    }
+
+    #[test]
+    fn text_wrap_standard_keywords_preserve_boolean_values() {
+        for (value, expected) in [
+            ("wrap", true),
+            ("WRAP", true),
+            ("nowrap", false),
+            ("NoWrap", false),
+            ("true", true),
+            ("false", false),
+            ("on", true),
+            ("off", false),
+            ("yes", true),
+            ("no", false),
+        ] {
+            let mut parser = Parser::new(value);
+            assert_eq!(
+                Property::parse_value(CowRcStr::from("text-wrap"), &mut parser).unwrap(),
+                Property::TextWrap(expected),
+                "{value}"
+            );
+            assert!(parser.is_exhausted());
+        }
+        for value in ["balance", "pretty", "wrap nowrap"] {
+            let mut parser = Parser::new(value);
+            assert!(
+                matches!(
+                    Property::parse_value(CowRcStr::from("text-wrap"), &mut parser),
+                    Ok(Property::Unparsed(_))
+                ),
+                "{value}"
+            );
+        }
+    }
+
+    #[test]
+    fn spacing_shorthands_expand_in_css_order() {
+        let px = Units::Pixels;
+        let padding_cases = [
+            ("1px", Rect(px(1.0), px(1.0), px(1.0), px(1.0))),
+            ("1px 2px", Rect(px(1.0), px(2.0), px(1.0), px(2.0))),
+            ("1px 2px 3px", Rect(px(1.0), px(2.0), px(3.0), px(2.0))),
+            ("0 2px 3% 4s", Rect(px(0.0), px(2.0), Units::Percentage(3.0), Units::Stretch(4.0))),
+        ];
+        for (value, expected) in padding_cases {
+            let mut parser = Parser::new(value);
+            assert_eq!(Padding::parse(&mut parser).unwrap(), Padding(expected), "{value}");
+            assert!(parser.is_exhausted());
+        }
+
+        for (value, row, column) in [("5px", px(5.0), px(5.0)), ("0 2px", px(0.0), px(2.0))] {
+            let mut parser = Parser::new(value);
+            assert_eq!(Gap::parse(&mut parser).unwrap(), Gap { row, column }, "{value}");
+            assert!(parser.is_exhausted());
+        }
+    }
+
+    #[test]
+    fn spacing_shorthands_do_not_parse_partial_values() {
+        for (name, value) in [
+            ("padding", "1px 2px 3px 4px 5px"),
+            ("padding", "1px invalid"),
+            ("padding", "1px var(--spacing)"),
+            ("gap", "1px 2px 3px"),
+            ("gap", "1px invalid"),
+            ("gap", "var(--spacing) 2px"),
+        ] {
+            let mut parser = Parser::new(value);
+            let parsed = match name {
+                "padding" => Padding::parse(&mut parser).map(|_| ()),
+                "gap" => Gap::parse(&mut parser).map(|_| ()),
+                _ => unreachable!(),
+            };
+            assert!(parsed.is_err(), "{name}: {value}");
+        }
+    }
+
+    #[test]
+    fn standard_property_aliases_parse_like_vizia_names() {
+        let aliases = [
+            ("position", "position-type", "absolute"),
+            ("flex-direction", "layout-type", "column"),
+            ("flex-wrap", "wrap", "wrap"),
+            ("flex-wrap", "wrap", "nowrap"),
+            ("grid-template-columns", "grid-columns", "20px 1s"),
+            ("grid-template-rows", "grid-rows", "20px 1s"),
+            ("row-gap", "vertical-gap", "5px"),
+            ("column-gap", "horizontal-gap", "6px"),
+            ("border-radius", "corner-radius", "4px"),
+            ("border-top-left-radius", "corner-top-left-radius", "5px"),
+            ("border-top-right-radius", "corner-top-right-radius", "6px"),
+            ("border-bottom-left-radius", "corner-bottom-left-radius", "7px"),
+            ("border-bottom-right-radius", "corner-bottom-right-radius", "8px"),
+            ("box-shadow", "shadow", "1px 2px 3px red"),
+            ("mix-blend-mode", "blend-mode", "multiply"),
+            ("font-style", "font-slant", "italic"),
+            ("font-stretch", "font-width", "condensed"),
+        ];
+
+        for (alias, original, value) in aliases {
+            let parsed = |name| {
+                let mut parser = Parser::new(value);
+                let property = Property::parse_value(CowRcStr::from(name), &mut parser).unwrap();
+                assert!(parser.is_exhausted(), "{name}: {value}");
+                assert!(!matches!(property, Property::Custom(_) | Property::Unparsed(_)));
+                property
+            };
+            assert_eq!(parsed(alias), parsed(original), "{alias}");
+        }
+    }
+
+    #[test]
+    fn standard_property_aliases_keep_canonical_names_for_variable_resolution() {
+        for (alias, original) in [
+            ("border-radius", "corner-radius"),
+            ("box-shadow", "shadow"),
+            ("row-gap", "vertical-gap"),
+        ] {
+            let mut parser = Parser::new("var(--value, 4px)");
+            let property = Property::parse_value(CowRcStr::from(alias), &mut parser).unwrap();
+            assert!(matches!(property, Property::Unparsed(ref value) if value.name == original));
+        }
+    }
 
     #[test]
     fn parse_property() {
@@ -242,6 +553,72 @@ mod tests {
                 .expect("Property parsing should fall back to Unparsed");
 
         assert!(!matches!(parsed_property, Property::BackgroundPosition(_)));
+    }
+
+    #[test]
+    fn background_position_edge_offsets_parse_per_axis_and_layer() {
+        for (value, x, y) in [
+            ("right 10px bottom 5px", 90.0, 75.0),
+            ("bottom 10% left 12px", 12.0, 72.0),
+            ("right 25% top", 75.0, 0.0),
+            ("left top 25%", 0.0, 20.0),
+            ("center bottom 10px", 50.0, 70.0),
+            ("bottom 10px center", 50.0, 70.0),
+            ("center right 10px", 90.0, 40.0),
+            ("right -10px bottom -5px", 110.0, 85.0),
+            ("right 1in bottom 0", 4.0, 80.0),
+            ("right calc(10px + 1px) bottom 2px", 89.0, 78.0),
+            ("right 10px", 100.0, 10.0),
+        ] {
+            let mut parser = Parser::new(value);
+            let property =
+                Property::parse_value("background-position".into(), &mut parser).unwrap();
+            let Property::BackgroundPosition(positions) = property else {
+                panic!("{value} did not parse");
+            };
+            assert_eq!(
+                positions[0].x.to_length_or_percentage().to_pixels(100.0, 1.0),
+                x,
+                "{value}"
+            );
+            assert_eq!(positions[0].y.to_length_or_percentage().to_pixels(80.0, 1.0), y, "{value}");
+        }
+
+        let mut parser = Parser::new("right 10px bottom 5px, left 20% top 25%");
+        let property = Property::parse_value("background-position".into(), &mut parser).unwrap();
+        let Property::BackgroundPosition(positions) = property else {
+            panic!("layered positions did not parse");
+        };
+        assert_eq!(positions.len(), 2);
+        assert_eq!(positions[0].x.to_length_or_percentage().to_pixels(100.0, 2.0), 80.0);
+        assert_eq!(positions[1].x.to_length_or_percentage().to_pixels(100.0, 2.0), 20.0);
+        assert_eq!(positions[1].y.to_length_or_percentage().to_pixels(80.0, 2.0), 20.0);
+
+        for value in [
+            "right 10px 20px",
+            "left 10px right 2px",
+            "center 10px bottom",
+            "right center 10px",
+            "right 10px bottom 5px 1px",
+            "right 1em bottom 2px",
+            "right calc(10px + 1em) bottom 2px",
+            "right calc(10% + 1px) bottom 2px",
+            "right 10px bottom 5px, left 1em top",
+        ] {
+            let mut parser = Parser::new(value);
+            assert!(
+                matches!(
+                    Property::parse_value("background-position".into(), &mut parser),
+                    Ok(Property::Unparsed(_))
+                ),
+                "{value}"
+            );
+        }
+        let mut parser = Parser::new("right 10px bottom 5px");
+        assert!(matches!(
+            Property::parse_value("transform-origin".into(), &mut parser),
+            Ok(Property::Unparsed(_))
+        ));
     }
 
     #[test]

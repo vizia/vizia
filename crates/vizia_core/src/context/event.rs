@@ -1262,7 +1262,7 @@ impl<'a> EventContext<'a> {
 
     /// Sets the text of the current view.
     pub fn set_text(&mut self, text: &str) {
-        self.style.text.insert(self.current, text.to_owned());
+        self.style.set_text(self.tree, self.current, text.to_owned());
         self.style.needs_text_update(self.current);
         self.needs_relayout();
         self.needs_redraw();

@@ -87,6 +87,10 @@ impl<'i> selectors::parser::Parser<'i> for SelectorParser<'_, 'i> {
     type Impl = Selectors;
     type Error = CustomParseError<'i>;
 
+    fn parse_is_and_where(&self) -> bool {
+        true
+    }
+
     fn parse_non_ts_pseudo_class(
         &self,
         name: &str,
@@ -117,7 +121,9 @@ impl<'i> selectors::parser::Parser<'i> for SelectorParser<'_, 'i> {
             "user-invalid" => UserInvalid,
             "placeholder-shown" => PlaceholderShown,
 
-            _ => Custom(name.to_string())
+            _ => return Err(ParseError::custom(CustomParseError::from(
+                selectors::parser::SelectorParseErrorKind::UnsupportedPseudoClassOrElement
+            )))
 
         };
 

@@ -71,7 +71,7 @@ impl<'i> Parse<'i> for Border {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{BorderStyleKeyword, BorderWidthKeyword, Color, tests::assert_parse};
+    use crate::{BorderStyleKeyword, BorderWidthKeyword, Color, Length, tests::assert_parse};
 
     assert_parse! {
         Border, assert_border,
@@ -98,11 +98,18 @@ mod tests {
                     Some(BorderStyle::new(BorderStyleKeyword::Solid, BorderStyleKeyword::Solid, BorderStyleKeyword::Solid, BorderStyleKeyword::Solid)),
                     Some(Color::rgb(0, 255, 0)),
                 ),
+                "0" => Border::new(Some(Length::zero().into()), None, None),
+                "0 solid #00FF00" => Border::new(
+                    Some(Length::zero().into()),
+                    Some(BorderStyle::new(BorderStyleKeyword::Solid, BorderStyleKeyword::Solid, BorderStyleKeyword::Solid, BorderStyleKeyword::Solid)),
+                    Some(Color::rgb(0, 255, 0)),
+                ),
             }
 
             failure {
                 "test",
                 "123",
+                "1 solid",
                 "test #00FF00",
                 // "#00FF00 test",
                 // "thin solid #00FF00 x",

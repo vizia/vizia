@@ -1,7 +1,18 @@
 use cssparser::*;
 use skia_safe::font_style::Weight;
 
-use crate::{FontWeightKeyword, Parse, macros::impl_parse};
+use crate::{
+    FontWeightKeyword, Parse,
+    macros::{define_enum, impl_parse},
+};
+
+define_enum! {
+    /// A font weight relative to the inherited computed weight.
+    pub enum RelativeFontWeight {
+        "bolder": Bolder,
+        "lighter": Lighter,
+    }
+}
 
 /// A font weight value.
 #[derive(Debug, Copy, Clone, PartialEq)]

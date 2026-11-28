@@ -138,6 +138,29 @@ test {
         assert_eq!(location.line, 2);
         assert_eq!(location.column, 5);
     }
+
+    #[test]
+    fn unknown_pseudo_class_errors_follow_recovery_options() {
+        use crate::error::SelectorError;
+        use std::sync::{Arc, RwLock};
+
+        let css = ".before { width: 10px; }\n.valid, .invalid:made-up { width: 99px; }\n.after { width: 20px; }";
+        let error = StyleSheet::parse(css, ParserOptions::default()).unwrap_err();
+        let expected =
+            CustomParseError::SelectorError(SelectorError::UnsupportedPseudoClassOrElement);
+        assert_eq!(error.kind, expected);
+        assert_eq!(error.location.unwrap().line, 1);
+
+        let warnings = Arc::new(RwLock::new(Vec::new()));
+        let mut options = ParserOptions::new();
+        options.warnings = Some(warnings.clone());
+        let stylesheet = StyleSheet::parse(css, options).unwrap();
+        assert_eq!(stylesheet.rules.0.len(), 2);
+        let warnings = warnings.read().unwrap();
+        assert_eq!(warnings.len(), 1);
+        assert_eq!(warnings[0].kind, expected);
+        assert_eq!(warnings[0].location.as_ref().unwrap().line, 1);
+    }
 }
 
 // use cssparser::*;

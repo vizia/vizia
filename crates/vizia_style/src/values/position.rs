@@ -1,8 +1,9 @@
 use crate::error::CustomParseError;
 use crate::horizontal_position_keyword::HorizontalPositionKeyword;
 use crate::traits::Parse;
+use crate::values::length::length::parse_unitless_zero;
 use crate::vertical_position_keyword::VerticalPositionKeyword;
-use crate::{Length, LengthOrPercentage};
+use crate::{Length, LengthOrPercentage, ParserErrorExt};
 use cssparser::*;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -25,6 +26,107 @@ impl Position {
 
     pub fn is_center(&self) -> bool {
         self.x.is_center() && self.y.is_center()
+    }
+
+    pub(crate) fn parse_background<'i>(
+        input: &mut Parser<'i>,
+    ) -> Result<Self, ParseError<CustomParseError<'i>>> {
+        enum Offset {
+            Pixels(f32),
+            Percentage(f32),
+        }
+
+        fn offset<'i>(input: &mut Parser<'i>) -> Result<Offset, ParseError<CustomParseError<'i>>> {
+            if input.try_parse(parse_unitless_zero).is_ok() {
+                return Ok(Offset::Pixels(0.0));
+            }
+            match LengthOrPercentage::parse(input)? {
+                LengthOrPercentage::Percentage(value) => Ok(Offset::Percentage(value)),
+                LengthOrPercentage::Length(length) => length
+                    .to_px()
+                    .map(Offset::Pixels)
+                    .ok_or_else(|| input.new_error_for_next_token()),
+                LengthOrPercentage::Calc { .. } => Err(input.new_error_for_next_token()),
+            }
+        }
+
+        fn resolve_offset(value: Offset, from_end: bool) -> LengthOrPercentage {
+            match (value, from_end) {
+                (Offset::Percentage(value), true) => LengthOrPercentage::Percentage(100.0 - value),
+                (Offset::Percentage(value), false) => LengthOrPercentage::Percentage(value),
+                (Offset::Pixels(px), true) => {
+                    LengthOrPercentage::Calc { percentage: 100.0, px: -px }
+                }
+                (Offset::Pixels(px), false) => LengthOrPercentage::px(px),
+            }
+        }
+
+        fn horizontal<'i>(
+            input: &mut Parser<'i>,
+        ) -> Result<(HorizontalPosition, bool), ParseError<CustomParseError<'i>>> {
+            if input.try_parse(|input| input.expect_ident_matching("center")).is_ok() {
+                return Ok((HorizontalPosition::Center, false));
+            }
+            let side = HorizontalPositionKeyword::parse(input)?;
+            if let Ok(value) = input.try_parse(offset) {
+                Ok((
+                    HorizontalPosition::Length(resolve_offset(
+                        value,
+                        matches!(side, HorizontalPositionKeyword::Right),
+                    )),
+                    true,
+                ))
+            } else {
+                Ok((HorizontalPosition::Side(side), false))
+            }
+        }
+
+        fn vertical<'i>(
+            input: &mut Parser<'i>,
+        ) -> Result<(VerticalPosition, bool), ParseError<CustomParseError<'i>>> {
+            if input.try_parse(|input| input.expect_ident_matching("center")).is_ok() {
+                return Ok((VerticalPosition::Center, false));
+            }
+            let side = VerticalPositionKeyword::parse(input)?;
+            if let Ok(value) = input.try_parse(offset) {
+                Ok((
+                    VerticalPosition::Length(resolve_offset(
+                        value,
+                        matches!(side, VerticalPositionKeyword::Bottom),
+                    )),
+                    true,
+                ))
+            } else {
+                Ok((VerticalPosition::Side(side), false))
+            }
+        }
+
+        let edge_position = |input: &mut Parser<'i>| {
+            let ((x, x_offset), (y, y_offset)) = if let Ok(values) = input.try_parse(|input| {
+                Ok::<_, ParseError<CustomParseError<'i>>>((horizontal(input)?, vertical(input)?))
+            }) {
+                values
+            } else {
+                let y = vertical(input)?;
+                let x = horizontal(input)?;
+                (x, y)
+            };
+            if !x_offset && !y_offset {
+                return Err(input.new_error_for_next_token());
+            }
+            Ok(Position { x, y })
+        };
+        let position = input.try_parse(edge_position).or_else(|_| Position::parse(input))?;
+        if matches!(
+            position.x,
+            HorizontalPosition::Length(LengthOrPercentage::Length(Length::Calc(_)))
+        ) || matches!(
+            position.y,
+            VerticalPosition::Length(LengthOrPercentage::Length(Length::Calc(_)))
+        ) {
+            return Err(input.new_custom_error(CustomParseError::InvalidValue));
+        }
+        Ok(position)
     }
 }
 
@@ -60,8 +162,7 @@ impl<'i> Parse<'i> for Position {
 
             // If it didn't work, assume the first actually represents a y position,
             // and the next is an x position. e.g. `center left` rather than `left center`.
-            let x =
-                input.try_parse(HorizontalPosition::parse).unwrap_or(HorizontalPosition::Center);
+            let x = input.try_parse(HorizontalPosition::parse).unwrap_or(x);
             let y: PositionComponent<VerticalPositionKeyword> = VerticalPosition::Center;
             Ok(Position { x, y })
         } else if let Ok(y) = input.try_parse(VerticalPosition::parse) {
@@ -69,7 +170,7 @@ impl<'i> Parse<'i> for Position {
             if let Ok(x) = input.try_parse(HorizontalPosition::parse) {
                 Ok(Position { x, y })
             } else {
-                Ok(Position { x: HorizontalPosition::Center, y: VerticalPosition::Center })
+                Ok(Position { x: HorizontalPosition::Center, y })
             }
         } else {
             // Return default or return an error?
@@ -85,7 +186,12 @@ impl<'i> Parse<'i> for Vec<Position> {
             return Err(input.new_error_for_next_token());
         }
 
-        input.parse_comma_separated(Position::parse)
+        input.parse_comma_separated(|input| {
+            if input.is_exhausted() {
+                return Err(input.new_error_for_next_token());
+            }
+            Position::parse_background(input)
+        })
     }
 }
 
@@ -104,6 +210,9 @@ impl<S: Copy + Into<LengthOrPercentage>> PositionComponent<S> {
         match self {
             PositionComponent::Center => true,
             PositionComponent::Length(LengthOrPercentage::Percentage(p)) => *p == 50.0,
+            PositionComponent::Length(LengthOrPercentage::Calc { percentage, px }) => {
+                *percentage == 50.0 && *px == 0.0
+            }
             _ => false,
         }
     }
@@ -121,6 +230,10 @@ impl<'i, S: Parse<'i> + Copy + Into<LengthOrPercentage>> Parse<'i> for PositionC
     fn parse<'t>(input: &mut Parser<'i>) -> Result<Self, ParseError<CustomParseError<'i>>> {
         if input.try_parse(|i| i.expect_ident_matching("center")).is_ok() {
             return Ok(PositionComponent::Center);
+        }
+
+        if let Ok(zero) = input.try_parse(parse_unitless_zero) {
+            return Ok(PositionComponent::Length(LengthOrPercentage::Length(zero)));
         }
 
         if let Ok(lp) = input.try_parse(LengthOrPercentage::parse) {
@@ -182,5 +295,92 @@ impl From<HorizontalPositionKeyword> for HorizontalPosition {
 impl From<VerticalPositionKeyword> for VerticalPosition {
     fn from(value: VerticalPositionKeyword) -> Self {
         VerticalPosition::Side(value)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unitless_zero_positions_parse_per_axis() {
+        let zero = LengthOrPercentage::px(0.0);
+        let center = LengthOrPercentage::Percentage(50.0);
+        for (value, x, y) in [
+            ("0", zero.clone(), center),
+            ("0 0", zero.clone(), zero.clone()),
+            ("-0 25%", zero.clone(), LengthOrPercentage::Percentage(25.0)),
+            ("right 0", LengthOrPercentage::Percentage(100.0), zero.clone()),
+            ("0 bottom", zero.clone(), LengthOrPercentage::Percentage(100.0)),
+        ] {
+            let mut parser = Parser::new(value);
+            let positions = Vec::<Position>::parse(&mut parser).unwrap();
+            assert_eq!(positions.len(), 1);
+            assert_eq!(positions[0].x.to_length_or_percentage(), x, "{value}");
+            assert_eq!(positions[0].y.to_length_or_percentage(), y, "{value}");
+            assert!(parser.is_exhausted(), "{value}");
+        }
+        let mut parser = Parser::new("0 0, 0 10px");
+        let positions = Vec::<Position>::parse(&mut parser).unwrap();
+        assert_eq!(positions.len(), 2);
+        assert_eq!(positions[0].y.to_length_or_percentage(), zero);
+        assert_eq!(positions[1].y.to_length_or_percentage(), LengthOrPercentage::px(10.0));
+
+        for value in ["1", "0 1", "0 0 0", "0,"] {
+            assert!(Vec::<Position>::parse(&mut Parser::new(value)).is_err(), "{value}");
+        }
+    }
+
+    #[test]
+    fn single_value_positions_keep_the_specified_axis() {
+        let center = LengthOrPercentage::Percentage(50.0);
+        for (value, x, y) in [
+            ("left", LengthOrPercentage::px(0.0), center.clone()),
+            ("right", LengthOrPercentage::Percentage(100.0), center.clone()),
+            ("top", center.clone(), LengthOrPercentage::px(0.0)),
+            ("bottom", center.clone(), LengthOrPercentage::Percentage(100.0)),
+            ("center", center.clone(), center.clone()),
+            ("10px", LengthOrPercentage::px(10.0), center.clone()),
+            ("25%", LengthOrPercentage::Percentage(25.0), center.clone()),
+        ] {
+            let mut parser = Parser::new(value);
+            let position = Position::parse(&mut parser).unwrap();
+            assert_eq!(position.x.to_length_or_percentage(), x, "{value}");
+            assert_eq!(position.y.to_length_or_percentage(), y, "{value}");
+            assert!(parser.is_exhausted(), "{value}");
+        }
+    }
+
+    #[test]
+    fn two_value_positions_and_layers_remain_supported() {
+        let mut parser = Parser::new("left top, top right, center left, 10px 20%");
+        let positions = Vec::<Position>::parse(&mut parser).unwrap();
+        let expected = [
+            (LengthOrPercentage::px(0.0), LengthOrPercentage::px(0.0)),
+            (LengthOrPercentage::Percentage(100.0), LengthOrPercentage::px(0.0)),
+            (LengthOrPercentage::px(0.0), LengthOrPercentage::Percentage(50.0)),
+            (LengthOrPercentage::px(10.0), LengthOrPercentage::Percentage(20.0)),
+        ];
+        assert_eq!(positions.len(), expected.len());
+        for (position, (x, y)) in positions.iter().zip(expected) {
+            assert_eq!(position.x.to_length_or_percentage(), x);
+            assert_eq!(position.y.to_length_or_percentage(), y);
+        }
+        assert!(parser.is_exhausted());
+    }
+
+    #[test]
+    fn background_positions_reject_unresolved_calculations() {
+        for value in [
+            "calc(1px + 1em) 0",
+            "0 calc(1px + 1em)",
+            "left top, calc(1px + 1em) 0",
+            "right calc(1px + 1em) bottom",
+        ] {
+            assert!(Vec::<Position>::parse(&mut Parser::new(value)).is_err(), "{value}");
+        }
+        for value in ["calc(1px + 2px) 0", "right 5px bottom 2px"] {
+            assert!(Vec::<Position>::parse(&mut Parser::new(value)).is_ok(), "{value}");
+        }
     }
 }

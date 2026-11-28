@@ -276,7 +276,7 @@ where
     }
 
     fn sync_display_text(&self, cx: &mut EventContext) {
-        cx.style.text.insert(cx.current, self.display_text_from_real());
+        cx.style.set_text(cx.tree, cx.current, self.display_text_from_real());
         cx.style.needs_text_update(cx.current);
     }
 

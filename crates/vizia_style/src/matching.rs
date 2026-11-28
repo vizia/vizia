@@ -38,6 +38,53 @@ mod test {
         )
     }
 
+    #[test]
+    fn unknown_pseudo_classes_are_rejected() {
+        use crate::error::SelectorError;
+
+        for selector in [
+            ":made-up",
+            ".valid, .invalid:made-up",
+            ".invalid:made-up, .valid",
+            ":not(.valid, :made-up)",
+            ":has(> .valid, > :made-up)",
+        ] {
+            let error = parse(selector).unwrap_err();
+            assert_eq!(
+                error.kind,
+                ParseErrorKind::Custom(CustomParseError::SelectorError(
+                    SelectorError::UnsupportedPseudoClassOrElement
+                )),
+                "{selector}"
+            );
+        }
+
+        for selector in [":hover", ":HOVER", ":over", ":not(:hover)", ":has(> :over)"] {
+            assert!(parse(selector).is_ok(), "{selector}");
+        }
+        assert!(parse(":made-up(value)").is_err());
+    }
+
+    #[test]
+    fn language_selector_serialization_preserves_ranges() {
+        let selector = parse(r#":lang(en, "zh-*", "a\"b")"#).unwrap();
+        let css = selector.to_css_string();
+        assert_eq!(css, r#":lang("en", "zh-*", "a\"b")"#);
+        assert_eq!(parse(&css).unwrap(), selector);
+    }
+
+    #[test]
+    fn is_and_where_use_forgiving_selector_lists() {
+        for name in ["is", "where"] {
+            let input = format!(":{name}(.valid, :made-up)");
+            let selector = parse(&input).unwrap();
+            assert_eq!(selector.to_css_string(), input);
+            assert!(parse(&format!(":{name}(:made-up)")).is_ok());
+        }
+        assert!(parse(".valid, :made-up").is_err());
+        assert!(parse(":not(.valid, :made-up)").is_err());
+    }
+
     #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct Entity(u32);
 

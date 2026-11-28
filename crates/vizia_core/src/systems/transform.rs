@@ -132,7 +132,7 @@ fn local_transform(cx: &Context, entity: Entity) -> Option<skia_safe::Matrix> {
 }
 #[cfg(test)]
 mod tests {
-    use super::transform_system;
+    use super::{local_transform, transform_system};
     use crate::prelude::*;
     use skia_safe::Matrix;
 
@@ -172,6 +172,53 @@ mod tests {
         cx.style.overflowx.insert(entity, Overflow::Hidden);
         cx.style.overflowy.insert(entity, Overflow::Hidden);
         cx.cache.own_clips.insert(entity);
+    }
+
+    #[test]
+    fn single_value_transform_origin_positions_scale_pivot() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".probe { transform-origin: left; scale: 2; }").unwrap();
+        let entity = Element::new(&mut cx).class("probe").entity();
+        cx.cache.set_bounds(entity, BoundingBox { x: 0.0, y: 0.0, w: 100.0, h: 80.0 });
+        crate::systems::style_system(&mut cx);
+
+        let matrix = local_transform(&cx, entity).unwrap();
+        assert_eq!(matrix.map_point((0.0, 40.0)), skia_safe::Point::new(0.0, 40.0));
+        assert_eq!(matrix.map_point((50.0, 80.0)), skia_safe::Point::new(100.0, 120.0));
+    }
+
+    #[test]
+    fn unitless_zero_transform_origin_positions_scale_pivot() {
+        let mut cx = Context::default();
+        cx.add_stylesheet(".probe { transform-origin: 0 0; scale: 2; }").unwrap();
+        let entity = Element::new(&mut cx).class("probe").entity();
+        cx.cache.set_bounds(entity, BoundingBox { x: 0.0, y: 0.0, w: 100.0, h: 80.0 });
+        crate::systems::style_system(&mut cx);
+
+        let matrix = local_transform(&cx, entity).unwrap();
+        assert_eq!(matrix.map_point((0.0, 0.0)), skia_safe::Point::new(0.0, 0.0));
+        assert_eq!(matrix.map_point((50.0, 40.0)), skia_safe::Point::new(100.0, 80.0));
+    }
+
+    #[test]
+    fn absolute_lengths_resolve_in_css_translations() {
+        for (declaration, scale, expected) in [
+            ("translate: 6pt 3pt;", 1.0, (8.0, 4.0)),
+            ("transform: translate(6pt, 3pt);", 2.0, (16.0, 8.0)),
+        ] {
+            let mut cx = Context::default();
+            cx.style.dpi_factor = scale;
+            cx.add_stylesheet(crate::util::CSS::from_string(&format!(
+                ".probe {{ {declaration} }}"
+            )))
+            .unwrap();
+            let entity = Element::new(&mut cx).class("probe").entity();
+            cx.cache.set_bounds(entity, BoundingBox { x: 0.0, y: 0.0, w: 100.0, h: 80.0 });
+            crate::systems::style_system(&mut cx);
+
+            let matrix = local_transform(&cx, entity).unwrap();
+            assert_eq!(matrix.map_point((0.0, 0.0)), skia_safe::Point::from(expected));
+        }
     }
 
     #[test]

@@ -86,12 +86,19 @@ pub use vizia_style::{
 
 use cssparser::Token as CssToken;
 use vizia_style::{
-    BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, Selectors, StyleSheet,
-    TokenList, TokenOrValue, Variable,
+    BlendMode, EasingFunction, KeyframeSelector, ParserOptions, Property, RelativeFontWeight,
+    Selectors, StyleSheet, TokenList, TokenOrValue, Variable, canonical_property_name,
+    parse_shadow_tokens,
 };
 
 mod rule;
 pub(crate) use rule::Rule;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) enum SpecifiedFontWeight {
+    Absolute(FontWeight),
+    Relative(RelativeFontWeight),
+}
 
 mod pseudoclass;
 pub(crate) use pseudoclass::*;
@@ -157,6 +164,22 @@ pub enum ImageOrGradient {
     Image(String),
     /// A gradient.
     Gradient(Gradient),
+}
+
+fn background_image_layers(images: &[BackgroundImage<'_>]) -> Vec<ImageOrGradient> {
+    if matches!(images, [BackgroundImage::None]) {
+        return Vec::new();
+    }
+
+    images
+        .iter()
+        .map(|image| match image {
+            // Preserve empty layers without adding a public ImageOrGradient variant.
+            BackgroundImage::None => ImageOrGradient::Gradient(Gradient::None),
+            BackgroundImage::Gradient(gradient) => ImageOrGradient::Gradient(*gradient.clone()),
+            BackgroundImage::Url(url) => ImageOrGradient::Image(url.url.to_string()),
+        })
+        .collect()
 }
 
 /// A font-family.
@@ -228,6 +251,8 @@ pub struct Style {
     pub(crate) inline_inheritance_key: Option<(u64, u64)>,
     /// The tree and inline style structure generations at the last style pass.
     pub(crate) style_structure_key: Option<(u64, u64)>,
+    /// Application locale and its serialized language tag for selector matching.
+    pub(crate) selector_language: Option<(unic_langid::LanguageIdentifier, String)>,
 
     pub(crate) default_font: Vec<FamilyOwned>,
 
@@ -352,7 +377,7 @@ pub struct Style {
     pub(crate) font_family: StyleSet<Vec<FamilyOwned>>,
     pub(crate) font_color: AnimatableVarSet<Color>,
     pub(crate) font_size: AnimatableVarSet<FontSize>,
-    pub(crate) font_weight: StyleSet<FontWeight>,
+    pub(crate) font_weight: StyleSet<SpecifiedFontWeight>,
     pub(crate) font_slant: StyleSet<FontSlant>,
     pub(crate) font_width: StyleSet<FontWidth>,
     pub(crate) font_variation_settings: StyleSet<Vec<FontVariation>>,
@@ -457,6 +482,62 @@ pub struct Style {
 }
 
 impl Style {
+    pub(crate) fn set_text(&mut self, tree: &Tree<Entity>, entity: Entity, text: String) {
+        let previous_direction = (self.direction.get(entity) == Some(&Direction::Auto))
+            .then(|| crate::text::resolved_text_direction(self, entity));
+        self.text.insert(entity, text);
+        if previous_direction.is_some_and(|direction| {
+            direction != crate::text::resolved_text_direction(self, entity)
+        }) {
+            self.needs_restyle_with_dependents(tree, entity);
+        }
+    }
+
+    pub(crate) fn resolved_font_weight(
+        &self,
+        tree: &Tree<Entity>,
+        entity: Entity,
+    ) -> Option<FontWeight> {
+        let mut current = entity;
+        let mut relative = Vec::new();
+        let base = loop {
+            match self.font_weight.get(current) {
+                Some(SpecifiedFontWeight::Absolute(weight)) => break Some(*weight),
+                Some(SpecifiedFontWeight::Relative(weight))
+                    if !self.font_weight.is_inherited(current) =>
+                {
+                    relative.push(*weight);
+                }
+                _ => {}
+            }
+            match tree.get_layout_parent(current) {
+                Some(parent) => current = parent,
+                None => break None,
+            }
+        };
+
+        if relative.is_empty() {
+            return base;
+        }
+
+        Some(relative.into_iter().rev().fold(base.unwrap_or_default(), |weight, relative| {
+            FontWeight(match relative {
+                RelativeFontWeight::Bolder => match weight.0 {
+                    0..=349 => 400,
+                    350..=549 => 700,
+                    550..=899 => 900,
+                    _ => weight.0,
+                },
+                RelativeFontWeight::Lighter => match weight.0 {
+                    0..=99 => weight.0,
+                    100..=549 => 100,
+                    550..=749 => 400,
+                    _ => 700,
+                },
+            })
+        }))
+    }
+
     /// Returns the scale factor of the application.
     pub fn scale_factor(&self) -> f32 {
         self.dpi_factor as f32
@@ -496,6 +577,12 @@ impl Style {
     /// siblings, such as `:first-child`.
     pub(crate) fn has_positional_rules(&mut self) -> bool {
         self.invalidation_map().positional
+    }
+
+    pub(crate) fn can_share_selector_list_matches(&mut self) -> bool {
+        let map = self.invalidation_map();
+        // Siblings with identical local state can differ in position, neighbors, or children.
+        !map.selector_list || !(map.positional || map.sibling_dependent || map.ancestor_dependent)
     }
 
     /// Marks the entities which may be affected by a change to the selector attributes (element,
@@ -933,18 +1020,7 @@ impl Style {
                 }
 
                 Property::BackgroundImage(images) => {
-                    let images = images
-                        .iter()
-                        .filter_map(|img| match img {
-                            BackgroundImage::None => None,
-                            BackgroundImage::Gradient(gradient) => {
-                                Some(ImageOrGradient::Gradient(*gradient.clone()))
-                            }
-                            BackgroundImage::Url(url) => {
-                                Some(ImageOrGradient::Image(url.url.to_string()))
-                            }
-                        })
-                        .collect::<Vec<_>>();
+                    let images = background_image_layers(images);
                     insert_keyframe(&mut self.background_image, animation_id, time, images);
                 }
 
@@ -1013,6 +1089,13 @@ impl Style {
                 }
 
                 // Padding
+                Property::Padding(value) => {
+                    insert_keyframe2(&mut self.padding_top, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_right, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_bottom, animation_id, time, *value);
+                    insert_keyframe2(&mut self.padding_left, animation_id, time, *value);
+                }
+
                 Property::PaddingLeft(value) => {
                     insert_keyframe2(&mut self.padding_left, animation_id, time, *value);
                 }
@@ -1393,7 +1476,7 @@ impl Style {
 
     fn insert_transition(&mut self, rule_id: Rule, transition: &Transition) {
         let animation = self.animation_manager.create();
-        match transition.property.as_ref() {
+        match canonical_property_name(transition.property.as_ref()) {
             "display" => {
                 self.display.insert_animation(animation, self.add_transition(transition));
                 self.display.insert_transition(rule_id, animation);
@@ -1914,6 +1997,13 @@ impl Style {
 
         fn length_fallback(var: &Variable<'_>) -> Option<LengthOrPercentage> {
             match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Number { value, .. }))
+                    if *value == 0.0
+                        && matches!(var.fallback.as_ref(), Some(TokenList(tokens)) if tokens.len() == 1) =>
+                {
+                    Some(LengthOrPercentage::Length(Length::zero()))
+                }
+
                 Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
                     if unit.as_ref().eq_ignore_ascii_case("px") =>
                 {
@@ -1930,6 +2020,13 @@ impl Style {
 
         fn font_size_fallback(var: &Variable<'_>) -> Option<FontSize> {
             match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Number { value, .. }))
+                    if *value == 0.0
+                        && matches!(var.fallback.as_ref(), Some(TokenList(tokens)) if tokens.len() == 1) =>
+                {
+                    Some(FontSize(Length::zero()))
+                }
+
                 Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
                     if unit.as_ref().eq_ignore_ascii_case("px") =>
                 {
@@ -1942,6 +2039,13 @@ impl Style {
 
         fn letter_spacing_fallback(var: &Variable<'_>) -> Option<LetterSpacing> {
             match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Number { value, .. }))
+                    if *value == 0.0
+                        && matches!(var.fallback.as_ref(), Some(TokenList(tokens)) if tokens.len() == 1) =>
+                {
+                    Some(LetterSpacing::Length(Length::zero()))
+                }
+
                 Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
                     if unit.as_ref().eq_ignore_ascii_case("px") =>
                 {
@@ -1986,6 +2090,13 @@ impl Style {
 
         fn units_fallback(var: &Variable<'_>) -> Option<Units> {
             match first_fallback_token(var) {
+                Some(TokenOrValue::Token(CssToken::Number { value, .. }))
+                    if *value == 0.0
+                        && matches!(var.fallback.as_ref(), Some(TokenList(tokens)) if tokens.len() == 1) =>
+                {
+                    Some(Units::Pixels(0.0))
+                }
+
                 Some(TokenOrValue::Token(CssToken::Dimension { value, unit, .. }))
                     if unit.as_ref().eq_ignore_ascii_case("px") =>
                 {
@@ -2024,88 +2135,8 @@ impl Style {
             }
         }
 
-        fn parse_shadow_list(tokens: &[TokenOrValue<'_>]) -> Option<Vec<Shadow>> {
-            fn parse_shadow_length(token: &TokenOrValue<'_>) -> Option<Length> {
-                match token {
-                    TokenOrValue::Token(CssToken::Dimension { value, unit, .. })
-                        if unit.as_ref().eq_ignore_ascii_case("px") =>
-                    {
-                        Some(Length::Value(LengthValue::Px(*value)))
-                    }
-
-                    TokenOrValue::Token(CssToken::Number { value, .. }) if *value == 0.0 => {
-                        Some(Length::Value(LengthValue::Px(0.0)))
-                    }
-
-                    _ => None,
-                }
-            }
-
-            fn parse_single_shadow(tokens: &[TokenOrValue<'_>]) -> Option<Shadow> {
-                let mut lengths: Vec<Length> = Vec::new();
-                let mut color = None;
-                let mut inset = false;
-
-                for token in tokens {
-                    match token {
-                        TokenOrValue::Token(CssToken::WhiteSpace(_)) => {}
-
-                        TokenOrValue::Color(c) => {
-                            if color.is_some() {
-                                return None;
-                            }
-                            color = Some(*c);
-                        }
-
-                        TokenOrValue::Token(CssToken::Ident(ident))
-                            if ident.as_ref().eq_ignore_ascii_case("inset") =>
-                        {
-                            if inset {
-                                return None;
-                            }
-                            inset = true;
-                        }
-
-                        other => {
-                            let length = parse_shadow_length(other)?;
-                            lengths.push(length);
-                        }
-                    }
-                }
-
-                if !(2..=4).contains(&lengths.len()) {
-                    return None;
-                }
-
-                let x_offset = lengths[0].clone();
-                let y_offset = lengths[1].clone();
-                let blur_radius = lengths.get(2).cloned();
-                let spread_radius = lengths.get(3).cloned();
-
-                Some(Shadow::new(x_offset, y_offset, blur_radius, spread_radius, color, inset))
-            }
-
-            let mut parts = Vec::<&[TokenOrValue<'_>]>::new();
-            let mut start = 0usize;
-            for (idx, token) in tokens.iter().enumerate() {
-                if matches!(token, TokenOrValue::Token(CssToken::Comma)) {
-                    parts.push(&tokens[start..idx]);
-                    start = idx + 1;
-                }
-            }
-            parts.push(&tokens[start..]);
-
-            let mut parsed = Vec::new();
-            for part in parts {
-                let shadow = parse_single_shadow(part)?;
-                parsed.push(shadow);
-            }
-
-            Some(parsed)
-        }
-
         fn shadow_fallback(var: &Variable<'_>) -> Option<Vec<Shadow>> {
-            var.fallback.as_ref().and_then(|TokenList(tokens)| parse_shadow_list(tokens))
+            var.fallback.as_ref().and_then(|TokenList(tokens)| parse_shadow_tokens(tokens))
         }
 
         match property.clone() {
@@ -2232,10 +2263,10 @@ impl Style {
 
             // Padding
             Property::Padding(padding) => {
-                self.padding_left.insert_rule(rule_id, padding);
-                self.padding_right.insert_rule(rule_id, padding);
                 self.padding_top.insert_rule(rule_id, padding);
+                self.padding_right.insert_rule(rule_id, padding);
                 self.padding_bottom.insert_rule(rule_id, padding);
+                self.padding_left.insert_rule(rule_id, padding);
             }
 
             Property::PaddingLeft(padding_left) => {
@@ -2527,7 +2558,11 @@ impl Style {
 
             // Font Weight
             Property::FontWeight(font_weight) => {
-                self.font_weight.insert_rule(rule_id, font_weight);
+                self.font_weight.insert_rule(rule_id, SpecifiedFontWeight::Absolute(font_weight));
+            }
+
+            Property::RelativeFontWeight(font_weight) => {
+                self.font_weight.insert_rule(rule_id, SpecifiedFontWeight::Relative(font_weight));
             }
 
             // Font Slant
@@ -2620,18 +2655,7 @@ impl Style {
 
             // Background Images & Gradients
             Property::BackgroundImage(images) => {
-                let images = images
-                    .into_iter()
-                    .filter_map(|img| match img {
-                        BackgroundImage::None => None,
-                        BackgroundImage::Gradient(gradient) => {
-                            Some(ImageOrGradient::Gradient(*gradient))
-                        }
-                        BackgroundImage::Url(url) => {
-                            Some(ImageOrGradient::Image(url.url.to_string()))
-                        }
-                    })
-                    .collect::<Vec<_>>();
+                let images = background_image_layers(&images);
 
                 self.background_image.insert_rule(rule_id, images);
             }
@@ -2732,6 +2756,17 @@ impl Style {
                         }
                     };
                 }
+                macro_rules! parse_radius_var {
+                    ($($prop:expr),+) => {
+                        if let [TokenOrValue::Var(var)] = unparsed.value.0.as_slice() {
+                            let hash = variable_hash(var);
+                            let fallback = length_fallback(var);
+                            $($prop.insert_variable_rule(rule_id, hash, fallback.clone());)+
+                        } else {
+                            warn!("Unparsed {} {:?}", unparsed.name, unparsed.value);
+                        }
+                    };
+                }
                 macro_rules! parse_font_size_var {
                     ($prop:expr) => {
                         if let Some(TokenOrValue::Var(var)) = unparsed.value.0.first() {
@@ -2774,6 +2809,17 @@ impl Style {
                         }
                     };
                 }
+                macro_rules! parse_units_shorthand_var {
+                    ($($prop:expr),+) => {
+                        if let [TokenOrValue::Var(var)] = unparsed.value.0.as_slice() {
+                            let hash = variable_hash(var);
+                            let fallback = units_fallback(var);
+                            $($prop.insert_variable_rule(rule_id, hash, fallback.clone());)+
+                        } else {
+                            warn!("Unparsed {} {:?}", unparsed.name, unparsed.value);
+                        }
+                    };
+                }
                 match unparsed.name.as_ref() {
                     "background-color" => parse_color_var!(self.background_color),
                     "border-color" => parse_color_var!(
@@ -2791,19 +2837,19 @@ impl Style {
                     "font-size" => parse_font_size_var!(self.font_size),
                     "letter-spacing" => parse_letter_spacing_var!(self.letter_spacing),
                     "line-height" => parse_line_height_var!(self.line_height),
-                    "corner-radius" => parse_length_var!(
+                    "corner-radius" => parse_radius_var!(
                         self.corner_top_left_radius,
                         self.corner_top_right_radius,
                         self.corner_bottom_left_radius,
                         self.corner_bottom_right_radius
                     ),
-                    "corner-top-left-radius" => parse_length_var!(self.corner_top_left_radius),
-                    "corner-top-right-radius" => parse_length_var!(self.corner_top_right_radius),
+                    "corner-top-left-radius" => parse_radius_var!(self.corner_top_left_radius),
+                    "corner-top-right-radius" => parse_radius_var!(self.corner_top_right_radius),
                     "corner-bottom-left-radius" => {
-                        parse_length_var!(self.corner_bottom_left_radius)
+                        parse_radius_var!(self.corner_bottom_left_radius)
                     }
                     "corner-bottom-right-radius" => {
-                        parse_length_var!(self.corner_bottom_right_radius)
+                        parse_radius_var!(self.corner_bottom_right_radius)
                     }
                     "border-width" => parse_length_var!(
                         self.border_top_width,
@@ -2873,7 +2919,7 @@ impl Style {
                     "padding-right" => parse_units_var!(self.padding_right),
                     "padding-top" => parse_units_var!(self.padding_top),
                     "padding-bottom" => parse_units_var!(self.padding_bottom),
-                    "padding" => parse_units_var!(
+                    "padding" => parse_units_shorthand_var!(
                         self.padding_left,
                         self.padding_right,
                         self.padding_top,
@@ -2881,7 +2927,7 @@ impl Style {
                     ),
                     "row-gap" | "vertical-gap" => parse_units_var!(self.vertical_gap),
                     "column-gap" | "horizontal-gap" => parse_units_var!(self.horizontal_gap),
-                    "gap" => parse_units_var!(self.vertical_gap, self.horizontal_gap),
+                    "gap" => parse_units_shorthand_var!(self.vertical_gap, self.horizontal_gap),
                     "min-gap" => {
                         parse_units_var!(self.min_horizontal_gap, self.min_vertical_gap)
                     }
@@ -2915,7 +2961,7 @@ impl Style {
                 custom.name.hash(&mut s);
                 let variable_name_hash = s.finish();
 
-                if let Some(shadows) = parse_shadow_list(&custom.value.0) {
+                if let Some(shadows) = parse_shadow_tokens(&custom.value.0) {
                     if let Some(store) = self.custom_shadow_props.get_mut(&variable_name_hash) {
                         store.insert_rule(rule_id, shadows);
                     } else {
@@ -3211,6 +3257,50 @@ impl Style {
                             }
                         }
                         TokenOrValue::Token(CssToken::Number { value, .. }) => {
+                            if *value == 0.0 && custom.value.0.len() == 1 {
+                                let length_val = LengthOrPercentage::Length(Length::zero());
+                                if let Some(store) =
+                                    self.custom_length_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, length_val);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, length_val);
+                                    self.custom_length_props.insert(variable_name_hash, store);
+                                }
+                                let font_size = FontSize(Length::zero());
+                                if let Some(store) =
+                                    self.custom_font_size_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, font_size);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, font_size);
+                                    self.custom_font_size_props.insert(variable_name_hash, store);
+                                }
+                                let letter_spacing = LetterSpacing::Length(Length::zero());
+                                if let Some(store) =
+                                    self.custom_letter_spacing_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, letter_spacing);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, letter_spacing);
+                                    self.custom_letter_spacing_props
+                                        .insert(variable_name_hash, store);
+                                }
+                                let units_val = Units::Pixels(0.0);
+                                if let Some(store) =
+                                    self.custom_units_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, units_val);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, units_val);
+                                    self.custom_units_props.insert(variable_name_hash, store);
+                                }
+                            }
+
                             // Plain number like 0.5 → Opacity
                             let opacity_val = Opacity(*value);
                             if let Some(store) =

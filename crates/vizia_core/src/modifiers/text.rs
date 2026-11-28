@@ -25,7 +25,7 @@ pub trait TextModifiers: internal::Modifiable {
                 };
 
                 // cx.text_context.set_text(entity, &text_data);
-                cx.style.text.insert(entity, text_data);
+                cx.style.set_text(cx.tree, entity, text_data);
 
                 cx.style.needs_text_update(entity);
                 cx.needs_relayout();
@@ -46,7 +46,7 @@ pub trait TextModifiers: internal::Modifiable {
                 };
 
                 // cx.text_context.set_text(entity, &text_data);
-                cx.style.text.insert(entity, text_data);
+                cx.style.set_text(cx.tree, entity, text_data);
 
                 cx.style.needs_text_update(entity);
                 cx.needs_relayout();
@@ -66,12 +66,19 @@ pub trait TextModifiers: internal::Modifiable {
         SystemFlags::REFLOW
     );
 
-    modifier!(
-        /// Sets the font weight that should be used by the view.
-        font_weight,
-        FontWeight,
-        SystemFlags::REFLOW
-    );
+    /// Sets the font weight that should be used by the view.
+    fn font_weight<U: Into<FontWeight>>(mut self, value: impl Res<U>) -> Self {
+        let entity = self.entity();
+        value.set_or_bind(self.context(), move |cx, v| {
+            cx.style.font_weight.insert(
+                entity,
+                crate::style::SpecifiedFontWeight::Absolute(v.get_value(cx).into()),
+            );
+            cx.style.system_flags |= SystemFlags::REFLOW;
+            cx.set_system_flags(entity, SystemFlags::REFLOW);
+        });
+        self
+    }
 
     modifier!(
         /// Sets the font style that should be used by the view.

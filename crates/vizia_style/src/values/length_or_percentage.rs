@@ -7,6 +7,11 @@ use morphorm::Units;
 pub enum LengthOrPercentage {
     Length(Length),
     Percentage(f32),
+    /// A percentage plus a length in logical pixels.
+    Calc {
+        percentage: f32,
+        px: f32,
+    },
 }
 
 impl Default for LengthOrPercentage {
@@ -23,8 +28,8 @@ impl LengthOrPercentage {
             LengthOrPercentage::Length(length) => {
                 match length {
                     Length::Value(val) => {
-                        if let LengthValue::Px(pixels) = val {
-                            return *pixels * scale;
+                        if let Some(pixels) = val.to_px() {
+                            return pixels * scale;
                         }
                     }
 
@@ -37,6 +42,10 @@ impl LengthOrPercentage {
 
             LengthOrPercentage::Percentage(val) => {
                 return (val / 100.0) * min_bounds;
+            }
+
+            LengthOrPercentage::Calc { percentage, px } => {
+                return (percentage / 100.0) * min_bounds + px * scale;
             }
         }
 
@@ -96,6 +105,34 @@ impl From<Units> for LengthOrPercentage {
 mod tests {
     use super::*;
     use crate::tests::assert_parse;
+
+    #[test]
+    fn absolute_lengths_resolve_to_scaled_pixels() {
+        for (value, pixels) in [
+            ("96px", 96.0),
+            ("1in", 96.0),
+            ("2.54cm", 96.0),
+            ("25.4mm", 96.0),
+            ("101.6q", 96.0),
+            ("72pt", 96.0),
+            ("6pc", 96.0),
+            ("-1in", -96.0),
+        ] {
+            let mut parser = Parser::new(value);
+            let length = LengthOrPercentage::parse(&mut parser).unwrap();
+            assert!(parser.is_exhausted(), "{value}");
+            for scale in [1.0, 2.0] {
+                let expected = pixels * scale;
+                let actual = length.to_pixels(200.0, scale);
+                assert!((actual - expected).abs() < 0.0001, "{value} at {scale}: {actual}");
+            }
+        }
+        assert_eq!(LengthOrPercentage::Percentage(25.0).to_pixels(200.0, 2.0), 50.0);
+        assert_eq!(
+            LengthOrPercentage::Calc { percentage: 25.0, px: -5.0 }.to_pixels(200.0, 2.0),
+            40.0
+        );
+    }
 
     assert_parse! {
         LengthOrPercentage, parse_length_percentage,

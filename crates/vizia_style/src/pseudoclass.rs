@@ -65,7 +65,16 @@ impl ToCss for PseudoClass {
             PseudoClass::Optional => dest.write_str(":optional"),
             PseudoClass::UserValid => dest.write_str(":user-valid"),
             PseudoClass::UserInvalid => dest.write_str(":user-invalid"),
-            PseudoClass::Lang(ref _lang) => dest.write_str(":lang()"),
+            PseudoClass::Lang(ref languages) => {
+                dest.write_str(":lang(")?;
+                for (index, language) in languages.iter().enumerate() {
+                    if index != 0 {
+                        dest.write_str(", ")?;
+                    }
+                    serialize_string(language, dest)?;
+                }
+                dest.write_str(")")
+            }
             PseudoClass::Dir(_) => dest.write_str(":dir()"),
             PseudoClass::Has(ref _selectors) => dest.write_str(":has()"),
             PseudoClass::Custom(_) => dest.write_str(":custom"),

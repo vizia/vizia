@@ -1,12 +1,12 @@
 use skia_safe::canvas::SaveLayerRec;
 use skia_safe::wrapper::PointerWrapper;
 use skia_safe::{
-    BlurStyle, ClipOp, MaskFilter, Matrix, Paint, PaintStyle, Path, PathBuilder, PathEffect, Point,
-    RRect, Rect, SamplingOptions, TileMode,
+    BlurStyle, ClipOp, FilterMode, MaskFilter, Matrix, Paint, PaintStyle, Path, PathBuilder,
+    PathEffect, Picture, PictureRecorder, Point, RRect, Rect, SamplingOptions, TileMode,
 };
 use std::any::{Any, TypeId};
 use std::f32::consts::SQRT_2;
-use vizia_style::LengthPercentageOrAuto;
+use vizia_style::{BackgroundRepeatMode, Length, LengthOrPercentage, LengthPercentageOrAuto};
 
 use hashbrown::HashMap;
 
@@ -194,7 +194,7 @@ impl DrawContext<'_> {
 
     /// Returns the font-weight of the current view.
     pub fn font_weight(&self) -> FontWeight {
-        self.style.font_weight.get(self.current).copied().unwrap_or_default()
+        self.style.resolved_font_weight(self.tree, self.current).unwrap_or_default()
     }
 
     /// Returns the font-width of the current view.
@@ -518,6 +518,9 @@ impl DrawContext<'_> {
     }
 
     /// Returns a reference to any images of the current view.
+    ///
+    /// In a multi-layer list, `ImageOrGradient::Gradient(Gradient::None)` represents an
+    /// empty `none` layer.
     pub fn background_images(&self) -> Option<&Vec<ImageOrGradient>> {
         self.style.background_image.get(self.current)
     }
@@ -1404,6 +1407,274 @@ impl DrawContext<'_> {
 
     /// Draw background images (including gradients) for the current view.
     fn draw_background_images(&mut self, canvas: &Canvas) {
+        fn layer_value<T>(values: &[T], index: usize) -> Option<&T> {
+            if values.is_empty() { None } else { values.get(index % values.len()) }
+        }
+
+        fn unresolved_calculation(value: &LengthOrPercentage) -> bool {
+            matches!(value, LengthOrPercentage::Length(Length::Calc(_)))
+        }
+
+        fn unresolved_dimension(value: &LengthPercentageOrAuto) -> bool {
+            matches!(value, LengthPercentageOrAuto::LengthPercentage(length) if unresolved_calculation(length))
+        }
+
+        fn image_size(
+            size: Option<&BackgroundSize>,
+            bounds: BoundingBox,
+            scale: f32,
+            intrinsic_width: Option<f32>,
+            intrinsic_height: Option<f32>,
+            ratio: Option<f32>,
+        ) -> (f32, f32) {
+            let fit = |cover: bool| match ratio {
+                Some(ratio) if (ratio > bounds.w / bounds.h) != cover => {
+                    (bounds.w, bounds.w / ratio)
+                }
+                Some(ratio) => (bounds.h * ratio, bounds.h),
+                None => (bounds.w, bounds.h),
+            };
+            match size {
+                Some(BackgroundSize::Contain) => fit(false),
+                Some(BackgroundSize::Cover) => fit(true),
+                explicit => {
+                    let dimension = |value: &LengthPercentageOrAuto, available| match value {
+                        LengthPercentageOrAuto::LengthPercentage(length) => {
+                            Some(length.to_pixels(available, scale))
+                        }
+                        LengthPercentageOrAuto::Auto => None,
+                    };
+                    let (width, height) = match explicit {
+                        Some(BackgroundSize::Explicit { width, height }) => {
+                            (dimension(width, bounds.w), dimension(height, bounds.h))
+                        }
+                        _ => (None, None),
+                    };
+                    match (width, height) {
+                        (Some(width), Some(height)) => (width, height),
+                        (Some(width), None) => (
+                            width,
+                            ratio
+                                .map(|ratio| width / ratio)
+                                .or(intrinsic_height)
+                                .unwrap_or(bounds.h),
+                        ),
+                        (None, Some(height)) => (
+                            ratio
+                                .map(|ratio| height * ratio)
+                                .or(intrinsic_width)
+                                .unwrap_or(bounds.w),
+                            height,
+                        ),
+                        (None, None) => match (intrinsic_width, intrinsic_height, ratio) {
+                            (Some(width), Some(height), _) => (width, height),
+                            (Some(width), None, Some(ratio)) => (width, width / ratio),
+                            (None, Some(height), Some(ratio)) => (height * ratio, height),
+                            (Some(width), None, None) => (width, bounds.h),
+                            (None, Some(height), None) => (bounds.w, height),
+                            (None, None, Some(_)) => fit(false),
+                            (None, None, None) => (bounds.w, bounds.h),
+                        },
+                    }
+                }
+            }
+        }
+
+        fn svg_intrinsic_dimension(length: skia_safe::svg::Length, scale: f32) -> Option<f32> {
+            use skia_safe::svg::LengthUnit;
+            let factor = match length.unit {
+                LengthUnit::Number | LengthUnit::PX => 1.0,
+                LengthUnit::IN => 96.0,
+                LengthUnit::CM => 96.0 / 2.54,
+                LengthUnit::MM => 96.0 / 25.4,
+                LengthUnit::PT => 96.0 / 72.0,
+                LengthUnit::PC => 16.0,
+                _ => return None,
+            };
+            Some(length.value * factor * scale)
+        }
+
+        fn rounded_size(
+            bounds: BoundingBox,
+            size: Option<&BackgroundSize>,
+            repeat: BackgroundRepeat,
+            mut width: f32,
+            mut height: f32,
+            has_intrinsic_ratio: bool,
+        ) -> (f32, f32) {
+            use BackgroundRepeatMode::Round;
+            let (x, y) = repeat.axes();
+            let original_width = width;
+            let original_height = height;
+            let (auto_x, auto_y) = match size {
+                Some(BackgroundSize::Explicit { width, height }) => (
+                    matches!(width, LengthPercentageOrAuto::Auto),
+                    matches!(height, LengthPercentageOrAuto::Auto),
+                ),
+                None => (true, true),
+                _ => (false, false),
+            };
+            if x == Round {
+                width = bounds.w / (bounds.w / width).round().max(1.0);
+            }
+            if y == Round {
+                height = bounds.h / (bounds.h / height).round().max(1.0);
+            }
+            if has_intrinsic_ratio {
+                if x == Round && y != Round && auto_y {
+                    height *= width / original_width;
+                } else if y == Round && x != Round && auto_x {
+                    width *= height / original_height;
+                }
+            }
+            (width, height)
+        }
+
+        fn draw_spaced_or_rounded_layer(
+            canvas: &Canvas,
+            rrect: RRect,
+            view: BoundingBox,
+            tile: BoundingBox,
+            repeat: BackgroundRepeat,
+            picture: &Picture,
+        ) {
+            fn axis(
+                start: f32,
+                available: f32,
+                tile_start: f32,
+                length: f32,
+                mode: BackgroundRepeatMode,
+            ) -> (f32, f32, bool) {
+                match mode {
+                    BackgroundRepeatMode::Space => {
+                        let count = (available / length).floor();
+                        if count >= 2.0 {
+                            (start, (available - length) / (count - 1.0), true)
+                        } else {
+                            (tile_start, length, false)
+                        }
+                    }
+                    BackgroundRepeatMode::NoRepeat => (tile_start, length, false),
+                    BackgroundRepeatMode::Repeat | BackgroundRepeatMode::Round => {
+                        (tile_start, length, true)
+                    }
+                }
+            }
+            let (x_mode, y_mode) = repeat.axes();
+            let (x, step_x, repeat_x) = axis(view.x, view.w, tile.x, tile.w, x_mode);
+            let (y, step_y, repeat_y) = axis(view.y, view.h, tile.y, tile.h, y_mode);
+            let period = Rect::new(0.0, 0.0, step_x, step_y);
+            let mut recorder = PictureRecorder::new();
+            recorder.begin_recording(period, false).draw_picture(picture, None, None);
+            let padded = recorder
+                .finish_recording_as_picture(None)
+                .expect("background tile recording must produce a picture");
+            let mut paint = Paint::default();
+            paint.set_anti_alias(true);
+            paint.set_shader(padded.to_shader(
+                (TileMode::Repeat, TileMode::Repeat),
+                FilterMode::Nearest,
+                &Matrix::translate((x, y)),
+                &period,
+            ));
+
+            canvas.save();
+            if !repeat_x || !repeat_y {
+                canvas.clip_rect(
+                    Rect::new(
+                        if repeat_x { view.left() } else { x },
+                        if repeat_y { view.top() } else { y },
+                        if repeat_x { view.right() } else { x + tile.w },
+                        if repeat_y { view.bottom() } else { y + tile.h },
+                    ),
+                    ClipOp::Intersect,
+                    true,
+                );
+            }
+            canvas.draw_rrect(rrect, &paint);
+            canvas.restore();
+        }
+
+        fn repeat_axes(repeat: BackgroundRepeat) -> (bool, bool) {
+            (
+                matches!(repeat, BackgroundRepeat::Repeat | BackgroundRepeat::RepeatX),
+                matches!(repeat, BackgroundRepeat::Repeat | BackgroundRepeat::RepeatY),
+            )
+        }
+
+        fn needs_background_tiles(
+            view: BoundingBox,
+            tile: BoundingBox,
+            repeat: BackgroundRepeat,
+        ) -> bool {
+            let (repeat_x, repeat_y) = repeat_axes(repeat);
+            (repeat_x && (tile.left() > view.left() || tile.right() < view.right()))
+                || (repeat_y && (tile.top() > view.top() || tile.bottom() < view.bottom()))
+        }
+
+        fn draw_background_layer(
+            canvas: &Canvas,
+            rrect: RRect,
+            view: BoundingBox,
+            tile: BoundingBox,
+            repeat: BackgroundRepeat,
+            mut paint: Paint,
+            already_tiled: bool,
+        ) {
+            if matches!(repeat, BackgroundRepeat::Axes { .. }) {
+                let local = Rect::new(0.0, 0.0, tile.w, tile.h);
+                let mut recorder = PictureRecorder::new();
+                let tile_canvas = recorder.begin_recording(local, false);
+                tile_canvas.translate((-tile.x, -tile.y));
+                tile_canvas.draw_rect(
+                    Rect::new(tile.left(), tile.top(), tile.right(), tile.bottom()),
+                    &paint,
+                );
+                let picture = recorder
+                    .finish_recording_as_picture(None)
+                    .expect("gradient tile recording must produce a picture");
+                draw_spaced_or_rounded_layer(canvas, rrect, view, tile, repeat, &picture);
+                return;
+            }
+            let (repeat_x, repeat_y) = repeat_axes(repeat);
+            let clip_x = !repeat_x && (tile.left() > view.left() || tile.right() < view.right());
+            let clip_y = !repeat_y && (tile.top() > view.top() || tile.bottom() < view.bottom());
+
+            if needs_background_tiles(view, tile, repeat) && !already_tiled {
+                // Tile the gradient as an image; clipping below restricts non-repeating axes.
+                let tile_rect = Rect::new(tile.left(), tile.top(), tile.right(), tile.bottom());
+                let mut recorder = PictureRecorder::new();
+                recorder.begin_recording(tile_rect, false).draw_rect(tile_rect, &paint);
+                let picture = recorder
+                    .finish_recording_as_picture(None)
+                    .expect("gradient tile recording must produce a picture");
+                paint.set_shader(picture.to_shader(
+                    (TileMode::Repeat, TileMode::Repeat),
+                    FilterMode::Nearest,
+                    None,
+                    &tile_rect,
+                ));
+            }
+
+            if clip_x || clip_y {
+                canvas.save();
+                canvas.clip_rect(
+                    Rect::new(
+                        if clip_x { tile.left() } else { view.left() - view.w },
+                        if clip_y { tile.top() } else { view.top() - view.h },
+                        if clip_x { tile.right() } else { view.right() + view.w },
+                        if clip_y { tile.bottom() } else { view.bottom() + view.h },
+                    ),
+                    ClipOp::Intersect,
+                    true,
+                );
+            }
+            canvas.draw_rrect(rrect, &paint);
+            if clip_x || clip_y {
+                canvas.restore();
+            }
+        }
+
         let bounds = self.bounds();
 
         if self.background_images().is_some() {
@@ -1413,10 +1684,90 @@ impl DrawContext<'_> {
                 let image_positions = self.background_position();
                 let image_repeats = self.background_repeat();
 
-                for (index, image) in images.iter().enumerate() {
+                for (index, image) in images.iter().enumerate().rev() {
+                    let unresolved_size = matches!(
+                        layer_value(&image_sizes, index),
+                        Some(BackgroundSize::Explicit { width, height })
+                            if unresolved_dimension(width) || unresolved_dimension(height)
+                    );
+                    let unresolved_position =
+                        layer_value(&image_positions, index).is_some_and(|position| {
+                            unresolved_calculation(&position.x.to_length_or_percentage())
+                                || unresolved_calculation(&position.y.to_length_or_percentage())
+                        });
+                    let unresolved_stop = match image {
+                        ImageOrGradient::Gradient(Gradient::Linear(gradient)) => {
+                            gradient.stops.as_slice()
+                        }
+                        ImageOrGradient::Gradient(Gradient::Radial(gradient)) => {
+                            gradient.stops.as_slice()
+                        }
+                        _ => &[],
+                    }
+                    .iter()
+                    .any(|stop| stop.position.as_ref().is_some_and(unresolved_calculation));
+                    if unresolved_size || unresolved_position || unresolved_stop {
+                        log::warn!(
+                            "Cannot draw background layer {index}: unresolved length calculation"
+                        );
+                        continue;
+                    }
+
+                    let gradient_geometry = || {
+                        let size = layer_value(&image_sizes, index);
+                        let (width, height) = match size {
+                            Some(BackgroundSize::Explicit { width, height }) => {
+                                let dimension =
+                                    |value: &LengthPercentageOrAuto, available| match value {
+                                        LengthPercentageOrAuto::LengthPercentage(length) => {
+                                            length.to_pixels(available, self.scale_factor())
+                                        }
+                                        LengthPercentageOrAuto::Auto => available,
+                                    };
+                                (dimension(width, bounds.w), dimension(height, bounds.h))
+                            }
+                            _ => (bounds.w, bounds.h),
+                        };
+                        if width <= 0.0
+                            || height <= 0.0
+                            || !width.is_finite()
+                            || !height.is_finite()
+                        {
+                            return None;
+                        }
+                        let repeat = layer_value(&image_repeats, index)
+                            .copied()
+                            .unwrap_or(BackgroundRepeat::Repeat);
+                        let (width, height) =
+                            rounded_size(bounds, size, repeat, width, height, false);
+                        if width <= 0.0
+                            || height <= 0.0
+                            || !width.is_finite()
+                            || !height.is_finite()
+                        {
+                            return None;
+                        }
+                        let position =
+                            layer_value(&image_positions, index).cloned().unwrap_or_default();
+                        let x = bounds.x
+                            + position
+                                .x
+                                .to_length_or_percentage()
+                                .to_pixels(bounds.w - width, self.scale_factor());
+                        let y = bounds.y
+                            + position
+                                .y
+                                .to_length_or_percentage()
+                                .to_pixels(bounds.h - height, self.scale_factor());
+                        Some((BoundingBox { x, y, w: width, h: height }, repeat))
+                    };
                     match image {
                         ImageOrGradient::Gradient(gradient) => match gradient {
                             Gradient::Linear(linear_gradient) => {
+                                let view_bounds = bounds;
+                                let Some((bounds, repeat)) = gradient_geometry() else {
+                                    continue;
+                                };
                                 let (start, end, parent_length) = match linear_gradient.direction {
                                     LineDirection::Horizontal(horizontal_keyword) => {
                                         match horizontal_keyword {
@@ -1551,10 +1902,22 @@ impl DrawContext<'_> {
                                 paint.set_shader(shader);
                                 paint.set_anti_alias(true);
 
-                                canvas.draw_rrect(rrect, &paint);
+                                draw_background_layer(
+                                    canvas,
+                                    rrect,
+                                    view_bounds,
+                                    bounds,
+                                    repeat,
+                                    paint,
+                                    false,
+                                );
                             }
 
                             Gradient::Radial(radial_gradient) => {
+                                let view_bounds = bounds;
+                                let Some((bounds, repeat)) = gradient_geometry() else {
+                                    continue;
+                                };
                                 let num_stops = radial_gradient.stops.len();
 
                                 let mut stops = radial_gradient
@@ -1613,7 +1976,15 @@ impl DrawContext<'_> {
                                 paint.set_shader(shader);
                                 paint.set_anti_alias(true);
 
-                                canvas.draw_rrect(rrect, &paint);
+                                draw_background_layer(
+                                    canvas,
+                                    rrect,
+                                    view_bounds,
+                                    bounds,
+                                    repeat,
+                                    paint,
+                                    false,
+                                );
                             }
 
                             _ => {}
@@ -1627,70 +1998,42 @@ impl DrawContext<'_> {
                                     ImageOrSvg::Image(image) => {
                                         let image_width = image.width();
                                         let image_height = image.height();
-                                        let (width, height) = if let Some(background_size) =
-                                            image_sizes.get(index)
+                                        if image_width <= 0 || image_height <= 0 {
+                                            continue;
+                                        }
+                                        let size = layer_value(&image_sizes, index);
+                                        let (width, height) = image_size(
+                                            size,
+                                            bounds,
+                                            self.scale_factor(),
+                                            Some(image_width as f32),
+                                            Some(image_height as f32),
+                                            Some(image_width as f32 / image_height as f32),
+                                        );
+
+                                        let repeat = layer_value(&image_repeats, index)
+                                            .copied()
+                                            .unwrap_or(BackgroundRepeat::Repeat);
+                                        if width <= 0.0
+                                            || height <= 0.0
+                                            || !width.is_finite()
+                                            || !height.is_finite()
                                         {
-                                            match background_size {
-                                                BackgroundSize::Explicit { width, height } => {
-                                                    let w = match width {
-                                                LengthPercentageOrAuto::LengthPercentage(
-                                                    length,
-                                                ) => {
-                                                    length.to_pixels(bounds.w, self.scale_factor())
-                                                }
-                                                LengthPercentageOrAuto::Auto => image_width as f32,
-                                            };
+                                            continue;
+                                        }
+                                        let (width, height) =
+                                            rounded_size(bounds, size, repeat, width, height, true);
+                                        if width <= 0.0
+                                            || height <= 0.0
+                                            || !width.is_finite()
+                                            || !height.is_finite()
+                                        {
+                                            continue;
+                                        }
 
-                                                    let h = match height {
-                                                LengthPercentageOrAuto::LengthPercentage(
-                                                    length,
-                                                ) => {
-                                                    length.to_pixels(bounds.h, self.scale_factor())
-                                                }
-                                                LengthPercentageOrAuto::Auto => image_height as f32,
-                                            };
-
-                                                    (w, h)
-                                                }
-
-                                                BackgroundSize::Contain => {
-                                                    let image_ratio =
-                                                        image_width as f32 / image_height as f32;
-                                                    let container_ratio = bounds.w / bounds.h;
-
-                                                    let (w, h) = if image_ratio > container_ratio {
-                                                        (bounds.w, bounds.w / image_ratio)
-                                                    } else {
-                                                        (bounds.h * image_ratio, bounds.h)
-                                                    };
-
-                                                    (w, h)
-                                                }
-
-                                                BackgroundSize::Cover => {
-                                                    let image_ratio =
-                                                        image_width as f32 / image_height as f32;
-                                                    let container_ratio = bounds.w / bounds.h;
-
-                                                    let (w, h) = if image_ratio < container_ratio {
-                                                        (bounds.w, bounds.w / image_ratio)
-                                                    } else {
-                                                        (bounds.h * image_ratio, bounds.h)
-                                                    };
-
-                                                    (w, h)
-                                                }
-                                            }
-                                        } else {
-                                            (image_width as f32, image_height as f32)
-                                        };
-
-                                        let position = image_positions
-                                            .get(index)
+                                        let position = layer_value(&image_positions, index)
                                             .cloned()
-                                            .or_else(|| image_positions.last().cloned())
                                             .unwrap_or_default();
-
                                         let posx = position
                                             .x
                                             .to_length_or_percentage()
@@ -1699,21 +2042,39 @@ impl DrawContext<'_> {
                                             bounds.height() - height,
                                             self.scale_factor(),
                                         );
-                                        let repeat = image_repeats
-                                            .get(index)
-                                            .copied()
-                                            .or_else(|| image_repeats.last().copied())
-                                            .unwrap_or(BackgroundRepeat::Repeat);
-
-                                        if width <= 0.0 || height <= 0.0 {
-                                            continue;
-                                        }
-
                                         let mut paint = Paint::default();
                                         paint.set_anti_alias(true);
 
                                         let origin_x = bounds.left() + posx;
                                         let origin_y = bounds.top() + posy;
+
+                                        if matches!(repeat, BackgroundRepeat::Axes { .. }) {
+                                            let local = Rect::new(0.0, 0.0, width, height);
+                                            let mut recorder = PictureRecorder::new();
+                                            recorder
+                                                .begin_recording(local, false)
+                                                .draw_image_rect_with_sampling_options(
+                                                    image,
+                                                    None,
+                                                    local,
+                                                    SamplingOptions::default(),
+                                                    &paint,
+                                                );
+                                            let picture =
+                                                recorder.finish_recording_as_picture(None).expect(
+                                                    "image tile recording must produce a picture",
+                                                );
+                                            let tile = BoundingBox {
+                                                x: origin_x,
+                                                y: origin_y,
+                                                w: width,
+                                                h: height,
+                                            };
+                                            draw_spaced_or_rounded_layer(
+                                                canvas, rrect, bounds, tile, repeat, &picture,
+                                            );
+                                            continue;
+                                        }
 
                                         let mut start_x = origin_x;
                                         let mut start_y = origin_y;
@@ -1819,32 +2180,151 @@ impl DrawContext<'_> {
                                                             );
                                                         x += width;
                                                     }
+
                                                     y += height;
                                                 }
                                             }
+                                            BackgroundRepeat::Axes { .. } => unreachable!(),
                                         }
 
                                         canvas.restore();
                                     }
 
                                     ImageOrSvg::Svg(svg) => {
-                                        canvas.save_layer(&SaveLayerRec::default());
-                                        canvas.translate((bounds.x, bounds.y));
-                                        let (scale_x, scale_y) = (
-                                            bounds.width() / svg.inner().fContainerSize.fWidth,
-                                            bounds.height() / svg.inner().fContainerSize.fHeight,
-                                        );
-
-                                        if scale_x.is_finite() && scale_y.is_finite() {
-                                            canvas.scale((scale_x, scale_y));
-                                        } else {
-                                            svg.clone().set_container_size((
-                                                bounds.width(),
-                                                bounds.height(),
-                                            ));
+                                        let mut root = svg.root();
+                                        let original_width = *root.width();
+                                        let original_height = *root.height();
+                                        let scale = self.scale_factor();
+                                        let intrinsic_width =
+                                            svg_intrinsic_dimension(original_width, scale);
+                                        let intrinsic_height =
+                                            svg_intrinsic_dimension(original_height, scale);
+                                        let viewbox = root.view_box().copied();
+                                        if viewbox.is_none()
+                                            && (intrinsic_width.is_some_and(|w| w <= 0.0)
+                                                || intrinsic_height.is_some_and(|h| h <= 0.0))
+                                        {
+                                            continue;
                                         }
+                                        let ratio = match (intrinsic_width, intrinsic_height) {
+                                            (Some(w), Some(h)) if w > 0.0 && h > 0.0 => Some(w / h),
+                                            _ => viewbox.and_then(|rect| {
+                                                if rect.width() > 0.0 && rect.height() > 0.0 {
+                                                    Some(rect.width() / rect.height())
+                                                } else {
+                                                    None
+                                                }
+                                            }),
+                                        };
+                                        let size = layer_value(&image_sizes, index);
+                                        let (width, height) = image_size(
+                                            size,
+                                            bounds,
+                                            scale,
+                                            intrinsic_width,
+                                            intrinsic_height,
+                                            ratio,
+                                        );
+                                        if width <= 0.0
+                                            || height <= 0.0
+                                            || !width.is_finite()
+                                            || !height.is_finite()
+                                        {
+                                            continue;
+                                        }
+                                        let repeat = layer_value(&image_repeats, index)
+                                            .copied()
+                                            .unwrap_or(BackgroundRepeat::Repeat);
+                                        let (width, height) = rounded_size(
+                                            bounds,
+                                            size,
+                                            repeat,
+                                            width,
+                                            height,
+                                            ratio.is_some(),
+                                        );
+                                        if width <= 0.0
+                                            || height <= 0.0
+                                            || !width.is_finite()
+                                            || !height.is_finite()
+                                        {
+                                            continue;
+                                        }
+                                        let position = layer_value(&image_positions, index)
+                                            .cloned()
+                                            .unwrap_or_default();
+                                        let tile = BoundingBox {
+                                            x: bounds.x
+                                                + position
+                                                    .x
+                                                    .to_length_or_percentage()
+                                                    .to_pixels(bounds.w - width, scale),
+                                            y: bounds.y
+                                                + position
+                                                    .y
+                                                    .to_length_or_percentage()
+                                                    .to_pixels(bounds.h - height, scale),
+                                            w: width,
+                                            h: height,
+                                        };
+                                        // A local tile origin preserves transparent margins in Skia's picture shader.
+                                        let tile_rect = Rect::new(0.0, 0.0, width, height);
+                                        let mut recorder = PictureRecorder::new();
+                                        let tile_canvas =
+                                            recorder.begin_recording(tile_rect, false);
+                                        tile_canvas.clip_rect(tile_rect, ClipOp::Intersect, true);
+                                        tile_canvas.save_layer(&SaveLayerRec::default());
 
-                                        svg.render(canvas);
+                                        // DOM clones share the root and container, so restore both after recording.
+                                        let mut svg = svg.clone();
+                                        let original_container = svg.inner().fContainerSize;
+                                        if viewbox.is_some() {
+                                            root.set_width(skia_safe::svg::Length::new(
+                                                width / scale,
+                                                skia_safe::svg::LengthUnit::PX,
+                                            ));
+                                            root.set_height(skia_safe::svg::Length::new(
+                                                height / scale,
+                                                skia_safe::svg::LengthUnit::PX,
+                                            ));
+                                            svg.set_container_size((width / scale, height / scale));
+                                            tile_canvas.scale((scale, scale));
+                                        } else {
+                                            if intrinsic_width.is_none() {
+                                                root.set_width(skia_safe::svg::Length::new(
+                                                    width / scale,
+                                                    skia_safe::svg::LengthUnit::PX,
+                                                ));
+                                            }
+                                            if intrinsic_height.is_none() {
+                                                root.set_height(skia_safe::svg::Length::new(
+                                                    height / scale,
+                                                    skia_safe::svg::LengthUnit::PX,
+                                                ));
+                                            }
+                                            let svg_size = root.intrinsic_size();
+                                            let svg_width = svg_size.width;
+                                            let svg_height = svg_size.height;
+                                            if svg_width <= 0.0
+                                                || svg_height <= 0.0
+                                                || !svg_width.is_finite()
+                                                || !svg_height.is_finite()
+                                            {
+                                                root.set_width(original_width);
+                                                root.set_height(original_height);
+                                                continue;
+                                            }
+                                            svg.set_container_size((svg_width, svg_height));
+                                            tile_canvas
+                                                .scale((width / svg_width, height / svg_height));
+                                        }
+                                        svg.render(tile_canvas);
+                                        root.set_width(original_width);
+                                        root.set_height(original_height);
+                                        svg.set_container_size((
+                                            original_container.fWidth,
+                                            original_container.fHeight,
+                                        ));
 
                                         if let Some(color) = self.style.fill.get_resolved(
                                             self.current,
@@ -1864,10 +2344,38 @@ impl DrawContext<'_> {
                                                 paint.set_anti_alias(true);
                                                 paint.set_blend_mode(skia_safe::BlendMode::SrcIn);
                                                 paint.set_color(color);
-                                                canvas.draw_paint(&paint);
+                                                tile_canvas.draw_paint(&paint);
                                             }
                                         }
-                                        canvas.restore();
+                                        tile_canvas.restore();
+                                        let picture = recorder
+                                            .finish_recording_as_picture(None)
+                                            .expect("SVG tile recording must produce a picture");
+                                        if matches!(repeat, BackgroundRepeat::Axes { .. }) {
+                                            draw_spaced_or_rounded_layer(
+                                                canvas, rrect, bounds, tile, repeat, &picture,
+                                            );
+                                            continue;
+                                        }
+                                        if !needs_background_tiles(bounds, tile, repeat) {
+                                            canvas.save();
+                                            canvas.clip_rrect(rrect, ClipOp::Intersect, true);
+                                            canvas.translate((tile.x, tile.y));
+                                            canvas.draw_picture(&picture, None, None);
+                                            canvas.restore();
+                                            continue;
+                                        }
+                                        let mut paint = Paint::default();
+                                        paint.set_anti_alias(true);
+                                        paint.set_shader(picture.to_shader(
+                                            (TileMode::Repeat, TileMode::Repeat),
+                                            FilterMode::Linear,
+                                            &Matrix::translate((tile.x, tile.y)),
+                                            &tile_rect,
+                                        ));
+                                        draw_background_layer(
+                                            canvas, rrect, bounds, tile, repeat, paint, true,
+                                        );
                                     }
                                 }
                             }
