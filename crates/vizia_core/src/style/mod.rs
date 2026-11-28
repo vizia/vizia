@@ -3257,51 +3257,47 @@ impl Style {
                             }
                         }
                         TokenOrValue::Token(CssToken::Number { value, .. }) => {
-                            if *value == 0.0 {
-                                if custom.value.0.len() == 1 {
-                                    let length_val = LengthOrPercentage::Length(Length::zero());
-                                    if let Some(store) =
-                                        self.custom_length_props.get_mut(&variable_name_hash)
-                                    {
-                                        store.insert_rule(rule_id, length_val);
-                                    } else {
-                                        let mut store = AnimatableVarSet::default();
-                                        store.insert_rule(rule_id, length_val);
-                                        self.custom_length_props.insert(variable_name_hash, store);
-                                    }
-                                    let font_size = FontSize(Length::zero());
-                                    if let Some(store) =
-                                        self.custom_font_size_props.get_mut(&variable_name_hash)
-                                    {
-                                        store.insert_rule(rule_id, font_size);
-                                    } else {
-                                        let mut store = AnimatableVarSet::default();
-                                        store.insert_rule(rule_id, font_size);
-                                        self.custom_font_size_props
-                                            .insert(variable_name_hash, store);
-                                    }
-                                    let letter_spacing = LetterSpacing::Length(Length::zero());
-                                    if let Some(store) = self
-                                        .custom_letter_spacing_props
-                                        .get_mut(&variable_name_hash)
-                                    {
-                                        store.insert_rule(rule_id, letter_spacing);
-                                    } else {
-                                        let mut store = AnimatableVarSet::default();
-                                        store.insert_rule(rule_id, letter_spacing);
-                                        self.custom_letter_spacing_props
-                                            .insert(variable_name_hash, store);
-                                    }
-                                    let units_val = Units::Pixels(0.0);
-                                    if let Some(store) =
-                                        self.custom_units_props.get_mut(&variable_name_hash)
-                                    {
-                                        store.insert_rule(rule_id, units_val);
-                                    } else {
-                                        let mut store = AnimatableVarSet::default();
-                                        store.insert_rule(rule_id, units_val);
-                                        self.custom_units_props.insert(variable_name_hash, store);
-                                    }
+                            if *value == 0.0 && custom.value.0.len() == 1 {
+                                let length_val = LengthOrPercentage::Length(Length::zero());
+                                if let Some(store) =
+                                    self.custom_length_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, length_val);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, length_val);
+                                    self.custom_length_props.insert(variable_name_hash, store);
+                                }
+                                let font_size = FontSize(Length::zero());
+                                if let Some(store) =
+                                    self.custom_font_size_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, font_size);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, font_size);
+                                    self.custom_font_size_props.insert(variable_name_hash, store);
+                                }
+                                let letter_spacing = LetterSpacing::Length(Length::zero());
+                                if let Some(store) =
+                                    self.custom_letter_spacing_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, letter_spacing);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, letter_spacing);
+                                    self.custom_letter_spacing_props
+                                        .insert(variable_name_hash, store);
+                                }
+                                let units_val = Units::Pixels(0.0);
+                                if let Some(store) =
+                                    self.custom_units_props.get_mut(&variable_name_hash)
+                                {
+                                    store.insert_rule(rule_id, units_val);
+                                } else {
+                                    let mut store = AnimatableVarSet::default();
+                                    store.insert_rule(rule_id, units_val);
+                                    self.custom_units_props.insert(variable_name_hash, store);
                                 }
                             }
 
